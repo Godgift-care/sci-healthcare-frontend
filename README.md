@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="Apache 2.0" />
 </p>
 
-# SCI Healthcare — Web App | [Documentation](https://sci-healthcare.gitbook.io/docs)
+# SCI Healthcare — Web App | [Documentation](https://otobongdev.github.io/sci-healthcare-contracts/)
 
 The interface for the [SCI Healthcare care-voucher protocol](https://github.com/otobongdev/sci-healthcare-contracts) on Stellar.
 
