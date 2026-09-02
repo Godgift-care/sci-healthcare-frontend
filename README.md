@@ -13,6 +13,11 @@
 
 # SCI Healthcare — Web App | [Documentation](https://otobongdev.github.io/sci-healthcare-contracts/)
 
+> **Live:** [App](https://sci-healthcare.vercel.app) · [API](https://sci-healthcare-api.onrender.com/stats) · [Docs](https://otobongdev.github.io/sci-healthcare-contracts/) · [Contracts on testnet](https://stellar.expert/explorer/testnet/contract/CBAOY2SQSMEIEQEITLZ3U3MER3K4ZBFQ5BTV5OCODAJINMXNOGLENC5I)
+>
+> The API runs on Render's free tier and sleeps after ~15 minutes idle; the first
+> request may take 30–60 seconds to wake it.
+
 The interface for the [SCI Healthcare care-voucher protocol](https://github.com/otobongdev/sci-healthcare-contracts) on Stellar.
 
 Someone funds a voucher for a specific clinic and a specific service. The money sits in escrow and is released only once an independent attester confirms the care was delivered. If it never happens, the funder gets it back. The funder need not be the patient — a relative sending from abroad uses the same flow, which is the point: a remittance that can only be spent on the care it was sent for.
