@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sci-healthcare/sci-healthcare-frontend/actions/workflows/ci.yml">
-    <img src="https://github.com/sci-healthcare/sci-healthcare-frontend/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/otobongdev/sci-healthcare-frontend/actions/workflows/ci.yml">
+    <img src="https://github.com/otobongdev/sci-healthcare-frontend/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
   <img src="https://img.shields.io/badge/next.js-16.3-black" alt="next 16" />
   <img src="https://img.shields.io/badge/react-19.2-blue" alt="react 19" />
@@ -13,7 +13,7 @@
 
 # SCI Healthcare — Web App | [Documentation](https://sci-healthcare.gitbook.io/docs)
 
-The interface for the [SCI Healthcare care-voucher protocol](https://github.com/sci-healthcare/sci-healthcare-contracts) on Stellar.
+The interface for the [SCI Healthcare care-voucher protocol](https://github.com/otobongdev/sci-healthcare-contracts) on Stellar.
 
 Someone funds a voucher for a specific clinic and a specific service. The money sits in escrow and is released only once an independent attester confirms the care was delivered. If it never happens, the funder gets it back. The funder need not be the patient — a relative sending from abroad uses the same flow, which is the point: a remittance that can only be spent on the care it was sent for.
 
@@ -68,7 +68,7 @@ Simulation happens **before** signing, so a user is never asked to approve a tra
 You need the backend running and a deployed set of contracts.
 
 ```bash
-git clone https://github.com/sci-healthcare/sci-healthcare-frontend
+git clone https://github.com/otobongdev/sci-healthcare-frontend
 cd sci-healthcare-frontend
 npm install
 cp .env.example .env.local     # fill in the ids below
@@ -107,9 +107,9 @@ Suited to a platform built for Next.js, such as Vercel.
 
 | Repo | Purpose |
 | --- | --- |
-| [sci-healthcare-contracts](https://github.com/sci-healthcare/sci-healthcare-contracts) | Soroban contracts |
-| [sci-healthcare-backend](https://github.com/sci-healthcare/sci-healthcare-backend) | Event indexer and read API |
-| [sci-healthcare-frontend](https://github.com/sci-healthcare/sci-healthcare-frontend) | Web app (this repo) |
+| [sci-healthcare-contracts](https://github.com/otobongdev/sci-healthcare-contracts) | Soroban contracts |
+| [sci-healthcare-backend](https://github.com/otobongdev/sci-healthcare-backend) | Event indexer and read API |
+| [sci-healthcare-frontend](https://github.com/otobongdev/sci-healthcare-frontend) | Web app (this repo) |
 
 ## Contributing
 
@@ -117,8 +117,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.m
 
 ## Contributors
 
-<a href="https://github.com/sci-healthcare/sci-healthcare-frontend/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=sci-healthcare/sci-healthcare-frontend" />
+<a href="https://github.com/otobongdev/sci-healthcare-frontend/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=otobongdev/sci-healthcare-frontend" />
 </a>
 
 ## License
