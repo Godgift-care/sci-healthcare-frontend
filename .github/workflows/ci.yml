@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    # Contract ids are inlined at build time, so CI needs placeholders of the
+    # right shape or the build fails in a way that has nothing to do with the PR.
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_STELLAR_NETWORK: testnet
+      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
