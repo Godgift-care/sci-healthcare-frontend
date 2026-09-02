@@ -17,6 +17,15 @@ The interface for the [SCI Healthcare care-voucher protocol](https://github.com/
 
 Someone funds a voucher for a specific clinic and a specific service. The money sits in escrow and is released only once an independent attester confirms the care was delivered. If it never happens, the funder gets it back. The funder need not be the patient — a relative sending from abroad uses the same flow, which is the point: a remittance that can only be spent on the care it was sent for.
 
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fotobongdev%2Fsci-healthcare-frontend&env=NEXT_PUBLIC_API_URL&envDescription=URL%20of%20the%20deployed%20indexer%20API&envLink=https%3A%2F%2Fgithub.com%2Fotobongdev%2Fsci-healthcare-backend">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+  </a>
+</p>
+
+Contract ids are already in `vercel.json`. Vercel will prompt for one variable,
+`NEXT_PUBLIC_API_URL` — the URL of your deployed backend. See [DEPLOY.md](DEPLOY.md).
+
 ## Maintainers | [Telegram](https://t.me/YOUR_TELEGRAM_GROUP)
 
 <table align="center">
