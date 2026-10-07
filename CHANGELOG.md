@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Clinic desk lists the clinic's services with Edit (prefills the form to change label or price) and Delist (two-click, calls `remove_service`).
 - Funding shows what the clinic receives after the protocol fee, quoted live from the contract.
 - Funders can generate a strong patient key in one click, with a prompt to save and share it.
 - Funders choose how long the patient has to attend (14, 30, 60 or 90 days).
@@ -13,6 +14,7 @@
 - Claimed vouchers say when they become refundable if no attester confirms.
 
 ### Fixed
+- Clinic desk treated pending, suspended and unregistered clinics alike, so a clinic awaiting verification was offered the Register form again, which then failed. Status is now read from the registry and each state gets its own message.
 - Services priced at 1,000 USDC or more could not be funded: the amount field was pre-filled with a thousands separator the parser rejects.
 - Voucher amounts in lists showed seven decimals (`$3.0000000`); they now match the rest of the app.
 - Switching wallets mid-load could show the previous wallet's vouchers.

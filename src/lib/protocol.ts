@@ -100,6 +100,10 @@ export const voucher = {
   },
 };
 
+/** ProviderStatus discriminants in the registry contract, in order. */
+const PROVIDER_STATUSES = ['Pending', 'Active', 'Suspended'] as const;
+export type ProviderStanding = (typeof PROVIDER_STATUSES)[number];
+
 export const registry = {
   /** register_provider(owner, name, country) */
   async registerProvider(
@@ -132,6 +136,39 @@ export const registry = {
       provider,
       sign,
     );
+  },
+
+  /** remove_service(provider_addr, code). Funded vouchers are unaffected. */
+  async removeService(provider: string, code: number, sign: SignFn) {
+    return invokeContract(
+      config.contracts.registry,
+      'remove_service',
+      [arg.address(provider), arg.u32(code)],
+      provider,
+      sign,
+    );
+  },
+
+  /**
+   * The provider's lifecycle state straight from the registry, or null if
+   * it never registered. Read on chain rather than from the indexer so a
+   * clinic sees its own registration the moment it lands.
+   */
+  async providerStatus(address: string): Promise<ProviderStanding | null> {
+    try {
+      const p = await readContract<{ status: number | string }>(
+        config.contracts.registry,
+        'get_provider',
+        [arg.address(address)],
+      );
+      return typeof p.status === 'string'
+        ? (p.status as ProviderStanding)
+        : (PROVIDER_STATUSES[p.status] ?? null);
+    } catch (err) {
+      // ProviderNotFound is #4 in RegistryError.
+      if (/Error\(Contract,\s*#4\)/.test(String(err))) return null;
+      throw err;
+    }
   },
 
   async isActiveProvider(address: string): Promise<boolean> {
