@@ -13,7 +13,7 @@
 
 # SCI Healthcare — Web App | [Documentation](https://godgift-care.github.io/sci-healthcare-contracts/)
 
-> **Live:** [App](https://sci-healthcare.vercel.app) · [API](https://sci-healthcare-api.onrender.com/stats) · [Docs](https://godgift-care.github.io/sci-healthcare-contracts/) · [Contracts on testnet](https://stellar.expert/explorer/testnet/contract/CBAOY2SQSMEIEQEITLZ3U3MER3K4ZBFQ5BTV5OCODAJINMXNOGLENC5I)
+> **Live:** [App](https://sci-healthcare.vercel.app) · [API](https://sci-healthcare-api.onrender.com/stats) · [Docs](https://godgift-care.github.io/sci-healthcare-contracts/) · [Contracts on testnet](https://stellar.expert/explorer/testnet/contract/CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ)
 >
 > The API runs on Render's free tier and sleeps after ~15 minutes idle; the first
 > request may take 30–60 seconds to wake it.
@@ -99,10 +99,10 @@ Every one of these is inlined into the client bundle at **build** time.
 | `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet` |
 | `NEXT_PUBLIC_SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` |
 | `NEXT_PUBLIC_NETWORK_PASSPHRASE` | `Test SDF Network ; September 2015` |
-| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | `CCY4K4FO3J4PHM7VQTTS4F5N5U3G7PJJQR5V7TGLYHGZQH2BQ2MQY77L` |
-| `NEXT_PUBLIC_VOUCHER_CONTRACT_ID` | `CBAOY2SQSMEIEQEITLZ3U3MER3K4ZBFQ5BTV5OCODAJINMXNOGLENC5I` |
-| `NEXT_PUBLIC_RECEIPT_CONTRACT_ID` | `CC25Q56WGEKNP4IDYOZK7BJJYD7JQ73JNCBAZIAEY4WCIVSUORQTS7PT` |
-| `NEXT_PUBLIC_USDC_CONTRACT_ID` | `CCKJV474HALEXYJC6URWG2QMUDPH5LY2SKAYA2S4TFHJTXW7OU4OAERQ` |
+| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | `CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V` |
+| `NEXT_PUBLIC_VOUCHER_CONTRACT_ID` | `CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ` |
+| `NEXT_PUBLIC_RECEIPT_CONTRACT_ID` | `CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7` |
+| `NEXT_PUBLIC_USDC_CONTRACT_ID` | `CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M` |
 
 > If the deployed app still calls `localhost`, these were set in the host's **runtime** environment but not its **build** environment. Next inlines `NEXT_PUBLIC_*` at build time; setting them afterwards changes nothing. This is the single most common deployment failure for this shape of app.
 
