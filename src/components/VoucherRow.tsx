@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import type { Voucher } from '@/lib/api';
@@ -18,10 +19,13 @@ export function VoucherRow({
   v,
   actions,
   onDone,
+  summary = true,
 }: {
   v: Voucher;
   actions: Action[];
   onDone?: () => void;
+  /** False on the voucher's own page, which already shows the summary. */
+  summary?: boolean;
 }) {
   const { address, signTransaction, connect } = useWallet();
   const [busy, setBusy] = useState<Action | null>(null);
@@ -74,29 +78,35 @@ export function VoucherRow({
   });
 
   return (
-    <Card className="p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="mono text-xs text-[var(--color-ink-soft)]">
-              #{v.id}
-            </span>
-            <StatusBadge status={v.status} />
-          </div>
-          <h3 className="mt-1 font-medium">{v.provider.name}</h3>
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="mono text-lg font-semibold">${v.amountDisplay}</div>
-          {v.status === 'Settled' && v.settledNet && (
-            <div className="text-xs text-[var(--color-ink-soft)]">
-              clinic received ${formatUsdc(v.settledNet)}
+    // Without the summary, the first hint or button row sits at the top.
+    <Card className={summary ? 'p-5' : 'p-5 [&>:first-child]:mt-0'}>
+      {summary && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/vouchers/${v.id}`}
+                className="mono text-xs text-[var(--color-ink-soft)] underline-offset-2 hover:underline"
+              >
+                #{v.id}
+              </Link>
+              <StatusBadge status={v.status} />
             </div>
-          )}
+            <h3 className="mt-1 font-medium">{v.provider.name}</h3>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="mono text-lg font-semibold">${formatUsdc(v.amount)}</div>
+            {v.status === 'Settled' && v.settledNet && (
+              <div className="text-xs text-[var(--color-ink-soft)]">
+                clinic received ${formatUsdc(v.settledNet)}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {v.status === 'Attested' && v.disputeDeadline && !v.isSettleable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">

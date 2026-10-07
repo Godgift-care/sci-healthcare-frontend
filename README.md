@@ -54,6 +54,7 @@ Contract ids are already in `vercel.json`. Vercel will prompt for one variable,
 | `/my` | Funders and patients | Vouchers you funded; dispute, refund, settle; care history lookup |
 | `/clinic` | Clinics | Register, list services, mark patients seen |
 | `/attest` | Attesters | Review claimed vouchers and confirm delivery |
+| `/vouchers/[id]` | Anyone | One voucher's on-chain history, receipt and available actions; shareable by link |
 
 ## Two properties worth stating up front
 
