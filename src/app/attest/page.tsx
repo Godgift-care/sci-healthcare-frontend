@@ -21,23 +21,30 @@ export default function AttestPage() {
   const [claimed, setClaimed] = useState<Voucher[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!address) return;
-    try {
-      const [ok, list] = await Promise.all([
-        registry.isAttester(address).catch(() => false),
-        api.vouchers({ status: 'Claimed' }),
-      ]);
-      setAuthorised(ok);
-      setClaimed(list.vouchers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    }
-  }, [address]);
+  const [reloads, setReloads] = useState(0);
+  const refresh = useCallback(() => setReloads((n) => n + 1), []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (!address) return;
+    // Ignore a response that lands after the wallet changed.
+    let ignore = false;
+    (async () => {
+      try {
+        const [ok, list] = await Promise.all([
+          registry.isAttester(address).catch(() => false),
+          api.vouchers({ status: 'Claimed' }),
+        ]);
+        if (ignore) return;
+        setAuthorised(ok);
+        setClaimed(list.vouchers);
+      } catch (err) {
+        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load');
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [address, reloads]);
 
   if (!address) return <Empty>Connect an attester wallet to review claims.</Empty>;
 

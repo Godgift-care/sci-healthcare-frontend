@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, type Receipt, type Voucher } from '@/lib/api';
 import { formatDate } from '@/lib/amounts';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
+import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 import { useWallet } from '@/lib/wallet';
@@ -14,29 +15,33 @@ export default function MyPage() {
   const [funded, setFunded] = useState<Voucher[]>([]);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [spend, setSpend] = useState('0.00');
-  const [identifier, setIdentifier] = useState('');
-  const [secret, setSecret] = useState('');
+  const saved = useSavedIdentity();
+  // null until the user types, so the saved values show through.
+  const [identifierDraft, setIdentifier] = useState<string | null>(null);
+  const [secretDraft, setSecret] = useState<string | null>(null);
+  const identifier = identifierDraft ?? saved.identifier;
+  const secret = secretDraft ?? saved.key;
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const saved = localIdentity.load();
-    setIdentifier(saved.identifier);
-    setSecret(saved.key);
-  }, []);
+  const [reloads, setReloads] = useState(0);
+  const loadFunded = useCallback(() => setReloads((n) => n + 1), []);
 
-  const loadFunded = useCallback(async () => {
+  useEffect(() => {
     if (!address) return;
-    try {
-      const res = await api.vouchers({ funder: address });
-      setFunded(res.vouchers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load vouchers');
-    }
-  }, [address]);
-
-  useEffect(() => {
-    void loadFunded();
-  }, [loadFunded]);
+    // Ignore a response that lands after the wallet changed.
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await api.vouchers({ funder: address });
+        if (!ignore) setFunded(res.vouchers);
+      } catch (err) {
+        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load vouchers');
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [address, reloads]);
 
   async function loadHistory() {
     setError(null);
@@ -74,7 +79,7 @@ export default function MyPage() {
               key={v.id}
               v={v}
               actions={['dispute', 'refund', 'settle']}
-              onDone={() => void loadFunded()}
+              onDone={loadFunded}
             />
           ))}
         </div>

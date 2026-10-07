@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
-import { formatUsdc, toBaseUnits } from '@/lib/amounts';
+import { toBaseUnits } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
 import { registry } from '@/lib/protocol';
@@ -32,23 +32,30 @@ export default function ClinicDeskPage() {
   const [label, setLabel] = useState('');
   const [price, setPrice] = useState('');
 
-  const refresh = useCallback(async () => {
-    if (!address) return;
-    try {
-      const [active, list] = await Promise.all([
-        registry.isActiveProvider(address).catch(() => false),
-        api.vouchers({ provider: address }).catch(() => ({ vouchers: [] })),
-      ]);
-      setIsActive(active);
-      setVouchers(list.vouchers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    }
-  }, [address]);
+  const [reloads, setReloads] = useState(0);
+  const refresh = useCallback(() => setReloads((n) => n + 1), []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (!address) return;
+    // Ignore a response that lands after the wallet changed.
+    let ignore = false;
+    (async () => {
+      try {
+        const [active, list] = await Promise.all([
+          registry.isActiveProvider(address).catch(() => false),
+          api.vouchers({ provider: address }).catch(() => ({ vouchers: [] })),
+        ]);
+        if (ignore) return;
+        setIsActive(active);
+        setVouchers(list.vouchers);
+      } catch (err) {
+        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load');
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [address, reloads]);
 
   async function submit(fn: () => Promise<{ hash: string }>, table = REGISTRY_ERRORS) {
     if (!address) return void connect();
@@ -58,7 +65,7 @@ export default function ClinicDeskPage() {
     try {
       const res = await fn();
       setHash(res.hash);
-      await refresh();
+      refresh();
     } catch (err) {
       setError(humaniseError(err, table));
     } finally {

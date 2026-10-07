@@ -5,6 +5,7 @@ import { use, useEffect, useState } from 'react';
 import { api, type Provider, type Service } from '@/lib/api';
 import { formatUsdc, shortAddress, toBaseUnits } from '@/lib/amounts';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
+import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import { voucher } from '@/lib/protocol';
@@ -23,19 +24,17 @@ export default function ClinicPage({
 
   const [provider, setProvider] = useState<Provider | null>(null);
   const [selected, setSelected] = useState<Service | null>(null);
-  const [identifier, setIdentifier] = useState('');
-  const [secret, setSecret] = useState('');
+  const saved = useSavedIdentity();
+  // null until the user types, so the saved values show through.
+  const [identifierDraft, setIdentifier] = useState<string | null>(null);
+  const [secretDraft, setSecret] = useState<string | null>(null);
+  const identifier = identifierDraft ?? saved.identifier;
+  const secret = secretDraft ?? saved.key;
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const saved = localIdentity.load();
-    setIdentifier(saved.identifier);
-    setSecret(saved.key);
-  }, []);
 
   useEffect(() => {
     (async () => {
