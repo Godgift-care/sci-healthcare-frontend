@@ -28,6 +28,20 @@ export async function beneficiaryRef(identifier: string, key: string): Promise<s
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * A fresh random key for deriving beneficiary references: 32 bytes from
+ * the browser's CSPRNG, base64url-encoded to 43 characters.
+ *
+ * Whoever funds care for a patient needs the same key again to look up
+ * that patient's history, so the UI must tell them to keep it.
+ */
+export function generateKey(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+}
+
 export function isValidRef(ref: string): boolean {
   return /^[0-9a-f]{64}$/.test(ref);
 }

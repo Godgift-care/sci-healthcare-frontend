@@ -1,10 +1,11 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { use, useEffect, useMemo, useState } from 'react';
 
 import { api, type Provider, type Service } from '@/lib/api';
-import { formatUsdc, shortAddress, toBaseUnits } from '@/lib/amounts';
-import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
+import { formatUsdc, shortAddress, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -12,7 +13,8 @@ import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
-const EXPIRY_DAYS = 30;
+/** How long the patient has to attend before the funder can refund. */
+const EXPIRY_OPTIONS = [14, 30, 60, 90] as const;
 
 export default function ClinicPage({
   params,
@@ -31,10 +33,45 @@ export default function ClinicPage({
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
   const [amount, setAmount] = useState('');
+  const [expiryDays, setExpiryDays] = useState<number>(30);
+  const [generatedKey, setGeneratedKey] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [fundedId, setFundedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // The amount as base units, or null while the field is not a number.
+  const baseAmount = useMemo(() => {
+    try {
+      const v = toBaseUnits(amount);
+      return v > 0n ? v : null;
+    } catch {
+      return null;
+    }
+  }, [amount]);
+
+  // What the clinic actually receives, read from the contract so the fee
+  // shown is the fee charged. Kept with the amount it was quoted for, so a
+  // stale quote is never shown against a newer amount.
+  const [quote, setQuote] = useState<{ amount: bigint; fee: bigint; net: bigint } | null>(null);
+  useEffect(() => {
+    if (baseAmount === null) return;
+    let ignore = false;
+    const timer = setTimeout(async () => {
+      try {
+        const [fee, net] = await voucher.quote(baseAmount);
+        if (!ignore) setQuote({ amount: baseAmount, fee: BigInt(fee), net: BigInt(net) });
+      } catch {
+        // A quote is a convenience; funding still validates on chain.
+      }
+    }, 300);
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
+  }, [baseAmount]);
+  const currentQuote = quote && quote.amount === baseAmount ? quote : null;
 
   useEffect(() => {
     (async () => {
@@ -44,7 +81,7 @@ export default function ClinicPage({
         const first = p.services.find((s) => s.active !== false);
         if (first) {
           setSelected(first);
-          setAmount(formatUsdc(first.price));
+          setAmount(toAmountInput(first.price));
         }
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : 'Failed to load clinic');
@@ -59,6 +96,7 @@ export default function ClinicPage({
     setBusy(true);
     setError(null);
     setTxHash(null);
+    setFundedId(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
       localIdentity.save(identifier, secret);
@@ -70,8 +108,7 @@ export default function ClinicPage({
         );
       }
 
-      const expiresAt =
-        Math.floor(Date.now() / 1000) + EXPIRY_DAYS * 24 * 60 * 60;
+      const expiresAt = Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60;
 
       const res = await voucher.create(
         {
@@ -85,6 +122,10 @@ export default function ClinicPage({
         signTransaction,
       );
       setTxHash(res.hash);
+      // create_voucher returns the new id as a u64.
+      if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
+        setFundedId(String(res.returnValue));
+      }
     } catch (err) {
       setError(humaniseError(err, VOUCHER_ERRORS));
     } finally {
@@ -115,7 +156,7 @@ export default function ClinicPage({
                 key={s.code}
                 onClick={() => {
                   setSelected(s);
-                  setAmount(formatUsdc(s.price));
+                  setAmount(toAmountInput(s.price));
                 }}
                 className={`flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[var(--color-canvas)] ${
                   selected?.code === s.code ? 'bg-[var(--color-brand-soft)]/40' : ''
@@ -169,18 +210,40 @@ export default function ClinicPage({
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
                 Secret key (32+ characters)
               </span>
-              <input
-                type="password"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                placeholder="stays on this device"
-                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
-              />
+              <div className="mt-1 flex gap-2">
+                <input
+                  type={generatedKey ? 'text' : 'password'}
+                  value={secret}
+                  onChange={(e) => {
+                    setSecret(e.target.value);
+                    setGeneratedKey(false);
+                  }}
+                  placeholder="stays on this device"
+                  className="mono min-w-0 flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2 text-xs"
+                />
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setSecret(generateKey());
+                    setGeneratedKey(true);
+                  }}
+                >
+                  Generate
+                </Button>
+              </div>
               <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
                 Used to derive an opaque reference. Never sent anywhere, and never
                 written to the ledger.
               </span>
             </label>
+
+            {generatedKey && (
+              <Alert kind="info">
+                Save this key somewhere safe and share it with the patient or their
+                clinic. It is the only way to look up this patient&apos;s care history
+                later, and it cannot be recovered.
+              </Alert>
+            )}
 
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
@@ -192,6 +255,29 @@ export default function ClinicPage({
                 inputMode="decimal"
                 className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />
+              {currentQuote && (
+                <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
+                  Clinic receives ${formatUsdc(currentQuote.net)} after a $
+                  {formatUsdc(currentQuote.fee)} protocol fee. Refunds are free.
+                </span>
+              )}
+            </label>
+
+            <label className="block">
+              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                Patient must attend within
+              </span>
+              <select
+                value={expiryDays}
+                onChange={(e) => setExpiryDays(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+              >
+                {EXPIRY_OPTIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d} days
+                  </option>
+                ))}
+              </select>
             </label>
 
             {error && <Alert>{error}</Alert>}
@@ -199,6 +285,14 @@ export default function ClinicPage({
             {txHash && (
               <Alert kind="success">
                 Voucher funded.{' '}
+                {fundedId && (
+                  <>
+                    <Link href={`/vouchers/${fundedId}`} className="underline underline-offset-2">
+                      Open voucher #{fundedId}
+                    </Link>{' '}
+                    ·{' '}
+                  </>
+                )}
                 <ExplorerLink href={explorerTx(txHash)}>View transaction</ExplorerLink>
               </Alert>
             )}
@@ -211,7 +305,7 @@ export default function ClinicPage({
               Funds are escrowed by the contract at{' '}
               {shortAddress(config.contracts.voucher, 4)} and released to the clinic
               only after an attester confirms delivery. Unclaimed vouchers are
-              refundable after {EXPIRY_DAYS} days.
+              refundable after {expiryDays} days.
             </p>
           </>
         )}

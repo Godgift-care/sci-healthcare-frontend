@@ -25,6 +25,15 @@ export function formatUsdc(base: string | bigint): string {
   return `${whole.toLocaleString('en-US')}.${trimmed}`;
 }
 
+/**
+ * Formats base units for an editable amount field: no thousands
+ * separators, so `toBaseUnits` can parse it back. `formatUsdc` groups
+ * digits ("1,000.00"), which `toBaseUnits` rightly rejects.
+ */
+export function toAmountInput(base: string | bigint): string {
+  return formatUsdc(base).replaceAll(',', '');
+}
+
 export function shortAddress(addr: string, chars = 4): string {
   if (addr.length <= chars * 2 + 3) return addr;
   return `${addr.slice(0, chars)}…${addr.slice(-chars)}`;
