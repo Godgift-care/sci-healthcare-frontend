@@ -39,6 +39,13 @@ export const REGISTRY_ERRORS: Record<number, string> = {
   11: 'No admin handover is pending.',
 };
 
+export const FAUCET_ERRORS: Record<number, string> = {
+  2: 'The test USDC faucet is not set up on this network.',
+  3: 'You are not authorised to do that.',
+  4: 'The faucet amount must be greater than zero.',
+  5: 'You have already had test USDC today. Try again later.',
+};
+
 /** Pulls `Error(Contract, #N)` out of a Soroban host error string. */
 export function contractErrorCode(message: string): number | null {
   const m = /Error\(Contract,\s*#(\d+)\)/.exec(message);
@@ -50,14 +57,18 @@ export function humaniseError(
   table: Record<number, string> = VOUCHER_ERRORS,
 ): string {
   const message = err instanceof Error ? err.message : String(err);
-  const code = contractErrorCode(message);
-  if (code !== null) return table[code] ?? `Contract rejected this (error #${code}).`;
-  if (/insufficient balance|underflow/i.test(message)) {
-    return 'Not enough USDC in your wallet for this.';
-  }
+  // Token failures surface through our contracts with the token's own error
+  // number (a missing trustline is #13, which in the voucher table means
+  // something else entirely), so recognise them by text before looking the
+  // number up.
   if (/trustline/i.test(message)) {
     return 'Your wallet needs a USDC trustline before it can hold or send USDC.';
   }
+  if (/insufficient balance|balance is not sufficient|underflow/i.test(message)) {
+    return 'Not enough USDC in your wallet for this.';
+  }
+  const code = contractErrorCode(message);
+  if (code !== null) return table[code] ?? `Contract rejected this (error #${code}).`;
   if (/account not found/i.test(message)) {
     return 'This account does not exist on the network yet. Fund it first.';
   }

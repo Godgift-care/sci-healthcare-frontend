@@ -6,6 +6,7 @@ import { api, type Receipt, type Voucher } from '@/lib/api';
 import { formatDate } from '@/lib/amounts';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 import { useWallet } from '@/lib/wallet';
@@ -65,6 +66,8 @@ export default function MyPage() {
 
   return (
     <div className="space-y-8">
+      <TestUsdc />
+
       <section className="space-y-3">
         <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
         {!address && (

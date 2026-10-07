@@ -29,7 +29,11 @@ export const config = {
     voucher: process.env.NEXT_PUBLIC_VOUCHER_CONTRACT_ID ?? '',
     receipt: process.env.NEXT_PUBLIC_RECEIPT_CONTRACT_ID ?? '',
     usdc: process.env.NEXT_PUBLIC_USDC_CONTRACT_ID ?? '',
+    /** Testnet only: mints demo USDC to anyone, once a day each. */
+    faucet: process.env.NEXT_PUBLIC_FAUCET_CONTRACT_ID ?? '',
   },
+  /** Issuer of the demo USDC, needed to add the asset in a wallet. */
+  usdcIssuer: process.env.NEXT_PUBLIC_USDC_ISSUER ?? '',
 } as const;
 
 export function requireContracts(): void {

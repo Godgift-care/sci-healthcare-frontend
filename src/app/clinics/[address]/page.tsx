@@ -11,6 +11,7 @@ import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
+import { TestUsdc } from '@/components/TestUsdc';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
 /** How long the patient has to attend before the funder can refund. */
@@ -279,6 +280,8 @@ export default function ClinicPage({
                 ))}
               </select>
             </label>
+
+            <TestUsdc compact />
 
             {error && <Alert>{error}</Alert>}
 

@@ -184,6 +184,27 @@ export const registry = {
   },
 };
 
+export const faucet = {
+  enabled: (): boolean => Boolean(config.contracts.faucet),
+
+  /** drip(to) -> i128. Mints the daily amount of test USDC to `to`. */
+  async drip(to: string, sign: SignFn) {
+    return invokeContract(config.contracts.faucet, 'drip', [arg.address(to)], to, sign);
+  },
+
+  /** Ledger time (seconds) `to` may drip again, or 0 if it may now. */
+  async nextDripAt(to: string): Promise<number> {
+    return Number(
+      await readContract<bigint>(config.contracts.faucet, 'next_drip_at', [arg.address(to)]),
+    );
+  },
+
+  async amount(): Promise<bigint> {
+    const c = await readContract<{ amount: bigint }>(config.contracts.faucet, 'get_config');
+    return BigInt(c.amount);
+  },
+};
+
 export const usdc = {
   async balance(address: string): Promise<bigint> {
     if (!config.contracts.usdc) return 0n;

@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Testnet: **Get test USDC** on My vouchers and in the funding form, backed by the faucet contract. Shows the wallet's balance, the daily limit, and how to add the USDC trustline when it is missing.
 - Clinic desk lists the clinic's services with Edit (prefills the form to change label or price) and Delist (two-click, calls `remove_service`).
 - Funding shows what the clinic receives after the protocol fee, quoted live from the contract.
 - Funders can generate a strong patient key in one click, with a prompt to save and share it.
@@ -14,6 +15,7 @@
 - Claimed vouchers say when they become refundable if no attester confirms.
 
 ### Fixed
+- A missing USDC trustline was reported as "The dispute window is still open", and an insufficient balance as "not in the right state": token errors come through with the token's own error numbers, which were looked up in the voucher table. Token messages are now recognised first.
 - Clinic desk treated pending, suspended and unregistered clinics alike, so a clinic awaiting verification was offered the Register form again, which then failed. Status is now read from the registry and each state gets its own message.
 - Services priced at 1,000 USDC or more could not be funded: the amount field was pre-filled with a thousands separator the parser rejects.
 - Voucher amounts in lists showed seven decimals (`$3.0000000`); they now match the rest of the app.
