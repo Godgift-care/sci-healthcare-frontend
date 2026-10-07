@@ -8,7 +8,7 @@ depends on where the backend landed.
 
 ## Vercel
 
-1. **Add New → Project**, import `otobongdev/sci-healthcare-frontend`.
+1. **Add New → Project**, import `Godgift-care/sci-healthcare-frontend`.
 2. Framework preset is detected as Next.js from `vercel.json`.
 3. Under **Environment Variables**, add one:
 

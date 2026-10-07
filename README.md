@@ -3,27 +3,27 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/otobongdev/sci-healthcare-frontend/actions/workflows/ci.yml">
-    <img src="https://github.com/otobongdev/sci-healthcare-frontend/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/Godgift-care/sci-healthcare-frontend/actions/workflows/ci.yml">
+    <img src="https://github.com/Godgift-care/sci-healthcare-frontend/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
   <img src="https://img.shields.io/badge/next.js-16.3-black" alt="next 16" />
   <img src="https://img.shields.io/badge/react-19.2-blue" alt="react 19" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="Apache 2.0" />
 </p>
 
-# SCI Healthcare — Web App | [Documentation](https://otobongdev.github.io/sci-healthcare-contracts/)
+# SCI Healthcare — Web App | [Documentation](https://godgift-care.github.io/sci-healthcare-contracts/)
 
-> **Live:** [App](https://sci-healthcare.vercel.app) · [API](https://sci-healthcare-api.onrender.com/stats) · [Docs](https://otobongdev.github.io/sci-healthcare-contracts/) · [Contracts on testnet](https://stellar.expert/explorer/testnet/contract/CBAOY2SQSMEIEQEITLZ3U3MER3K4ZBFQ5BTV5OCODAJINMXNOGLENC5I)
+> **Live:** [App](https://sci-healthcare.vercel.app) · [API](https://sci-healthcare-api.onrender.com/stats) · [Docs](https://godgift-care.github.io/sci-healthcare-contracts/) · [Contracts on testnet](https://stellar.expert/explorer/testnet/contract/CBAOY2SQSMEIEQEITLZ3U3MER3K4ZBFQ5BTV5OCODAJINMXNOGLENC5I)
 >
 > The API runs on Render's free tier and sleeps after ~15 minutes idle; the first
 > request may take 30–60 seconds to wake it.
 
-The interface for the [SCI Healthcare care-voucher protocol](https://github.com/otobongdev/sci-healthcare-contracts) on Stellar.
+The interface for the [SCI Healthcare care-voucher protocol](https://github.com/Godgift-care/sci-healthcare-contracts) on Stellar.
 
 Someone funds a voucher for a specific clinic and a specific service. The money sits in escrow and is released only once an independent attester confirms the care was delivered. If it never happens, the funder gets it back. The funder need not be the patient — a relative sending from abroad uses the same flow, which is the point: a remittance that can only be spent on the care it was sent for.
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fotobongdev%2Fsci-healthcare-frontend&env=NEXT_PUBLIC_API_URL&envDescription=URL%20of%20the%20deployed%20indexer%20API&envLink=https%3A%2F%2Fgithub.com%2Fotobongdev%2Fsci-healthcare-backend">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FGodgift-care%2Fsci-healthcare-frontend&env=NEXT_PUBLIC_API_URL&envDescription=URL%20of%20the%20deployed%20indexer%20API&envLink=https%3A%2F%2Fgithub.com%2FGodgift-care%2Fsci-healthcare-backend">
     <img src="https://vercel.com/button" alt="Deploy with Vercel" />
   </a>
 </p>
@@ -31,7 +31,7 @@ Someone funds a voucher for a specific clinic and a specific service. The money 
 Contract ids are already in `vercel.json`. Vercel will prompt for one variable,
 `NEXT_PUBLIC_API_URL` — the URL of your deployed backend. See [DEPLOY.md](DEPLOY.md).
 
-## Maintainers | [Telegram](https://t.me/YOUR_TELEGRAM_GROUP)
+## Maintainers
 
 <table align="center">
   <tr>
@@ -41,8 +41,6 @@ Contract ids are already in `vercel.json`. Vercel will prompt for one variable,
       <strong>Adeleke | Frontend &amp; Protocol</strong>
       <br /><br />
       <a href="https://github.com/adelekevat">adelekevat</a>
-      <br />
-      <a href="https://t.me/YOUR_TELEGRAM_HANDLE">Telegram</a>
     </td>
   </tr>
 </table>
@@ -82,7 +80,7 @@ Simulation happens **before** signing, so a user is never asked to approve a tra
 You need the backend running and a deployed set of contracts.
 
 ```bash
-git clone https://github.com/otobongdev/sci-healthcare-frontend
+git clone https://github.com/Godgift-care/sci-healthcare-frontend
 cd sci-healthcare-frontend
 npm install
 cp .env.example .env.local     # fill in the ids below
@@ -121,9 +119,9 @@ Suited to a platform built for Next.js, such as Vercel.
 
 | Repo | Purpose |
 | --- | --- |
-| [sci-healthcare-contracts](https://github.com/otobongdev/sci-healthcare-contracts) | Soroban contracts |
-| [sci-healthcare-backend](https://github.com/otobongdev/sci-healthcare-backend) | Event indexer and read API |
-| [sci-healthcare-frontend](https://github.com/otobongdev/sci-healthcare-frontend) | Web app (this repo) |
+| [sci-healthcare-contracts](https://github.com/Godgift-care/sci-healthcare-contracts) | Soroban contracts |
+| [sci-healthcare-backend](https://github.com/Godgift-care/sci-healthcare-backend) | Event indexer and read API |
+| [sci-healthcare-frontend](https://github.com/Godgift-care/sci-healthcare-frontend) | Web app (this repo) |
 
 ## Contributing
 
@@ -131,8 +129,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.m
 
 ## Contributors
 
-<a href="https://github.com/otobongdev/sci-healthcare-frontend/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=otobongdev/sci-healthcare-frontend" />
+<a href="https://github.com/Godgift-care/sci-healthcare-frontend/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Godgift-care/sci-healthcare-frontend" />
 </a>
 
 ## License
