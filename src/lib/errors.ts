@@ -17,11 +17,12 @@ export const VOUCHER_ERRORS: Record<number, string> = {
   9: 'The expiry date must be in the future.',
   10: 'This voucher is not in the right state for that action.',
   11: 'This voucher has expired.',
-  12: 'This voucher has not expired yet.',
+  12: 'This voucher cannot be refunded yet.',
   13: 'The dispute window is still open. Settlement unlocks once it closes.',
   14: 'The dispute window has closed.',
   15: 'That fee is not allowed.',
   16: 'The calculation overflowed.',
+  17: 'No admin handover is pending.',
 };
 
 export const REGISTRY_ERRORS: Record<number, string> = {
@@ -35,6 +36,7 @@ export const REGISTRY_ERRORS: Record<number, string> = {
   8: 'The price must be greater than zero.',
   9: 'The country code must be two letters.',
   10: 'A name is required.',
+  11: 'No admin handover is pending.',
 };
 
 /** Pulls `Error(Contract, #N)` out of a Soroban host error string. */

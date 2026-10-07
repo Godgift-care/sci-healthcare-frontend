@@ -33,6 +33,8 @@ export type Voucher = {
   beneficiaryRef: string;
   provider: { address: string; name: string; country: string };
   serviceCode: number;
+  /** Catalogue name for serviceCode; absent from older API deployments. */
+  serviceLabel?: string | null;
   amount: string;
   amountDisplay: string;
   status: VoucherStatus;
@@ -43,6 +45,9 @@ export type Voucher = {
   disputeDeadline: string | null;
   settledNet: string | null;
   settledFee: string | null;
+  disputeReason?: number | null;
+  /** When refund starts to succeed, or null if it never will. */
+  refundableAt?: string | null;
   isSettleable: boolean;
   isRefundable: boolean;
 };
@@ -51,6 +56,7 @@ export type Receipt = {
   voucherId: string;
   providerAddress: string;
   serviceCode: number;
+  serviceLabel?: string | null;
   amount: string;
   amountDisplay: string;
   settledAt: string;

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { Voucher } from '@/lib/api';
 import { formatDate, formatUsdc, timeUntil } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
+import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
 import { voucher as protocol } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
@@ -26,6 +27,9 @@ export function VoucherRow({
   const [busy, setBusy] = useState<Action | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hash, setHash] = useState<string | null>(null);
+  // Disputing freezes funds, so it takes a reason and a second click.
+  const [disputing, setDisputing] = useState(false);
+  const [reason, setReason] = useState<DisputeReasonCode>(DISPUTE_REASONS[0].code);
 
   async function run(action: Action) {
     if (!address) return void connect();
@@ -38,10 +42,11 @@ export function VoucherRow({
         attest: () => protocol.attest(address, v.id, signTransaction),
         settle: () => protocol.settle(address, v.id, signTransaction),
         refund: () => protocol.refund(address, v.id, signTransaction),
-        dispute: () => protocol.dispute(address, v.id, 1, signTransaction),
+        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
       };
       const res = await fns[action]();
       setHash(res.hash);
+      setDisputing(false);
       onDone?.();
     } catch (err) {
       setError(humaniseError(err));
@@ -80,7 +85,7 @@ export function VoucherRow({
           </div>
           <h3 className="mt-1 font-medium">{v.provider.name}</h3>
           <p className="text-xs text-[var(--color-ink-soft)]">
-            Service {v.serviceCode} · funded {formatDate(v.createdAt)}
+            {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
           </p>
         </div>
         <div className="text-right">
@@ -104,6 +109,18 @@ export function VoucherRow({
           Expires {formatDate(v.expiresAt)} · refundable after that if unused.
         </p>
       )}
+      {v.status === 'Claimed' && v.refundableAt && !v.isRefundable && (
+        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+          Waiting for an attester to confirm. If nobody does, this becomes
+          refundable on {formatDate(v.refundableAt)}.
+        </p>
+      )}
+      {v.status === 'Disputed' && v.disputeReason != null && (
+        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+          Disputed: {disputeReasonLabel(v.disputeReason)}. Funds are frozen until
+          an administrator resolves it.
+        </p>
+      )}
 
       {error && (
         <div className="mt-3">
@@ -118,14 +135,47 @@ export function VoucherRow({
         </div>
       )}
 
-      {available.length > 0 && (
+      {disputing && (
+        <div className="mt-4 space-y-3 rounded-lg border border-[var(--color-line)] p-4">
+          <label className="block">
+            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              What went wrong?
+            </span>
+            <select
+              value={reason}
+              onChange={(e) => setReason(Number(e.target.value) as DisputeReasonCode)}
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+            >
+              {DISPUTE_REASONS.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            The clinic will not be paid while this is open. An administrator reviews
+            it and returns the money to you or releases it to the clinic.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="danger" disabled={busy !== null} onClick={() => void run('dispute')}>
+              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+            </Button>
+            <Button variant="ghost" disabled={busy !== null} onClick={() => setDisputing(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {available.length > 0 && !disputing && (
         <div className="mt-4 flex flex-wrap gap-2">
           {available.map((a) => (
             <Button
               key={a}
               variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
               disabled={busy !== null}
-              onClick={() => void run(a)}
+              onClick={() => (a === 'dispute' ? setDisputing(true) : void run(a))}
             >
               {busy === a ? 'Confirming…' : LABELS[a]}
             </Button>

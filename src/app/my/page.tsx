@@ -127,7 +127,7 @@ export default function MyPage() {
               {receipts.map((r) => (
                 <li key={r.voucherId} className="flex justify-between py-3 text-sm">
                   <div>
-                    <div>Service {r.serviceCode}</div>
+                    <div>{r.serviceLabel ?? `Service ${r.serviceCode}`}</div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
                       {formatDate(r.settledAt)}
                     </div>
