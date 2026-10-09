@@ -88,7 +88,7 @@ cp .env.example .env.local     # fill in the ids below
 npm run dev                    # http://localhost:3000
 ```
 
-Install [Freighter](https://freighter.app) (or any SEP-43 wallet), switch it to **Testnet**, and fund the account at [friendbot](https://friendbot.stellar.org). To hold test USDC you also need a trustline to the issuer — `scripts/seed.sh` in the contracts repo sets these up for the demo accounts.
+Install [Freighter](https://freighter.app) (or any SEP-43 wallet), switch it to **Testnet**, and fund the account at [friendbot](https://friendbot.stellar.org). To hold test USDC you also need a trustline to the issuer (`USDC_ISSUER` in the contracts repo's `deployments/testnet.env`). Then use **Get test USDC** on *My vouchers*: it draws 50 USDC a day from the testnet faucet contract.
 
 ## Environment
 
@@ -104,6 +104,8 @@ Every one of these is inlined into the client bundle at **build** time.
 | `NEXT_PUBLIC_VOUCHER_CONTRACT_ID` | `CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ` |
 | `NEXT_PUBLIC_RECEIPT_CONTRACT_ID` | `CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7` |
 | `NEXT_PUBLIC_USDC_CONTRACT_ID` | `CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M` |
+| `NEXT_PUBLIC_FAUCET_CONTRACT_ID` | `CCB25WG7DQ2CSNXPTOHZO2PDZ324FQPZLH3LSNCCLWYM3FEH52GEXC47` (testnet only; leave unset in production) |
+| `NEXT_PUBLIC_USDC_ISSUER` | `GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR` |
 
 > If the deployed app still calls `localhost`, these were set in the host's **runtime** environment but not its **build** environment. Next inlines `NEXT_PUBLIC_*` at build time; setting them afterwards changes nothing. This is the single most common deployment failure for this shape of app.
 

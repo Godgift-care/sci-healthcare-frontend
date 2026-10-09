@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-09
 
 ### Added
+- Issue forms (bug, feature) and a pull request template; blank issues off, security reports routed to SECURITY.md.
 - Testnet: **Get test USDC** on My vouchers and in the funding form, backed by the faucet contract. Shows the wallet's balance, the daily limit, and how to add the USDC trustline when it is missing.
 - Clinic desk lists the clinic's services with Edit (prefills the form to change label or price) and Delist (two-click, calls `remove_service`).
 - Funding shows what the clinic receives after the protocol fee, quoted live from the contract.
