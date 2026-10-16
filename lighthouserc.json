@@ -1,0 +1,26 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://127.0.0.1:3100/",
+        "http://127.0.0.1:3100/my",
+        "http://127.0.0.1:3100/clinic"
+      ],
+      "startServerCommand": "npm run start -- -p 3100",
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--no-sandbox --headless"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 3000 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 716800 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

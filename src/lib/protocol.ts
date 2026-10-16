@@ -6,6 +6,10 @@ import { arg, invokeContract, readContract, type SignFn } from './stellar';
  *
  * Argument order must match the Rust function signatures exactly; Soroban
  * matches positionally, not by name.
+ *
+ * Encoders in `stellar.ts` are async (they load the SDK on demand), so every
+ * wrapper awaits its args before simulating. The wrappers themselves stay
+ * async with the same return shapes, so callers are unchanged.
  */
 
 export const voucher = {
@@ -24,14 +28,14 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
-      [
+      await Promise.all([
         arg.address(params.funder),
         arg.bytes32(params.beneficiaryRef),
         arg.address(params.provider),
         arg.u32(params.serviceCode),
         arg.i128(params.amount),
         arg.u64(params.expiresAt),
-      ],
+      ]),
       params.funder,
       sign,
     );
@@ -42,7 +46,7 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'claim',
-      [arg.address(provider), arg.u64(BigInt(voucherId))],
+      await Promise.all([arg.address(provider), arg.u64(BigInt(voucherId))]),
       provider,
       sign,
     );
@@ -53,7 +57,7 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'attest',
-      [arg.address(attester), arg.u64(BigInt(voucherId))],
+      await Promise.all([arg.address(attester), arg.u64(BigInt(voucherId))]),
       attester,
       sign,
     );
@@ -64,7 +68,11 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'dispute',
-      [arg.address(funder), arg.u64(BigInt(voucherId)), arg.u32(reasonCode)],
+      await Promise.all([
+        arg.address(funder),
+        arg.u64(BigInt(voucherId)),
+        arg.u32(reasonCode),
+      ]),
       funder,
       sign,
     );
@@ -75,7 +83,7 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'settle',
-      [arg.u64(BigInt(voucherId))],
+      await Promise.all([arg.u64(BigInt(voucherId))]),
       caller,
       sign,
     );
@@ -86,7 +94,7 @@ export const voucher = {
     return invokeContract(
       config.contracts.voucher,
       'refund',
-      [arg.u64(BigInt(voucherId))],
+      await Promise.all([arg.u64(BigInt(voucherId))]),
       caller,
       sign,
     );
@@ -95,7 +103,7 @@ export const voucher = {
   /** quote(amount) -> (fee, net) */
   async quote(amount: bigint): Promise<[bigint, bigint]> {
     return readContract<[bigint, bigint]>(config.contracts.voucher, 'quote', [
-      arg.i128(amount),
+      await arg.i128(amount),
     ]);
   },
 };
@@ -115,7 +123,11 @@ export const registry = {
     return invokeContract(
       config.contracts.registry,
       'register_provider',
-      [arg.address(owner), arg.string(name), arg.string(country)],
+      await Promise.all([
+        arg.address(owner),
+        arg.string(name),
+        arg.string(country),
+      ]),
       owner,
       sign,
     );
@@ -132,7 +144,12 @@ export const registry = {
     return invokeContract(
       config.contracts.registry,
       'upsert_service',
-      [arg.address(provider), arg.u32(code), arg.string(label), arg.i128(price)],
+      await Promise.all([
+        arg.address(provider),
+        arg.u32(code),
+        arg.string(label),
+        arg.i128(price),
+      ]),
       provider,
       sign,
     );
@@ -143,7 +160,7 @@ export const registry = {
     return invokeContract(
       config.contracts.registry,
       'remove_service',
-      [arg.address(provider), arg.u32(code)],
+      await Promise.all([arg.address(provider), arg.u32(code)]),
       provider,
       sign,
     );
@@ -159,7 +176,7 @@ export const registry = {
       const p = await readContract<{ status: number | string }>(
         config.contracts.registry,
         'get_provider',
-        [arg.address(address)],
+        [await arg.address(address)],
       );
       return typeof p.status === 'string'
         ? (p.status as ProviderStanding)
@@ -173,13 +190,13 @@ export const registry = {
 
   async isActiveProvider(address: string): Promise<boolean> {
     return readContract<boolean>(config.contracts.registry, 'is_active_provider', [
-      arg.address(address),
+      await arg.address(address),
     ]);
   },
 
   async isAttester(address: string): Promise<boolean> {
     return readContract<boolean>(config.contracts.registry, 'is_attester', [
-      arg.address(address),
+      await arg.address(address),
     ]);
   },
 };
@@ -189,13 +206,15 @@ export const faucet = {
 
   /** drip(to) -> i128. Mints the daily amount of test USDC to `to`. */
   async drip(to: string, sign: SignFn) {
-    return invokeContract(config.contracts.faucet, 'drip', [arg.address(to)], to, sign);
+    return invokeContract(config.contracts.faucet, 'drip', [await arg.address(to)], to, sign);
   },
 
   /** Ledger time (seconds) `to` may drip again, or 0 if it may now. */
   async nextDripAt(to: string): Promise<number> {
     return Number(
-      await readContract<bigint>(config.contracts.faucet, 'next_drip_at', [arg.address(to)]),
+      await readContract<bigint>(config.contracts.faucet, 'next_drip_at', [
+        await arg.address(to),
+      ]),
     );
   },
 
@@ -209,7 +228,7 @@ export const usdc = {
   async balance(address: string): Promise<bigint> {
     if (!config.contracts.usdc) return 0n;
     return readContract<bigint>(config.contracts.usdc, 'balance', [
-      arg.address(address),
+      await arg.address(address),
     ]);
   },
 };

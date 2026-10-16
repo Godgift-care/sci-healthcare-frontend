@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import type { VoucherStatus } from '@/lib/api';
 
@@ -130,5 +133,183 @@ export function NavLink({ href, children }: { href: string; children: ReactNode 
     >
       {children}
     </Link>
+  );
+}
+
+/**
+ * Accessible modal dialog.
+ *
+ * - Focus moves into the dialog on open and returns to the trigger on close.
+ * - `Escape` closes; Tab cycles inside (focus trap).
+ * - Backdrop click closes. `aria-modal` + labelled title for screen readers.
+ *
+ * Built on a plain div + portal rather than `<dialog>` so styling and the
+ * trap behave identically in every browser the wallet kit supports.
+ */
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  actions?: ReactNode;
+}) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocus = useRef<Element | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previousFocus.current = document.activeElement;
+    const dialog = dialogRef.current;
+    // Focus the dialog itself first so screen readers announce the title,
+    // then the first control once the user tabs.
+    dialog?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !dialog) return;
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown, true);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.body.style.overflow = prevOverflow;
+      if (previousFocus.current instanceof HTMLElement) {
+        previousFocus.current.focus();
+      }
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="relative w-full max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-xl outline-none"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h2 id={titleId} className="text-base font-semibold tracking-tight">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-3 text-sm">{children}</div>
+        {actions && <div className="mt-4 flex flex-wrap gap-2">{actions}</div>}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Accessible tooltip.
+ *
+ * Shows on hover *and* keyboard focus, hides on blur/Escape, and exposes
+ * the hint via `aria-describedby` + `role="tooltip"` so screen readers
+ * announce it. Use for short hints that would otherwise crowd the UI.
+ */
+export function Tooltip({
+  content,
+  children,
+  side = 'top',
+}: {
+  content: ReactNode;
+  children: ReactNode;
+  side?: 'top' | 'bottom';
+}) {
+  const [visible, setVisible] = useState(false);
+  const id = useId();
+
+  const position =
+    side === 'top'
+      ? 'bottom-full left-1/2 mb-2 -translate-x-1/2'
+      : 'top-full left-1/2 mt-2 -translate-x-1/2';
+
+  return (
+    <span className="relative inline-flex items-center">
+      <span
+        className="inline-flex items-center"
+        aria-describedby={visible ? id : undefined}
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onFocus={() => setVisible(true)}
+        onBlur={() => setVisible(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setVisible(false);
+        }}
+      >
+        {children}
+      </span>
+      {visible && (
+        <span
+          role="tooltip"
+          id={id}
+          className={`pointer-events-none absolute z-40 w-56 rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] px-3 py-2 text-xs leading-relaxed text-white shadow-lg ${position}`}
+        >
+          {content}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** Small "?" affordance that pairs with {@link Tooltip} for inline hints. */
+export function InfoTip({ content }: { content: ReactNode }) {
+  return (
+    <Tooltip content={content}>
+      <span
+        tabIndex={0}
+        aria-label="More information"
+        className="ml-1 inline-grid h-4 w-4 cursor-help place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] text-[10px] leading-none text-[var(--color-ink-soft)]"
+      >
+        ?
+      </span>
+    </Tooltip>
   );
 }

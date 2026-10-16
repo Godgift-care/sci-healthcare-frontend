@@ -12,7 +12,7 @@ import { humaniseError } from '@/lib/errors';
 import { voucher as protocol } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
-import { Alert, Button, Card, ExplorerLink, StatusBadge } from './ui';
+import { Alert, Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
 
 type Action = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute';
 
@@ -41,8 +41,10 @@ export function VoucherRow({
   const [busy, setBusy] = useState<Action | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hash, setHash] = useState<string | null>(null);
-  // Disputing freezes funds, so it takes a reason and a second click.
+  // Disputing freezes funds, so it takes a reason and a confirmation modal.
+  // Attesting pays the clinic after the dispute window, so it confirms too.
   const [disputing, setDisputing] = useState(false);
+  const [attesting, setAttesting] = useState(false);
   const [reason, setReason] = useState<DisputeReasonCode>(DISPUTE_REASONS[0].code);
 
   async function run(action: Action) {
@@ -61,6 +63,7 @@ export function VoucherRow({
       const res = await fns[action]();
       setHash(res.hash);
       setDisputing(false);
+      setAttesting(false);
       trackEvent(ACTION_EVENTS[action]);
       onDone?.();
     } catch (err) {
@@ -123,17 +126,20 @@ export function VoucherRow({
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
           Dispute window closes in {timeUntil(v.disputeDeadline)} — settles after
           that.
+          <InfoTip content="Anyone can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
         </p>
       )}
       {v.status === 'Funded' && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
           Expires {formatDate(v.expiresAt)} · refundable after that if unused.
+          <InfoTip content="If the clinic never marks the patient seen, the funder can reclaim the escrow after expiry." />
         </p>
       )}
       {v.status === 'Claimed' && v.refundableAt && !v.isRefundable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
           Waiting for an attester to confirm. If nobody does, this becomes
           refundable on {formatDate(v.refundableAt)}.
+          <InfoTip content="An independent attester must confirm care was delivered. Without confirmation the funder can reclaim after this date." />
         </p>
       )}
       {v.status === 'Disputed' && v.disputeReason != null && (
@@ -156,8 +162,51 @@ export function VoucherRow({
         </div>
       )}
 
-      {disputing && (
-        <div className="mt-4 space-y-3 rounded-lg border border-[var(--color-line)] p-4">
+      {available.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {available.map((a) => (
+            <Button
+              key={a}
+              variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
+              disabled={busy !== null}
+              onClick={() => {
+                if (a === 'dispute') setDisputing(true);
+                else if (a === 'attest') setAttesting(true);
+                else void run(a);
+              }}
+            >
+              {busy === a ? 'Confirming…' : LABELS[a]}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <Modal
+        open={disputing}
+        onClose={() => {
+          if (busy === null) setDisputing(false);
+        }}
+        title="Open dispute"
+        actions={
+          <>
+            <Button
+              variant="danger"
+              disabled={busy !== null}
+              onClick={() => void run('dispute')}
+            >
+              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy !== null}
+              onClick={() => setDisputing(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
           <label className="block">
             <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
               What went wrong?
@@ -174,35 +223,56 @@ export function VoucherRow({
               ))}
             </select>
           </label>
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            The clinic will not be paid while this is open. An administrator reviews
-            it and returns the money to you or releases it to the clinic.
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+            The clinic will not be paid while this is open. An administrator
+            reviews it and returns the money to you or releases it to the clinic.
+            <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="danger" disabled={busy !== null} onClick={() => void run('dispute')}>
-              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+          {error && (
+            <div>
+              <Alert>{error}</Alert>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        open={attesting}
+        onClose={() => {
+          if (busy === null) setAttesting(false);
+        }}
+        title="Confirm care delivered"
+        actions={
+          <>
+            <Button
+              disabled={busy !== null}
+              onClick={() => void run('attest')}
+            >
+              {busy === 'attest' ? 'Confirming…' : 'Confirm'}
             </Button>
-            <Button variant="ghost" disabled={busy !== null} onClick={() => setDisputing(false)}>
+            <Button
+              variant="ghost"
+              disabled={busy !== null}
+              onClick={() => setAttesting(false)}
+            >
               Cancel
             </Button>
-          </div>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+            Confirm only care you have actually verified. Confirming opens a
+            dispute window, after which the clinic is paid.
+            <InfoTip content="Your attestation is written on chain. The funder can still dispute before the window closes." />
+          </p>
+          {error && (
+            <div>
+              <Alert>{error}</Alert>
+            </div>
+          )}
         </div>
-      )}
-
-      {available.length > 0 && !disputing && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {available.map((a) => (
-            <Button
-              key={a}
-              variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
-              disabled={busy !== null}
-              onClick={() => (a === 'dispute' ? setDisputing(true) : void run(a))}
-            >
-              {busy === a ? 'Confirming…' : LABELS[a]}
-            </Button>
-          ))}
-        </div>
-      )}
+      </Modal>
     </Card>
   );
 }

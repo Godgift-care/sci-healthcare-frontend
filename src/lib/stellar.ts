@@ -1,20 +1,36 @@
-import {
-  Address,
-  BASE_FEE,
-  Contract,
-  nativeToScVal,
-  rpc,
-  scValToNative,
-  TransactionBuilder,
-  xdr,
-} from '@stellar/stellar-sdk';
+import type { xdr } from '@stellar/stellar-sdk';
 
 import { config } from './config';
 import { isMockRpc, recordMockCall } from './e2e-seam';
 
-export const server = new rpc.Server(config.rpcUrl, {
-  allowHttp: config.rpcUrl.startsWith('http://'),
-});
+/**
+ * Stellar SDK access.
+ *
+ * The SDK (~large) is split out of the initial bundle: every page that only
+ * reads the indexer never imports it. It loads on demand the first time a
+ * write is simulated, submitted or read via `simulateTransaction`.
+ * Static `import type` above is erased at build time and costs nothing.
+ */
+
+type Sdk = typeof import('@stellar/stellar-sdk');
+
+let sdkPromise: Promise<Sdk> | null = null;
+function loadSdk(): Promise<Sdk> {
+  if (!sdkPromise) sdkPromise = import('@stellar/stellar-sdk');
+  return sdkPromise;
+}
+
+type RpcServer = InstanceType<Sdk['rpc']['Server']>;
+let cachedServer: RpcServer | null = null;
+
+async function getServer(): Promise<RpcServer> {
+  if (cachedServer) return cachedServer;
+  const { rpc } = await loadSdk();
+  cachedServer = new rpc.Server(config.rpcUrl, {
+    allowHttp: config.rpcUrl.startsWith('http://'),
+  });
+  return cachedServer;
+}
 
 export type SignFn = (xdrString: string) => Promise<string>;
 
@@ -45,6 +61,10 @@ export async function invokeContract(
     recordMockCall({ kind: 'invoke', contractId, method });
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
+
+  const { BASE_FEE, Contract, rpc, TransactionBuilder, scValToNative } =
+    await loadSdk();
+  const server = await getServer();
 
   const account = await server.getAccount(walletAddress);
   const contract = new Contract(contractId);
@@ -83,7 +103,13 @@ export async function invokeContract(
   };
 }
 
-async function waitForTransaction(hash: string): Promise<rpc.Api.GetSuccessfulTransactionResponse> {
+async function waitForTransaction(
+  hash: string,
+): Promise<
+  import('@stellar/stellar-sdk').rpc.Api.GetSuccessfulTransactionResponse
+> {
+  const { rpc } = await loadSdk();
+  const server = await getServer();
   const deadline = Date.now() + CONFIRM_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
@@ -114,9 +140,12 @@ export async function readContract<T>(
     return mockReadResult<T>(method, args);
   }
 
+  const { BASE_FEE, Account, Contract, rpc, TransactionBuilder, scValToNative } =
+    await loadSdk();
+  const server = await getServer();
+
   const contract = new Contract(contractId);
   // A well-formed but unfunded account is enough to simulate a read.
-  const { Account } = await import('@stellar/stellar-sdk');
   const dummy = new Account(
     'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
     '0',
@@ -149,10 +178,15 @@ function mockReturnValue(method: string): unknown {
  * clinic and attester in their working states; the faucet reads give the
  * connected wallet a balance. Anything else throws so a missing double
  * fails loudly instead of rendering a confusing empty state.
+ *
+ * The SDK is loaded lazily even here: decoding the quote amount needs
+ * `scValToNative`, but mock mode is test-only so the extra chunk is never
+ * part of the production read-only bundle.
  */
-function mockReadResult<T>(method: string, args: xdr.ScVal[]): T {
+async function mockReadResult<T>(method: string, args: xdr.ScVal[]): Promise<T> {
   switch (method) {
     case 'quote': {
+      const { scValToNative } = await loadSdk();
       const amount = scValToNative(args[0]) as bigint;
       return [0n, amount] as unknown as T;
     }
@@ -177,20 +211,46 @@ function mockReadResult<T>(method: string, args: xdr.ScVal[]): T {
 // Soroban is strict about numeric widths. Passing a JS number where the
 // contract expects u64 or i128 produces a confusing XDR error, so each
 // encoder below is explicit about its type.
+//
+// Async on purpose: encoding needs the SDK, and awaiting `import()` keeps
+// the SDK in a separate chunk that read-only pages never download. Callers
+// `await` each encoder before `invokeContract`/`readContract`.
 
 export const arg = {
-  address: (v: string): xdr.ScVal => Address.fromString(v).toScVal(),
-  u32: (v: number): xdr.ScVal => nativeToScVal(v, { type: 'u32' }),
-  u64: (v: bigint | number): xdr.ScVal => nativeToScVal(BigInt(v), { type: 'u64' }),
-  i128: (v: bigint | string): xdr.ScVal => nativeToScVal(BigInt(v), { type: 'i128' }),
-  string: (v: string): xdr.ScVal => nativeToScVal(v, { type: 'string' }),
-  symbol: (v: string): xdr.ScVal => nativeToScVal(v, { type: 'symbol' }),
-  bytes32: (hex: string): xdr.ScVal => {
+  address: async (v: string): Promise<xdr.ScVal> => {
+    const { Address } = await loadSdk();
+    return Address.fromString(v).toScVal();
+  },
+  u32: async (v: number): Promise<xdr.ScVal> => {
+    const { nativeToScVal } = await loadSdk();
+    return nativeToScVal(v, { type: 'u32' });
+  },
+  u64: async (v: bigint | number): Promise<xdr.ScVal> => {
+    const { nativeToScVal } = await loadSdk();
+    return nativeToScVal(BigInt(v), { type: 'u64' });
+  },
+  i128: async (v: bigint | string): Promise<xdr.ScVal> => {
+    const { nativeToScVal } = await loadSdk();
+    return nativeToScVal(BigInt(v), { type: 'i128' });
+  },
+  string: async (v: string): Promise<xdr.ScVal> => {
+    const { nativeToScVal } = await loadSdk();
+    return nativeToScVal(v, { type: 'string' });
+  },
+  symbol: async (v: string): Promise<xdr.ScVal> => {
+    const { nativeToScVal } = await loadSdk();
+    return nativeToScVal(v, { type: 'symbol' });
+  },
+  bytes32: async (hex: string): Promise<xdr.ScVal> => {
+    const { xdr } = await loadSdk();
     const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
     if (!/^[0-9a-fA-F]{64}$/.test(clean)) {
       throw new Error('Beneficiary reference must be 64 hex characters');
     }
     return xdr.ScVal.scvBytes(Buffer.from(clean, 'hex'));
   },
-  bool: (v: boolean): xdr.ScVal => xdr.ScVal.scvBool(v),
+  bool: async (v: boolean): Promise<xdr.ScVal> => {
+    const { xdr } = await loadSdk();
+    return xdr.ScVal.scvBool(v);
+  },
 };

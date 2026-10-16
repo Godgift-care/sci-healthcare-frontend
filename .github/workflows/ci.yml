@@ -53,6 +53,45 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  storybook:
+    name: storybook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build-storybook
+
+  lighthouse:
+    name: lighthouse
+    runs-on: ubuntu-latest
+    # Same build-time env as the build job; the app is measured as built.
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_STELLAR_NETWORK: testnet
+      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Fails when LCP, total JS or accessibility exceed the budgets in
+      # lighthouserc.json. Uploads a temporary-public-storage report whose
+      # URL appears in the logs, linked from the PR.
+      - run: npx lhci autorun
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
   visual:
     name: visual
     runs-on: ubuntu-latest

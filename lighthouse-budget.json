@@ -1,0 +1,21 @@
+[
+  {
+    "path": "/*",
+    "timings": [
+      {
+        "metric": "largest-contentful-paint",
+        "budget": 3000
+      }
+    ],
+    "resourceSizes": [
+      {
+        "resourceType": "script",
+        "budget": 700
+      },
+      {
+        "resourceType": "total",
+        "budget": 1200
+      }
+    ]
+  }
+]
