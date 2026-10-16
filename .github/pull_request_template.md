@@ -11,6 +11,8 @@ Closes #
 
 ## Checklist
 
+<!-- Pull requests merge automatically once CI passes. Keep this a draft until it is ready. -->
+
 - [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass
 - [ ] Lockfile written with npm 10 (Node 22) if dependencies changed
 - [ ] Checked at desktop and phone widths

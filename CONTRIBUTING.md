@@ -60,6 +60,16 @@ fix(wallet): restore session after the kit rotates its storage key
 - Screenshots for any visible change, light background at minimum.
 - No new dependency without saying in the PR why it is needed.
 
+## How pull requests are merged
+
+A bot merges pull requests automatically (squash) as soon as every CI check on the latest commit has passed, provided the pull request:
+
+- is not a draft and has no `do-not-merge` label,
+- has no merge conflicts and is up to date with `main` (the bot comments if it is behind),
+- and, if it changes CI configuration, deployment settings or dependency manifests, has been approved by a maintainer. The exact paths are listed in `.github/workflows/automerge.yml`; the bot comments with the files that need approval.
+
+So open your pull request as a draft until it is ready, and keep CI green. To stop an automatic merge, add the `do-not-merge` label or convert the pull request back to a draft.
+
 ## Wave program
 
 Issues carry `trivial` (100), `medium` (150) or `high` (200) complexity labels.
