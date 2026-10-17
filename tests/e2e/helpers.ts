@@ -48,6 +48,7 @@ export type BackendState = {
   voucherById?: Record<string, unknown>;
   dailyStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
+  receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
 };
 
 export async function mockBackend(page: Page, state: BackendState): Promise<void> {
@@ -111,7 +112,9 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
     }
 
     if (parts[0] === 'receipts') {
-      return json({ total: 0, totalSpendDisplay: '0.00', receipts: [] });
+      return json(
+        state.receipts ?? { total: 0, totalSpendDisplay: '0.00', receipts: [] },
+      );
     }
 
     if (parts[0] === 'providers') {

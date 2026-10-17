@@ -1,10 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { formatDate } from '@/lib/amounts';
+import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
-import { useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
+import { humaniseError } from '@/lib/errors';
+import { invalidateVouchers, useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
+import { voucher as protocol } from '@/lib/protocol';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
@@ -12,7 +16,7 @@ import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 
 export default function MyPage() {
-  const { address } = useWallet();
+  const { address, signTransaction, connect } = useWallet();
   useLiveUpdates();
 
   const saved = useSavedIdentity();
@@ -24,6 +28,18 @@ export default function MyPage() {
 
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Batch refunding state (#45)
+  const [batchRefunding, setBatchRefunding] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+    currentId: string;
+  } | null>(null);
+  const [batchSummary, setBatchSummary] = useState<{
+    succeeded: string[];
+    failed: { id: string; error: string }[];
+  } | null>(null);
 
   // SWR cached reads (#63)
   const {
@@ -47,6 +63,37 @@ export default function MyPage() {
   const seenIds = new Set(walletFunded.map((v) => v.id));
   const funded = [...walletFunded, ...refVouchers.filter((v) => !seenIds.has(v.id))];
 
+  const refundable = funded.filter((v) => v.isRefundable);
+
+  async function handleRefundAll() {
+    if (!address) return void connect();
+    const toRefund = funded.filter((v) => v.isRefundable);
+    if (toRefund.length === 0) return;
+
+    setBatchRefunding(true);
+    setBatchSummary(null);
+    const succeeded: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
+    for (let i = 0; i < toRefund.length; i++) {
+      const v = toRefund[i];
+      setBatchProgress({ current: i + 1, total: toRefund.length, currentId: v.id });
+      try {
+        await protocol.refund(address, v.id, signTransaction);
+        succeeded.push(v.id);
+        trackEvent('voucher_refunded');
+        void invalidateVouchers(v.id);
+      } catch (err) {
+        failed.push({ id: v.id, error: humaniseError(err) });
+      }
+    }
+
+    setBatchProgress(null);
+    setBatchRefunding(false);
+    setBatchSummary({ succeeded, failed });
+    void mutateFunded();
+  }
+
   async function loadHistory() {
     setError(null);
     try {
@@ -65,7 +112,54 @@ export default function MyPage() {
       <TestUsdc />
 
       <section className="space-y-3">
-        <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
+          {refundable.length > 0 && (
+            <Button
+              variant="ghost"
+              disabled={batchRefunding}
+              onClick={() => void handleRefundAll()}
+            >
+              {batchRefunding
+                ? `Refunding ${batchProgress?.current ?? 0}/${batchProgress?.total ?? refundable.length}…`
+                : `Refund all (${refundable.length})`}
+            </Button>
+          )}
+        </div>
+        {batchProgress && (
+          <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
+            <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">
+              <span>Refunding voucher #{batchProgress.currentId}…</span>
+              <span className="mono font-medium">
+                {batchProgress.current} of {batchProgress.total}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line)]">
+              <div
+                className="h-full bg-[var(--color-brand)] transition-all duration-300"
+                style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {batchSummary && (
+          <div className="space-y-2">
+            {batchSummary.succeeded.length > 0 && (
+              <Alert kind="success">
+                Refunded {batchSummary.succeeded.length} voucher
+                {batchSummary.succeeded.length === 1 ? '' : 's'} successfully (
+                {batchSummary.succeeded.map((id) => `#${id}`).join(', ')}).
+              </Alert>
+            )}
+            {batchSummary.failed.length > 0 && (
+              <Alert>
+                Failed to refund {batchSummary.failed.length} voucher
+                {batchSummary.failed.length === 1 ? '' : 's'}:{' '}
+                {batchSummary.failed.map((f) => `#${f.id} (${f.error})`).join(', ')}.
+              </Alert>
+            )}
+          </div>
+        )}
         {fundedError && <Alert>{fundedError}</Alert>}
         {!address && (
           <Empty>Connect a wallet to see vouchers you have funded.</Empty>
@@ -122,7 +216,29 @@ export default function MyPage() {
 
         {receipts.length > 0 && (
           <Card className="p-5">
-            <Field label="Total care funded">${spend}</Field>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Field label="Total care funded">${spend}</Field>
+              <Link
+                href="/my/print"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4 text-[var(--color-ink-soft)]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M6 9V2h12v7" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <path d="M6 14h12v8H6z" />
+                </svg>
+                Print care summary
+              </Link>
+            </div>
             <ul className="mt-4 divide-y divide-[var(--color-line)]">
               {receipts.map((r) => (
                 <li key={r.voucherId} className="flex justify-between py-3 text-sm">

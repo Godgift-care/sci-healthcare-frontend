@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { use } from 'react';
+import { use, useState } from 'react';
 
 import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
 import { config, explorerContract } from '@/lib/config';
@@ -22,6 +22,18 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const { address } = useWallet();
   const now = useNow();
+  const [copied, setCopied] = useState(false);
+
+  async function copyLink() {
+    try {
+      const url = typeof window !== 'undefined' ? window.location.href : '';
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard write failed
+    }
+  }
 
   const { voucher: v, error, mutate } = useVoucher(id);
   useLiveUpdates({ voucherId: id });
@@ -44,9 +56,36 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="mono text-xs text-[var(--color-ink-soft)]">Voucher #{v.id}</span>
             <StatusBadge status={v.status} />
+            <button
+              type="button"
+              onClick={() => void copyLink()}
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+              aria-label="Copy link"
+            >
+              {copied ? (
+                <span className="font-medium text-emerald-700">Link copied!</span>
+              ) : (
+                <>
+                  <svg
+                    aria-hidden="true"
+                    className="h-3 w-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  <span>Copy link</span>
+                </>
+              )}
+            </button>
           </div>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">
             {v.serviceLabel ?? `Service ${v.serviceCode}`}
@@ -104,6 +143,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
                   (fee ${formatUsdc(v.settledFee)})
                 </span>
               )}
+            </Field>
+          )}
+          {v.disputeOutcome && (
+            <Field label="Dispute outcome">
+              <span className="font-medium">
+                {v.disputeOutcome}
+                {v.disputeResolvedAt && ` · ${formatDate(v.disputeResolvedAt)}`}
+              </span>
             </Field>
           )}
           {v.receipt && (

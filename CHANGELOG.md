@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Batch refund action on My vouchers (`src/app/my/page.tsx`) enabling funders to recover expired, unclaimed vouchers in a single sequence with live progress and completion summary (#45).
+- Printable patient care summary page (`src/app/my/print/page.tsx`) rendering settled care receipts with dates, clinics, services, amounts, and receipt numbers, without printing any patient secret key, reference, or beneficiary hash (#46).
+- Display dispute resolution outcome and date on voucher page (`src/lib/timeline.ts`, `src/app/vouchers/[id]/page.tsx`, `VoucherRow.tsx`) showing whether resolved in funder's favour (refunded) or clinic's favour (settled) (#47).
+- One-click copy link button on voucher page (`src/app/vouchers/[id]/page.tsx`) with accessible visual feedback and clipboard confirmation message (#48).
 - Live countdown timer for dispute windows and expiries (`useNow` hook with 1-minute interval ticks, passed to `timeUntil` and `voucherTimeline`) updating dynamically without re-fetching or render-time clock reads (#49).
 - Public protocol statistics page (`src/app/stats/page.tsx`) showing active clinics, countries, funded vouchers, and care settled, with 7d/14d/30d/90d daily activity charts and toggleable accessible data tables (#50).
 - Attester directory (`src/app/attesters/page.tsx`) listing accredited medical attesters and independent audit organisations with confirmation counts, status filtering, and Stellar Expert explorer links (#51).

@@ -74,6 +74,20 @@ export function voucherTimeline(
     });
   }
 
+  if (v.disputeOutcome) {
+    const isRefundedOutcome = String(v.disputeOutcome).toLowerCase() === 'refunded';
+    const resolutionDate =
+      v.disputeResolvedAt ?? (isRefundedOutcome ? null : receipt?.settledAt ?? null);
+    steps.push({
+      label: `Dispute resolved: ${isRefundedOutcome ? 'Refunded' : 'Settled'}`,
+      state: 'done',
+      at: resolutionDate,
+      detail: isRefundedOutcome
+        ? 'Resolved in funder’s favour — full amount refunded'
+        : 'Resolved in clinic’s favour — care payment released',
+    });
+  }
+
   if (v.status === 'Settled') {
     steps.push({
       label: 'Clinic paid',
@@ -82,7 +96,12 @@ export function voucherTimeline(
       detail: 'Escrow released and a care receipt minted',
     });
   } else if (refunded) {
-    steps.push({ label: 'Refunded', state: 'done', at: null, detail: 'Full amount returned to the funder' });
+    steps.push({
+      label: 'Refunded',
+      state: 'done',
+      at: v.disputeResolvedAt ?? null,
+      detail: 'Full amount returned to the funder',
+    });
   } else if (disputed) {
     steps.push({
       label: 'In dispute',

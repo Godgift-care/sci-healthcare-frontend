@@ -79,6 +79,10 @@ export type Voucher = {
   settledNet: string | null;
   settledFee: string | null;
   disputeReason?: number | null;
+  /** When resolved, whether the dispute resulted in settlement or refund (#47). */
+  disputeOutcome?: 'Settled' | 'Refunded' | string | null;
+  /** Timestamp when the dispute was resolved by administrator (#47). */
+  disputeResolvedAt?: string | null;
   /** When refund starts to succeed, or null if it never will. */
   refundableAt?: string | null;
   isSettleable: boolean;

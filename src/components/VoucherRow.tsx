@@ -151,6 +151,12 @@ export function VoucherRow({
           an administrator resolves it.
         </p>
       )}
+      {v.disputeOutcome && (
+        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+          Dispute resolved: {v.disputeOutcome}
+          {v.disputeResolvedAt && ` on ${formatDate(v.disputeResolvedAt)}`}.
+        </p>
+      )}
 
       {error && (
         <div className="mt-3">
