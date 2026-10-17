@@ -5,7 +5,7 @@ import { use } from 'react';
 
 import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
 import { config, explorerContract } from '@/lib/config';
-import { useLiveUpdates, useVoucher } from '@/lib/hooks';
+import { useLiveUpdates, useNow, useVoucher } from '@/lib/hooks';
 import { voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { VoucherRow } from '@/components/VoucherRow';
@@ -21,6 +21,7 @@ import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
 export default function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { address } = useWallet();
+  const now = useNow();
 
   const { voucher: v, error, mutate } = useVoucher(id);
   useLiveUpdates({ voucherId: id });
@@ -37,7 +38,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         ? (['claim', 'settle'] as const)
         : (['settle', 'refund'] as const);
 
-  const steps = voucherTimeline(v, v.receipt);
+  const steps = voucherTimeline(v, v.receipt, now);
 
   return (
     <div className="space-y-6">

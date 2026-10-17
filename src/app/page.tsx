@@ -73,6 +73,12 @@ export default function HomePage() {
             Browse clinics &darr;
           </a>
           <Link
+            href="/how-it-works"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+          >
+            How it works &rarr;
+          </Link>
+          <Link
             href="/clinic"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >

@@ -104,6 +104,32 @@ export type Stats = {
   receipts: number;
 };
 
+export type DailyBucket = { count: number; amount: string };
+
+export type DailyRow = {
+  date: string;
+  funded: DailyBucket;
+  settled: DailyBucket;
+  refunded: DailyBucket;
+};
+
+export type DailyStats = {
+  days: number;
+  from: string;
+  to: string;
+  series: DailyRow[];
+};
+
+export type Attester = {
+  address: string;
+  active: boolean;
+  addedAt: string;
+  removedAt?: string | null;
+  attestations: number;
+  name?: string | null;
+  organisation?: string | null;
+};
+
 class ApiError extends Error {
   constructor(readonly status: number, message: string) {
     super(message);
@@ -134,6 +160,8 @@ async function get<T>(path: string, params?: Record<string, string | undefined>)
 export const api = {
   stats: () => get<Stats>('/stats'),
 
+  dailyStats: (days = 30) => get<DailyStats>('/stats/daily', { days: String(days) }),
+
   providers: (params?: { status?: string; country?: string; q?: string }) =>
     get<{ total: number; providers: Provider[] }>('/providers', params),
 
@@ -152,6 +180,16 @@ export const api = {
     get<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>('/receipts', {
       beneficiaryRef,
     }),
+
+  attesters: (params?: { all?: boolean; limit?: number; offset?: number }) =>
+    get<{ total: number; limit: number; offset: number; attesters: Attester[] }>('/attesters', {
+      all: params?.all ? 'true' : 'false',
+      limit: params?.limit ? String(params.limit) : undefined,
+      offset: params?.offset ? String(params.offset) : undefined,
+    }),
+
+  attester: (address: string) => get<Attester>(`/attesters/${address}`),
 };
 
 export { ApiError };
+

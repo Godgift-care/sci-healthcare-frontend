@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Live countdown timer for dispute windows and expiries (`useNow` hook with 1-minute interval ticks, passed to `timeUntil` and `voucherTimeline`) updating dynamically without re-fetching or render-time clock reads (#49).
+- Public protocol statistics page (`src/app/stats/page.tsx`) showing active clinics, countries, funded vouchers, and care settled, with 7d/14d/30d/90d daily activity charts and toggleable accessible data tables (#50).
+- Attester directory (`src/app/attesters/page.tsx`) listing accredited medical attesters and independent audit organisations with confirmation counts, status filtering, and Stellar Expert explorer links (#51).
+- How it works page (`src/app/how-it-works/page.tsx`) illustrating the 5-step voucher lifecycle (fund into escrow -> claim attendance -> independent attestation -> dispute window -> pay or refund) linked from the main navigation, home hero, and footer (#52).
 - Landing hero section on the home page (`src/app/page.tsx`) with a one-sentence purpose, CTAs for funders and clinics, explanation of the three roles (funders, clinics, attesters), and trust points (escrow, attestation, refunds) while keeping the clinic directory visible above the fold on desktop (#53).
 - Plain-language Privacy page (`src/app/privacy/page.tsx`) explaining what is written to the blockchain, what stays on the device, what the indexer API caches, and analytics/error-reporting scrubbers, linked from the layout footer (#55).
 - Dismissible Testnet notice on first visit (`src/components/TestnetNotice.tsx`) shown when `config.network` is testnet, remembered per browser via `localStorage`, and hidden in mainnet builds (#56).

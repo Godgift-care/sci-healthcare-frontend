@@ -46,6 +46,8 @@ export type BackendState = {
   providers?: Record<string, unknown>[];
   vouchers?: Record<string, unknown>[];
   voucherById?: Record<string, unknown>;
+  dailyStats?: Record<string, unknown>;
+  attesters?: Record<string, unknown>[];
 };
 
 export async function mockBackend(page: Page, state: BackendState): Promise<void> {
@@ -61,6 +63,23 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
       });
 
     if (parts[0] === 'stats') {
+      if (parts[1] === 'daily') {
+        return json(
+          state.dailyStats ?? {
+            days: 30,
+            from: '2026-05-16T00:00:00.000Z',
+            to: '2026-06-15T00:00:00.000Z',
+            series: [
+              {
+                date: '2026-06-01',
+                funded: { count: 4, amount: '120000000' },
+                settled: { count: 2, amount: '60000000' },
+                refunded: { count: 0, amount: '0' },
+              },
+            ],
+          },
+        );
+      }
       return json({
         providers: providers.length,
         activeProviders: providers.length,
@@ -68,6 +87,26 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
         settledVouchers: 0,
         settledValue: '0',
         receipts: 0,
+      });
+    }
+
+    if (parts[0] === 'attesters') {
+      const attesters = state.attesters ?? [
+        {
+          address: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAA',
+          active: true,
+          addedAt: '2026-01-15T10:00:00.000Z',
+          removedAt: null,
+          attestations: 14,
+          name: 'Red Cross Clinical Inspector',
+          organisation: 'International Medical Verification',
+        },
+      ];
+      return json({
+        total: attesters.length,
+        limit: 50,
+        offset: 0,
+        attesters,
       });
     }
 

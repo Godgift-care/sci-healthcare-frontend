@@ -17,9 +17,19 @@ export type TimelineStep = {
  * Every timestamp here comes from a contract event, so the timeline is a
  * readable rendering of the ledger, not an app-side record.
  */
-export function voucherTimeline(v: Voucher, receipt: Receipt | null): TimelineStep[] {
+export function voucherTimeline(
+  v: Voucher,
+  receipt: Receipt | null,
+  now?: number | Date | null,
+): TimelineStep[] {
   const refunded = v.status === 'Refunded';
   const disputed = v.status === 'Disputed';
+  const currentMs =
+    now != null && (typeof now !== 'number' || now > 0)
+      ? typeof now === 'number'
+        ? now
+        : now.getTime()
+      : Date.now();
 
   const steps: TimelineStep[] = [
     { label: 'Funded', state: 'done', at: v.createdAt, detail: 'USDC moved into escrow' },
@@ -55,7 +65,7 @@ export function voucherTimeline(v: Voucher, receipt: Receipt | null): TimelineSt
   }
 
   if (v.disputeDeadline) {
-    const closed = new Date(v.disputeDeadline).getTime() <= Date.now();
+    const closed = new Date(v.disputeDeadline).getTime() <= currentMs;
     steps.push({
       label: 'Dispute window',
       state: closed || v.status !== 'Attested' ? 'done' : 'current',

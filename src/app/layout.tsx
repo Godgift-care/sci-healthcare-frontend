@@ -42,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
                 <nav className="hidden items-center gap-1 sm:flex">
                   <NavLink href="/">Clinics</NavLink>
+                  <NavLink href="/how-it-works">How it works</NavLink>
                   <NavLink href="/my">My vouchers</NavLink>
                   <NavLink href="/clinic">Clinic desk</NavLink>
                   <NavLink href="/attest">Attest</NavLink>
@@ -65,6 +66,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
               </p>
               <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
+                <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
+                  How it works
+                </Link>
+                <Link href="/stats" className="hover:text-[var(--color-brand)]">
+                  Stats
+                </Link>
+                <Link href="/attesters" className="hover:text-[var(--color-brand)]">
+                  Attesters
+                </Link>
                 <Link href="/privacy" className="hover:text-[var(--color-brand)]">
                   Privacy
                 </Link>

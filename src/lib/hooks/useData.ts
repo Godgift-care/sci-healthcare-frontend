@@ -2,7 +2,15 @@
 
 import useSWR, { mutate as globalMutate, type SWRConfiguration } from 'swr';
 
-import { api, type Provider, type Receipt, type Stats, type Voucher } from '../api';
+import {
+  api,
+  type Attester,
+  type DailyStats,
+  type Provider,
+  type Receipt,
+  type Stats,
+  type Voucher,
+} from '../api';
 
 export type LoadedVoucher = Voucher & { receipt: Receipt | null };
 
@@ -126,6 +134,51 @@ export function useStats(config?: SWRConfiguration<Stats>) {
     mutate,
   };
 }
+
+/**
+ * Hook for fetching and caching daily time-series protocol statistics (#50).
+ */
+export function useDailyStats(days = 30, config?: SWRConfiguration<DailyStats>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<DailyStats>(
+    ['dailyStats', days],
+    () => api.dailyStats(days),
+    config,
+  );
+
+  return {
+    dailyStats: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching the attester directory (#51).
+ */
+export function useAttesters(
+  params?: { all?: boolean; limit?: number; offset?: number },
+  config?: SWRConfiguration<{ total: number; limit: number; offset: number; attesters: Attester[] }>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    ['attesters', params ?? {}],
+    () => api.attesters(params),
+    config,
+  );
+
+  return {
+    attesters: data?.attesters ?? [],
+    total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
 
 /**
  * Hook for fetching and caching receipts for a patient beneficiary ref (#63).

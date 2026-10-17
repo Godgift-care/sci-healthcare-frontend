@@ -49,10 +49,16 @@ export function formatDate(iso: string | Date | null): string {
   });
 }
 
-export function timeUntil(iso: string | Date | null): string {
+export function timeUntil(iso: string | Date | null, now?: number | Date | null): string {
   if (!iso) return '—';
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  const ms = d.getTime() - Date.now();
+  const currentMs =
+    now != null && (typeof now !== 'number' || now > 0)
+      ? typeof now === 'number'
+        ? now
+        : now.getTime()
+      : Date.now();
+  const ms = d.getTime() - currentMs;
   if (ms <= 0) return 'now';
   const mins = Math.floor(ms / 60000);
   if (mins < 60) return `${mins}m`;

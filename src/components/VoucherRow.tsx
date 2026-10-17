@@ -9,7 +9,7 @@ import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
-import { invalidateVouchers } from '@/lib/hooks';
+import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
@@ -39,6 +39,7 @@ export function VoucherRow({
   summary?: boolean;
 }) {
   const { address, signTransaction, connect } = useWallet();
+  const now = useNow();
   const [busy, setBusy] = useState<Action | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hash, setHash] = useState<string | null>(null);
@@ -126,7 +127,7 @@ export function VoucherRow({
 
       {v.status === 'Attested' && v.disputeDeadline && !v.isSettleable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Dispute window closes in {timeUntil(v.disputeDeadline)} — settles after
+          Dispute window closes in {timeUntil(v.disputeDeadline, now)} — settles after
           that.
           <InfoTip content="Anyone can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
         </p>
