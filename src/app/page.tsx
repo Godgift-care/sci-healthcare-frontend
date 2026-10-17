@@ -51,17 +51,72 @@ export default function HomePage() {
   }, [providers]);
 
   return (
-    <div className="space-y-8">
-      <section className="max-w-2xl">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Pay for care, not for promises
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">
-          Fund a voucher for a specific clinic and a specific service. The money is
-          held in escrow and released only once delivery is confirmed by an
-          independent attester. If the care never happens, you get it back.
-          Anyone can fund a voucher for someone else — including from abroad.
-        </p>
+    <div className="space-y-6">
+      <section className="space-y-3.5 rounded-2xl border border-[var(--color-line)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-canvas)] p-4 sm:p-5">
+        <div className="max-w-2xl space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+            Care-voucher protocol on Stellar
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-ink)]">
+            Pay for care, not for promises
+          </h1>
+          <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink-soft)]">
+            Prepaid, purpose-bound healthcare vouchers that release funds to licensed clinics only when independent attesters confirm care was delivered.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="#directory"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Browse clinics &darr;
+          </a>
+          <Link
+            href="/clinic"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+          >
+            Clinic desk
+          </Link>
+        </div>
+
+        <div className="grid gap-2.5 pt-0.5 sm:grid-cols-3">
+          <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
+            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+              <span className="grid h-5 w-5 place-items-center rounded bg-blue-100 text-[11px] font-bold text-blue-800">
+                1
+              </span>
+              <span>Escrow (Funders)</span>
+            </div>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
+              Funders commit USDC bound to a named clinic and service. Money is held securely in smart contract escrow.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
+            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+              <span className="grid h-5 w-5 place-items-center rounded bg-amber-100 text-[11px] font-bold text-amber-800">
+                2
+              </span>
+              <span>Attestation (Attesters)</span>
+            </div>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
+              Clinics claim when seen, and independent third-party attesters verify delivery before any payment can settle.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
+            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+              <span className="grid h-5 w-5 place-items-center rounded bg-emerald-100 text-[11px] font-bold text-emerald-800">
+                3
+              </span>
+              <span>Refunds (Protection)</span>
+            </div>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
+              If the patient never attends or care is not verified, 100% of the funds return to the funder with zero fees.
+            </p>
+          </div>
+        </div>
       </section>
 
       <DemoTour />
@@ -78,7 +133,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="space-y-3">
+      <section id="directory" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Verified clinics</h2>
 

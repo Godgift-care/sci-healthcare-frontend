@@ -2,11 +2,14 @@
 
 ## Unreleased
 
+- Landing hero section on the home page (`src/app/page.tsx`) with a one-sentence purpose, CTAs for funders and clinics, explanation of the three roles (funders, clinics, attesters), and trust points (escrow, attestation, refunds) while keeping the clinic directory visible above the fold on desktop (#53).
+- Plain-language Privacy page (`src/app/privacy/page.tsx`) explaining what is written to the blockchain, what stays on the device, what the indexer API caches, and analytics/error-reporting scrubbers, linked from the layout footer (#55).
+- Dismissible Testnet notice on first visit (`src/components/TestnetNotice.tsx`) shown when `config.network` is testnet, remembered per browser via `localStorage`, and hidden in mainnet builds (#56).
+- Frequently Asked Questions page (`src/app/faq/page.tsx`) with accessible accordion sections covering lifecycle, trust model, fees, and cryptographic patient privacy, with every answer linking to protocol documentation (#54).
 - Warn when spendable XLM balance is low for Stellar network fees (< 1.0 XLM) after computing base account reserves and subentries via Horizon API; displays amber status badge and top-up alert in wallet menu with Friendbot link on testnet (#61).
 - Generated TypeScript contract bindings (`RegistryClient`, `VoucherClient`, `FaucetClient`) derived from Soroban contract specifications; replaces manual positional argument encoding in `protocol.ts` with typed specification builders while preserving existing protocol API (#62).
 - Client-side data fetching and caching with SWR (`useVoucher`, `useVouchers`, `useProvider`, `useProviders`, `useStats`, `useReceipts`, `useIsAttester`), providing fast cached reads, automatic revalidation on focus/reconnect, and cache invalidation after writes (#63).
 - Live updates from the API stream via Server-Sent Events (`EventSource`) through `useLiveUpdates` hook, automatically invalidating SWR cache keys on server updates with automatic polling fallback (#64).
-
 - Accessible wallet menu in `ConnectButton` replacing the static address display. Displays the active wallet name, full address copy with visual feedback, explorer link on Stellar Expert, and a disconnect button. Operable by keyboard (Escape, focus return) and mouse (#57).
 - Passkey smart wallet support using WebAuthn / secp256r1 biometrics on Soroban testnet, enabling passwordless, non-custodial signing without browser extensions alongside existing extension wallets (#58).
 - Silent wallet reconnection on mount persisting the selected wallet id in `localStorage` under `sci-wallet-id`, with complete cleanup on disconnect (#59).
