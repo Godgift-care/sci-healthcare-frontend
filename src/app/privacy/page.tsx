@@ -149,6 +149,10 @@ export default function PrivacyPage() {
           <li>
             <strong className="text-[var(--color-ink)]">Non-custodial key handling:</strong> The app never requests or handles your wallet&apos;s private key or seed phrase. All transaction signatures occur inside your Stellar wallet extension (such as Freighter).
           </li>
+          <li>
+            <strong className="text-[var(--color-ink)]">Installable app and offline shell:</strong> The app can be installed on a phone and keeps the interface it needs to open without a connection — the page frame, its icons and its build output — in the browser&apos;s cache. Never cached: any answer from the API or RPC, any voucher, and any patient reference, so the offline copy carries no health information. Your low-data preference and tour progress are small flags in{' '}
+            <code className="rounded bg-[var(--color-canvas)] px-1 py-0.5 font-mono text-xs text-[var(--color-ink)]">localStorage</code>; clearing site data removes both those and the cached shell.
+          </li>
         </ul>
       </section>
 

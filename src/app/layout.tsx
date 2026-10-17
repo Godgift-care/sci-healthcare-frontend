@@ -1,11 +1,14 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 
 import { ConnectButton } from '@/components/ConnectButton';
 import { Analytics } from '@/components/Analytics';
 import { ErrorReporter } from '@/components/ErrorReporter';
+import { LowBandwidthToggle } from '@/components/LowBandwidthToggle';
 import { NetworkBadge } from '@/components/NetworkBadge';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
 import { NavLink } from '@/components/ui';
 import { WalletProvider } from '@/lib/wallet';
@@ -17,6 +20,28 @@ export const metadata: Metadata = {
   title: 'SCI Healthcare — care vouchers on Stellar',
   description:
     'Prepaid, purpose-bound care vouchers. Money committed to a named clinic and a named service, released when care is confirmed delivered.',
+  // Installable app (#74). The manifest itself is served from
+  // `src/app/manifest.ts`; declaring it here keeps the link explicit (and is
+  // what makes the install prompt available at all).
+  manifest: '/manifest.webmanifest',
+  applicationName: 'SCI Healthcare',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'SCI Healthcare',
+    statusBarStyle: 'default',
+  },
+};
+
+/** Same brand colour the app paints with, so the chrome does not flash. */
+export const viewport: Viewport = {
+  themeColor: '#0f766e',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,72 +51,79 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
+        <ServiceWorkerRegistration />
         <WalletProvider>
-          <TestnetNotice />
-          <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
-              <div className="flex min-w-0 items-center gap-6">
-                <Link href="/" className="flex items-center gap-2 font-semibold">
-                  <span
-                    aria-hidden
-                    className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm text-white"
+          {/* Application-wide SWR defaults, relaxed in low-bandwidth mode
+              (#75). The setting is read once here so every page below sees
+              the same behaviour. */}
+          <SwrProvider>
+            <TestnetNotice />
+            <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
+              <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
+                <div className="flex min-w-0 items-center gap-6">
+                  <Link href="/" className="flex items-center gap-2 font-semibold">
+                    <span
+                      aria-hidden
+                      className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm text-white"
+                    >
+                      ✚
+                    </span>
+                    SCI Healthcare
+                  </Link>
+                  <nav className="hidden items-center gap-1 sm:flex">
+                    <NavLink href="/">Clinics</NavLink>
+                    <NavLink href="/how-it-works">How it works</NavLink>
+                    <NavLink href="/my">My vouchers</NavLink>
+                    <NavLink href="/clinic">Clinic desk</NavLink>
+                    <NavLink href="/attest">Attest</NavLink>
+                    <NavLink href="/faq">FAQ</NavLink>
+                  </nav>
+                </div>
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  <LowBandwidthToggle />
+                  <NetworkBadge />
+                  <ConnectButton />
+                </div>
+              </div>
+            </header>
+
+            <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+
+            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-6 py-8 text-xs text-[var(--color-ink-soft)]">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-xl">
+                  {isTestnet
+                    ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
+                    : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
+                </p>
+                <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
+                  <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
+                    How it works
+                  </Link>
+                  <Link href="/stats" className="hover:text-[var(--color-brand)]">
+                    Stats
+                  </Link>
+                  <Link href="/attesters" className="hover:text-[var(--color-brand)]">
+                    Attesters
+                  </Link>
+                  <Link href="/privacy" className="hover:text-[var(--color-brand)]">
+                    Privacy
+                  </Link>
+                  <Link href="/faq" className="hover:text-[var(--color-brand)]">
+                    FAQ
+                  </Link>
+                  <a
+                    href="https://godgift-care.github.io/sci-healthcare-contracts/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[var(--color-brand)]"
                   >
-                    ✚
-                  </span>
-                  SCI Healthcare
-                </Link>
-                <nav className="hidden items-center gap-1 sm:flex">
-                  <NavLink href="/">Clinics</NavLink>
-                  <NavLink href="/how-it-works">How it works</NavLink>
-                  <NavLink href="/my">My vouchers</NavLink>
-                  <NavLink href="/clinic">Clinic desk</NavLink>
-                  <NavLink href="/attest">Attest</NavLink>
-                  <NavLink href="/faq">FAQ</NavLink>
+                    Docs
+                  </a>
                 </nav>
               </div>
-              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                <NetworkBadge />
-                <ConnectButton />
-              </div>
-            </div>
-          </header>
-
-          <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
-
-          <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-6 py-8 text-xs text-[var(--color-ink-soft)]">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-xl">
-                {isTestnet
-                  ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
-                  : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
-              </p>
-              <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
-                <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
-                  How it works
-                </Link>
-                <Link href="/stats" className="hover:text-[var(--color-brand)]">
-                  Stats
-                </Link>
-                <Link href="/attesters" className="hover:text-[var(--color-brand)]">
-                  Attesters
-                </Link>
-                <Link href="/privacy" className="hover:text-[var(--color-brand)]">
-                  Privacy
-                </Link>
-                <Link href="/faq" className="hover:text-[var(--color-brand)]">
-                  FAQ
-                </Link>
-                <a
-                  href="https://godgift-care.github.io/sci-healthcare-contracts/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[var(--color-brand)]"
-                >
-                  Docs
-                </a>
-              </nav>
-            </div>
-          </footer>
+            </footer>
+          </SwrProvider>
         </WalletProvider>
       </body>
     </html>

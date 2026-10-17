@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "analyze": "ANALYZE=true next build --webpack",
+    "icons": "node scripts/generate-icons.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "lighthouse": "lhci autorun",

@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
 import { useLiveUpdates, useProviders, useStats } from '@/lib/hooks';
+import { useLowBandwidth } from '@/lib/low-bandwidth';
 import { DemoTour } from '@/components/DemoTour';
 import { Alert, Card, Empty } from '@/components/ui';
 
@@ -29,7 +30,14 @@ type View = 'list' | 'map';
 
 export default function HomePage() {
   const [view, setView] = useState<View>('list');
+  const lowBandwidth = useLowBandwidth();
   useLiveUpdates();
+
+  // The map is the heaviest thing on this page: a Leaflet chunk plus one
+  // raster tile per pan. In low-bandwidth mode (#75) the list is used
+  // whatever the toggle says, so switching the mode on while the map is open
+  // drops it immediately, and switching it back off restores the choice.
+  const activeView: View = lowBandwidth ? 'list' : view;
 
   const {
     providers,
@@ -149,17 +157,26 @@ export default function HomePage() {
             className="flex items-center gap-0.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-0.5"
           >
             <ViewToggle
-              active={view === 'list'}
+              active={activeView === 'list'}
               onClick={() => setView('list')}
               label="List"
             />
             <ViewToggle
-              active={view === 'map'}
+              active={activeView === 'map'}
               onClick={() => setView('map')}
               label="Map"
+              disabled={lowBandwidth}
+              disabledReason="Map tiles are skipped in low-data mode"
             />
           </div>
         </div>
+
+        {lowBandwidth && (
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            Low-data mode is on: the map and its tiles are skipped. Turn it off
+            in the header to see clinic locations.
+          </p>
+        )}
 
         {error && <Alert>{error}</Alert>}
         {loading && !error && (
@@ -173,7 +190,7 @@ export default function HomePage() {
           </Empty>
         )}
 
-        {view === 'list' && (
+        {activeView === 'list' && (
           <div className="grid gap-3 sm:grid-cols-2">
             {providers.map((p) => (
               <ClinicCard key={p.address} provider={p} />
@@ -181,7 +198,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {view === 'map' && providers.length > 0 && (
+        {activeView === 'map' && providers.length > 0 && (
           <div className="space-y-3">
             {located.length > 0 ? (
               <ClinicMap providers={located} />
@@ -222,21 +239,27 @@ function ViewToggle({
   active,
   onClick,
   label,
+  disabled = false,
+  disabledReason,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   return (
     <button
       type="button"
       aria-pressed={active}
       onClick={onClick}
+      disabled={disabled}
+      title={disabled ? disabledReason : undefined}
       className={`rounded-md px-3 py-1 text-sm font-medium transition ${
         active
           ? 'bg-[var(--color-brand)] text-white'
           : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
-      }`}
+      } disabled:cursor-not-allowed disabled:opacity-40`}
     >
       {label}
     </button>

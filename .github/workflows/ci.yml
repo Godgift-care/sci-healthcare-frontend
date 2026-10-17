@@ -37,13 +37,19 @@ jobs:
   build:
     name: build
     runs-on: ubuntu-latest
-    # Contract ids are inlined at build time, so CI needs placeholders of the
-    # right shape or the build fails in a way that has nothing to do with the PR.
+    # Every NEXT_PUBLIC_* value is inlined at build time and a production
+    # build now refuses to start without the required ones (#76), so CI
+    # supplies the testnet deployment's public contract ids (the same values
+    # as vercel.json; public addresses, not secrets).
     env:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
       NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
       NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
+      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
+      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
+      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,6 +58,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Regression test for #76: without the required variables the build
+      # must stop with a clear message rather than ship a bundle that fails
+      # on its first contract call. It aborts while loading next.config.ts,
+      # so this costs seconds, not a second compile.
+      - name: build stops when configuration is missing
+        env:
+          NEXT_PUBLIC_VOUCHER_CONTRACT_ID: ''
+        run: |
+          if npm run build > /tmp/build-without-config.log 2>&1; then
+            echo "::error::the build passed without NEXT_PUBLIC_VOUCHER_CONTRACT_ID"
+            exit 1
+          fi
+          cat /tmp/build-without-config.log
+          grep -q 'NEXT_PUBLIC_VOUCHER_CONTRACT_ID' /tmp/build-without-config.log
 
   storybook:
     name: storybook
@@ -74,6 +94,10 @@ jobs:
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
       NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
       NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
+      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
+      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
+      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

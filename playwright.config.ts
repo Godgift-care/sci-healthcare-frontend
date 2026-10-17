@@ -36,6 +36,11 @@ export default defineConfig({
     timezoneId: 'UTC',
     locale: 'en-GB',
     colorScheme: 'light',
+    // The production build registers the offline shell service worker (#74).
+    // Blocking it here keeps every other suite on the network it carved out
+    // for itself (mocked API, blocked RPC) instead of being served from a
+    // cache between runs. The offline-shell spec opts back in.
+    serviceWorkers: 'block',
   },
   projects: [
     {

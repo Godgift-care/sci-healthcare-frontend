@@ -18,6 +18,12 @@ depends on where the backend landed.
 
 4. Deploy.
 
+A production build validates the required configuration before it compiles: if
+`NEXT_PUBLIC_API_URL` is missing (or a contract id is empty or malformed) the
+build stops with an itemised message naming each variable and what it breaks,
+rather than shipping a bundle that fails in the browser on its first contract
+call. The values in `vercel.json` satisfy the rest.
+
 > `NEXT_PUBLIC_*` is inlined into the client bundle at **build** time. Adding or
 > changing it later does nothing until you redeploy. If the live site is calling
 > `localhost`, this variable was missing when the build ran — set it and

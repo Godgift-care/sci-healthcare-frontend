@@ -22,6 +22,11 @@ npm run typecheck
 npm run build
 ```
 
+`npm run build` is a production build, so it checks the required
+`NEXT_PUBLIC_*` values first and stops with an itemised message when one is
+missing (see `next.config.ts`, #76). Fill in `.env.local` before building —
+`next dev` and Storybook are not affected by that check.
+
 ## Non-negotiables
 
 - **Non-custodial, always.** The app must never hold, request, or transmit a
