@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
-import { api, type Provider, type Service } from '@/lib/api';
+import { type Service } from '@/lib/api';
 import { formatUsdc, shortAddress, toAmountInput, toBaseUnits } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
+import { invalidateVouchers, useProvider } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -26,22 +27,25 @@ export default function ClinicPage({
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
 
-  const [provider, setProvider] = useState<Provider | null>(null);
-  const [selected, setSelected] = useState<Service | null>(null);
+  const { provider, error: loadError } = useProvider(address);
+  const [selectedOverride, setSelectedOverride] = useState<Service | null>(null);
+  const firstActive = provider?.services.find((s) => s.active !== false) ?? null;
+  const selected = selectedOverride ?? firstActive;
+
   const saved = useSavedIdentity();
   // null until the user types, so the saved values show through.
   const [identifierDraft, setIdentifier] = useState<string | null>(null);
   const [secretDraft, setSecret] = useState<string | null>(null);
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
-  const [amount, setAmount] = useState('');
+  const [amountOverride, setAmountOverride] = useState<string | null>(null);
+  const amount = amountOverride ?? (selected ? toAmountInput(selected.price) : '');
   const [expiryDays, setExpiryDays] = useState<number>(30);
   const [generatedKey, setGeneratedKey] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [fundedId, setFundedId] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   // The amount as base units, or null while the field is not a number.
   const baseAmount = useMemo(() => {
@@ -74,22 +78,6 @@ export default function ClinicPage({
     };
   }, [baseAmount]);
   const currentQuote = quote && quote.amount === baseAmount ? quote : null;
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const p = await api.provider(address);
-        setProvider(p);
-        const first = p.services.find((s) => s.active !== false);
-        if (first) {
-          setSelected(first);
-          setAmount(toAmountInput(first.price));
-        }
-      } catch (err) {
-        setLoadError(err instanceof Error ? err.message : 'Failed to load clinic');
-      }
-    })();
-  }, [address]);
 
   async function fund() {
     if (!wallet) return void connect();
@@ -126,7 +114,11 @@ export default function ClinicPage({
       setTxHash(res.hash);
       // create_voucher returns the new id as a u64.
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
-        setFundedId(String(res.returnValue));
+        const newId = String(res.returnValue);
+        setFundedId(newId);
+        void invalidateVouchers(newId);
+      } else {
+        void invalidateVouchers();
       }
       trackEvent('voucher_funded');
     } catch (err) {
@@ -158,8 +150,8 @@ export default function ClinicPage({
               <button
                 key={s.code}
                 onClick={() => {
-                  setSelected(s);
-                  setAmount(toAmountInput(s.price));
+                  setSelectedOverride(s);
+                  setAmountOverride(toAmountInput(s.price));
                 }}
                 className={`flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[var(--color-canvas)] ${
                   selected?.code === s.code ? 'bg-[var(--color-brand-soft)]/40' : ''
@@ -254,7 +246,7 @@ export default function ClinicPage({
               </span>
               <input
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmountOverride(e.target.value)}
                 inputMode="decimal"
                 className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />

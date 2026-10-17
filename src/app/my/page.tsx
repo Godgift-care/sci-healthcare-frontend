@@ -1,68 +1,64 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { api, type Receipt, type Voucher } from '@/lib/api';
 import { formatDate } from '@/lib/amounts';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
+import { useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
-import { useWallet } from '@/lib/wallet';
 
 export default function MyPage() {
   const { address } = useWallet();
-  const [funded, setFunded] = useState<Voucher[]>([]);
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
-  const [spend, setSpend] = useState('0.00');
+  useLiveUpdates();
+
   const saved = useSavedIdentity();
   // null until the user types, so the saved values show through.
   const [identifierDraft, setIdentifier] = useState<string | null>(null);
   const [secretDraft, setSecret] = useState<string | null>(null);
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
+
+  const [activeRef, setActiveRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [reloads, setReloads] = useState(0);
-  const loadFunded = useCallback(() => setReloads((n) => n + 1), []);
+  // SWR cached reads (#63)
+  const {
+    vouchers: walletFunded,
+    error: fundedError,
+    mutate: mutateFunded,
+  } = useVouchers(address ? { funder: address } : null);
 
-  useEffect(() => {
-    if (!address) return;
-    // Ignore a response that lands after the wallet changed.
-    let ignore = false;
-    (async () => {
-      try {
-        const res = await api.vouchers({ funder: address });
-        if (!ignore) setFunded(res.vouchers);
-      } catch (err) {
-        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load vouchers');
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [address, reloads]);
+  const {
+    receipts,
+    totalSpendDisplay: spend,
+    error: receiptsError,
+  } = useReceipts(activeRef);
+
+  const {
+    vouchers: refVouchers,
+    error: refVouchersError,
+  } = useVouchers(activeRef ? { beneficiaryRef: activeRef } : null);
+
+  // Combine wallet vouchers with any looked-up beneficiary history vouchers
+  const seenIds = new Set(walletFunded.map((v) => v.id));
+  const funded = [...walletFunded, ...refVouchers.filter((v) => !seenIds.has(v.id))];
 
   async function loadHistory() {
     setError(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
       localIdentity.save(identifier, secret);
-      const [r, v] = await Promise.all([
-        api.receipts(ref),
-        api.vouchers({ beneficiaryRef: ref }),
-      ]);
-      setReceipts(r.receipts);
-      setSpend(r.totalSpendDisplay);
-      setFunded((prev) => {
-        const seen = new Set(prev.map((x) => x.id));
-        return [...prev, ...v.vouchers.filter((x) => !seen.has(x.id))];
-      });
+      setActiveRef(ref);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load history');
     }
   }
+
+  const historyError = error || receiptsError || refVouchersError;
 
   return (
     <div className="space-y-8">
@@ -70,6 +66,7 @@ export default function MyPage() {
 
       <section className="space-y-3">
         <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
+        {fundedError && <Alert>{fundedError}</Alert>}
         {!address && (
           <Empty>Connect a wallet to see vouchers you have funded.</Empty>
         )}
@@ -82,7 +79,7 @@ export default function MyPage() {
               key={v.id}
               v={v}
               actions={['dispute', 'refund', 'settle']}
-              onDone={loadFunded}
+              onDone={() => void mutateFunded()}
             />
           ))}
         </div>
@@ -119,7 +116,7 @@ export default function MyPage() {
               />
             </label>
           </div>
-          {error && <Alert>{error}</Alert>}
+          {historyError && <Alert>{historyError}</Alert>}
           <Button onClick={() => void loadHistory()}>Look up history</Button>
         </Card>
 

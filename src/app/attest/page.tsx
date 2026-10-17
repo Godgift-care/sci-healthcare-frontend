@@ -1,9 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-
-import { api, type Voucher } from '@/lib/api';
-import { registry } from '@/lib/protocol';
+import { useIsAttester, useLiveUpdates, useVouchers } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Empty } from '@/components/ui';
@@ -17,34 +14,14 @@ import { Alert, Empty } from '@/components/ui';
  */
 export default function AttestPage() {
   const { address } = useWallet();
-  const [authorised, setAuthorised] = useState<boolean | null>(null);
-  const [claimed, setClaimed] = useState<Voucher[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  useLiveUpdates();
 
-  const [reloads, setReloads] = useState(0);
-  const refresh = useCallback(() => setReloads((n) => n + 1), []);
-
-  useEffect(() => {
-    if (!address) return;
-    // Ignore a response that lands after the wallet changed.
-    let ignore = false;
-    (async () => {
-      try {
-        const [ok, list] = await Promise.all([
-          registry.isAttester(address).catch(() => false),
-          api.vouchers({ status: 'Claimed' }),
-        ]);
-        if (ignore) return;
-        setAuthorised(ok);
-        setClaimed(list.vouchers);
-      } catch (err) {
-        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load');
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [address, reloads]);
+  const { isAttester: authorised } = useIsAttester(address);
+  const {
+    vouchers: claimed,
+    error,
+    mutate,
+  } = useVouchers(address ? { status: 'Claimed' } : null);
 
   if (!address) return <Empty>Connect an attester wallet to review claims.</Empty>;
 
@@ -69,7 +46,7 @@ export default function AttestPage() {
       {claimed.length === 0 && <Empty>Nothing is waiting for confirmation.</Empty>}
       <div className="space-y-3">
         {claimed.map((v) => (
-          <VoucherRow key={v.id} v={v} actions={['attest']} onDone={refresh} />
+          <VoucherRow key={v.id} v={v} actions={['attest']} onDone={() => void mutate()} />
         ))}
       </div>
     </div>

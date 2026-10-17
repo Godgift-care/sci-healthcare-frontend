@@ -19,7 +19,7 @@ import {
   getStoredPasskeyAddress,
   signWithPasskey,
 } from './passkey';
-import { checkAccountFunded } from './stellar';
+import { checkAccountFunded, getAccountSpendableBalance } from './stellar';
 
 /**
  * Wallet connection.
@@ -42,6 +42,8 @@ export type WalletState = {
   walletName: string | null;
   connecting: boolean;
   isUnfunded: boolean;
+  isLowXlm: boolean;
+  spendableXlm: number | null;
   error: string | null;
   connect: (walletId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -112,6 +114,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [walletName, setWalletName] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [isUnfunded, setIsUnfunded] = useState(false);
+  const [isLowXlm, setIsLowXlm] = useState(false);
+  const [spendableXlm, setSpendableXlm] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Restore a previous session silently (#59).
@@ -175,18 +179,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Check if connected account exists on network (#60).
+  // Check if connected account exists on network (#60) and has enough XLM for fees (#61).
   useEffect(() => {
     if (!address) return;
     let cancelled = false;
     (async () => {
       try {
-        const funded = await checkAccountFunded(address);
+        const [funded, spendableInfo] = await Promise.all([
+          checkAccountFunded(address),
+          getAccountSpendableBalance(address),
+        ]);
         if (!cancelled) {
           setIsUnfunded(!funded);
+          if (spendableInfo) {
+            setIsLowXlm(spendableInfo.isLowForFees);
+            setSpendableXlm(spendableInfo.spendable);
+          } else {
+            setIsLowXlm(false);
+            setSpendableXlm(null);
+          }
         }
       } catch {
-        if (!cancelled) setIsUnfunded(false);
+        if (!cancelled) {
+          setIsUnfunded(false);
+          setIsLowXlm(false);
+          setSpendableXlm(null);
+        }
       }
     })();
     return () => {
@@ -265,6 +283,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setAddress(null);
       setWalletName(null);
       setIsUnfunded(false);
+      setIsLowXlm(false);
+      setSpendableXlm(null);
     }
   }, []);
 
@@ -301,6 +321,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletName,
       connecting,
       isUnfunded,
+      isLowXlm,
+      spendableXlm,
       error,
       connect,
       disconnect,
@@ -311,6 +333,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletName,
       connecting,
       isUnfunded,
+      isLowXlm,
+      spendableXlm,
       error,
       connect,
       disconnect,

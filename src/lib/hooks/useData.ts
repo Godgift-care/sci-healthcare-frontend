@@ -1,0 +1,195 @@
+'use client';
+
+import useSWR, { mutate as globalMutate, type SWRConfiguration } from 'swr';
+
+import { api, type Provider, type Receipt, type Stats, type Voucher } from '../api';
+
+export type LoadedVoucher = Voucher & { receipt: Receipt | null };
+
+/**
+ * Hook for fetching and caching a single voucher with its receipt (#63).
+ * Automatically revalidates on window focus and network reconnect.
+ */
+export function useVoucher(
+  id: string | null | undefined,
+  config?: SWRConfiguration<LoadedVoucher>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<LoadedVoucher>(
+    id ? ['voucher', id] : null,
+    () => api.voucher(id!),
+    config,
+  );
+
+  return {
+    voucher: data ?? null,
+    receipt: data?.receipt ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching vouchers matching filter criteria (#63).
+ */
+export function useVouchers(
+  params: {
+    funder?: string;
+    provider?: string;
+    beneficiaryRef?: string;
+    status?: string;
+  } | null,
+  config?: SWRConfiguration<{ total: number; vouchers: Voucher[] }>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    params ? ['vouchers', params] : null,
+    () => api.vouchers(params!),
+    config,
+  );
+
+  return {
+    vouchers: data?.vouchers ?? [],
+    total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching a provider profile (#63).
+ */
+export function useProvider(
+  address: string | null | undefined,
+  config?: SWRConfiguration<Provider>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<Provider>(
+    address ? ['provider', address] : null,
+    () => api.provider(address!),
+    config,
+  );
+
+  return {
+    provider: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching provider directory (#63).
+ */
+export function useProviders(
+  params?: { status?: string; country?: string; q?: string },
+  config?: SWRConfiguration<{ total: number; providers: Provider[] }>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    ['providers', params ?? {}],
+    () => api.providers(params),
+    config,
+  );
+
+  return {
+    providers: data?.providers ?? [],
+    total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching global protocol statistics (#63).
+ */
+export function useStats(config?: SWRConfiguration<Stats>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<Stats>(
+    'stats',
+    () => api.stats(),
+    config,
+  );
+
+  return {
+    stats: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching receipts for a patient beneficiary ref (#63).
+ */
+export function useReceipts(
+  beneficiaryRef: string | null | undefined,
+  config?: SWRConfiguration<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    beneficiaryRef ? ['receipts', beneficiaryRef] : null,
+    () => api.receipts(beneficiaryRef!),
+    config,
+  );
+
+  return {
+    receipts: data?.receipts ?? [],
+    total: data?.total ?? 0,
+    totalSpendDisplay: data?.totalSpendDisplay ?? '0.00',
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for checking if an address is an authorized attester (#63).
+ */
+export function useIsAttester(address: string | null | undefined) {
+  const { data, error, isLoading } = useSWR(
+    address ? ['isAttester', address] : null,
+    async () => {
+      const { registry } = await import('../protocol');
+      return registry.isAttester(address!).catch(() => false);
+    },
+  );
+
+  return {
+    isAttester: data ?? null,
+    isLoading,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+  };
+}
+
+/** Invalidate all voucher-related cache entries after a transaction */
+export async function invalidateVouchers(voucherId?: string): Promise<void> {
+  if (voucherId) {
+    await globalMutate(['voucher', voucherId]);
+  }
+  await globalMutate(
+    (key) =>
+      Array.isArray(key) &&
+      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher'),
+  );
+}
+
+/** Invalidate all provider-related cache entries */
+export async function invalidateProvider(providerAddress?: string): Promise<void> {
+  if (providerAddress) {
+    await globalMutate(['provider', providerAddress]);
+  }
+  await globalMutate(
+    (key) =>
+      Array.isArray(key) && (key[0] === 'providers' || key[0] === 'provider'),
+  );
+}

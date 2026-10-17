@@ -9,6 +9,7 @@ import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
+import { invalidateVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
@@ -65,6 +66,7 @@ export function VoucherRow({
       setDisputing(false);
       setAttesting(false);
       trackEvent(ACTION_EVENTS[action]);
+      void invalidateVouchers(v.id);
       onDone?.();
     } catch (err) {
       setError(humaniseError(err));

@@ -4,7 +4,7 @@ import nextTs from 'eslint-config-next/typescript';
 const config = [
   ...nextVitals,
   ...nextTs,
-  { ignores: ['.next/', 'out/', 'node_modules/', 'next-env.d.ts', 'storybook-static/', '.lighthouseci/'] },
+  { ignores: ['.next/', 'out/', 'node_modules/', 'next-env.d.ts', 'storybook-static/', '.lighthouseci/', 'src/lib/contracts/generated/**'] },
   {
     // GitHub Actions scripts (actions/github-script loads CommonJS).
     files: ['.github/scripts/**/*.cjs'],

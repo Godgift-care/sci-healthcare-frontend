@@ -9,8 +9,16 @@ import { useWallet } from '@/lib/wallet';
 import { Button } from './ui';
 
 export function ConnectButton() {
-  const { address, walletName, connecting, isUnfunded, connect, disconnect } =
-    useWallet();
+  const {
+    address,
+    walletName,
+    connecting,
+    isUnfunded,
+    isLowXlm,
+    spendableXlm,
+    connect,
+    disconnect,
+  } = useWallet();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -79,7 +87,7 @@ export function ConnectButton() {
         <span
           aria-hidden="true"
           className={`h-2 w-2 rounded-full ${
-            isUnfunded ? 'bg-amber-500' : 'bg-emerald-500'
+            isUnfunded || isLowXlm ? 'bg-amber-500' : 'bg-emerald-500'
           }`}
         />
         <span className="mono">{shortAddress(address, 6)}</span>
@@ -110,10 +118,12 @@ export function ConnectButton() {
               className={`rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ${
                 isUnfunded
                   ? 'bg-amber-50 text-amber-700 ring-amber-200'
-                  : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                  : isLowXlm
+                    ? 'bg-amber-50 text-amber-700 ring-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
               }`}
             >
-              {isUnfunded ? 'Unfunded' : 'Active'}
+              {isUnfunded ? 'Unfunded' : isLowXlm ? 'Low XLM' : 'Active'}
             </span>
           </div>
 
@@ -158,6 +168,34 @@ export function ConnectButton() {
                     className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
                   >
                     <span>Fund with Friendbot</span>
+                    <span aria-hidden="true">&rarr;</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Low XLM for Network Fees Alert (#61) */}
+          {!isUnfunded && isLowXlm && (
+            <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <p className="font-semibold">Spendable XLM is low for fees</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
+                Spendable balance is{' '}
+                <span className="font-semibold">
+                  {spendableXlm !== null ? `${spendableXlm.toFixed(2)} XLM` : '< 1.00 XLM'}
+                </span>
+                . In addition to the base account reserve, transactions require spendable XLM to pay network fees.
+              </p>
+              {config.network === 'testnet' && (
+                <div className="mt-2">
+                  <a
+                    href={friendbotUrl(address)}
+                    target="_blank"
+                    rel="noreferrer"
+                    role="menuitem"
+                    className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
+                  >
+                    <span>Top up with Friendbot</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>

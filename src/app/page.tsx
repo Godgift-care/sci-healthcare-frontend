@@ -2,10 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { api, providerLocation, type Provider, type Stats } from '@/lib/api';
+import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
+import { useLiveUpdates, useProviders, useStats } from '@/lib/hooks';
 import { DemoTour } from '@/components/DemoTour';
 import { Alert, Card, Empty } from '@/components/ui';
 
@@ -27,28 +28,16 @@ const ClinicMap = dynamic(
 type View = 'list' | 'map';
 
 export default function HomePage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>('list');
+  useLiveUpdates();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [p, s] = await Promise.all([
-          api.providers({ status: 'Active' }),
-          api.stats(),
-        ]);
-        setProviders(p.providers);
-        setStats(s);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const {
+    providers,
+    isLoading: loading,
+    error: providersError,
+  } = useProviders({ status: 'Active' });
+  const { stats, error: statsError } = useStats();
+  const error = providersError || statsError;
 
   // Memoized so the map is not torn down and rebuilt on every render: the
   // filter arrays are otherwise new objects each time.

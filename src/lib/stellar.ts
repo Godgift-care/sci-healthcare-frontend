@@ -35,6 +35,31 @@ async function getServer(): Promise<RpcServer> {
 
 export type SignFn = (xdrString: string) => Promise<string>;
 
+export const MIN_FEE_BUFFER_XLM = 1.0;
+
+export interface SpendableXlmInfo {
+  rawBalance: number;
+  minBalance: number;
+  spendable: number;
+  isLowForFees: boolean;
+}
+
+interface HorizonBalanceLine {
+  asset_type: string;
+  balance: string;
+}
+
+interface HorizonAccountRecord {
+  balances: HorizonBalanceLine[];
+  subentry_count: number;
+}
+
+function horizonBaseUrl(): string {
+  if (config.network === 'public') return 'https://horizon.stellar.org';
+  if (config.network === 'futurenet') return 'https://horizon-futurenet.stellar.org';
+  return 'https://horizon-testnet.stellar.org';
+}
+
 /**
  * Checks whether an account exists on the network (is funded with XLM).
  * Soroban RPC returns 404 / account not found for brand new accounts.
@@ -60,6 +85,56 @@ export async function checkAccountFunded(address: string): Promise<boolean> {
       return false;
     }
     return true;
+  }
+}
+
+/**
+ * Reads native balance and subentries to compute spendable XLM balance (#61).
+ * In Stellar, min balance = (2 + subentries) * base_reserve (0.5 XLM).
+ * Returns isLowForFees=true when spendable XLM is below MIN_FEE_BUFFER_XLM.
+ */
+export async function getAccountSpendableBalance(
+  address: string,
+): Promise<SpendableXlmInfo | null> {
+  if (isMockRpc()) {
+    if (
+      typeof window !== 'undefined' &&
+      (window as unknown as { __SCI_LOW_XLM_BALANCE__?: boolean })
+        .__SCI_LOW_XLM_BALANCE__
+    ) {
+      return {
+        rawBalance: 1.0,
+        minBalance: 1.0,
+        spendable: 0.0,
+        isLowForFees: true,
+      };
+    }
+    return {
+      rawBalance: 100.0,
+      minBalance: 1.0,
+      spendable: 99.0,
+      isLowForFees: false,
+    };
+  }
+
+  try {
+    const url = `${horizonBaseUrl()}/accounts/${address}`;
+    const res = await fetch(url, { headers: { accept: 'application/json' } });
+    if (!res.ok) return null;
+    const account = (await res.json()) as HorizonAccountRecord;
+    const nativeEntry = account.balances.find((b) => b.asset_type === 'native');
+    const rawBalance = nativeEntry ? parseFloat(nativeEntry.balance) : 0;
+    const subentries = account.subentry_count ?? 0;
+    const minBalance = (2 + subentries) * 0.5;
+    const spendable = Math.max(0, rawBalance - minBalance);
+    return {
+      rawBalance,
+      minBalance,
+      spendable,
+      isLowForFees: spendable < MIN_FEE_BUFFER_XLM,
+    };
+  } catch {
+    return null;
   }
 }
 

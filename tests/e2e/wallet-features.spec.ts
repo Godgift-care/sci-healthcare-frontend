@@ -99,6 +99,40 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
     );
   });
 
+  test('shows low XLM warning and top-up link when spendable XLM is below threshold', async ({
+    page,
+  }) => {
+    await page.addInitScript(`
+      window.__SCI_LOW_XLM_BALANCE__ = true;
+    `);
+    await useMockWallet(page, FUNDER);
+    await mockBackend(page, { provider: CLINIC, vouchers: [] });
+
+    await page.goto('/');
+
+    const menuButton = page.locator('#wallet-menu-button');
+    await expect(menuButton).toBeVisible();
+
+    // Click to open menu
+    await menuButton.click();
+
+    const menu = page.locator('[role="menu"]');
+    await expect(menu).toBeVisible();
+
+    // Verify Low XLM badge inside menu
+    await expect(menu.getByText('Low XLM', { exact: true })).toBeVisible();
+
+    // Verify low XLM warning inside menu
+    await expect(menu.getByText(/spendable xlm is low for fees/i)).toBeVisible();
+    await expect(menu.getByText(/spendable balance is/i)).toBeVisible();
+    const topUpLink = menu.getByRole('menuitem', { name: /top up with friendbot/i });
+    await expect(topUpLink).toBeVisible();
+    await expect(topUpLink).toHaveAttribute(
+      'href',
+      `https://friendbot.stellar.org/?addr=${FUNDER}`,
+    );
+  });
+
   test('auto-reconnects passkey wallet from localStorage on mount and forgets on disconnect', async ({
     page,
   }) => {

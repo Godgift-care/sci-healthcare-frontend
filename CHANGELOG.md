@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Warn when spendable XLM balance is low for Stellar network fees (< 1.0 XLM) after computing base account reserves and subentries via Horizon API; displays amber status badge and top-up alert in wallet menu with Friendbot link on testnet (#61).
+- Generated TypeScript contract bindings (`RegistryClient`, `VoucherClient`, `FaucetClient`) derived from Soroban contract specifications; replaces manual positional argument encoding in `protocol.ts` with typed specification builders while preserving existing protocol API (#62).
+- Client-side data fetching and caching with SWR (`useVoucher`, `useVouchers`, `useProvider`, `useProviders`, `useStats`, `useReceipts`, `useIsAttester`), providing fast cached reads, automatic revalidation on focus/reconnect, and cache invalidation after writes (#63).
+- Live updates from the API stream via Server-Sent Events (`EventSource`) through `useLiveUpdates` hook, automatically invalidating SWR cache keys on server updates with automatic polling fallback (#64).
+
 - Accessible wallet menu in `ConnectButton` replacing the static address display. Displays the active wallet name, full address copy with visual feedback, explorer link on Stellar Expert, and a disconnect button. Operable by keyboard (Escape, focus return) and mouse (#57).
 - Passkey smart wallet support using WebAuthn / secp256r1 biometrics on Soroban testnet, enabling passwordless, non-custodial signing without browser extensions alongside existing extension wallets (#58).
 - Silent wallet reconnection on mount persisting the selected wallet id in `localStorage` under `sci-wallet-id`, with complete cleanup on disconnect (#59).

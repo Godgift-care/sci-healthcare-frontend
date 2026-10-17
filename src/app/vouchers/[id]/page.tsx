@@ -1,46 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use } from 'react';
 
-import { api, type Receipt, type Voucher } from '@/lib/api';
 import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
 import { config, explorerContract } from '@/lib/config';
+import { useLiveUpdates, useVoucher } from '@/lib/hooks';
 import { voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
 
-type Loaded = Voucher & { receipt: Receipt | null };
-
 /**
  * One voucher, end to end: what it pays for, where it is in its lifecycle,
  * and the receipt once it settles. Shareable by link; everything shown is
  * already public on the ledger.
+ *
+ * Uses SWR caching (#63) and live updates via SSE with polling fallback (#64).
  */
 export default function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { address } = useWallet();
-  const [v, setV] = useState<Loaded | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const [reloads, setReloads] = useState(0);
-  const refresh = useCallback(() => setReloads((n) => n + 1), []);
-
-  useEffect(() => {
-    let ignore = false;
-    (async () => {
-      try {
-        const res = await api.voucher(id);
-        if (!ignore) setV(res);
-      } catch (err) {
-        if (!ignore) setError(err instanceof Error ? err.message : 'Failed to load voucher');
-      }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [id, reloads]);
+  const { voucher: v, error, mutate } = useVoucher(id);
+  useLiveUpdates({ voucherId: id });
 
   if (error) return <Alert>{error}</Alert>;
   if (!v) return <p className="text-sm text-[var(--color-ink-soft)]">Loading voucher…</p>;
@@ -138,7 +121,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         </Card>
       </div>
 
-      <VoucherRow v={v} actions={[...actions]} onDone={refresh} summary={false} />
+      <VoucherRow
+        v={v}
+        actions={[...actions]}
+        onDone={() => {
+          void mutate();
+        }}
+        summary={false}
+      />
     </div>
   );
 }
