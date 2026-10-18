@@ -60,9 +60,12 @@ export default function ClinicPage({
   const { address: wallet, signTransaction, connect } = useWallet();
 
   const { provider, error: loadError } = useProvider(address);
-  const [selectedOverride, setSelectedOverride] = useState<Service | null>(null);
-  const firstActive = provider?.services.find((s) => s.active !== false) ?? null;
-  const selected = selectedOverride ?? firstActive;
+  const [selectedCodes, setSelectedCodes] = useState<number[]>([]);
+  const selectedServices = useMemo(() => {
+    if (!provider) return [] as Service[];
+    return provider.services.filter((service) => selectedCodes.includes(service.code));
+  }, [provider, selectedCodes]);
+  const selected = selectedServices.length === 1 ? selectedServices[0] : null;
 
   const saved = useSavedIdentity();
   // null until the user types, so the saved values show through.
@@ -71,12 +74,35 @@ export default function ClinicPage({
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
-  const amount = amountOverride ?? (selected ? toAmountInput(selected.price) : '');
+  const selectionTotal = useMemo(
+    () =>
+      selectedServices.reduce(
+        (total, service) => total + toBaseUnits(String(service.price)),
+        0n,
+      ),
+    [selectedServices],
+  );
+  const amount =
+    amountOverride ??
+    (selected
+      ? toAmountInput(selected.price)
+      : selectedServices.length > 0
+        ? toAmountInput(String(selectionTotal))
+        : '');
   const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
   const [expiryDays, setExpiryDays] = useState<number>(30);
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+    label: string;
+  } | null>(null);
+  const [batchSummary, setBatchSummary] = useState<{
+    succeeded: string[];
+    failed: { label: string; error: string }[];
+  } | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -107,13 +133,24 @@ export default function ClinicPage({
 
   // The amount as base units, or null while the field is not a number.
   const baseAmount = useMemo(() => {
+    if (selectedServices.length > 0) return selectionTotal;
     try {
       const v = toBaseUnits(amount);
       return v > 0n ? v : null;
     } catch {
       return null;
     }
-  }, [amount]);
+  }, [amount, selectedServices.length, selectionTotal]);
+
+  function toggleService(service: Service) {
+    setSelectedCodes((current) => {
+      const exists = current.includes(service.code);
+      if (exists) return current.filter((code) => code !== service.code);
+      return [...current, service.code];
+    });
+    setAmountOverride(null);
+    setBatchSummary(null);
+  }
 
   // What the clinic actually receives, read from the contract so the fee
   // shown is the fee charged. Kept with the amount it was quoted for, so a
@@ -156,64 +193,90 @@ export default function ClinicPage({
 
   async function fund() {
     if (!wallet) return void connect();
-    if (!selected) return;
+    if (selectedServices.length === 0) return;
 
     setBusy(true);
+    setBatchSummary(null);
+    const requests = selectedServices.map((service) => ({
+      funder: wallet,
+      beneficiaryRef: identifier,
+      provider: address,
+      serviceCode: service.code,
+      amount: toBaseUnits(String(service.price)),
+      expiresAt: Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60,
+    }));
+
+    const succeeded: string[] = [];
+    const successfulTxs: { hash: string; id: string | null }[] = [];
+    const failed: { label: string; error: string }[] = [];
+
     try {
       const ref = await beneficiaryRef(identifier, secret);
       localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
-      const base = toBaseUnits(amount);
-      if (base < BigInt(selected.price)) {
-        throw new Error(
-          `The listed price is $${formatUsdc(selected.price)}. Enter at least that.`,
-        );
+      for (let i = 0; i < requests.length; i++) {
+        const request = { ...requests[i], beneficiaryRef: ref };
+        setBatchProgress({
+          current: i + 1,
+          total: requests.length,
+          label: selectedServices[i].label,
+        });
+
+        try {
+          const res = await voucher.create(request, signTransaction);
+          const balance = await usdc.balance(wallet).catch(() => null);
+          if (balance !== null) setWalletBalance(balance);
+
+          let newId: string | null = null;
+          if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
+            newId = String(res.returnValue);
+            succeeded.push(newId);
+            successfulTxs.push({ hash: res.hash, id: newId });
+            void invalidateVouchers(newId);
+          } else {
+            successfulTxs.push({ hash: res.hash, id: null });
+            void invalidateVouchers();
+          }
+          trackEvent('voucher_funded');
+        } catch (err) {
+          failed.push({
+            label: selectedServices[i].label,
+            error: humaniseError(err, VOUCHER_ERRORS),
+          });
+          setBatchProgress(null);
+          setBatchSummary({ succeeded, failed });
+          toast.error(
+            `Funded ${succeeded.length} of ${requests.length} service${requests.length === 1 ? '' : 's'} before ${selectedServices[i].label} failed: ${failed[failed.length - 1].error}`,
+          );
+          return;
+        }
       }
 
-      const expiresAt = Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60;
-
-      const res = await voucher.create(
-        {
-          funder: wallet,
-          beneficiaryRef: ref,
-          provider: address,
-          serviceCode: selected.code,
-          amount: base,
-          expiresAt,
-        },
-        signTransaction,
-      );
-      try {
-        const balance = await usdc.balance(wallet);
-        setWalletBalance(balance);
-      } catch {
-        setWalletBalance(null);
-      }
-      // create_voucher returns the new id as a u64.
-      let newId: string | null = null;
-      if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
-        newId = String(res.returnValue);
-        void invalidateVouchers(newId);
-      } else {
-        void invalidateVouchers();
-      }
-      trackEvent('voucher_funded');
+      setBatchProgress(null);
+      setBatchSummary({ succeeded, failed });
+      const firstId = succeeded[0];
+      const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
         <>
-          Voucher funded.{' '}
-          {newId && (
+          {succeeded.length} voucher{requests.length === 1 ? '' : 's'} funded successfully.
+          {firstId && (
             <>
-              <Link href={`/vouchers/${newId}`} className="underline underline-offset-2">
-                Open voucher #{newId}
-              </Link>{' '}
+              {' '}
+              <Link href={`/vouchers/${firstId}`} className="underline underline-offset-2">
+                Open voucher #{firstId}
+              </Link>
+              {' '}
               ·{' '}
             </>
           )}
-          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+          {lastHash && <ExplorerLink href={explorerTx(lastHash)}>View transaction</ExplorerLink>}
         </>,
       );
     } catch (err) {
-      toast.error(humaniseError(err, VOUCHER_ERRORS));
+      const message = humaniseError(err, VOUCHER_ERRORS);
+      setBatchProgress(null);
+      setBatchSummary({ succeeded, failed: [{ label: 'Funding', error: message }] });
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -274,26 +337,37 @@ export default function ClinicPage({
         <Card className="divide-y divide-[var(--color-line)]">
           {provider.services
             .filter((s) => s.active !== false)
-            .map((s) => (
-              <button
-                key={s.code}
-                onClick={() => {
-                  setSelectedOverride(s);
-                  setAmountOverride(toAmountInput(s.price));
-                }}
-                className={`flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[var(--color-canvas)] ${
-                  selected?.code === s.code ? 'bg-[var(--color-brand-soft)]/40' : ''
-                }`}
-              >
-                <div>
-                  <div className="text-sm font-medium">{s.label}</div>
-                  <div className="text-xs text-[var(--color-ink-soft)]">
-                    Service code {s.code}
+            .map((s) => {
+              const checked = selectedCodes.includes(s.code);
+              return (
+                <button
+                  key={s.code}
+                  onClick={() => toggleService(s)}
+                  className={`flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[var(--color-canvas)] ${
+                    checked ? 'bg-[var(--color-brand-soft)]/40' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold ${
+                        checked
+                          ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                          : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent'
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <div>
+                      <div className="text-sm font-medium">{s.label}</div>
+                      <div className="text-xs text-[var(--color-ink-soft)]">
+                        Service code {s.code}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="mono text-sm">${formatUsdc(s.price)}</div>
-              </button>
-            ))}
+                  <div className="mono text-sm">${formatUsdc(s.price)}</div>
+                </button>
+              );
+            })}
           {provider.services.length === 0 && (
             <p className="px-5 py-6 text-sm text-[var(--color-ink-soft)]">
               This clinic has not listed any services yet.
@@ -305,16 +379,67 @@ export default function ClinicPage({
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
 
-        {!selected && (
+        {batchProgress && (
+          <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
+            <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">
+              <span>Funding {batchProgress.label}…</span>
+              <span className="mono font-medium">
+                {batchProgress.current} of {batchProgress.total}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line)]">
+              <div
+                className="h-full bg-[var(--color-brand)] transition-all duration-300"
+                style={{
+                  width: `${(batchProgress.current / batchProgress.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {batchSummary && (
+          <div className="space-y-2">
+            {batchSummary.succeeded.length > 0 && (
+              <Alert kind="success">
+                Funded {batchSummary.succeeded.length} voucher
+                {batchSummary.succeeded.length === 1 ? '' : 's'} successfully (
+                {batchSummary.succeeded.map((id) => `#${id}`).join(', ')}).
+              </Alert>
+            )}
+            {batchSummary.failed.length > 0 && (
+              <Alert>
+                Failed to fund {batchSummary.failed.length} service
+                {batchSummary.failed.length === 1 ? '' : 's'}:{' '}
+                {batchSummary.failed
+                  .map((failure) => `${failure.label} (${failure.error})`)
+                  .join(', ')}.
+              </Alert>
+            )}
+          </div>
+        )}
+
+        {selectedServices.length === 0 && !reviewing && (
           <p className="text-sm text-[var(--color-ink-soft)]">
-            Choose a service to fund.
+            Choose one or more services to fund.
           </p>
         )}
 
-        {selected && !reviewing && (
+        {selectedServices.length > 0 && !reviewing && (
           <>
-            <Field label="Service">
-              {selected.label} · ${formatUsdc(selected.price)}
+            <Field label="Selected services">
+              <div className="space-y-2">
+                {selectedServices.map((service) => (
+                  <div key={service.code} className="flex items-center justify-between gap-3">
+                    <span className="text-sm">{service.label}</span>
+                    <span className="mono text-sm">${formatUsdc(service.price)}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-2 text-sm font-medium">
+                  <span>Total</span>
+                  <span className="mono">${formatUsdc(selectionTotal)}</span>
+                </div>
+              </div>
             </Field>
 
             <SavedPatientControls
@@ -385,6 +510,7 @@ export default function ClinicPage({
                 value={amount}
                 onChange={(e) => setAmountOverride(e.target.value)}
                 inputMode="decimal"
+                readOnly={selectedServices.length > 1}
                 className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />
               <div className="mt-2 flex items-center justify-between gap-3 text-xs">
@@ -445,7 +571,11 @@ export default function ClinicPage({
               disabled={busy || insufficientUsdcBalance}
               className="w-full"
             >
-              {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
+              {busy
+                ? 'Confirming…'
+                : wallet
+                  ? `Fund ${selectedServices.length === 1 ? 'voucher' : `${selectedServices.length} vouchers`}`
+                  : 'Connect wallet'}
             </Button>
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
@@ -461,12 +591,13 @@ export default function ClinicPage({
           </>
         )}
 
-        {selected && reviewing && (
+        {selectedServices.length > 0 && reviewing && (
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium">Review funding</h3>
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-                Check the details below before signing the voucher.
+                Check the details below before signing{' '}
+                {selectedServices.length === 1 ? 'the voucher' : `${selectedServices.length} vouchers`}.
               </p>
             </div>
 
@@ -476,9 +607,11 @@ export default function ClinicPage({
                 <dd className="text-right font-medium">{provider.name}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <dt className="text-[var(--color-ink-soft)]">Service</dt>
+                <dt className="text-[var(--color-ink-soft)]">Services</dt>
                 <dd className="text-right font-medium">
-                  {selected.label} · ${formatUsdc(selected.price)}
+                  {selectedServices
+                    .map((service) => `${service.label} · $${formatUsdc(service.price)}`)
+                    .join(', ')}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-3">

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fund several services in one checkout on the clinic page (`src/app/clinics/[address]/page.tsx`): service rows become selectable basket items with a running total, the app funds each voucher sequentially with live progress and stops on the first failure while reporting which earlier vouchers succeeded, and the flow keeps the single-voucher path available when only one service is selected.
 - Check USDC wallet balance before funding on the clinic page (`src/app/clinics/[address]/page.tsx`): the amount field shows the wallet balance, the fund/confirm buttons disable with an explanatory shortfall message when the wallet cannot cover the amount, and the balance refreshes after a successful voucher funding transaction.
 - Review screen before funding on the clinic page (`src/app/clinics/[address]/page.tsx`): funders confirm clinic, service, amount, fee, payout and expiry before signing, can go back without losing values, and the summary masks the patient secret key so it is never shown in full.
 - Named saved patients for funding and care-history lookup (`src/lib/beneficiary.ts`, `SavedPatientControls`) with browser-local storage, selection, rename/delete, and migration from the previous single-patient storage format.
