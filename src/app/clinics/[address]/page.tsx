@@ -16,7 +16,7 @@ import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
-import { voucher } from '@/lib/protocol';
+import { usdc, voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { TestUsdc } from '@/components/TestUsdc';
@@ -72,11 +72,28 @@ export default function ClinicPage({
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
   const amount = amountOverride ?? (selected ? toAmountInput(selected.price) : '');
+  const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
   const [expiryDays, setExpiryDays] = useState<number>(30);
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    if (!wallet) return;
+    let ignore = false;
+    (async () => {
+      try {
+        const balance = await usdc.balance(wallet);
+        if (!ignore) setWalletBalance(balance);
+      } catch {
+        if (!ignore) setWalletBalance(null);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [wallet]);
 
   // Track record for funders: how many vouchers this clinic has settled. The
   // count is filtered server-side, so it stays right as the list grows, and
@@ -122,6 +139,15 @@ export default function ClinicPage({
   const reviewAmount = baseAmount === null ? '—' : formatUsdc(baseAmount);
   const reviewFee = currentQuote ? formatUsdc(currentQuote.fee) : '—';
   const reviewNet = currentQuote ? formatUsdc(currentQuote.net) : '—';
+  const insufficientUsdcBalance =
+    wallet !== null &&
+    baseAmount !== null &&
+    walletBalance !== null &&
+    walletBalance < baseAmount;
+  const missingUsdcForFunding =
+    wallet !== null && baseAmount !== null && walletBalance !== null && insufficientUsdcBalance;
+  const usdcShortfall =
+    missingUsdcForFunding ? baseAmount - walletBalance : null;
   const maskedSecret = secret
     ? secret.length <= 8
       ? '••••'
@@ -157,6 +183,12 @@ export default function ClinicPage({
         },
         signTransaction,
       );
+      try {
+        const balance = await usdc.balance(wallet);
+        setWalletBalance(balance);
+      } catch {
+        setWalletBalance(null);
+      }
       // create_voucher returns the new id as a u64.
       let newId: string | null = null;
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
@@ -355,10 +387,30 @@ export default function ClinicPage({
                 inputMode="decimal"
                 className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+                <span className="text-[var(--color-ink-soft)]">
+                  Wallet USDC balance:{' '}
+                  {wallet ? (
+                    walletBalance === null ? '—' : `$${formatUsdc(walletBalance)}`
+                  ) : (
+                    'Connect wallet'
+                  )}
+                </span>
+                {usdcShortfall !== null && (
+                  <span className="font-medium text-red-600">
+                    Need ${formatUsdc(usdcShortfall)} more
+                  </span>
+                )}
+              </div>
               {currentQuote && (
                 <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
                   Clinic receives ${formatUsdc(currentQuote.net)} after a $
                   {formatUsdc(currentQuote.fee)} protocol fee. Refunds are free.
+                </span>
+              )}
+              {insufficientUsdcBalance && (
+                <span className="mt-2 block text-xs text-red-600">
+                  Not enough USDC in your wallet for this. You need ${formatUsdc(usdcShortfall ?? 0n)} more.
                 </span>
               )}
             </label>
@@ -390,7 +442,7 @@ export default function ClinicPage({
                 }
                 setReviewing(true);
               }}
-              disabled={busy}
+              disabled={busy || insufficientUsdcBalance}
               className="w-full"
             >
               {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
@@ -462,7 +514,7 @@ export default function ClinicPage({
               <Button
                 className="flex-1"
                 onClick={() => void fund()}
-                disabled={busy}
+                disabled={busy || insufficientUsdcBalance}
               >
                 {busy ? 'Confirming…' : 'Confirm'}
               </Button>

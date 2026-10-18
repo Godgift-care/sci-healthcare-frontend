@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Check USDC wallet balance before funding on the clinic page (`src/app/clinics/[address]/page.tsx`): the amount field shows the wallet balance, the fund/confirm buttons disable with an explanatory shortfall message when the wallet cannot cover the amount, and the balance refreshes after a successful voucher funding transaction.
 - Review screen before funding on the clinic page (`src/app/clinics/[address]/page.tsx`): funders confirm clinic, service, amount, fee, payout and expiry before signing, can go back without losing values, and the summary masks the patient secret key so it is never shown in full.
 - Named saved patients for funding and care-history lookup (`src/lib/beneficiary.ts`, `SavedPatientControls`) with browser-local storage, selection, rename/delete, and migration from the previous single-patient storage format.
 - Unit tests for the pure helpers (#77): Vitest (`vitest.config.mts`, `npm run test:unit`, dev-dependency `vitest`, and a `unit` job in CI) covers `amounts` — including i128 boundaries and the `toBaseUnits`/`formatUsdc` edge cases that decide what a funder pays — plus `timeline`, `disputes`, `errors` and the new `names` helper. `@types/node` moves from 22.10.5 to 22.20.5 because Vitest's Vite requires `>=22.12.0`.
