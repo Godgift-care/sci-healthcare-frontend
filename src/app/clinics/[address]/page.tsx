@@ -16,15 +16,18 @@ import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
+import {
+  EXPIRY_OPTIONS,
+  expiresAtFor,
+  minExpiryDate,
+  type ExpiryChoice,
+} from '@/lib/expiry';
 import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
-
-/** How long the patient has to attend before the funder can refund. */
-const EXPIRY_OPTIONS = [14, 30, 60, 90] as const;
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -71,7 +74,8 @@ export default function ClinicPage({
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
   const amount = amountOverride ?? (selected ? toAmountInput(selected.price) : '');
-  const [expiryDays, setExpiryDays] = useState<number>(30);
+  const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
+  const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
@@ -118,6 +122,17 @@ export default function ClinicPage({
   }, [baseAmount]);
   const currentQuote = quote && quote.amount === baseAmount ? quote : null;
 
+  // A custom expiry is described by the date it resolves to, so the funder
+  // reads the voucher's last valid day rather than the picker's raw value.
+  const customExpiresAt =
+    expiryChoice === 'custom' ? expiresAtFor('custom', customExpiry) : null;
+  const expirySummary =
+    expiryChoice === 'custom'
+      ? customExpiresAt === null
+        ? 'the end of the date you choose'
+        : `the end of ${formatDate(new Date(customExpiresAt * 1000))}`
+      : `${expiryChoice} days`;
+
   async function fund() {
     if (!wallet) return void connect();
     if (!selected) return;
@@ -134,7 +149,15 @@ export default function ClinicPage({
         );
       }
 
-      const expiresAt = Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60;
+      // A preset window is counted from now; a custom date is the last second
+      // of the day the funder picked.
+      const expiresAt = expiresAtFor(expiryChoice, customExpiry);
+      if (expiresAt === null) {
+        throw new Error('Choose the date the patient must attend by.');
+      }
+      if (expiresAt <= Math.floor(Date.now() / 1000)) {
+        throw new Error('The expiry date must be in the future.');
+      }
 
       const res = await voucher.create(
         {
@@ -349,8 +372,8 @@ export default function ClinicPage({
                 Patient must attend within
               </span>
               <select
-                value={expiryDays}
-                onChange={(e) => setExpiryDays(Number(e.target.value))}
+                value={expiryChoice}
+                onChange={(e) => setExpiryChoice(e.target.value as ExpiryChoice)}
                 className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
               >
                 {EXPIRY_OPTIONS.map((d) => (
@@ -358,8 +381,30 @@ export default function ClinicPage({
                     {d} days
                   </option>
                 ))}
+                <option value="custom">Custom date</option>
               </select>
             </label>
+
+            {expiryChoice === 'custom' && (
+              <div>
+                <label className="block">
+                  <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Expiry date
+                  </span>
+                  <input
+                    type="date"
+                    value={customExpiry}
+                    min={minExpiryDate()}
+                    onChange={(e) => setCustomExpiry(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+                  />
+                </label>
+                <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
+                  The voucher is valid through this date (UTC). The contract
+                  accepts any date in the future.
+                </span>
+              </div>
+            )}
 
             <TestUsdc compact />
 
@@ -375,7 +420,7 @@ export default function ClinicPage({
                 label="contract id"
               />{' '}
               and released to the clinic only after an attester confirms delivery.
-              Unclaimed vouchers are refundable after {expiryDays} days.
+              Unclaimed vouchers are refundable after {expirySummary}.
             </p>
           </>
         )}
