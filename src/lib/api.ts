@@ -176,7 +176,16 @@ export const api = {
     provider?: string;
     beneficiaryRef?: string;
     status?: string;
-  }) => get<{ total: number; vouchers: Voucher[] }>('/vouchers', params),
+    /** Page size. A caller that only needs `total` asks for one row. */
+    limit?: number;
+  }) =>
+    get<{ total: number; vouchers: Voucher[] }>('/vouchers', {
+      funder: params.funder,
+      provider: params.provider,
+      beneficiaryRef: params.beneficiaryRef,
+      status: params.status,
+      limit: params.limit ? String(params.limit) : undefined,
+    }),
 
   voucher: (id: string) => get<Voucher & { receipt: Receipt | null }>(`/vouchers/${id}`),
 

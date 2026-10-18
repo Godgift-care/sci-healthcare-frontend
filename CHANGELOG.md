@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Public clinic page header (`src/app/clinics/[address]/page.tsx`) showing whether the clinic is verified, when it was registered, and how many of its vouchers have settled, so funders can judge a clinic's track record before funding. The count is filtered server-side (`/vouchers?provider=…&status=Settled&limit=1`, `useVouchers`) and every stat is omitted rather than guessed when the indexer does not provide it; `tests/e2e/clinic-profile.spec.ts` covers both.
 - Batch refund action on My vouchers (`src/app/my/page.tsx`) enabling funders to recover expired, unclaimed vouchers in a single sequence with live progress and completion summary (#45).
 - Printable patient care summary page (`src/app/my/print/page.tsx`) rendering settled care receipts with dates, clinics, services, amounts, and receipt numbers, without printing any patient secret key, reference, or beneficiary hash (#46).
 - Display dispute resolution outcome and date on voucher page (`src/lib/timeline.ts`, `src/app/vouchers/[id]/page.tsx`, `VoucherRow.tsx`) showing whether resolved in funder's favour (refunded) or clinic's favour (settled) (#47).

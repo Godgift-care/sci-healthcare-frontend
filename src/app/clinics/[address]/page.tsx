@@ -4,10 +4,16 @@ import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
 import { type Service } from '@/lib/api';
-import { formatUsdc, shortAddress, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import {
+  formatDate,
+  formatUsdc,
+  shortAddress,
+  toAmountInput,
+  toBaseUnits,
+} from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
-import { invalidateVouchers, useProvider } from '@/lib/hooks';
+import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -18,6 +24,30 @@ import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
 /** How long the patient has to attend before the funder can refund. */
 const EXPIRY_OPTIONS = [14, 30, 60, 90] as const;
+
+/**
+ * Registry status in the words a funder reads. A funder choosing a clinic
+ * needs to know it is verified, and an unknown status is shown as such
+ * rather than assumed verified.
+ */
+const STATUS_BADGES: Record<string, { label: string; className: string }> = {
+  Active: {
+    label: 'Verified',
+    className: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  },
+  Pending: {
+    label: 'Verification pending',
+    className: 'bg-amber-50 text-amber-800 ring-amber-200',
+  },
+  Suspended: {
+    label: 'Suspended',
+    className: 'bg-red-50 text-red-700 ring-red-200',
+  },
+};
+const UNKNOWN_STATUS = {
+  label: 'Status unknown',
+  className: 'bg-slate-100 text-slate-600 ring-slate-200',
+};
 
 export default function ClinicPage({
   params,
@@ -46,6 +76,16 @@ export default function ClinicPage({
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [fundedId, setFundedId] = useState<string | null>(null);
+
+  // Track record for funders: how many vouchers this clinic has settled. The
+  // count is filtered server-side, so it stays right as the list grows, and
+  // it simply goes unrendered if the indexer cannot answer. One row is enough
+  // for a total — clinic connections are often metered.
+  const {
+    total: settledCount,
+    isLoading: loadingSettled,
+    error: settledError,
+  } = useVouchers({ provider: address, status: 'Settled', limit: 1 });
 
   // The amount as base units, or null while the field is not a number.
   const baseAmount = useMemo(() => {
@@ -133,15 +173,51 @@ export default function ClinicPage({
     return <p className="text-sm text-[var(--color-ink-soft)]">Loading clinic…</p>;
   }
 
+  const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
+  const registeredAt = Number.isFinite(Date.parse(provider.registeredAt))
+    ? provider.registeredAt
+    : null;
+  const showSettled = !loadingSettled && !settledError;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
-          <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
-            {provider.country} · {shortAddress(provider.address, 8)}
-          </p>
-        </div>
+        <Card className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
+              <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
+                {provider.country} · {shortAddress(provider.address, 8)}
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${status.className}`}
+            >
+              {status.label}
+            </span>
+          </div>
+
+          {(registeredAt || showSettled) && (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--color-line)] pt-4 sm:grid-cols-3">
+              {registeredAt && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Registered
+                  </dt>
+                  <dd className="mt-0.5 text-sm">{formatDate(registeredAt)}</dd>
+                </div>
+              )}
+              {showSettled && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Vouchers settled
+                  </dt>
+                  <dd className="mt-0.5 text-sm tabular-nums">{settledCount}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </Card>
 
         <Card className="divide-y divide-[var(--color-line)]">
           {provider.services
