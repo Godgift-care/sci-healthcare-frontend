@@ -2,6 +2,15 @@ import { config } from './config';
 
 /** Read model served by the indexer. Never used for writes. */
 
+/**
+ * Deadline for a read that a page render is waiting on: the
+ * `generateMetadata` behind a shared voucher or clinic link. The indexer host
+ * sleeps when idle and can take 30–60s to wake, so a preview fetch gives up
+ * quickly and the page falls back to the default title instead of hanging on
+ * a cold API.
+ */
+export const METADATA_TIMEOUT_MS = 4_000;
+
 export type Service = {
   code: number;
   label: string;
@@ -141,7 +150,12 @@ class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, params?: Record<string, string | undefined>): Promise<T> {
+async function get<T>(
+  path: string,
+  params?: Record<string, string | undefined>,
+  /** Carried into `fetch`, so a caller can put a deadline on the read. */
+  init?: RequestInit,
+): Promise<T> {
   const url = new URL(path, config.apiUrl);
   for (const [k, v] of Object.entries(params ?? {})) {
     if (v) url.searchParams.set(k, v);
@@ -149,7 +163,10 @@ async function get<T>(path: string, params?: Record<string, string | undefined>)
 
   let res: Response;
   try {
-    res = await fetch(url.toString(), { headers: { accept: 'application/json' } });
+    res = await fetch(url.toString(), {
+      ...init,
+      headers: { accept: 'application/json' },
+    });
   } catch {
     throw new ApiError(0, `Cannot reach the API at ${config.apiUrl}. Is it running?`);
   }
@@ -169,7 +186,8 @@ export const api = {
   providers: (params?: { status?: string; country?: string; q?: string }) =>
     get<{ total: number; providers: Provider[] }>('/providers', params),
 
-  provider: (address: string) => get<Provider>(`/providers/${address}`),
+  provider: (address: string, init?: RequestInit) =>
+    get<Provider>(`/providers/${address}`, undefined, init),
 
   vouchers: (params: {
     funder?: string;
@@ -187,7 +205,8 @@ export const api = {
       limit: params.limit ? String(params.limit) : undefined,
     }),
 
-  voucher: (id: string) => get<Voucher & { receipt: Receipt | null }>(`/vouchers/${id}`),
+  voucher: (id: string, init?: RequestInit) =>
+    get<Voucher & { receipt: Receipt | null }>(`/vouchers/${id}`, undefined, init),
 
   receipts: (beneficiaryRef: string) =>
     get<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>('/receipts', {
