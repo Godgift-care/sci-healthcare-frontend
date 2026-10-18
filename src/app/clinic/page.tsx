@@ -10,7 +10,8 @@ import { useLiveUpdates, useProvider, useVouchers } from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Button, Card, Empty, ExplorerLink } from '@/components/ui';
+import { useToast } from '@/components/Toast';
+import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
 type Standing = ProviderStanding | 'Unregistered' | null;
@@ -35,9 +36,8 @@ const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
 export default function ClinicDeskPage() {
   const { address, signTransaction, connect } = useWallet();
 
-  const [error, setError] = useState<string | null>(null);
-  const [hash, setHash] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const toast = useToast();
 
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
@@ -78,15 +78,19 @@ export default function ClinicDeskPage() {
   async function submit(fn: () => Promise<{ hash: string }>, table = REGISTRY_ERRORS) {
     if (!address) return void connect();
     setBusy(true);
-    setError(null);
-    setHash(null);
     try {
       const res = await fn();
-      setHash(res.hash);
       setConfirmRemove(null);
       refreshAll();
+      toast.success(
+        <>
+          Submitted.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>{' '}
+          Lists update once the indexer catches up.
+        </>,
+      );
     } catch (err) {
-      setError(humaniseError(err, table));
+      toast.error(humaniseError(err, table));
     } finally {
       setBusy(false);
     }
@@ -112,14 +116,6 @@ export default function ClinicDeskPage() {
           {standing === null ? 'Checking registration…' : STANDING_TEXT[standing]}
         </p>
       </div>
-
-      {error && <Alert>{error}</Alert>}
-      {hash && (
-        <Alert kind="success">
-          Submitted. <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>{' '}
-          Lists update once the indexer catches up.
-        </Alert>
-      )}
 
       {standing === 'Unregistered' && (
         <Card className="space-y-3 p-5">

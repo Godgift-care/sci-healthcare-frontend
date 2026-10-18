@@ -34,6 +34,20 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
 
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # Vitest unit tests for the pure helpers in src/lib (#77): money,
+      # lifecycle, dispute codes and error mapping, with i128 boundaries.
+      - run: npm run test:unit
+
   build:
     name: build
     runs-on: ubuntu-latest
