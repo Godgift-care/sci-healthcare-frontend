@@ -277,6 +277,7 @@ export const api = {
     beneficiaryRef: string,
     params?: { limit?: number; offset?: number },
   ) =>
+  receipts: (beneficiaryRef: string) =>
     get<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>('/receipts', {
       beneficiaryRef,
       limit: params?.limit ? String(params.limit) : undefined,
