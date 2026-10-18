@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Filter and sort on My vouchers (`src/app/my/page.tsx`, `src/lib/voucher-filters.ts`): funders with many vouchers can narrow the list by status and clinic and order it by date or amount, so what needs action now is at the top. The choice lives in the URL (`?status=…&clinic=…&sort=…`), so a reload keeps the view and the link can be shared; defaults are omitted from the URL, amounts are compared as `BigInt` rather than `Number`, and the list offers only statuses and clinics it actually contains. Covered by `tests/e2e/my-voucher-filters.spec.ts` at desktop and 390px widths.
 - Public clinic page header (`src/app/clinics/[address]/page.tsx`) showing whether the clinic is verified, when it was registered, and how many of its vouchers have settled, so funders can judge a clinic's track record before funding. The count is filtered server-side (`/vouchers?provider=…&status=Settled&limit=1`, `useVouchers`) and every stat is omitted rather than guessed when the indexer does not provide it; `tests/e2e/clinic-profile.spec.ts` covers both.
 - Batch refund action on My vouchers (`src/app/my/page.tsx`) enabling funders to recover expired, unclaimed vouchers in a single sequence with live progress and completion summary (#45).
 - Printable patient care summary page (`src/app/my/print/page.tsx`) rendering settled care receipts with dates, clinics, services, amounts, and receipt numbers, without printing any patient secret key, reference, or beneficiary hash (#46).

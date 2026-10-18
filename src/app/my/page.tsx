@@ -1,23 +1,56 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { formatDate } from '@/lib/amounts';
+import { formatDate, shortAddress } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import {
+  DEFAULT_SORT,
+  SORT_LABELS,
+  VOUCHER_STATUSES,
+  clinicOptions,
+  filterVouchers,
+  parseSort,
+  parseStatus,
+  sortVouchers,
+  type VoucherSort,
+} from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 
 export default function MyPage() {
+  // useSearchParams sends the tree through client rendering; the boundary
+  // keeps that bailout local to this page, as Next requires.
+  return (
+    <Suspense fallback={<p className="text-sm text-[var(--color-ink-soft)]">Loading vouchers…</p>}>
+      <MyVouchers />
+    </Suspense>
+  );
+}
+
+function MyVouchers() {
   const { address, signTransaction, connect } = useWallet();
   useLiveUpdates();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // Two selects changed in quick succession would both read the query from the
+  // render before the first navigation landed, so the later write would drop
+  // the earlier choice. Build every write on the last query we wrote instead.
+  const queryRef = useRef(searchParams.toString());
+  useEffect(() => {
+    queryRef.current = searchParams.toString();
+  }, [searchParams]);
 
   const saved = useSavedIdentity();
   // null until the user types, so the saved values show through.
@@ -62,6 +95,51 @@ export default function MyPage() {
   // Combine wallet vouchers with any looked-up beneficiary history vouchers
   const seenIds = new Set(walletFunded.map((v) => v.id));
   const funded = [...walletFunded, ...refVouchers.filter((v) => !seenIds.has(v.id))];
+
+  // Filters and sort live in the URL, so a reload keeps the view.
+  const statusFilter = parseStatus(searchParams.get('status'));
+  const clinicFilter = searchParams.get('clinic');
+  const sort = parseSort(searchParams.get('sort'));
+
+  const clinics = clinicOptions(funded);
+  const clinicChoices =
+    clinicFilter && !clinics.some((c) => c.address === clinicFilter)
+      ? [...clinics, { address: clinicFilter, name: shortAddress(clinicFilter, 6) }]
+      : clinics;
+  // Only statuses in use are offered, plus a stale one still in the URL.
+  const statusChoices = VOUCHER_STATUSES.filter(
+    (s) => s === statusFilter || funded.some((v) => v.status === s),
+  );
+  const visible = sortVouchers(
+    filterVouchers(funded, { status: statusFilter, clinic: clinicFilter }),
+    sort,
+  );
+  const filtered = statusFilter !== null || Boolean(clinicFilter);
+  const isDefaultView = !filtered && sort === DEFAULT_SORT;
+
+  function writeParams(update: (params: URLSearchParams) => void) {
+    const params = new URLSearchParams(queryRef.current);
+    update(params);
+    const query = params.toString();
+    queryRef.current = query;
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  function setParam(key: 'status' | 'clinic' | 'sort', value: string) {
+    writeParams((params) => {
+      // Defaults are omitted, so an unfiltered /my stays a clean link.
+      if (!value || (key === 'sort' && value === DEFAULT_SORT)) params.delete(key);
+      else params.set(key, value);
+    });
+  }
+
+  function resetFilters() {
+    writeParams((params) => {
+      params.delete('status');
+      params.delete('clinic');
+      params.delete('sort');
+    });
+  }
 
   const refundable = funded.filter((v) => v.isRefundable);
 
@@ -167,8 +245,91 @@ export default function MyPage() {
         {address && funded.length === 0 && (
           <Empty>No vouchers yet. Pick a clinic to fund care.</Empty>
         )}
+        {funded.length > 0 && (
+          <Card className="space-y-3 p-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  Status
+                </span>
+                <select
+                  value={statusFilter ?? ''}
+                  onChange={(e) => setParam('status', e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                >
+                  <option value="">All statuses</option>
+                  {statusChoices.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  Clinic
+                </span>
+                <select
+                  value={clinicFilter ?? ''}
+                  onChange={(e) => setParam('clinic', e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                >
+                  <option value="">All clinics</option>
+                  {clinicChoices.map((c) => (
+                    <option key={c.address} value={c.address}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  Sort by
+                </span>
+                <select
+                  value={sort}
+                  onChange={(e) => setParam('sort', e.target.value as VoucherSort)}
+                  className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                >
+                  {(Object.keys(SORT_LABELS) as VoucherSort[]).map((s) => (
+                    <option key={s} value={s}>
+                      {SORT_LABELS[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span aria-live="polite">
+                Showing {visible.length} of {funded.length} voucher
+                {funded.length === 1 ? '' : 's'}
+              </span>
+              {!isDefaultView && (
+                <Button
+                  variant="ghost"
+                  className="px-3 py-1.5 text-xs"
+                  onClick={resetFilters}
+                >
+                  Reset filters
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+        {funded.length > 0 && visible.length === 0 && (
+          <Empty>
+            No vouchers match these filters.{' '}
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="font-medium underline underline-offset-2 hover:no-underline"
+            >
+              Clear filters
+            </button>
+          </Empty>
+        )}
         <div className="space-y-3">
-          {funded.map((v) => (
+          {visible.map((v) => (
             <VoucherRow
               key={v.id}
               v={v}
