@@ -62,7 +62,10 @@ export function useLiveUpdates({
       setLastEventTime(Date.now());
       if (voucherId) {
         void mutate(['voucher', voucherId]);
-        void mutate((key) => Array.isArray(key) && key[0] === 'vouchers');
+        // The event log gains a row with every step (#18): refetch it too
+        // so a fresh claim or attestation arrives with its transaction.
+        void mutate(['voucher-events', voucherId]);
+        void mutate((key) => Array.isArray(key) && (key[0] === 'vouchers' || key[0] === 'voucher-events'));
       }
       if (providerAddress) {
         void mutate(['provider', providerAddress]);
