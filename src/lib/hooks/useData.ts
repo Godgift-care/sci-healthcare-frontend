@@ -10,6 +10,7 @@ import {
   type Receipt,
   type Stats,
   type Voucher,
+  type VoucherEvent,
 } from '../api';
 
 export type LoadedVoucher = Voucher & { receipt: Receipt | null };
@@ -36,6 +37,29 @@ export function useVoucher(
     isLoading,
     isValidating,
     mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching a voucher's on-chain event log (#18).
+ *
+ * Each event carries the hash of the transaction that emitted it, so the
+ * timeline can link its steps to Stellar Expert. An indexer that predates
+ * the endpoint (backend #13) answers 404: the error is not retried and not
+ * surfaced — the page renders the same timeline, only without the links.
+ */
+export function useVoucherEvents(id: string | null | undefined) {
+  const { data, error, isLoading, isValidating } = useSWR<VoucherEvent[]>(
+    id ? ['voucher-events', id] : null,
+    () => api.voucherEvents(id!),
+    { shouldRetryOnError: false },
+  );
+
+  return {
+    events: data ?? [],
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    isLoading,
+    isValidating,
   };
 }
 
@@ -230,11 +254,12 @@ export function useIsAttester(address: string | null | undefined) {
 export async function invalidateVouchers(voucherId?: string): Promise<void> {
   if (voucherId) {
     await globalMutate(['voucher', voucherId]);
+    await globalMutate(['voucher-events', voucherId]);
   }
   await globalMutate(
     (key) =>
       Array.isArray(key) &&
-      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher'),
+      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher' || key[0] === 'voucher-events'),
   );
 }
 

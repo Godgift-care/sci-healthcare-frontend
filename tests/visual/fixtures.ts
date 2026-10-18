@@ -213,6 +213,11 @@ export async function mockApi(page: Page): Promise<void> {
     }
 
     if (parts[0] === 'vouchers') {
+      // /vouchers/<id>/events — a pre-#13 indexer answers 404, so the
+      // timeline snapshot shows dates without "view transaction" links.
+      if (parts.length === 3 && parts[2] === 'events') {
+        return json({ message: 'Not found' }, 404);
+      }
       // /vouchers/<id>
       if (parts.length === 2) {
         if (parts[1] === VOUCHER_ID) return json(voucherDetail);

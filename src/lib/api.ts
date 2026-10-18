@@ -98,6 +98,59 @@ export type Voucher = {
   isRefundable: boolean;
 };
 
+/**
+ * One row of the indexer's append-only contract-event log (backend #13).
+ *
+ * Every processed event is stored once, in ledger order, with the hash of
+ * the transaction that emitted it — the raw material for linking a
+ * timeline step to Stellar Expert (#18).
+ */
+export type VoucherEvent = {
+  /** RPC event id; unique, and the indexer is idempotent on it. */
+  id?: string | number;
+  /** Address of the contract that emitted the event. */
+  contract?: string;
+  /** Event name as decoded from the topic, e.g. `voucher_created`. */
+  name: string;
+  /** Ledger the event was closed in; rows come back in this order. */
+  ledger?: number;
+  /** Hash of the transaction that emitted the event. */
+  txHash: string;
+  /** Ledger close time of the event. */
+  closedAt?: string;
+  /** The voucher this event belongs to, when the event carries one. */
+  voucherId?: string | number | null;
+  /** Decoded payload; addresses and amounts are strings, never numbers. */
+  data?: Record<string, unknown> | null;
+};
+
+/**
+ * Normalises the payload of `GET /vouchers/:id/events` into a plain list.
+ *
+ * The endpoint is new (backend #13) and its envelope is not settled yet,
+ * so both shapes are accepted: a bare array, or an object carrying
+ * `events`. Anything else — a 404 body from an indexer that predates the
+ * endpoint, an empty object, a stray non-event row — becomes an empty
+ * list, and the caller shows a timeline without links rather than an
+ * error (#18).
+ */
+export function parseVoucherEvents(body: unknown): VoucherEvent[] {
+  const list: unknown[] = Array.isArray(body)
+    ? body
+    : body && typeof body === 'object' && Array.isArray((body as { events?: unknown }).events)
+      ? (body as { events: unknown[] }).events
+      : [];
+
+  return list.filter(
+    (e): e is VoucherEvent =>
+      !!e &&
+      typeof e === 'object' &&
+      typeof (e as VoucherEvent).name === 'string' &&
+      typeof (e as VoucherEvent).txHash === 'string' &&
+      (e as VoucherEvent).txHash.length > 0,
+  );
+}
+
 export type Receipt = {
   voucherId: string;
   providerAddress: string;
@@ -207,6 +260,16 @@ export const api = {
 
   voucher: (id: string, init?: RequestInit) =>
     get<Voucher & { receipt: Receipt | null }>(`/vouchers/${id}`, undefined, init),
+
+  /**
+   * A voucher's on-chain event log, in ledger order (#18, backend #13).
+   *
+   * Throws when the endpoint is unavailable — an indexer that predates it
+   * answers 404 — and callers are expected to treat that as "no links",
+   * not as a failure of the page.
+   */
+  voucherEvents: async (id: string, init?: RequestInit): Promise<VoucherEvent[]> =>
+    parseVoucherEvents(await get<unknown>(`/vouchers/${id}/events`, undefined, init)),
 
   receipts: (beneficiaryRef: string) =>
     get<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>('/receipts', {
