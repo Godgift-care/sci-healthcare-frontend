@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { use, useState } from 'react';
 
-import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
+import { formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract } from '@/lib/config';
-import { useLiveUpdates, useNow, useVoucher } from '@/lib/hooks';
+import { useLiveUpdates, useNameIndex, useNow, useVoucher } from '@/lib/hooks';
 import { voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
+import { CopyValue } from '@/components/CopyValue';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
 
@@ -22,6 +23,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const { address } = useWallet();
   const now = useNow();
+  const names = useNameIndex();
   const [copied, setCopied] = useState(false);
 
   async function copyLink() {
@@ -131,7 +133,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
 
         <Card className="space-y-4 p-5">
           <Field label="Funded by">
-            <span className="mono">{shortAddress(v.funder)}</span>
+            <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
           </Field>
           <Field label="Expires">{formatDate(v.expiresAt)}</Field>
           {v.status === 'Settled' && v.settledNet && (
@@ -157,7 +159,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             <Field label="Care receipt">Minted {formatDate(v.receipt.settledAt)}</Field>
           )}
           <Field label="Patient reference">
-            <span className="mono text-xs">{v.beneficiaryRef.slice(0, 16)}…</span>
+            <CopyValue
+              value={v.beneficiaryRef}
+              display={`${v.beneficiaryRef.slice(0, 16)}…`}
+              label="patient reference"
+            />
           </Field>
           <p className="text-xs text-[var(--color-ink-soft)]">
             The patient reference is an opaque hash. It cannot be turned back into a

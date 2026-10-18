@@ -4,10 +4,15 @@ import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
 import { type Service } from '@/lib/api';
-import { formatUsdc, shortAddress, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import {
+  formatDate,
+  formatUsdc,
+  toAmountInput,
+  toBaseUnits,
+} from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
-import { invalidateVouchers, useProvider } from '@/lib/hooks';
+import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -15,10 +20,36 @@ import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { TestUsdc } from '@/components/TestUsdc';
+import { CopyValue } from '@/components/CopyValue';
+import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
 /** How long the patient has to attend before the funder can refund. */
 const EXPIRY_OPTIONS = [14, 30, 60, 90] as const;
+
+/**
+ * Registry status in the words a funder reads. A funder choosing a clinic
+ * needs to know it is verified, and an unknown status is shown as such
+ * rather than assumed verified.
+ */
+const STATUS_BADGES: Record<string, { label: string; className: string }> = {
+  Active: {
+    label: 'Verified',
+    className: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  },
+  Pending: {
+    label: 'Verification pending',
+    className: 'bg-amber-50 text-amber-800 ring-amber-200',
+  },
+  Suspended: {
+    label: 'Suspended',
+    className: 'bg-red-50 text-red-700 ring-red-200',
+  },
+};
+const UNKNOWN_STATUS = {
+  label: 'Status unknown',
+  className: 'bg-slate-100 text-slate-600 ring-slate-200',
+};
 
 export default function ClinicPage({
   params,
@@ -44,9 +75,17 @@ export default function ClinicPage({
   const [expiryDays, setExpiryDays] = useState<number>(30);
   const [generatedKey, setGeneratedKey] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [fundedId, setFundedId] = useState<string | null>(null);
+  const toast = useToast();
+
+  // Track record for funders: how many vouchers this clinic has settled. The
+  // count is filtered server-side, so it stays right as the list grows, and
+  // it simply goes unrendered if the indexer cannot answer. One row is enough
+  // for a total — clinic connections are often metered.
+  const {
+    total: settledCount,
+    isLoading: loadingSettled,
+    error: settledError,
+  } = useVouchers({ provider: address, status: 'Settled', limit: 1 });
 
   // The amount as base units, or null while the field is not a number.
   const baseAmount = useMemo(() => {
@@ -85,9 +124,6 @@ export default function ClinicPage({
     if (!selected) return;
 
     setBusy(true);
-    setError(null);
-    setTxHash(null);
-    setFundedId(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
       localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
@@ -112,18 +148,31 @@ export default function ClinicPage({
         },
         signTransaction,
       );
-      setTxHash(res.hash);
       // create_voucher returns the new id as a u64.
+      let newId: string | null = null;
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
-        const newId = String(res.returnValue);
-        setFundedId(newId);
+        newId = String(res.returnValue);
         void invalidateVouchers(newId);
       } else {
         void invalidateVouchers();
       }
       trackEvent('voucher_funded');
+      toast.success(
+        <>
+          Voucher funded.{' '}
+          {newId && (
+            <>
+              <Link href={`/vouchers/${newId}`} className="underline underline-offset-2">
+                Open voucher #{newId}
+              </Link>{' '}
+              ·{' '}
+            </>
+          )}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
     } catch (err) {
-      setError(humaniseError(err, VOUCHER_ERRORS));
+      toast.error(humaniseError(err, VOUCHER_ERRORS));
     } finally {
       setBusy(false);
     }
@@ -134,15 +183,52 @@ export default function ClinicPage({
     return <p className="text-sm text-[var(--color-ink-soft)]">Loading clinic…</p>;
   }
 
+  const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
+  const registeredAt = Number.isFinite(Date.parse(provider.registeredAt))
+    ? provider.registeredAt
+    : null;
+  const showSettled = !loadingSettled && !settledError;
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
-          <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
-            {provider.country} · {shortAddress(provider.address, 8)}
-          </p>
-        </div>
+        <Card className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
+              <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
+                {provider.country} ·{' '}
+                <CopyValue value={provider.address} chars={8} label="clinic address" />
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${status.className}`}
+            >
+              {status.label}
+            </span>
+          </div>
+
+          {(registeredAt || showSettled) && (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--color-line)] pt-4 sm:grid-cols-3">
+              {registeredAt && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Registered
+                  </dt>
+                  <dd className="mt-0.5 text-sm">{formatDate(registeredAt)}</dd>
+                </div>
+              )}
+              {showSettled && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Vouchers settled
+                  </dt>
+                  <dd className="mt-0.5 text-sm tabular-nums">{settledCount}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </Card>
 
         <Card className="divide-y divide-[var(--color-line)]">
           {provider.services
@@ -287,32 +373,19 @@ export default function ClinicPage({
 
             <TestUsdc compact />
 
-            {error && <Alert>{error}</Alert>}
-
-            {txHash && (
-              <Alert kind="success">
-                Voucher funded.{' '}
-                {fundedId && (
-                  <>
-                    <Link href={`/vouchers/${fundedId}`} className="underline underline-offset-2">
-                      Open voucher #{fundedId}
-                    </Link>{' '}
-                    ·{' '}
-                  </>
-                )}
-                <ExplorerLink href={explorerTx(txHash)}>View transaction</ExplorerLink>
-              </Alert>
-            )}
-
             <Button onClick={() => void fund()} disabled={busy} className="w-full">
               {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
             </Button>
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
               Funds are escrowed by the contract at{' '}
-              {shortAddress(config.contracts.voucher, 4)} and released to the clinic
-              only after an attester confirms delivery. Unclaimed vouchers are
-              refundable after {expiryDays} days.
+              <CopyValue
+                value={config.contracts.voucher}
+                chars={4}
+                label="contract id"
+              />{' '}
+              and released to the clinic only after an attester confirms delivery.
+              Unclaimed vouchers are refundable after {expiryDays} days.
             </p>
           </>
         )}

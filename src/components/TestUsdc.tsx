@@ -9,6 +9,7 @@ import { faucet, usdc } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
 import { Alert, Button, Card } from './ui';
+import { useToast } from './Toast';
 
 /**
  * Testnet only: the connected wallet's demo USDC balance and a button to
@@ -22,8 +23,8 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
   const [nextAt, setNextAt] = useState<number>(0);
   const [drip, setDrip] = useState<bigint | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [needsTrustline, setNeedsTrustline] = useState(false);
+  const toast = useToast();
 
   const [reloads, setReloads] = useState(0);
   const refresh = useCallback(() => setReloads((n) => n + 1), []);
@@ -53,7 +54,6 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
   async function getUsdc() {
     if (!address) return void connect();
     setBusy(true);
-    setError(null);
     setNeedsTrustline(false);
     try {
       await faucet.drip(address, signTransaction);
@@ -61,7 +61,7 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
     } catch (err) {
       const msg = humaniseError(err, FAUCET_ERRORS);
       if (/trustline/i.test(msg)) setNeedsTrustline(true);
-      else setError(msg);
+      else toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -116,12 +116,6 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
             <span className="mono break-all">{config.usdcIssuer || 'see the docs'}</span>.
             Then press the button again.
           </Alert>
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-3">
-          <Alert>{error}</Alert>
         </div>
       )}
     </>

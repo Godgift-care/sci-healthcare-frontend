@@ -48,6 +48,8 @@ export function useVouchers(
     provider?: string;
     beneficiaryRef?: string;
     status?: string;
+    /** Page size; pass 1 when only `total` is used. */
+    limit?: number;
   } | null,
   config?: SWRConfiguration<{ total: number; vouchers: Voucher[] }>,
 ) {
