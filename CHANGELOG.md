@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Review screen before funding on the clinic page (`src/app/clinics/[address]/page.tsx`): funders confirm clinic, service, amount, fee, payout and expiry before signing, can go back without losing values, and the summary masks the patient secret key so it is never shown in full.
 - Named saved patients for funding and care-history lookup (`src/lib/beneficiary.ts`, `SavedPatientControls`) with browser-local storage, selection, rename/delete, and migration from the previous single-patient storage format.
 - Unit tests for the pure helpers (#77): Vitest (`vitest.config.mts`, `npm run test:unit`, dev-dependency `vitest`, and a `unit` job in CI) covers `amounts` — including i128 boundaries and the `toBaseUnits`/`formatUsdc` edge cases that decide what a funder pays — plus `timeline`, `disputes`, `errors` and the new `names` helper. `@types/node` moves from 22.10.5 to 22.20.5 because Vitest's Vite requires `>=22.12.0`.
 - Copy control beside shortened addresses and hashes (`src/components/CopyValue.tsx`, #78): a reusable button that copies the full value, confirms with a tick, and announces the result through an ARIA live region. Used on the clinic page (clinic address, voucher contract id), the voucher page (funder address, patient reference) and the attester directory, so a value can be pasted straight into an explorer.
