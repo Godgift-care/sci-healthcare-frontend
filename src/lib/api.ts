@@ -249,6 +249,7 @@ export const api = {
     status?: string;
     /** Page size. A caller that only needs `total` asks for one row. */
     limit?: number;
+    offset?: number;
   }) =>
     get<{ total: number; vouchers: Voucher[] }>('/vouchers', {
       funder: params.funder,
@@ -256,6 +257,7 @@ export const api = {
       beneficiaryRef: params.beneficiaryRef,
       status: params.status,
       limit: params.limit ? String(params.limit) : undefined,
+      offset: params.offset ? String(params.offset) : undefined,
     }),
 
   voucher: (id: string, init?: RequestInit) =>
@@ -271,9 +273,14 @@ export const api = {
   voucherEvents: async (id: string, init?: RequestInit): Promise<VoucherEvent[]> =>
     parseVoucherEvents(await get<unknown>(`/vouchers/${id}/events`, undefined, init)),
 
-  receipts: (beneficiaryRef: string) =>
+  receipts: (
+    beneficiaryRef: string,
+    params?: { limit?: number; offset?: number },
+  ) =>
     get<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>('/receipts', {
       beneficiaryRef,
+      limit: params?.limit ? String(params.limit) : undefined,
+      offset: params?.offset ? String(params.offset) : undefined,
     }),
 
   attesters: (params?: { all?: boolean; limit?: number; offset?: number }) =>
