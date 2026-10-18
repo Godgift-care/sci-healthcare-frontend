@@ -13,6 +13,7 @@ import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
+import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { TestUsdc } from '@/components/TestUsdc';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
@@ -89,7 +90,7 @@ export default function ClinicPage({
     setFundedId(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(identifier, secret);
+      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
       const base = toBaseUnits(amount);
       if (base < BigInt(selected.price)) {
@@ -189,6 +190,15 @@ export default function ClinicPage({
               {selected.label} · ${formatUsdc(selected.price)}
             </Field>
 
+            <SavedPatientControls
+              identifier={identifier}
+              keyValue={secret}
+              onSelect={(patient) => {
+                setIdentifier(patient?.identifier ?? '');
+                setSecret(patient?.key ?? '');
+              }}
+            />
+
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
                 Patient reference
@@ -234,9 +244,9 @@ export default function ClinicPage({
 
             {generatedKey && (
               <Alert kind="info">
-                Save this key somewhere safe and share it with the patient or their
-                clinic. It is the only way to look up this patient&apos;s care history
-                later, and it cannot be recovered.
+                This key is the only way to look up this patient&apos;s care history
+                later. Save the patient on this browser or keep a separate backup;
+                the key cannot be recovered.
               </Alert>
             )}
 

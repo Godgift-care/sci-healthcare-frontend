@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Named saved patients for funding and care-history lookup (`src/lib/beneficiary.ts`, `SavedPatientControls`) with browser-local storage, selection, rename/delete, and migration from the previous single-patient storage format.
 - Batch refund action on My vouchers (`src/app/my/page.tsx`) enabling funders to recover expired, unclaimed vouchers in a single sequence with live progress and completion summary (#45).
 - Printable patient care summary page (`src/app/my/print/page.tsx`) rendering settled care receipts with dates, clinics, services, amounts, and receipt numbers, without printing any patient secret key, reference, or beneficiary hash (#46).
 - Display dispute resolution outcome and date on voucher page (`src/lib/timeline.ts`, `src/app/vouchers/[id]/page.tsx`, `VoucherRow.tsx`) showing whether resolved in funder's favour (refunded) or clinic's favour (settled) (#47).
