@@ -3,9 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { BrowserQRCodeReader } from '@zxing/browser';
+
 import { formatDate, shortAddress } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
-import { beneficiaryRef, localIdentity } from '@/lib/beneficiary';
+import {
+  beneficiaryRef,
+  loadSavedPatients,
+  localIdentity,
+  parsePatientBackup,
+  upsertSavedPatient,
+} from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
@@ -65,6 +73,12 @@ export default function MyPage() {
 
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedPatients, setSavedPatients] = useState(() => loadSavedPatients());
+  const [importError, setImportError] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrBusy, setQrBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Batch refunding state (#45)
   const [batchRefunding, setBatchRefunding] = useState(false);
@@ -191,6 +205,89 @@ export default function MyPage() {
       setError(err instanceof Error ? err.message : 'Failed to load history');
     }
   }
+
+  async function applyImportedPatient(input: string | File | unknown) {
+    setImportError(null);
+    try {
+      const patient = await parsePatientBackup(input);
+      const nextSaved = upsertSavedPatient(patient);
+      setSavedPatients(nextSaved);
+      setIdentifier(patient.identifier);
+      setSecret(patient.key);
+      localIdentity.save(patient.identifier, patient.key);
+      setError(null);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'That patient backup is invalid.');
+    }
+  }
+
+  useEffect(() => {
+    if (!qrOpen) return;
+
+    let cancelled = false;
+    let controls: { stop: () => void | Promise<void> } | undefined;
+    let cameraElement: HTMLVideoElement | null = null;
+
+    const start = async () => {
+      setQrBusy(true);
+      try {
+        const devices = await BrowserQRCodeReader.listVideoInputDevices();
+        if (devices.length === 0) {
+          throw new Error('No camera is available on this device.');
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false,
+        });
+
+        const reader = new BrowserQRCodeReader();
+        cameraElement = videoRef.current;
+        if (!cameraElement) {
+          throw new Error('Unable to open the QR scanner.');
+        }
+        cameraElement.srcObject = stream;
+        await cameraElement.play();
+
+        controls = await reader.decodeFromVideoDevice(
+          devices[0].deviceId,
+          cameraElement,
+          async (result, error) => {
+            if (cancelled) return;
+            if (result) {
+              const text = result.getText();
+              setQrBusy(false);
+              setQrOpen(false);
+              await applyImportedPatient(text);
+            } else if (error && !/NotFoundException|NoCodeFound/.test(String(error))) {
+              setQrBusy(false);
+              setQrOpen(false);
+              setImportError(
+                'Could not read that QR code. Try another angle or import the JSON backup file instead.',
+              );
+            }
+          },
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setQrBusy(false);
+          setQrOpen(false);
+          setImportError(
+            err instanceof Error ? err.message : 'Unable to open the QR scanner.',
+          );
+        }
+      }
+    };
+
+    void start();
+    return () => {
+      cancelled = true;
+      void controls?.stop();
+      const stream = cameraElement?.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((track) => track.stop());
+      if (cameraElement) cameraElement.srcObject = null;
+    };
+  }, [qrOpen]);
 
   const historyError = error || receiptsError || refVouchersError;
 
@@ -355,6 +452,76 @@ export default function MyPage() {
           Enter the patient reference and key used when funding. Both stay on this
           device; only a derived, opaque value is ever queried.
         </p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              await applyImportedPatient(file);
+              e.target.value = '';
+            }}
+          />
+          <Button variant="ghost" onClick={() => fileInputRef.current?.click()}>
+            Import backup
+          </Button>
+          <Button variant="ghost" onClick={() => setQrOpen(true)}>
+            Scan QR
+          </Button>
+        </div>
+
+        {savedPatients.length > 0 && (
+          <Card className="space-y-2 p-4">
+            <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              Saved patients
+            </div>
+            <div className="space-y-2">
+              {savedPatients.map((savedPatient) => (
+                <div
+                  key={`${savedPatient.identifier}-${savedPatient.createdAt}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] px-3 py-2"
+                >
+                  <div>
+                    <div className="text-sm font-medium">{savedPatient.identifier}</div>
+                    <div className="text-xs text-[var(--color-ink-soft)]">
+                      {savedPatient.key.slice(0, 8)}…
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="px-3 py-1.5 text-xs"
+                    onClick={() => {
+                      setIdentifier(savedPatient.identifier);
+                      setSecret(savedPatient.key);
+                      localIdentity.save(savedPatient.identifier, savedPatient.key);
+                    }}
+                  >
+                    Use
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {importError && <Alert>{importError}</Alert>}
+
+        {qrOpen && (
+          <Card className="space-y-3 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-medium">Scan patient QR code</div>
+              <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => setQrOpen(false)}>
+                Close
+              </Button>
+            </div>
+            <video ref={videoRef} className="w-full rounded-lg border border-[var(--color-line)] bg-black" autoPlay muted playsInline />
+            {qrBusy && <div className="text-xs text-[var(--color-ink-soft)]">Scanning…</div>}
+          </Card>
+        )}
 
         <Card className="space-y-3 p-5">
           <div className="grid gap-3 sm:grid-cols-2">
