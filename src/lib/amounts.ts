@@ -25,6 +25,14 @@ export function formatUsdc(base: string | bigint): string {
   return `${whole.toLocaleString('en-US')}.${trimmed}`;
 }
 
+export function formatXlm(base: string | bigint): string {
+  const value = typeof base === 'bigint' ? base : BigInt(base);
+  const whole = value / SCALE;
+  const frac = (value % SCALE).toString().padStart(DECIMALS, '0');
+  const trimmed = frac.replace(/0+$/, '').padEnd(2, '0');
+  return `${whole.toLocaleString('en-US')}.${trimmed}`;
+}
+
 /**
  * Formats base units for an editable amount field: no thousands
  * separators, so `toBaseUnits` can parse it back. `formatUsdc` groups

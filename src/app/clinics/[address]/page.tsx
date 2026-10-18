@@ -4,14 +4,21 @@ import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
 import { type Service } from '@/lib/api';
-import { formatUsdc, shortAddress, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import {
+  formatUsdc,
+  formatXlm,
+  shortAddress,
+  toAmountInput,
+  toBaseUnits,
+} from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
 import { invalidateVouchers, useProvider } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
-import { config, explorerTx } from '@/lib/config';
+import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
-import { voucher } from '@/lib/protocol';
+import { voucher, usdc } from '@/lib/protocol';
+import { quoteXlmForUsdc } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
@@ -46,6 +53,9 @@ export default function ClinicPage({
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [fundedId, setFundedId] = useState<string | null>(null);
+  const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
+    ReturnType<typeof quoteXlmForUsdc>
+  > | null>(null);
 
   // The amount as base units, or null while the field is not a number.
   const baseAmount = useMemo(() => {
@@ -78,6 +88,35 @@ export default function ClinicPage({
     };
   }, [baseAmount]);
   const currentQuote = quote && quote.amount === baseAmount ? quote : null;
+  const canSwapWithXlm = isTestnet && Boolean(config.usdcIssuer);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadQuote() {
+      if (!wallet || !selected || baseAmount === null || !canSwapWithXlm) {
+        if (!ignore) setXlmSwapQuote(null);
+        return;
+      }
+
+      try {
+        const balance = await usdc.balance(wallet).catch(() => 0n);
+        if (balance >= baseAmount) {
+          if (!ignore) setXlmSwapQuote(null);
+          return;
+        }
+        const nextQuote = await quoteXlmForUsdc(baseAmount - balance, 100);
+        if (!ignore) setXlmSwapQuote(nextQuote);
+      } catch {
+        if (!ignore) setXlmSwapQuote(null);
+      }
+    }
+
+    void loadQuote();
+    return () => {
+      ignore = true;
+    };
+  }, [baseAmount, canSwapWithXlm, selected, wallet]);
 
   async function fund() {
     if (!wallet) return void connect();
@@ -99,18 +138,34 @@ export default function ClinicPage({
       }
 
       const expiresAt = Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60;
+      const walletBalance = canSwapWithXlm ? await usdc.balance(wallet).catch(() => 0n) : base;
+      const missingUsdc = walletBalance < base ? base - walletBalance : 0n;
 
-      const res = await voucher.create(
-        {
-          funder: wallet,
-          beneficiaryRef: ref,
-          provider: address,
-          serviceCode: selected.code,
-          amount: base,
-          expiresAt,
-        },
-        signTransaction,
-      );
+      const res = missingUsdc > 0n
+        ? await voucher.createWithXlmSwap(
+            {
+              funder: wallet,
+              beneficiaryRef: ref,
+              provider: address,
+              serviceCode: selected.code,
+              amount: base,
+              expiresAt,
+              swapAmount: missingUsdc,
+            },
+            signTransaction,
+            100,
+          )
+        : await voucher.create(
+            {
+              funder: wallet,
+              beneficiaryRef: ref,
+              provider: address,
+              serviceCode: selected.code,
+              amount: base,
+              expiresAt,
+            },
+            signTransaction,
+          );
       setTxHash(res.hash);
       // create_voucher returns the new id as a u64.
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
@@ -256,6 +311,13 @@ export default function ClinicPage({
                   {formatUsdc(currentQuote.fee)} protocol fee. Refunds are free.
                 </span>
               )}
+              {xlmSwapQuote && (
+                <span className="mt-2 block rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  XLM swap: {formatXlm(xlmSwapQuote.xlmCost)} XLM quoted to buy{' '}
+                  {formatUsdc(xlmSwapQuote.usdcAmount)} USDC, with a 1% slippage cap of{' '}
+                  {formatXlm(xlmSwapQuote.maxXlm)} XLM before the transaction aborts.
+                </span>
+              )}
             </label>
 
             <label className="block">
@@ -295,7 +357,13 @@ export default function ClinicPage({
             )}
 
             <Button onClick={() => void fund()} disabled={busy} className="w-full">
-              {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
+              {busy
+                ? 'Confirming…'
+                : wallet
+                  ? xlmSwapQuote
+                    ? 'Swap XLM & fund voucher'
+                    : 'Fund voucher'
+                  : 'Connect wallet'}
             </Button>
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">

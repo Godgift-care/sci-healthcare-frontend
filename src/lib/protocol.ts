@@ -4,7 +4,13 @@ import {
   RegistryClient,
   VoucherClient,
 } from './contracts';
-import { arg, invokeContract, readContract, type SignFn } from './stellar';
+import {
+  arg,
+  invokeContract,
+  invokePathPaymentThenContract,
+  readContract,
+  type SignFn,
+} from './stellar';
 
 export { RegistryClient, VoucherClient, FaucetClient } from './contracts';
 
@@ -73,6 +79,41 @@ export const voucher = {
       args,
       params.funder,
       sign,
+    );
+  },
+
+  async createWithXlmSwap(
+    params: {
+      funder: string;
+      beneficiaryRef: string;
+      provider: string;
+      serviceCode: number;
+      amount: bigint;
+      expiresAt: number;
+      swapAmount: bigint;
+    },
+    sign: SignFn,
+    slippageBps = 100,
+  ) {
+    const client = getVoucherClient();
+    const clean = params.beneficiaryRef.startsWith('0x')
+      ? params.beneficiaryRef.slice(2)
+      : params.beneficiaryRef;
+    const args = client.spec.funcArgsToScVals('create_voucher', {
+      funder: params.funder,
+      beneficiary_ref: Buffer.from(clean, 'hex'),
+      provider: params.provider,
+      service_code: params.serviceCode,
+      amount: params.amount,
+      expires_at: BigInt(params.expiresAt),
+    });
+    return invokePathPaymentThenContract(
+      config.contracts.voucher,
+      'create_voucher',
+      args,
+      params.funder,
+      sign,
+      { usdcAmount: params.swapAmount, slippageBps },
     );
   },
 
