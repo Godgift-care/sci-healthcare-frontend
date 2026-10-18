@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { formatDate, shortAddress } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
@@ -28,29 +27,34 @@ import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 
 export default function MyPage() {
-  // useSearchParams sends the tree through client rendering; the boundary
-  // keeps that bailout local to this page, as Next requires.
-  return (
-    <Suspense fallback={<p className="text-sm text-[var(--color-ink-soft)]">Loading vouchers…</p>}>
-      <MyVouchers />
-    </Suspense>
-  );
-}
-
-function MyVouchers() {
   const { address, signTransaction, connect } = useWallet();
   useLiveUpdates();
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  // Two selects changed in quick succession would both read the query from the
-  // render before the first navigation landed, so the later write would drop
-  // the earlier choice. Build every write on the last query we wrote instead.
-  const queryRef = useRef(searchParams.toString());
+  // The filter choices are view state, so they live in the URL — but they are
+  // written with the History API rather than a Next navigation. Reading them
+  // through `useSearchParams` forces the whole page through client rendering,
+  // which leaves only the Suspense fallback in the prerendered HTML and pushes
+  // Largest Contentful Paint past its budget (lighthouserc.json).
+  const [query, setQuery] = useState('');
+  // Two selects changed in quick succession would both build on the query from
+  // the render before the first write landed, so the later write would drop the
+  // earlier choice. Build every write on the last query we wrote instead.
+  const queryRef = useRef('');
   useEffect(() => {
-    queryRef.current = searchParams.toString();
-  }, [searchParams]);
+    const sync = () => {
+      const next = window.location.search.replace(/^\?/, '');
+      queryRef.current = next;
+      setQuery(next);
+    };
+    // The prerendered HTML cannot see the URL, so the unfiltered view renders
+    // first and the query is applied on hydration. Vouchers arrive after that
+    // anyway, so no unfiltered rows flash in.
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  const searchParams = useMemo(() => new URLSearchParams(query), [query]);
 
   const saved = useSavedIdentity();
   // null until the user types, so the saved values show through.
@@ -120,9 +124,14 @@ function MyVouchers() {
   function writeParams(update: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(queryRef.current);
     update(params);
-    const query = params.toString();
-    queryRef.current = query;
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    const next = params.toString();
+    queryRef.current = next;
+    setQuery(next);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      next ? `${window.location.pathname}?${next}` : window.location.pathname,
+    );
   }
 
   function setParam(key: 'status' | 'clinic' | 'sort', value: string) {
