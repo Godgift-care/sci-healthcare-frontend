@@ -121,10 +121,14 @@ export async function getAccountSpendableBalance(
     const url = `${horizonBaseUrl()}/accounts/${address}`;
     const res = await fetch(url, { headers: { accept: 'application/json' } });
     if (!res.ok) return null;
-    const account = (await res.json()) as HorizonAccountRecord;
-    const nativeEntry = account.balances.find((b) => b.asset_type === 'native');
-    const rawBalance = nativeEntry ? parseFloat(nativeEntry.balance) : 0;
-    const subentries = account.subentry_count ?? 0;
+    const account = (await res.json()) as Partial<HorizonAccountRecord>;
+    const balances = Array.isArray(account.balances) ? account.balances : [];
+    const nativeEntry = balances.find((b) => b.asset_type === 'native');
+    const nativeBalance = nativeEntry && typeof nativeEntry.balance === 'string'
+      ? Number(nativeEntry.balance)
+      : 0;
+    const rawBalance = Number.isFinite(nativeBalance) ? nativeBalance : 0;
+    const subentries = Number.isFinite(account.subentry_count) ? Number(account.subentry_count) : 0;
     const minBalance = (2 + subentries) * 0.5;
     const spendable = Math.max(0, rawBalance - minBalance);
     return {

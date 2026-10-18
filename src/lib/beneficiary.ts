@@ -154,6 +154,29 @@ export async function parsePatientBackup(input: string | File | unknown): Promis
   return parseSavedPatientRecord(input);
 }
 
+export function serialisePatientBackup(patient: {
+  identifier: string;
+  key: string;
+  createdAt?: string;
+}): string {
+  const identifier = patient.identifier.trim();
+  const key = patient.key.trim();
+
+  if (!identifier) throw new Error('This backup is missing a patient reference.');
+  if (!key) throw new Error('This backup is missing a patient key.');
+  if (key.length < 32) throw new Error('The patient key must be at least 32 characters long.');
+
+  return JSON.stringify(
+    {
+      identifier,
+      key,
+      ...(patient.createdAt ? { createdAt: patient.createdAt } : {}),
+    },
+    null,
+    2,
+  );
+}
+
 export function loadSavedPatients(): SavedPatient[] {
   if (typeof window === 'undefined') return [];
   try {
