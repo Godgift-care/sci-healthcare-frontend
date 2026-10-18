@@ -13,7 +13,9 @@ import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
-import { Alert, Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
+import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
+import { AddressName } from './AddressName';
+import { useToast } from './Toast';
 
 type Action = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute';
 
@@ -40,9 +42,8 @@ export function VoucherRow({
 }) {
   const { address, signTransaction, connect } = useWallet();
   const now = useNow();
+  const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [hash, setHash] = useState<string | null>(null);
   // Disputing freezes funds, so it takes a reason and a confirmation modal.
   // Attesting pays the clinic after the dispute window, so it confirms too.
   const [disputing, setDisputing] = useState(false);
@@ -52,8 +53,6 @@ export function VoucherRow({
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
-    setError(null);
-    setHash(null);
     try {
       const fns: Record<Action, () => Promise<{ hash: string }>> = {
         claim: () => protocol.claim(address, v.id, signTransaction),
@@ -63,14 +62,19 @@ export function VoucherRow({
         dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
       };
       const res = await fns[action]();
-      setHash(res.hash);
       setDisputing(false);
       setAttesting(false);
       trackEvent(ACTION_EVENTS[action]);
       void invalidateVouchers(v.id);
       onDone?.();
+      toast.success(
+        <>
+          Done.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
     } catch (err) {
-      setError(humaniseError(err));
+      toast.error(humaniseError(err));
     } finally {
       setBusy(null);
     }
@@ -109,7 +113,9 @@ export function VoucherRow({
               </Link>
               <StatusBadge status={v.status} />
             </div>
-            <h3 className="mt-1 font-medium">{v.provider.name}</h3>
+            <h3 className="mt-1 font-medium">
+              <AddressName address={v.provider.address} name={v.provider.name} />
+            </h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
               {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
             </p>
@@ -156,19 +162,6 @@ export function VoucherRow({
           Dispute resolved: {v.disputeOutcome}
           {v.disputeResolvedAt && ` on ${formatDate(v.disputeResolvedAt)}`}.
         </p>
-      )}
-
-      {error && (
-        <div className="mt-3">
-          <Alert>{error}</Alert>
-        </div>
-      )}
-      {hash && (
-        <div className="mt-3">
-          <Alert kind="success">
-            Done. <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>
-          </Alert>
-        </div>
       )}
 
       {available.length > 0 && (
@@ -237,11 +230,6 @@ export function VoucherRow({
             reviews it and returns the money to you or releases it to the clinic.
             <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
           </p>
-          {error && (
-            <div>
-              <Alert>{error}</Alert>
-            </div>
-          )}
         </div>
       </Modal>
 
@@ -275,11 +263,6 @@ export function VoucherRow({
             dispute window, after which the clinic is paid.
             <InfoTip content="Your attestation is written on chain. The funder can still dispute before the window closes." />
           </p>
-          {error && (
-            <div>
-              <Alert>{error}</Alert>
-            </div>
-          )}
         </div>
       </Modal>
     </Card>

@@ -7,7 +7,6 @@ import { type Service } from '@/lib/api';
 import {
   formatDate,
   formatUsdc,
-  shortAddress,
   toAmountInput,
   toBaseUnits,
 } from '@/lib/amounts';
@@ -20,6 +19,8 @@ import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import { voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { TestUsdc } from '@/components/TestUsdc';
+import { CopyValue } from '@/components/CopyValue';
+import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
 /** How long the patient has to attend before the funder can refund. */
@@ -73,9 +74,7 @@ export default function ClinicPage({
   const [expiryDays, setExpiryDays] = useState<number>(30);
   const [generatedKey, setGeneratedKey] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [fundedId, setFundedId] = useState<string | null>(null);
+  const toast = useToast();
 
   // Track record for funders: how many vouchers this clinic has settled. The
   // count is filtered server-side, so it stays right as the list grows, and
@@ -124,9 +123,6 @@ export default function ClinicPage({
     if (!selected) return;
 
     setBusy(true);
-    setError(null);
-    setTxHash(null);
-    setFundedId(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
       localIdentity.save(identifier, secret);
@@ -151,18 +147,31 @@ export default function ClinicPage({
         },
         signTransaction,
       );
-      setTxHash(res.hash);
       // create_voucher returns the new id as a u64.
+      let newId: string | null = null;
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
-        const newId = String(res.returnValue);
-        setFundedId(newId);
+        newId = String(res.returnValue);
         void invalidateVouchers(newId);
       } else {
         void invalidateVouchers();
       }
       trackEvent('voucher_funded');
+      toast.success(
+        <>
+          Voucher funded.{' '}
+          {newId && (
+            <>
+              <Link href={`/vouchers/${newId}`} className="underline underline-offset-2">
+                Open voucher #{newId}
+              </Link>{' '}
+              ·{' '}
+            </>
+          )}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
     } catch (err) {
-      setError(humaniseError(err, VOUCHER_ERRORS));
+      toast.error(humaniseError(err, VOUCHER_ERRORS));
     } finally {
       setBusy(false);
     }
@@ -187,7 +196,8 @@ export default function ClinicPage({
             <div className="min-w-0">
               <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
               <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
-                {provider.country} · {shortAddress(provider.address, 8)}
+                {provider.country} ·{' '}
+                <CopyValue value={provider.address} chars={8} label="clinic address" />
               </p>
             </div>
             <span
@@ -353,32 +363,19 @@ export default function ClinicPage({
 
             <TestUsdc compact />
 
-            {error && <Alert>{error}</Alert>}
-
-            {txHash && (
-              <Alert kind="success">
-                Voucher funded.{' '}
-                {fundedId && (
-                  <>
-                    <Link href={`/vouchers/${fundedId}`} className="underline underline-offset-2">
-                      Open voucher #{fundedId}
-                    </Link>{' '}
-                    ·{' '}
-                  </>
-                )}
-                <ExplorerLink href={explorerTx(txHash)}>View transaction</ExplorerLink>
-              </Alert>
-            )}
-
             <Button onClick={() => void fund()} disabled={busy} className="w-full">
               {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
             </Button>
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
               Funds are escrowed by the contract at{' '}
-              {shortAddress(config.contracts.voucher, 4)} and released to the clinic
-              only after an attester confirms delivery. Unclaimed vouchers are
-              refundable after {expiryDays} days.
+              <CopyValue
+                value={config.contracts.voucher}
+                chars={4}
+                label="contract id"
+              />{' '}
+              and released to the clinic only after an attester confirms delivery.
+              Unclaimed vouchers are refundable after {expiryDays} days.
             </p>
           </>
         )}

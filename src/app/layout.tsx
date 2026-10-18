@@ -10,6 +10,7 @@ import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
+import { ToastProvider } from '@/components/Toast';
 import { NavLink } from '@/components/ui';
 import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
@@ -87,7 +88,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </header>
 
-            <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+            <main className="mx-auto max-w-6xl px-6 py-8">
+              {/* Toasts live here so transaction results from any page appear
+                  wherever the user is looking (#80). */}
+              <ToastProvider>{children}</ToastProvider>
+            </main>
 
             <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-6 py-8 text-xs text-[var(--color-ink-soft)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

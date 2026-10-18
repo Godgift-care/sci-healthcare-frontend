@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { formatDate, shortAddress } from '@/lib/amounts';
 import { explorerAccount } from '@/lib/config';
 import { useAttesters } from '@/lib/hooks';
+import { CopyValue } from '@/components/CopyValue';
 import { Alert, Card, Empty, ExplorerLink } from '@/components/ui';
 
 export default function AttestersPage() {
@@ -79,9 +80,12 @@ export default function AttestersPage() {
                       </div>
                     </td>
                     <td className="py-3.5 font-mono text-xs">
-                      <ExplorerLink href={explorerAccount(a.address)}>
-                        {shortAddress(a.address, 6)}
-                      </ExplorerLink>
+                      <span className="inline-flex items-center gap-1">
+                        <ExplorerLink href={explorerAccount(a.address)}>
+                          {shortAddress(a.address, 6)}
+                        </ExplorerLink>
+                        <CopyValue value={a.address} buttonOnly label="attester address" />
+                      </span>
                     </td>
                     <td className="py-3.5 text-right font-medium">
                       {a.attestations}
