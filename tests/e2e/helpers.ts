@@ -46,6 +46,12 @@ export type BackendState = {
   providers?: Record<string, unknown>[];
   vouchers?: Record<string, unknown>[];
   voucherById?: Record<string, unknown>;
+  /**
+   * Per-voucher event log (`GET /vouchers/:id/events`, #18). An id left
+   * out answers 404, exactly like an indexer that predates backend #13 —
+   * the page then shows the timeline without transaction links.
+   */
+  voucherEventsById?: Record<string, unknown[]>;
   dailyStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
   receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
@@ -129,6 +135,12 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
     }
 
     if (parts[0] === 'vouchers') {
+      // /vouchers/<id>/events — per-step transaction hashes (#18).
+      if (parts.length === 3 && parts[2] === 'events') {
+        const events = state.voucherEventsById?.[parts[1]];
+        if (events) return json({ total: events.length, events });
+        return json({ message: 'Not found' }, 404);
+      }
       if (parts.length === 2) {
         const v = state.voucherById?.[parts[1]];
         if (v) return json(v);
