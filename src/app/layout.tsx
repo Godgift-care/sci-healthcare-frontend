@@ -5,6 +5,7 @@ import { ConnectButton } from '@/components/ConnectButton';
 import { Analytics } from '@/components/Analytics';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { LowBandwidthToggle } from '@/components/LowBandwidthToggle';
+import { MobileNav } from '@/components/MobileNav';
 import { NetworkBadge } from '@/components/NetworkBadge';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -59,9 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               the same behaviour. */}
           <SwrProvider>
             <TestnetNotice />
-            <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
+            <header className="relative border-b border-[var(--color-line)] bg-[var(--color-surface)]">
               <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
-                <div className="flex min-w-0 items-center gap-6">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+                  <MobileNav />
                   <Link href="/" className="flex items-center gap-2 font-semibold">
                     <span
                       aria-hidden
@@ -88,13 +90,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </header>
 
-            <main className="mx-auto max-w-6xl px-6 py-8">
+            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
               <ToastProvider>{children}</ToastProvider>
             </main>
 
-            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-6 py-8 text-xs text-[var(--color-ink-soft)]">
+            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl">
                   {isTestnet

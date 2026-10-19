@@ -66,7 +66,7 @@ export function CopyValue({
         onClick={() => void copy()}
         aria-label={`Copy ${label}`}
         title={value}
-        className="inline-grid h-5 w-5 flex-none place-items-center rounded border border-transparent text-[var(--color-ink-soft)] transition hover:border-[var(--color-line)] hover:text-[var(--color-ink)]"
+        className="inline-grid h-11 w-11 flex-none place-items-center rounded border border-transparent text-[var(--color-ink-soft)] transition hover:border-[var(--color-line)] hover:text-[var(--color-ink)] sm:h-5 sm:w-5"
       >
         {state === 'copied' ? (
           <svg

@@ -215,7 +215,7 @@ export default function FaqPage() {
                         aria-expanded={isOpen}
                         aria-controls={contentId}
                         onClick={() => toggleItem(item.id)}
-                        className="flex w-full items-start justify-between gap-4 text-left font-medium text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
+                        className="flex min-h-11 w-full items-start justify-between gap-4 text-left font-medium text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
                       >
                         <span className="text-sm sm:text-base">{item.question}</span>
                         <span

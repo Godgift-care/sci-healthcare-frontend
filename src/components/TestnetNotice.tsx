@@ -57,8 +57,8 @@ export function TestnetNotice() {
       aria-label="Testnet notice"
       className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex items-start gap-2 sm:items-center">
           <span className="inline-block rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-900">
             Testnet
           </span>
@@ -71,7 +71,7 @@ export function TestnetNotice() {
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss testnet notice"
-          className="shrink-0 rounded px-2 py-1 font-medium text-amber-800 transition hover:bg-amber-100 hover:text-amber-950"
+          className="min-h-11 shrink-0 self-end rounded px-3 py-1 font-medium text-amber-800 transition hover:bg-amber-100 hover:text-amber-950 sm:self-auto"
         >
           Dismiss
         </button>

@@ -52,7 +52,7 @@ export default function PrivacyPage() {
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
-          <table className="w-full text-left text-sm">
+          <table className="table-reflow w-full text-left text-sm">
             <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>
                 <th className="px-4 py-3">Field</th>
@@ -62,34 +62,34 @@ export default function PrivacyPage() {
             </thead>
             <tbody className="divide-y divide-[var(--color-line)] text-xs sm:text-sm">
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">funder</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">GDUP…JG45</td>
-                <td className="px-4 py-3">The public Stellar wallet address that funded the voucher.</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">funder</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">GDUP…JG45</td>
+                <td className="px-4 py-3" data-label="What it reveals">The public Stellar wallet address that funded the voucher.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">provider</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">GDOO…ZKBK</td>
-                <td className="px-4 py-3">The verified clinic address authorized to claim the voucher.</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">provider</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">GDOO…ZKBK</td>
+                <td className="px-4 py-3" data-label="What it reveals">The verified clinic address authorized to claim the voucher.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">service_code</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">101</td>
-                <td className="px-4 py-3">A coarse category code (e.g., outpatient consult).</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">service_code</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">101</td>
+                <td className="px-4 py-3" data-label="What it reveals">A coarse category code (e.g., outpatient consult).</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">amount</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">30000000</td>
-                <td className="px-4 py-3">The value in USDC stroops ($3.00).</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">amount</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">30000000</td>
+                <td className="px-4 py-3" data-label="What it reveals">The value in USDC stroops ($3.00).</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">beneficiary_ref</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">72676a6f…0947</td>
-                <td className="px-4 py-3">An opaque 32-byte cryptographic digest.</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">beneficiary_ref</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">72676a6f…0947</td>
+                <td className="px-4 py-3" data-label="What it reveals">An opaque 32-byte cryptographic digest.</td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-mono font-medium">timestamps</td>
-                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]">1716199200</td>
-                <td className="px-4 py-3">Timestamps for creation, claim, attestation, and settlement.</td>
+                <td className="px-4 py-3 font-mono font-medium" data-label="Field">timestamps</td>
+                <td className="px-4 py-3 font-mono text-[var(--color-ink-soft)]" data-label="Example">1716199200</td>
+                <td className="px-4 py-3" data-label="What it reveals">Timestamps for creation, claim, attestation, and settlement.</td>
               </tr>
             </tbody>
           </table>

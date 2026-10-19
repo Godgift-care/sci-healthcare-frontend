@@ -28,3 +28,57 @@ body {
 .mono {
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 }
+
+/*
+ * Reflow data tables into stacked cards below the `sm` breakpoint (#6), so a
+ * table never forces the page to scroll sideways at 360px. Add
+ * `className="table-reflow"` to the table and `data-label` to every cell;
+ * the header row is hidden and each row becomes its own card.
+ */
+@media (max-width: 639px) {
+  .table-reflow thead {
+    display: none;
+  }
+
+  .table-reflow,
+  .table-reflow tbody,
+  .table-reflow tr,
+  .table-reflow td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-reflow tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+  }
+
+  .table-reflow tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table-reflow td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0;
+    text-align: right;
+  }
+
+  .table-reflow td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-align: left;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+}
+

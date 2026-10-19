@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
@@ -33,6 +33,32 @@ export default function HomePage() {
   const lowBandwidth = useLowBandwidth();
   useLiveUpdates();
 
+  // The directory filters live in the URL so a search can be shared and
+  // survives a reload, but they are written with the History API rather than
+  // `useSearchParams`: that hook forces the page through client rendering and
+  // leaves only the Suspense fallback in the prerendered HTML, which pushes
+  // Largest Contentful Paint past its budget (lighthouserc.json). Same pattern
+  // as the voucher filters on /my.
+  const [query, setQuery] = useState('');
+  const queryRef = useRef('');
+  useEffect(() => {
+    const sync = () => {
+      const next = window.location.search.replace(/^\?/, '');
+      queryRef.current = next;
+      setQuery(next);
+    };
+    // Prerendered HTML cannot see the URL, so the unfiltered directory renders
+    // first and the query is applied on hydration. Clinics arrive after that
+    // anyway, so no unfiltered cards flash in.
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  const searchParams = useMemo(() => new URLSearchParams(query), [query]);
+  const search = (searchParams.get('q') ?? '').trim();
+  const country = searchParams.get('country') ?? '';
+
   // The map is the heaviest thing on this page: a Leaflet chunk plus one
   // raster tile per pan. In low-bandwidth mode (#75) the list is used
   // whatever the toggle says, so switching the mode on while the map is open
@@ -47,16 +73,65 @@ export default function HomePage() {
   const { stats, error: statsError } = useStats();
   const error = providersError || statsError;
 
+  const countries = useMemo(
+    () => Array.from(new Set(providers.map((p) => p.country).filter(Boolean))).sort(),
+    [providers],
+  );
+
+  // Name and service label matching is case-insensitive; the country filter
+  // is an exact match on the code shown on each card.
+  const filtered = useMemo(() => {
+    const needle = search.toLowerCase();
+    return providers.filter((p) => {
+      if (country && p.country !== country) return false;
+      if (!needle) return true;
+      return (
+        p.name.toLowerCase().includes(needle) ||
+        p.services.some((s) => s.label.toLowerCase().includes(needle))
+      );
+    });
+  }, [providers, search, country]);
+
   // Memoized so the map is not torn down and rebuilt on every render: the
   // filter arrays are otherwise new objects each time.
   const { located, unlocated } = useMemo(() => {
     const withLocation: Provider[] = [];
     const withoutLocation: Provider[] = [];
-    for (const p of providers) {
+    for (const p of filtered) {
       (providerLocation(p) ? withLocation : withoutLocation).push(p);
     }
     return { located: withLocation, unlocated: withoutLocation };
-  }, [providers]);
+  }, [filtered]);
+
+  function writeParams(update: (params: URLSearchParams) => void) {
+    const params = new URLSearchParams(queryRef.current);
+    update(params);
+    const next = params.toString();
+    queryRef.current = next;
+    setQuery(next);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      next ? `${window.location.pathname}?${next}` : window.location.pathname,
+    );
+  }
+
+  function setParam(key: 'q' | 'country', value: string) {
+    writeParams((params) => {
+      // Empty values are omitted, so an unfiltered directory stays a clean link.
+      if (!value) params.delete(key);
+      else params.set(key, value);
+    });
+  }
+
+  function resetFilters() {
+    writeParams((params) => {
+      params.delete('q');
+      params.delete('country');
+    });
+  }
+
+  const filtering = search.length > 0 || country.length > 0;
 
   return (
     <div className="space-y-6">
@@ -76,19 +151,19 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href="#directory"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
           >
             Browse clinics &darr;
           </a>
           <Link
             href="/how-it-works"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             How it works &rarr;
           </Link>
           <Link
             href="/clinic"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             Clinic desk
           </Link>
@@ -190,15 +265,80 @@ export default function HomePage() {
           </Empty>
         )}
 
-        {activeView === 'list' && (
+        {!loading && !error && providers.length > 0 && (
+          <Card className="space-y-3 p-3 sm:p-4">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem]">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  Search clinics
+                </span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setParam('q', e.target.value)}
+                  placeholder="Clinic name or service"
+                  className="mt-1 min-h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  Country
+                </span>
+                <select
+                  value={country}
+                  onChange={(e) => setParam('country', e.target.value)}
+                  className="mt-1 min-h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                >
+                  <option value="">All countries</option>
+                  {countries.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span aria-live="polite">
+                Showing {filtered.length} of {providers.length} clinic
+                {providers.length === 1 ? '' : 's'}
+              </span>
+              {filtering && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="min-h-11 rounded-md px-2 font-medium underline underline-offset-2 hover:no-underline"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {!loading && !error && providers.length > 0 && filtered.length === 0 && (
+          <Empty>
+            No clinics match{search ? ` “${search}”` : ' these filters'}
+            {country ? ` in ${country}` : ''}.{' '}
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="font-medium underline underline-offset-2 hover:no-underline"
+            >
+              Clear filters
+            </button>
+          </Empty>
+        )}
+
+        {activeView === 'list' && filtered.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {providers.map((p) => (
+            {filtered.map((p) => (
               <ClinicCard key={p.address} provider={p} />
             ))}
           </div>
         )}
 
-        {activeView === 'map' && providers.length > 0 && (
+        {activeView === 'map' && filtered.length > 0 && (
           <div className="space-y-3">
             {located.length > 0 ? (
               <ClinicMap providers={located} />
@@ -255,7 +395,7 @@ function ViewToggle({
       onClick={onClick}
       disabled={disabled}
       title={disabled ? disabledReason : undefined}
-      className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+      className={`min-h-11 rounded-md px-3 py-1 text-sm font-medium transition ${
         active
           ? 'bg-[var(--color-brand)] text-white'
           : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'

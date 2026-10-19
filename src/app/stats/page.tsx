@@ -40,7 +40,7 @@ function ActivityChart({
       <div className="w-full overflow-x-auto">
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-          className="h-44 w-full min-w-[320px]"
+          className="h-44 w-full"
           role="img"
           aria-label={`${title} chart`}
         >
@@ -189,7 +189,7 @@ export default function StatsPage() {
               key={r}
               type="button"
               onClick={() => setDays(r)}
-              className={`rounded-md px-2.5 py-1 font-medium transition ${
+              className={`min-h-11 rounded-md px-3 py-1 font-medium transition ${
                 days === r
                   ? 'bg-[var(--color-brand)] text-white'
                   : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
@@ -247,12 +247,12 @@ export default function StatsPage() {
       </section>
 
       {/* View Mode Toggle for Accessibility */}
-      <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-3">
         <h2 className="text-base font-semibold">Daily activity ({days} days)</h2>
         <button
           type="button"
           onClick={() => setShowTables(!showTables)}
-          className="text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
+          className="min-h-11 text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
         >
           {showTables ? 'Hide data tables' : 'Show accessible data tables'}
         </button>
@@ -283,7 +283,7 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="table-reflow w-full text-left text-xs">
                     <caption className="sr-only">Daily vouchers funded data table</caption>
                     <thead>
                       <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
@@ -295,9 +295,9 @@ export default function StatsPage() {
                     <tbody className="divide-y divide-[var(--color-line)]">
                       {series.map((s) => (
                         <tr key={s.date}>
-                          <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-right">{s.funded.count}</td>
-                          <td className="py-1.5 text-right font-mono">${formatUsdc(s.funded.amount)}</td>
+                          <td className="py-1.5 font-mono" data-label="Date (UTC)">{s.date}</td>
+                          <td className="py-1.5 text-right" data-label="Count">{s.funded.count}</td>
+                          <td className="py-1.5 text-right font-mono" data-label="Volume (USDC)">${formatUsdc(s.funded.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -323,7 +323,7 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="table-reflow w-full text-left text-xs">
                     <caption className="sr-only">Daily care settled data table</caption>
                     <thead>
                       <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
@@ -335,9 +335,9 @@ export default function StatsPage() {
                     <tbody className="divide-y divide-[var(--color-line)]">
                       {series.map((s) => (
                         <tr key={s.date}>
-                          <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-right">{s.settled.count}</td>
-                          <td className="py-1.5 text-right font-mono">${formatUsdc(s.settled.amount)}</td>
+                          <td className="py-1.5 font-mono" data-label="Date (UTC)">{s.date}</td>
+                          <td className="py-1.5 text-right" data-label="Count">{s.settled.count}</td>
+                          <td className="py-1.5 text-right font-mono" data-label="Volume (USDC)">${formatUsdc(s.settled.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -353,7 +353,7 @@ export default function StatsPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold">Clinics by country</h2>
         <Card className="overflow-x-auto p-4">
-          <table className="w-full text-left text-sm">
+          <table className="table-reflow w-full text-left text-sm">
             <caption className="sr-only">Registered clinics grouped by country</caption>
             <thead>
               <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
@@ -365,16 +365,16 @@ export default function StatsPage() {
             <tbody className="divide-y divide-[var(--color-line)]">
               {countryCounts.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="py-4 text-center text-xs text-[var(--color-ink-soft)]">
+                  <td colSpan={3} className="py-4 text-center text-xs text-[var(--color-ink-soft)]" data-label="Clinics">
                     No clinics recorded yet.
                   </td>
                 </tr>
               ) : (
                 countryCounts.map(([country, stats]) => (
                   <tr key={country}>
-                    <td className="py-2.5 font-medium">{country}</td>
-                    <td className="py-2.5">{stats.count}</td>
-                    <td className="py-2.5 text-emerald-700">{stats.active} active</td>
+                    <td className="py-2.5 font-medium" data-label="Country code">{country}</td>
+                    <td className="py-2.5" data-label="Total registered">{stats.count}</td>
+                    <td className="py-2.5 text-emerald-700" data-label="Active status">{stats.active} active</td>
                   </tr>
                 ))
               )}
