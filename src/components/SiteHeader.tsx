@@ -30,17 +30,16 @@ const LINKS = [
  */
 export function SiteHeader() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // Keyed by the route that opened it, so a navigation (including Back) closes
+  // the panel without an effect that would set state during render.
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const open = openPath === pathname;
   const panelId = useId();
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') setOpenPath(null);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -77,7 +76,7 @@ export function SiteHeader() {
             aria-expanded={open}
             aria-controls={panelId}
             aria-label={open ? 'Close menu' : 'Open menu'}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => setOpenPath(open ? null : pathname)}
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] sm:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
@@ -98,7 +97,7 @@ export function SiteHeader() {
             <li key={link.href}>
               <Link
                 href={link.href}
-                onClick={() => setOpen(false)}
+                onClick={() => setOpenPath(null)}
                 className="flex min-h-11 items-center py-3 text-sm font-medium text-[var(--color-ink)]"
               >
                 {link.label}
