@@ -46,29 +46,124 @@ export function isValidRef(ref: string): boolean {
   return /^[0-9a-f]{64}$/.test(ref);
 }
 
-const KEY_STORAGE = 'sci:beneficiary-key';
-const ID_STORAGE = 'sci:beneficiary-id';
+export type SavedPatient = { nickname: string; identifier: string; key: string };
 
-/** Convenience persistence so a demo user does not retype these. */
+type SavedPatientStore = { patients: SavedPatient[]; selectedNickname: string };
+
+const PATIENTS_STORAGE = 'sci:saved-patients';
+const SELECTED_STORAGE = 'sci:selected-patient';
+const LEGACY_KEY_STORAGE = 'sci:beneficiary-key';
+const LEGACY_ID_STORAGE = 'sci:beneficiary-id';
+const PATIENTS_CHANGED = 'sci:saved-patients-changed';
+
+function readPatients(value: string | null): SavedPatient[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (patient): patient is SavedPatient =>
+        typeof patient?.nickname === 'string' &&
+        typeof patient?.identifier === 'string' &&
+        typeof patient?.key === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
+
+function announcePatientsChanged(): void {
+  window.dispatchEvent(new Event(PATIENTS_CHANGED));
+}
+
+function persist(store: SavedPatientStore): boolean {
+  try {
+    localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(store.patients));
+    if (store.selectedNickname) {
+      localStorage.setItem(SELECTED_STORAGE, store.selectedNickname);
+    } else {
+      localStorage.removeItem(SELECTED_STORAGE);
+    }
+    announcePatientsChanged();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Patient references and keys are persisted only in this browser's storage. */
 export const localIdentity = {
-  load(): { identifier: string; key: string } {
-    if (typeof window === 'undefined') return { identifier: '', key: '' };
+  load(): SavedPatientStore {
+    if (typeof window === 'undefined') return { patients: [], selectedNickname: '' };
     try {
-      return {
-        identifier: localStorage.getItem(ID_STORAGE) ?? '',
-        key: localStorage.getItem(KEY_STORAGE) ?? '',
-      };
+      const stored = localStorage.getItem(PATIENTS_STORAGE);
+      let patients = readPatients(stored);
+      if (stored === null) {
+        const identifier = localStorage.getItem(LEGACY_ID_STORAGE) ?? '';
+        const key = localStorage.getItem(LEGACY_KEY_STORAGE) ?? '';
+        if (identifier && key) {
+          patients = [{ nickname: 'Saved patient', identifier, key }];
+          localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(patients));
+          localStorage.removeItem(LEGACY_ID_STORAGE);
+          localStorage.removeItem(LEGACY_KEY_STORAGE);
+        }
+      }
+      const requested = localStorage.getItem(SELECTED_STORAGE) ?? '';
+      const selectedNickname = patients.some((patient) => patient.nickname === requested)
+        ? requested
+        : patients.at(-1)?.nickname ?? '';
+      return { patients, selectedNickname };
     } catch {
-      return { identifier: '', key: '' };
+      return { patients: [], selectedNickname: '' };
     }
   },
-  save(identifier: string, key: string): void {
-    try {
-      localStorage.setItem(ID_STORAGE, identifier);
-      localStorage.setItem(KEY_STORAGE, key);
-    } catch {
-      // Private browsing or blocked storage; the app still works, the user
-      // just retypes.
+  save(nickname: string, identifier: string, key: string): boolean {
+    const cleanNickname = nickname.trim();
+    if (!cleanNickname) return false;
+    const { patients } = this.load();
+    const existing = patients.findIndex(
+      (patient) => patient.nickname.toLowerCase() === cleanNickname.toLowerCase(),
+    );
+    const patient = { nickname: cleanNickname, identifier, key };
+    const next = [...patients];
+    if (existing >= 0) next[existing] = patient;
+    else next.push(patient);
+    return persist({ patients: next, selectedNickname: cleanNickname });
+  },
+  select(nickname: string): boolean {
+    const { patients } = this.load();
+    if (nickname && !patients.some((patient) => patient.nickname === nickname)) return false;
+    return persist({ patients, selectedNickname: nickname });
+  },
+  rename(currentNickname: string, newNickname: string): boolean {
+    const cleanNickname = newNickname.trim();
+    if (!cleanNickname) return false;
+    const { patients, selectedNickname } = this.load();
+    if (
+      patients.some(
+        (patient) =>
+          patient.nickname !== currentNickname &&
+          patient.nickname.toLowerCase() === cleanNickname.toLowerCase(),
+      )
+    ) {
+      return false;
     }
+    const next = patients.map((patient) =>
+      patient.nickname === currentNickname
+        ? { ...patient, nickname: cleanNickname }
+        : patient,
+    );
+    if (!next.some((patient) => patient.nickname === cleanNickname)) return false;
+    return persist({
+      patients: next,
+      selectedNickname: selectedNickname === currentNickname ? cleanNickname : selectedNickname,
+    });
+  },
+  remove(nickname: string): boolean {
+    const { patients, selectedNickname } = this.load();
+    const next = patients.filter((patient) => patient.nickname !== nickname);
+    if (next.length === patients.length) return false;
+    const nextSelected = selectedNickname === nickname ? next.at(-1)?.nickname ?? '' : selectedNickname;
+    return persist({ patients: next, selectedNickname: nextSelected });
   },
 };

@@ -22,6 +22,7 @@ import {
   type VoucherSort,
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -185,7 +186,7 @@ export default function MyPage() {
     setError(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(identifier, secret);
+      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
       setActiveRef(ref);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load history');
@@ -357,6 +358,14 @@ export default function MyPage() {
         </p>
 
         <Card className="space-y-3 p-5">
+          <SavedPatientControls
+            identifier={identifier}
+            keyValue={secret}
+            onSelect={(patient) => {
+              setIdentifier(patient?.identifier ?? '');
+              setSecret(patient?.key ?? '');
+            }}
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">

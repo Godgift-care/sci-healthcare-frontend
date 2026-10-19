@@ -17,7 +17,7 @@ import type { MockRpcCall } from '@/lib/e2e-seam';
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
+    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; args: string[][]; delayMs?: number };
   }
 }
 
@@ -32,7 +32,7 @@ export async function useMockWallet(
 ): Promise<void> {
   await page.addInitScript(
     `window.__SCI_MOCK_WALLET__ = { address: '${address}' };
-     window.__SCI_MOCK_RPC__ = { calls: [], delayMs: ${delayMs} };`,
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };`,
   );
   // The analytics script tag is present in the test build; keep the request
   // itself inside the sandbox. (The analytics spec stubs window.plausible,
@@ -46,6 +46,12 @@ export type BackendState = {
   providers?: Record<string, unknown>[];
   vouchers?: Record<string, unknown>[];
   voucherById?: Record<string, unknown>;
+  /**
+   * Per-voucher event log (`GET /vouchers/:id/events`, #18). An id left
+   * out answers 404, exactly like an indexer that predates backend #13 —
+   * the page then shows the timeline without transaction links.
+   */
+  voucherEventsById?: Record<string, unknown[]>;
   dailyStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
   receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
@@ -129,6 +135,12 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
     }
 
     if (parts[0] === 'vouchers') {
+      // /vouchers/<id>/events — per-step transaction hashes (#18).
+      if (parts.length === 3 && parts[2] === 'events') {
+        const events = state.voucherEventsById?.[parts[1]];
+        if (events) return json({ total: events.length, events });
+        return json({ message: 'Not found' }, 404);
+      }
       if (parts.length === 2) {
         const v = state.voucherById?.[parts[1]];
         if (v) return json(v);
@@ -145,4 +157,20 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
 export async function mockInvokes(page: Page): Promise<MockRpcCall[]> {
   const calls = await page.evaluate(() => window.__SCI_MOCK_RPC__?.calls ?? []);
   return calls.filter((c) => c.kind === 'invoke');
+}
+
+/**
+ * The arguments of those writes, as base64 XDR, in the same order: index `i`
+ * here is what `mockInvokes(page)[i]` carried. Lets a test assert a value the
+ * UI never shows — that the date a funder picked became the `expires_at` the
+ * contract was called with, for instance.
+ */
+export async function mockInvokeArgs(page: Page): Promise<string[][]> {
+  return page.evaluate(() => {
+    const mock = window.__SCI_MOCK_RPC__;
+    if (!mock) return [];
+    return mock.calls
+      .map((call, i) => (call.kind === 'invoke' ? mock.args[i] ?? [] : null))
+      .filter((args): args is string[] => args !== null);
+  });
 }
