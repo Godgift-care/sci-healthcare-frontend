@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
-import { type Service } from '@/lib/api';
+import { notFound } from 'next/navigation';
+
+import { ApiError, type Service } from '@/lib/api';
 import {
   formatDate,
   formatUsdc,
   formatXlm,
-  shortAddress,
   toAmountInput,
   toBaseUnits,
 } from '@/lib/amounts';
@@ -65,7 +66,7 @@ export default function ClinicPage({
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
 
-  const { provider, error: loadError } = useProvider(address);
+  const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
   const [selectedOverride, setSelectedOverride] = useState<Service | null>(null);
   const firstActive = provider?.services.find((s) => s.active !== false) ?? null;
   const selected = selectedOverride ?? firstActive;
@@ -78,18 +79,32 @@ export default function ClinicPage({
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
   const amount = amountOverride ?? (selected ? toAmountInput(selected.price) : '');
+  const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
   const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState<string | null>(null);
-  const [fundedId, setFundedId] = useState<string | null>(null);
   const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
     ReturnType<typeof quoteXlmForUsdc>
   > | null>(null);
   const toast = useToast();
+
+  useEffect(() => {
+    if (!wallet) return;
+    let ignore = false;
+    (async () => {
+      try {
+        const balance = await usdc.balance(wallet);
+        if (!ignore) setWalletBalance(balance);
+      } catch {
+        if (!ignore) setWalletBalance(null);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [wallet]);
 
   // Track record for funders: how many vouchers this clinic has settled. The
   // count is filtered server-side, so it stays right as the list grows, and
@@ -165,6 +180,15 @@ export default function ClinicPage({
   const reviewAmount = baseAmount === null ? '—' : formatUsdc(baseAmount);
   const reviewFee = currentQuote ? formatUsdc(currentQuote.fee) : '—';
   const reviewNet = currentQuote ? formatUsdc(currentQuote.net) : '—';
+  const insufficientUsdcBalance =
+    wallet !== null &&
+    baseAmount !== null &&
+    walletBalance !== null &&
+    walletBalance < baseAmount;
+  const missingUsdcForFunding =
+    wallet !== null && baseAmount !== null && walletBalance !== null && insufficientUsdcBalance;
+  const usdcShortfall =
+    missingUsdcForFunding ? baseAmount - walletBalance : null;
   const maskedSecret = secret
     ? secret.length <= 8
       ? '••••'
@@ -235,6 +259,12 @@ export default function ClinicPage({
             },
             signTransaction,
           );
+      try {
+        const balance = await usdc.balance(wallet);
+        setWalletBalance(balance);
+      } catch {
+        setWalletBalance(null);
+      }
       // create_voucher returns the new id as a u64.
       let newId: string | null = null;
       if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
@@ -265,6 +295,8 @@ export default function ClinicPage({
     }
   }
 
+  // An unknown clinic is a missing page, not an API failure.
+  if (loadRawError instanceof ApiError && loadRawError.status === 404) notFound();
   if (loadError) return <Alert>{loadError}</Alert>;
   if (!provider) {
     return <p className="text-sm text-[var(--color-ink-soft)]">Loading clinic…</p>;
@@ -433,6 +465,21 @@ export default function ClinicPage({
                 inputMode="decimal"
                 className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+                <span className="text-[var(--color-ink-soft)]">
+                  Wallet USDC balance:{' '}
+                  {wallet ? (
+                    walletBalance === null ? '—' : `$${formatUsdc(walletBalance)}`
+                  ) : (
+                    'Connect wallet'
+                  )}
+                </span>
+                {usdcShortfall !== null && (
+                  <span className="font-medium text-red-600">
+                    Need ${formatUsdc(usdcShortfall)} more
+                  </span>
+                )}
+              </div>
               {currentQuote && (
                 <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
                   Clinic receives ${formatUsdc(currentQuote.net)} after a $
@@ -444,6 +491,11 @@ export default function ClinicPage({
                   XLM swap: {formatXlm(xlmSwapQuote.xlmCost)} XLM quoted to buy{' '}
                   {formatUsdc(xlmSwapQuote.usdcAmount)} USDC, with a 1% slippage cap of{' '}
                   {formatXlm(xlmSwapQuote.maxXlm)} XLM before the transaction aborts.
+                </span>
+              )}
+              {!xlmSwapQuote && insufficientUsdcBalance && (
+                <span className="mt-2 block text-xs text-red-600">
+                  Not enough USDC in your wallet for this. You need ${formatUsdc(usdcShortfall ?? 0n)} more.
                 </span>
               )}
             </label>
@@ -497,7 +549,7 @@ export default function ClinicPage({
                 }
                 setReviewing(true);
               }}
-              disabled={busy}
+              disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
               className="w-full"
             >
               {busy
@@ -584,7 +636,7 @@ export default function ClinicPage({
               <Button
                 className="flex-1"
                 onClick={() => void fund()}
-                disabled={busy}
+                disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
               >
                 {busy ? 'Confirming…' : 'Confirm'}
               </Button>

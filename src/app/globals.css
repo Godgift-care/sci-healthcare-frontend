@@ -25,6 +25,17 @@ body {
     'Helvetica Neue', Arial, sans-serif;
 }
 
+/*
+ * Visible keyboard focus everywhere (#7). `:focus-visible` keeps the ring
+ * for keyboard users without outlining every mouse click, and the offset
+ * keeps it legible on both themes.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .mono {
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 }

@@ -16,8 +16,7 @@ import { useWallet } from '@/lib/wallet';
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
 import { AddressName } from './AddressName';
 import { useToast } from './Toast';
-
-type Action = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute';
+import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
 
 /** Funnel step per contract write. Names only — never any properties. */
 const ACTION_EVENTS = {
@@ -80,23 +79,13 @@ export function VoucherRow({
     }
   }
 
-  // Only offer an action the contract will actually accept right now.
-  const available = actions.filter((a) => {
-    switch (a) {
-      case 'claim':
-        return v.status === 'Funded';
-      case 'attest':
-        return v.status === 'Claimed';
-      case 'settle':
-        return v.isSettleable;
-      case 'refund':
-        return v.isRefundable;
-      case 'dispute':
-        return v.status === 'Claimed' || v.status === 'Attested';
-      default:
-        return false;
-    }
-  });
+  // Only offer an action the contract will actually accept right now
+  // (state machine in `@/lib/voucher-actions`, covered by unit tests).
+  const available = availableActions(
+    v.status,
+    { isSettleable: v.isSettleable, isRefundable: v.isRefundable },
+    actions,
+  );
 
   return (
     // Without the summary, the first hint or button row sits at the top.
