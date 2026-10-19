@@ -121,10 +121,14 @@ export async function getAccountSpendableBalance(
     const url = `${horizonBaseUrl()}/accounts/${address}`;
     const res = await fetch(url, { headers: { accept: 'application/json' } });
     if (!res.ok) return null;
-    const account = (await res.json()) as HorizonAccountRecord;
-    const nativeEntry = account.balances.find((b) => b.asset_type === 'native');
-    const rawBalance = nativeEntry ? parseFloat(nativeEntry.balance) : 0;
-    const subentries = account.subentry_count ?? 0;
+    const account = (await res.json()) as Partial<HorizonAccountRecord>;
+    const balances = Array.isArray(account.balances) ? account.balances : [];
+    const nativeEntry = balances.find((b) => b.asset_type === 'native');
+    const nativeBalance = nativeEntry && typeof nativeEntry.balance === 'string'
+      ? Number(nativeEntry.balance)
+      : 0;
+    const rawBalance = Number.isFinite(nativeBalance) ? nativeBalance : 0;
+    const subentries = Number.isFinite(account.subentry_count) ? Number(account.subentry_count) : 0;
     const minBalance = (2 + subentries) * 0.5;
     const spendable = Math.max(0, rawBalance - minBalance);
     return {
@@ -180,7 +184,7 @@ async function invoke(
   // would couple the tests to SDK internals; this keeps the same
   // `{ hash, returnValue }` shape the UI consumes.
   if (isMockRpc()) {
-    recordMockCall({ kind: 'invoke', contractId, method });
+    recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
     // A test can keep a write in flight to observe the unload guard.
     const delay = mockRpcDelayMs();
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
@@ -261,7 +265,7 @@ export async function readContract<T>(
   args: xdr.ScVal[] = [],
 ): Promise<T> {
   if (isMockRpc()) {
-    recordMockCall({ kind: 'read', contractId, method });
+    recordMockCall({ kind: 'read', contractId, method }, recordArgs(args));
     return mockReadResult<T>(method, args);
   }
 
@@ -292,6 +296,15 @@ export async function readContract<T>(
 // ----- end-to-end test doubles (see e2e-seam.ts) -----
 
 /** create_voucher returns the new id as u64; every other write returns nothing. */
+/**
+ * The arguments of a mocked call as base64 XDR, so Playwright can assert the
+ * exact values a contract call carried — the `args` beside the recorded
+ * calls in e2e-seam.ts.
+ */
+function recordArgs(args: xdr.ScVal[]): string[] {
+  return args.map((a) => a.toXDR('base64'));
+}
+
 function mockReturnValue(method: string): unknown {
   if (method === 'create_voucher') return 7n;
   return null;
