@@ -55,8 +55,60 @@ export default function AttestersPage() {
             Showing {attesters.length} of {total} registered attesters
           </div>
 
-          {/* Responsive Table View */}
-          <Card className="overflow-x-auto p-4">
+          {/* Below `sm` each row becomes a card: five columns cannot be read
+              at 360px. */}
+          <ul className="space-y-3 sm:hidden">
+            {attesters.map((a) => (
+              <li key={a.address}>
+                <Card className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="break-words font-medium text-[var(--color-ink)]">
+                        {a.name || 'Accredited Medical Attester'}
+                      </div>
+                      <div className="text-xs text-[var(--color-ink-soft)]">
+                        {a.organisation || 'Independent verifier'}
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                        a.active
+                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                          : 'bg-slate-100 text-slate-600 ring-slate-200'
+                      }`}
+                    >
+                      {a.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  <dl className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <dt className="uppercase tracking-wide text-[var(--color-ink-soft)]">
+                        Confirmations
+                      </dt>
+                      <dd className="mt-0.5 font-medium">{a.attestations}</dd>
+                    </div>
+                    <div>
+                      <dt className="uppercase tracking-wide text-[var(--color-ink-soft)]">
+                        Added
+                      </dt>
+                      <dd className="mt-0.5">{formatDate(a.addedAt)}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="flex min-h-11 items-center gap-1 font-mono text-xs">
+                    <ExplorerLink href={explorerAccount(a.address)}>
+                      {shortAddress(a.address, 6)}
+                    </ExplorerLink>
+                    <CopyValue value={a.address} buttonOnly label="attester address" />
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+
+          {/* Table from `sm` up. */}
+          <Card className="hidden overflow-x-auto p-4 sm:block">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">Directory of authorized attesters</caption>
               <thead>

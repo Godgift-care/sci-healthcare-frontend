@@ -352,7 +352,26 @@ export default function StatsPage() {
       {/* Country Breakdown Table */}
       <section className="space-y-3">
         <h2 className="text-base font-semibold">Clinics by country</h2>
-        <Card className="overflow-x-auto p-4">
+        <Card className="p-4 sm:hidden">
+          <ul className="divide-y divide-[var(--color-line)]">
+            {countryCounts.length === 0 ? (
+              <li className="py-4 text-center text-xs text-[var(--color-ink-soft)]">
+                No clinics recorded yet.
+              </li>
+            ) : (
+              countryCounts.map(([country, counts]) => (
+                <li key={country} className="flex items-center justify-between gap-3 py-3">
+                  <span className="font-medium">{country}</span>
+                  <span className="text-xs text-[var(--color-ink-soft)]">
+                    {counts.count} registered · {counts.active} active
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+        </Card>
+
+        <Card className="hidden overflow-x-auto p-4 sm:block">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Registered clinics grouped by country</caption>
             <thead>
