@@ -48,6 +48,107 @@ export function isValidRef(ref: string): boolean {
 
 export type SavedPatient = { nickname: string; identifier: string; key: string };
 
+/**
+ * Reads a patient backup: a file or text holding JSON (the app's own backup
+ * format and a few common shapes), or "reference | key" on one line. The
+ * result is a saved patient ready for `localIdentity.save`.
+ */
+function normalisePatientValue(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+}
+
+function parseMaybeJson(data: string): unknown {
+  const trimmed = data.trim();
+  if (!trimmed) throw new Error('The patient backup is empty.');
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return data;
+  }
+}
+
+function parseSavedPatientRecord(value: unknown): SavedPatient {
+  if (typeof value === 'string') {
+    const cleaned = value.trim();
+    if (!cleaned) throw new Error('The patient backup is empty.');
+
+    const parsed = parseMaybeJson(cleaned);
+    if (parsed !== cleaned) return parseSavedPatientRecord(parsed);
+
+    const [idPart, keyPart] = cleaned.split(/\s*\|\s*|\r?\n/).map((part) => part.trim());
+    if (idPart && keyPart) {
+      return { nickname: idPart, identifier: idPart, key: keyPart };
+    }
+
+    throw new Error('The backup must be a JSON object with an identifier and key.');
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) throw new Error('This patient backup is empty.');
+    return parseSavedPatientRecord(value[0]);
+  }
+
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('The backup must contain a patient identifier and key.');
+  }
+
+  const record = value as Record<string, unknown>;
+  const nested =
+    record.patient ??
+    record.identity ??
+    record.savedPatient ??
+    record.data ??
+    record.record ??
+    record;
+
+  const identifier = normalisePatientValue(
+    (nested as Record<string, unknown>).identifier ??
+      (nested as Record<string, unknown>).patientId ??
+      (nested as Record<string, unknown>).patientIdentifier ??
+      (nested as Record<string, unknown>).reference ??
+      (nested as Record<string, unknown>).patient_ref ??
+      record.identifier ??
+      record.patientId ??
+      record.patientIdentifier ??
+      record.reference,
+  );
+
+  const key = normalisePatientValue(
+    (nested as Record<string, unknown>).key ??
+      (nested as Record<string, unknown>).secretKey ??
+      (nested as Record<string, unknown>).patientKey ??
+      (nested as Record<string, unknown>).secret ??
+      record.key ??
+      record.secretKey ??
+      record.patientKey ??
+      record.secret,
+  );
+
+  if (!identifier) throw new Error('This backup is missing a patient reference.');
+  if (!key) throw new Error('This backup is missing a patient key.');
+  if (key.length < 32) throw new Error('The patient key must be at least 32 characters long.');
+
+  // Backups made by this app carry a nickname; anything else is listed under
+  // its patient reference, which only ever lives on this device.
+  const nickname =
+    normalisePatientValue(
+      (nested as Record<string, unknown>).nickname ?? record.nickname ?? record.name,
+    ) || identifier;
+  return { nickname, identifier, key };
+}
+
+export async function parsePatientBackup(input: string | File | unknown): Promise<SavedPatient> {
+  if (input instanceof File) {
+    return parseSavedPatientRecord(await input.text());
+  }
+  if (typeof input === 'string') {
+    return parseSavedPatientRecord(parseMaybeJson(input));
+  }
+  return parseSavedPatientRecord(input);
+}
+
 type SavedPatientStore = { patients: SavedPatient[]; selectedNickname: string };
 
 const PATIENTS_STORAGE = 'sci:saved-patients';

@@ -81,6 +81,7 @@ export default function ClinicPage({
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
   const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -160,6 +161,15 @@ export default function ClinicPage({
       ignore = true;
     };
   }, [baseAmount, canSwapWithXlm, selected, wallet]);
+
+  const reviewAmount = baseAmount === null ? '—' : formatUsdc(baseAmount);
+  const reviewFee = currentQuote ? formatUsdc(currentQuote.fee) : '—';
+  const reviewNet = currentQuote ? formatUsdc(currentQuote.net) : '—';
+  const maskedSecret = secret
+    ? secret.length <= 8
+      ? '••••'
+      : `${secret.slice(0, 4)}••••${secret.slice(-4)}`
+    : '—';
 
   // A custom expiry is described by the date it resolves to, so the funder
   // reads the voucher's last valid day rather than the picker's raw value.
@@ -347,7 +357,7 @@ export default function ClinicPage({
           </p>
         )}
 
-        {selected && (
+        {selected && !reviewing && (
           <>
             <Field label="Service">
               {selected.label} · ${formatUsdc(selected.price)}
@@ -479,7 +489,17 @@ export default function ClinicPage({
 
             <TestUsdc compact />
 
-            <Button onClick={() => void fund()} disabled={busy} className="w-full">
+            <Button
+              onClick={() => {
+                if (!wallet) {
+                  connect();
+                  return;
+                }
+                setReviewing(true);
+              }}
+              disabled={busy}
+              className="w-full"
+            >
               {busy
                 ? 'Confirming…'
                 : wallet
@@ -500,6 +520,76 @@ export default function ClinicPage({
               Unclaimed vouchers are refundable after {expirySummary}.
             </p>
           </>
+        )}
+
+        {selected && reviewing && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium">Review funding</h3>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+                Check the details below before signing the voucher.
+              </p>
+            </div>
+
+            <dl className="space-y-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Clinic</dt>
+                <dd className="text-right font-medium">{provider.name}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Service</dt>
+                <dd className="text-right font-medium">
+                  {selected.label} · ${formatUsdc(selected.price)}
+                </dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Patient reference</dt>
+                <dd className="text-right font-medium">{identifier || 'Not set'}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Patient key</dt>
+                <dd className="mono text-right font-medium">{maskedSecret}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Amount</dt>
+                <dd className="mono text-right font-medium">${reviewAmount}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Protocol fee</dt>
+                <dd className="mono text-right font-medium">${reviewFee}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Clinic payout</dt>
+                <dd className="mono text-right font-medium">${reviewNet}</dd>
+              </div>
+              {xlmSwapQuote && (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-[var(--color-ink-soft)]">Paid in XLM</dt>
+                  <dd className="mono text-right font-medium">
+                    up to {formatXlm(xlmSwapQuote.maxXlm)} XLM for {formatUsdc(xlmSwapQuote.usdcAmount)}{' '}
+                    USDC
+                  </dd>
+                </div>
+              )}
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-[var(--color-ink-soft)]">Expires</dt>
+                <dd className="text-right font-medium">{expirySummary}</dd>
+              </div>
+            </dl>
+
+            <div className="flex gap-2">
+              <Button variant="ghost" className="flex-1" onClick={() => setReviewing(false)}>
+                Back
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => void fund()}
+                disabled={busy}
+              >
+                {busy ? 'Confirming…' : 'Confirm'}
+              </Button>
+            </div>
+          </div>
         )}
       </Card>
     </div>
