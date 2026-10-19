@@ -9,10 +9,8 @@ import { formatDate, shortAddress } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import {
   beneficiaryRef,
-  loadSavedPatients,
   localIdentity,
   parsePatientBackup,
-  upsertSavedPatient,
 } from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useLiveUpdates, useReceipts, useVouchers } from '@/lib/hooks';
@@ -30,6 +28,7 @@ import {
   type VoucherSort,
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -73,7 +72,6 @@ export default function MyPage() {
 
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savedPatients, setSavedPatients] = useState(() => loadSavedPatients());
   const [importError, setImportError] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrBusy, setQrBusy] = useState(false);
@@ -199,7 +197,7 @@ export default function MyPage() {
     setError(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(identifier, secret);
+      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
       setActiveRef(ref);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load history');
@@ -210,11 +208,14 @@ export default function MyPage() {
     setImportError(null);
     try {
       const patient = await parsePatientBackup(input);
-      const nextSaved = upsertSavedPatient(patient);
-      setSavedPatients(nextSaved);
+      // Saved into the same store as every other saved patient, and
+      // selected, so it appears in the patient picker straight away.
+      if (!localIdentity.save(patient.nickname, patient.identifier, patient.key)) {
+        throw new Error('This device could not save the patient. Is storage blocked?');
+      }
+      localIdentity.select(patient.nickname);
       setIdentifier(patient.identifier);
       setSecret(patient.key);
-      localIdentity.save(patient.identifier, patient.key);
       setError(null);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'That patient backup is invalid.');
@@ -474,40 +475,6 @@ export default function MyPage() {
           </Button>
         </div>
 
-        {savedPatients.length > 0 && (
-          <Card className="space-y-2 p-4">
-            <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              Saved patients
-            </div>
-            <div className="space-y-2">
-              {savedPatients.map((savedPatient) => (
-                <div
-                  key={`${savedPatient.identifier}-${savedPatient.createdAt}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] px-3 py-2"
-                >
-                  <div>
-                    <div className="text-sm font-medium">{savedPatient.identifier}</div>
-                    <div className="text-xs text-[var(--color-ink-soft)]">
-                      {savedPatient.key.slice(0, 8)}…
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="px-3 py-1.5 text-xs"
-                    onClick={() => {
-                      setIdentifier(savedPatient.identifier);
-                      setSecret(savedPatient.key);
-                      localIdentity.save(savedPatient.identifier, savedPatient.key);
-                    }}
-                  >
-                    Use
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
         {importError && <Alert>{importError}</Alert>}
 
         {qrOpen && (
@@ -524,6 +491,14 @@ export default function MyPage() {
         )}
 
         <Card className="space-y-3 p-5">
+          <SavedPatientControls
+            identifier={identifier}
+            keyValue={secret}
+            onSelect={(patient) => {
+              setIdentifier(patient?.identifier ?? '');
+              setSecret(patient?.key ?? '');
+            }}
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">

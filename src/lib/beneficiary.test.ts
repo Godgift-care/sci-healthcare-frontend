@@ -27,6 +27,24 @@ describe('parsePatientBackup', () => {
     expect(patient.key).toBe('abcdefghijklmnopqrstuvwxzy1234567890');
   });
 
+  it('keeps the nickname from a backup made by this app', async () => {
+    const patient = await parsePatientBackup({
+      nickname: 'Mum',
+      identifier: 'card-881',
+      key: '0123456789abcdef0123456789abcdef',
+    });
+    expect(patient).toEqual({
+      nickname: 'Mum',
+      identifier: 'card-881',
+      key: '0123456789abcdef0123456789abcdef',
+    });
+  });
+
+  it('lists a backup without a nickname under its patient reference', async () => {
+    const patient = await parsePatientBackup('card-881 | 0123456789abcdef0123456789abcdef');
+    expect(patient.nickname).toBe('card-881');
+  });
+
   it('rejects a corrupted backup with a clear error', async () => {
     await expect(
       parsePatientBackup(JSON.stringify({ identifier: 'patient-123', key: 'too-short' })),
