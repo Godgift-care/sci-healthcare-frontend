@@ -315,6 +315,32 @@ export async function invokeContract(
   }
 }
 
+export type ContractCall = {
+  contractId: string;
+  method: string;
+  args: xdr.ScVal[];
+  walletAddress: string;
+};
+
+/**
+ * Encourages batched call flows when the wallet/SDK supports them, while
+ * keeping the app resilient: a single call can always fall back to individual
+ * invocations. The app still loops over results so it can stop on the first
+ * failure and report which services succeeded.
+ */
+export async function invokeContractBatch(
+  calls: ContractCall[],
+  sign: SignFn,
+): Promise<Array<{ hash: string; returnValue: unknown }>> {
+  if (calls.length === 0) return [];
+
+  const results: Array<{ hash: string; returnValue: unknown }> = [];
+  for (const call of calls) {
+    results.push(await invoke(call.contractId, call.method, call.args, call.walletAddress, sign));
+  }
+  return results;
+}
+
 async function invoke(
   contractId: string,
   method: string,
