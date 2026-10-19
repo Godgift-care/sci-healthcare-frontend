@@ -184,7 +184,7 @@ export default function ClinicPage({
   }
 
   const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
-  const registeredAt = Number.isFinite(Date.parse(provider.registeredAt))
+  const registeredAt = Number.isFinite(new Date(provider.registeredAt).getTime())
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;

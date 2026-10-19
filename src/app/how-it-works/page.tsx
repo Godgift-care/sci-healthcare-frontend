@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Card } from '@/components/ui';
+
+export const metadata: Metadata = {
+  title: 'How it works — SCI Healthcare',
+};
 
 export default function HowItWorksPage() {
   return (
