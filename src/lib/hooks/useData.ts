@@ -7,12 +7,14 @@ import {
   type Attester,
   type DailyStats,
   type Provider,
-  type Receipt,
+  type ReceiptsResponse,
   type Stats,
-  type Voucher,
+  type VoucherDetail,
+  type VoucherEvent,
+  type VouchersResponse,
 } from '../api';
 
-export type LoadedVoucher = Voucher & { receipt: Receipt | null };
+export type LoadedVoucher = VoucherDetail;
 
 /**
  * Hook for fetching and caching a single voucher with its receipt (#63).
@@ -40,6 +42,29 @@ export function useVoucher(
 }
 
 /**
+ * Hook for fetching and caching a voucher's on-chain event log (#18).
+ *
+ * Each event carries the hash of the transaction that emitted it, so the
+ * timeline can link its steps to Stellar Expert. An indexer that predates
+ * the endpoint (backend #13) answers 404: the error is not retried and not
+ * surfaced — the page renders the same timeline, only without the links.
+ */
+export function useVoucherEvents(id: string | null | undefined) {
+  const { data, error, isLoading, isValidating } = useSWR<VoucherEvent[]>(
+    id ? ['voucher-events', id] : null,
+    () => api.voucherEvents(id!),
+    { shouldRetryOnError: false },
+  );
+
+  return {
+    events: data ?? [],
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    isLoading,
+    isValidating,
+  };
+}
+
+/**
  * Hook for fetching and caching vouchers matching filter criteria (#63).
  */
 export function useVouchers(
@@ -50,8 +75,9 @@ export function useVouchers(
     status?: string;
     /** Page size; pass 1 when only `total` is used. */
     limit?: number;
+    offset?: number;
   } | null,
-  config?: SWRConfiguration<{ total: number; vouchers: Voucher[] }>,
+  config?: SWRConfiguration<VouchersResponse>,
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     params ? ['vouchers', params] : null,
@@ -97,7 +123,7 @@ export function useProvider(
  * Hook for fetching and caching provider directory (#63).
  */
 export function useProviders(
-  params?: { status?: string; country?: string; q?: string },
+  params?: { status?: 'Pending' | 'Active' | 'Suspended'; country?: string; q?: string },
   config?: SWRConfiguration<{ total: number; providers: Provider[] }>,
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
@@ -187,7 +213,7 @@ export function useAttesters(
  */
 export function useReceipts(
   beneficiaryRef: string | null | undefined,
-  config?: SWRConfiguration<{ total: number; totalSpendDisplay: string; receipts: Receipt[] }>,
+  config?: SWRConfiguration<ReceiptsResponse>,
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     beneficiaryRef ? ['receipts', beneficiaryRef] : null,
@@ -230,11 +256,12 @@ export function useIsAttester(address: string | null | undefined) {
 export async function invalidateVouchers(voucherId?: string): Promise<void> {
   if (voucherId) {
     await globalMutate(['voucher', voucherId]);
+    await globalMutate(['voucher-events', voucherId]);
   }
   await globalMutate(
     (key) =>
       Array.isArray(key) &&
-      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher'),
+      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher' || key[0] === 'voucher-events'),
   );
 }
 

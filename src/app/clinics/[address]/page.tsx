@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
-import { type Service } from '@/lib/api';
+import { notFound } from 'next/navigation';
+
+import { ApiError, type Service } from '@/lib/api';
 import {
   formatDate,
   formatUsdc,
@@ -16,6 +18,12 @@ import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
+import {
+  EXPIRY_OPTIONS,
+  expiresAtFor,
+  minExpiryDate,
+  type ExpiryChoice,
+} from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
@@ -23,9 +31,6 @@ import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
-
-/** How long the patient has to attend before the funder can refund. */
-const EXPIRY_OPTIONS = [14, 30, 60, 90] as const;
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -59,8 +64,17 @@ export default function ClinicPage({
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
 
-  const { provider, error: loadError } = useProvider(address);
-  const [selectedCodes, setSelectedCodes] = useState<number[]>([]);
+  const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
+  // Until the funder changes the basket, the clinic's first active service
+  // is selected, as before baskets existed: most funders pay for one thing.
+  const [selectedCodesOverride, setSelectedCodesOverride] = useState<number[] | null>(null);
+  const firstActive = provider?.services.find((s) => s.active !== false) ?? null;
+  const selectedCodes = useMemo(
+    () => selectedCodesOverride ?? (firstActive ? [firstActive.code] : []),
+    [selectedCodesOverride, firstActive],
+  );
+  const setSelectedCodes = (update: (current: number[]) => number[]) =>
+    setSelectedCodesOverride(update(selectedCodes));
   const selectedServices = useMemo(() => {
     if (!provider) return [] as Service[];
     return provider.services.filter((service) => selectedCodes.includes(service.code));
@@ -77,7 +91,7 @@ export default function ClinicPage({
   const selectionTotal = useMemo(
     () =>
       selectedServices.reduce(
-        (total, service) => total + toBaseUnits(String(service.price)),
+        (total, service) => total + BigInt(service.price),
         0n,
       ),
     [selectedServices],
@@ -90,7 +104,8 @@ export default function ClinicPage({
         ? toAmountInput(String(selectionTotal))
         : '');
   const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
-  const [expiryDays, setExpiryDays] = useState<number>(30);
+  const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
+  const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -191,9 +206,49 @@ export default function ClinicPage({
       : `${secret.slice(0, 4)}••••${secret.slice(-4)}`
     : '—';
 
+  // A custom expiry is described by the date it resolves to, so the funder
+  // reads the voucher's last valid day rather than the picker's raw value.
+  const customExpiresAt =
+    expiryChoice === 'custom' ? expiresAtFor('custom', customExpiry) : null;
+  const expirySummary =
+    expiryChoice === 'custom'
+      ? customExpiresAt === null
+        ? 'the end of the date you choose'
+        : `the end of ${formatDate(new Date(customExpiresAt * 1000))}`
+      : `${expiryChoice} days`;
+
   async function fund() {
     if (!wallet) return void connect();
     if (selectedServices.length === 0) return;
+
+    // A preset window is counted from now; a custom date is the last second
+    // of the day the funder picked. Checked once, before anything is signed,
+    // and shared by every voucher in the basket.
+    const expiresAt = expiresAtFor(expiryChoice, customExpiry);
+    if (expiresAt === null) {
+      toast.error('Choose the date the patient must attend by.');
+      return;
+    }
+    if (expiresAt <= Math.floor(Date.now() / 1000)) {
+      toast.error('The expiry date must be in the future.');
+      return;
+    }
+
+    // One service: the funder may pay above the listed price, never below.
+    // A basket of several funds each service at its listed price.
+    let singleAmount: bigint | null = null;
+    if (selected) {
+      try {
+        singleAmount = toBaseUnits(amount);
+      } catch {
+        toast.error('Enter a valid amount.');
+        return;
+      }
+      if (singleAmount < BigInt(selected.price)) {
+        toast.error(`The listed price is $${formatUsdc(selected.price)}. Enter at least that.`);
+        return;
+      }
+    }
 
     setBusy(true);
     setBatchSummary(null);
@@ -202,8 +257,8 @@ export default function ClinicPage({
       beneficiaryRef: identifier,
       provider: address,
       serviceCode: service.code,
-      amount: toBaseUnits(String(service.price)),
-      expiresAt: Math.floor(Date.now() / 1000) + expiryDays * 24 * 60 * 60,
+      amount: singleAmount ?? BigInt(service.price),
+      expiresAt,
     }));
 
     const succeeded: string[] = [];
@@ -258,7 +313,7 @@ export default function ClinicPage({
       const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
         <>
-          {succeeded.length} voucher{requests.length === 1 ? '' : 's'} funded successfully.
+          {requests.length === 1 ? 'Voucher funded.' : `${succeeded.length} vouchers funded.`}
           {firstId && (
             <>
               {' '}
@@ -282,13 +337,15 @@ export default function ClinicPage({
     }
   }
 
+  // An unknown clinic is a missing page, not an API failure.
+  if (loadRawError instanceof ApiError && loadRawError.status === 404) notFound();
   if (loadError) return <Alert>{loadError}</Alert>;
   if (!provider) {
     return <p className="text-sm text-[var(--color-ink-soft)]">Loading clinic…</p>;
   }
 
   const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
-  const registeredAt = Number.isFinite(Date.parse(provider.registeredAt))
+  const registeredAt = Number.isFinite(new Date(provider.registeredAt).getTime())
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;
@@ -546,8 +603,8 @@ export default function ClinicPage({
                 Patient must attend within
               </span>
               <select
-                value={expiryDays}
-                onChange={(e) => setExpiryDays(Number(e.target.value))}
+                value={expiryChoice}
+                onChange={(e) => setExpiryChoice(e.target.value as ExpiryChoice)}
                 className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
               >
                 {EXPIRY_OPTIONS.map((d) => (
@@ -555,8 +612,30 @@ export default function ClinicPage({
                     {d} days
                   </option>
                 ))}
+                <option value="custom">Custom date</option>
               </select>
             </label>
+
+            {expiryChoice === 'custom' && (
+              <div>
+                <label className="block">
+                  <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    Expiry date
+                  </span>
+                  <input
+                    type="date"
+                    value={customExpiry}
+                    min={minExpiryDate()}
+                    onChange={(e) => setCustomExpiry(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+                  />
+                </label>
+                <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
+                  The voucher is valid through this date (UTC). The contract
+                  accepts any date in the future.
+                </span>
+              </div>
+            )}
 
             <TestUsdc compact />
 
@@ -586,7 +665,7 @@ export default function ClinicPage({
                 label="contract id"
               />{' '}
               and released to the clinic only after an attester confirms delivery.
-              Unclaimed vouchers are refundable after {expiryDays} days.
+              Unclaimed vouchers are refundable after {expirySummary}.
             </p>
           </>
         )}
@@ -636,7 +715,7 @@ export default function ClinicPage({
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Expires</dt>
-                <dd className="text-right font-medium">{expiryDays} days</dd>
+                <dd className="text-right font-medium">{expirySummary}</dd>
               </div>
             </dl>
 
