@@ -309,7 +309,7 @@ export default function MyPage() {
     } catch {
       return '';
     }
-  }, [identifier, secret]);
+  }, [identifier, secret, saved.selectedNickname]);
 
   function downloadPatientBackup() {
     if (!identifier || !secret) return;
