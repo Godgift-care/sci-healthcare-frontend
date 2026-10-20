@@ -50,6 +50,9 @@ test('prompts for the trustline instead of showing the fund button', async ({
   await page.getByPlaceholder('e.g. clinic card number').fill('CARD-1');
   await page.getByPlaceholder('stays on this device').fill('s'.repeat(32));
   await page.getByRole('button', { name: 'Fund voucher' }).click();
+
+  // Funding goes through the review step (#22) like any other fund flow.
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByText('Voucher funded.')).toBeVisible();
 });
 

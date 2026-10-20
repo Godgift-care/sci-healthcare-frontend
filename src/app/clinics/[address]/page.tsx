@@ -162,15 +162,18 @@ export default function ClinicPage({
   } = useVouchers({ provider: address, status: 'Settled', limit: 1 });
 
   // The amount as base units, or null while the field is not a number.
+  // Taken from `amount` — the typed override for a single service, the
+  // basket total otherwise (the field is read-only there) — because that is
+  // exactly what `fund()` signs: the quote, the review screen, the balance
+  // warning and the disabled state must all describe the same number.
   const baseAmount = useMemo(() => {
-    if (selectedServices.length > 0) return selectionTotal;
     try {
       const v = toBaseUnits(amount);
       return v > 0n ? v : null;
     } catch {
       return null;
     }
-  }, [amount, selectedServices.length, selectionTotal]);
+  }, [amount]);
 
   function toggleService(service: Service) {
     setSelectedCodes((current) => {
