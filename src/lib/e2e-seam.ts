@@ -15,7 +15,9 @@
  */
 
 export type MockRpcCall = {
-  kind: 'invoke' | 'read';
+  /** `change_trust` is the classic USDC trustline operation (#1), not a
+   *  contract call: `contractId` is the USDC contract the line backs. */
+  kind: 'invoke' | 'read' | 'change_trust';
   contractId: string;
   method: string;
 };
@@ -24,6 +26,10 @@ declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
     __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
+    /** Playwright: the mock wallet has no USDC trustline yet (#1). */
+    __SCI_NO_TRUSTLINE__?: boolean;
+    /** Playwright: the mock wallet refuses to sign, as a real one can (#1). */
+    __SCI_MOCK_SIGN_REJECT__?: boolean;
   }
 }
 
@@ -40,6 +46,11 @@ export function isMockRpc(): boolean {
 
 export function recordMockCall(call: MockRpcCall): void {
   window.__SCI_MOCK_RPC__?.calls.push(call);
+}
+
+/** True once Playwright has made the mock wallet refuse to sign (#1). */
+export function mockSignRejects(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_SIGN_REJECT__);
 }
 
 /**

@@ -12,7 +12,12 @@ import {
 } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
-import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
+import {
+  invalidateVouchers,
+  useProvider,
+  useUsdcTrustline,
+  useVouchers,
+} from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -76,6 +81,11 @@ export default function ClinicPage({
   const [busy, setBusy] = useState(false);
   const toast = useToast();
 
+  // The wallet's USDC trustline (#1): checked on connect, before the fund
+  // button is offered, so funding never dies at signing with a raw token
+  // error. `missing` swaps the fund button for a one-click fix.
+  const trustline = useUsdcTrustline();
+
   // Track record for funders: how many vouchers this clinic has settled. The
   // count is filtered server-side, so it stays right as the list grows, and
   // it simply goes unrendered if the indexer cannot answer. One row is enough
@@ -121,6 +131,9 @@ export default function ClinicPage({
   async function fund() {
     if (!wallet) return void connect();
     if (!selected) return;
+    // Belt and braces: the button is not rendered without a trustline, but
+    // funding a wallet that cannot hold USDC would only fail at signing.
+    if (trustline.status === 'missing') return;
 
     setBusy(true);
     try {
@@ -361,11 +374,55 @@ export default function ClinicPage({
               </select>
             </label>
 
-            <TestUsdc compact />
+            {/* The faucet card's own trustline instructions would talk over
+                the one-click prompt below, so it stays out of the way here. */}
+            <TestUsdc compact trustlineHint={false} />
 
-            <Button onClick={() => void fund()} disabled={busy} className="w-full">
-              {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
-            </Button>
+            {trustline.status === 'missing' && (
+              <Alert kind="info">
+                <p>
+                  A trustline is your wallet agreeing to hold USDC — press{' '}
+                  <strong>Add USDC</strong> and approve the one-time request in
+                  your wallet.
+                </p>
+                <Button
+                  className="mt-3"
+                  disabled={trustline.adding}
+                  onClick={() => void trustline.add()}
+                >
+                  {trustline.adding ? 'Check your wallet…' : 'Add USDC'}
+                </Button>
+              </Alert>
+            )}
+
+            {trustline.status === 'ready' && trustline.balance !== null && (
+              <p className="text-sm">
+                USDC balance:{' '}
+                <span className="mono font-medium">
+                  ${formatUsdc(trustline.balance)}
+                </span>
+              </p>
+            )}
+
+            {trustline.balance !== null &&
+              baseAmount !== null &&
+              trustline.balance < baseAmount && (
+                <Alert>
+                  Your USDC balance is ${formatUsdc(trustline.balance)}, below
+                  the ${formatUsdc(baseAmount)} voucher amount. Top up before
+                  funding.
+                </Alert>
+              )}
+
+            {trustline.status !== 'missing' && (
+              <Button
+                onClick={() => void fund()}
+                disabled={busy || trustline.status === 'checking'}
+                className="w-full"
+              >
+                {busy ? 'Confirming…' : wallet ? 'Fund voucher' : 'Connect wallet'}
+              </Button>
+            )}
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
               Funds are escrowed by the contract at{' '}

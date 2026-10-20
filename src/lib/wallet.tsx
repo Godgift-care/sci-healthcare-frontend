@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import { config } from './config';
-import { mockWalletAddress } from './e2e-seam';
+import { mockSignRejects, mockWalletAddress } from './e2e-seam';
 import {
   PASSKEY_WALLET_ID,
   PasskeyModule,
@@ -291,7 +291,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const signTransaction = useCallback(
     async (xdr: string) => {
       if (!address) throw new Error('Connect a wallet first');
-      if (mockWalletAddress()) return xdr;
+      if (mockWalletAddress()) {
+        // Test seam (#1): a test can make the mock wallet refuse to sign so
+        // the rejection path is covered without a real wallet extension.
+        if (mockSignRejects()) throw new Error('User rejected the transaction in the wallet');
+        return xdr;
+      }
 
       const savedWalletId = (() => {
         try {
