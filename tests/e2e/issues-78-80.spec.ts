@@ -118,6 +118,8 @@ test.describe('Toast notifications for transaction results (#80)', () => {
     await mockBackend(page, {
       vouchers: [CLAIMED_VOUCHER('801')],
       voucherById: { '801': CLAIMED_VOUCHER('801') },
+      // Indexer catches up to the dispute a few polls in (#9).
+      voucherConverges: { status: 'Disputed' },
     });
 
     await page.goto('/my');
@@ -141,6 +143,8 @@ test.describe('Toast notifications for transaction results (#80)', () => {
     // No patient reference, so the local validation rejects it before any
     // transaction is built or simulated.
     await page.getByRole('button', { name: 'Fund voucher' }).click();
+    // Funding now goes through a review step (#22).
+    await page.getByRole('button', { name: 'Confirm', exact: true }).click();
 
     await expect(notifications(page)).toContainText('Enter a patient reference');
     expect(await mockInvokes(page)).toEqual([]);

@@ -17,7 +17,7 @@ import type { MockRpcCall } from '@/lib/e2e-seam';
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
+    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; args: string[][]; delayMs?: number };
   }
 }
 
@@ -32,7 +32,7 @@ export async function useMockWallet(
 ): Promise<void> {
   await page.addInitScript(
     `window.__SCI_MOCK_WALLET__ = { address: '${address}' };
-     window.__SCI_MOCK_RPC__ = { calls: [], delayMs: ${delayMs} };`,
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };`,
   );
   // The analytics script tag is present in the test build; keep the request
   // itself inside the sandbox. (The analytics spec stubs window.plausible,
@@ -51,6 +51,14 @@ export type BackendState = {
    * out answers 404, exactly like an indexer that predates backend #13 —
    * the page then shows the timeline without transaction links.
    */
+  /**
+   * Indexer convergence (#9). After this many reads of `GET /vouchers/:id`,
+   * the mock reports the voucher with `status`, simulating the indexer
+   * catching up to a write (default: the 3rd read, ~3s into the backoff
+   * poll). Earlier reads serve the fixture state, so write flows can assert
+   * the pending state first and the new status after.
+   */
+  voucherConverges?: { status: string; afterReads?: number };
   voucherEventsById?: Record<string, unknown[]>;
   dailyStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
@@ -59,6 +67,7 @@ export type BackendState = {
 
 export async function mockBackend(page: Page, state: BackendState): Promise<void> {
   const providers = state.providers ?? (state.provider ? [state.provider] : []);
+  const readsByVoucher = new Map<string, number>();
   await page.route('http://localhost:8080/**', (route) => {
     const url = new URL(route.request().url());
     const parts = url.pathname.split('/').filter(Boolean);
@@ -142,6 +151,19 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
         return json({ message: 'Not found' }, 404);
       }
       if (parts.length === 2) {
+        const converge = state.voucherConverges;
+        if (converge) {
+          const seen = (readsByVoucher.get(parts[1]) ?? 0) + 1;
+          readsByVoucher.set(parts[1], seen);
+          if (seen > (converge.afterReads ?? 2)) {
+            const raw =
+              state.voucherById?.[parts[1]] ??
+              state.vouchers?.find((cand) => String(cand.id) === parts[1]);
+            if (raw && typeof raw === 'object') {
+              return json({ ...(raw as Record<string, unknown>), status: converge.status });
+            }
+          }
+        }
         const v = state.voucherById?.[parts[1]];
         if (v) return json(v);
         return json({ message: 'Not found' }, 404);
@@ -162,4 +184,20 @@ export async function mockCalls(page: Page): Promise<MockRpcCall[]> {
 export async function mockInvokes(page: Page): Promise<MockRpcCall[]> {
   const calls = await mockCalls(page);
   return calls.filter((c) => c.kind === 'invoke');
+}
+
+/**
+ * The arguments of those writes, as base64 XDR, in the same order: index `i`
+ * here is what `mockInvokes(page)[i]` carried. Lets a test assert a value the
+ * UI never shows — that the date a funder picked became the `expires_at` the
+ * contract was called with, for instance.
+ */
+export async function mockInvokeArgs(page: Page): Promise<string[][]> {
+  return page.evaluate(() => {
+    const mock = window.__SCI_MOCK_RPC__;
+    if (!mock) return [];
+    return mock.calls
+      .map((call, i) => (call.kind === 'invoke' ? mock.args[i] ?? [] : null))
+      .filter((args): args is string[] => args !== null);
+  });
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import useSWR from 'swr';
 
@@ -9,9 +10,12 @@ import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
 import { useLiveUpdates, useProvider, useVouchers } from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
+import { QrScannerModal } from '@/components/QrScannerModal';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
 import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
+
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
 type Standing = ProviderStanding | 'Unregistered' | null;
@@ -34,9 +38,12 @@ const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
  * Uses SWR caching (#63) and live updates via SSE with polling fallback (#64).
  */
 export default function ClinicDeskPage() {
+  const router = useRouter();
   const { address, signTransaction, connect } = useWallet();
+  const { t, locale } = useLocaleContext();
 
   const [busy, setBusy] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const toast = useToast();
 
   const [name, setName] = useState('');
@@ -84,13 +91,13 @@ export default function ClinicDeskPage() {
       refreshAll();
       toast.success(
         <>
-          Submitted.{' '}
-          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>{' '}
-          Lists update once the indexer catches up.
+          {t('common.submitted')}{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>{t('common.viewTransaction')}</ExplorerLink>{' '}
+          {t('common.indexerCatchUp')}
         </>,
       );
     } catch (err) {
-      toast.error(humaniseError(err, table));
+      toast.error(humaniseError(err, table, locale));
     } finally {
       setBusy(false);
     }
@@ -103,34 +110,70 @@ export default function ClinicDeskPage() {
   }
 
   if (!address) {
-    return <Empty>Connect the clinic&apos;s wallet to manage this desk.</Empty>;
+    return <Empty>{t('clinic.connectWallet')}</Empty>;
   }
 
   const editing = services.some((s) => String(s.code) === code);
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Clinic desk</h1>
-        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          {standing === null ? 'Checking registration…' : STANDING_TEXT[standing]}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">{t('clinic.title')}</h1>
+          <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+            {standing === null ? t('clinic.checking') : STANDING_TEXT[standing]}
+          </p>
+        </div>
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => setScannerOpen(true)}
+            className="flex items-center gap-1.5"
+            aria-label="Scan voucher QR code"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+            <span>{t('clinic.scanVoucherQr')}</span>
+          </Button>
+        </div>
       </div>
+
+      <QrScannerModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={(voucherId) => {
+          setScannerOpen(false);
+          router.push(`/vouchers/${voucherId}`);
+        }}
+      />
 
       {standing === 'Unregistered' && (
         <Card className="space-y-3 p-5">
-          <h2 className="font-medium">Register this clinic</h2>
+          <h2 className="font-medium">{t('clinic.registerTitle')}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Clinic name"
+              placeholder={t('clinic.clinicName')}
               className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
             />
             <input
               value={country}
               onChange={(e) => setCountry(e.target.value.toUpperCase().slice(0, 2))}
-              placeholder="Country code (NG)"
+              placeholder={t('clinic.countryCode')}
               className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
             />
           </div>
@@ -142,17 +185,17 @@ export default function ClinicDeskPage() {
               )
             }
           >
-            {busy ? 'Confirming…' : 'Register'}
+            {busy ? t('common.confirming') : t('clinic.register')}
           </Button>
         </Card>
       )}
 
       {standing === 'Active' && (
         <Card className="p-5">
-          <h2 className="font-medium">Services</h2>
+          <h2 className="font-medium">{t('clinic.services')}</h2>
           {services.length === 0 ? (
             <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
-              No services listed yet. Funders can only pay for services you list.
+              {t('clinic.noServices')}
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-[var(--color-line)]">
@@ -164,12 +207,12 @@ export default function ClinicDeskPage() {
                   <div>
                     <div className="text-sm font-medium">{s.label}</div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
-                      Code {s.code} · <span className="mono">${formatUsdc(s.price)}</span>
+                      {t('clinic.code', { code: s.code })} · <span className="mono">${formatUsdc(s.price, locale)}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="ghost" disabled={busy} onClick={() => edit(s)}>
-                      Edit
+                      {t('clinic.edit')}
                     </Button>
                     {confirmRemove === s.code ? (
                       <>
@@ -182,14 +225,14 @@ export default function ClinicDeskPage() {
                             )
                           }
                         >
-                          {busy ? 'Confirming…' : 'Confirm delist'}
+                          {busy ? t('common.confirming') : t('clinic.confirmDelist')}
                         </Button>
                         <Button
                           variant="ghost"
                           disabled={busy}
                           onClick={() => setConfirmRemove(null)}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                       </>
                     ) : (
@@ -198,7 +241,7 @@ export default function ClinicDeskPage() {
                         disabled={busy}
                         onClick={() => setConfirmRemove(s.code)}
                       >
-                        Delist
+                        {t('clinic.delist')}
                       </Button>
                     )}
                   </div>
@@ -208,8 +251,7 @@ export default function ClinicDeskPage() {
           )}
           {confirmRemove !== null && (
             <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-              Delisting stops new vouchers for this service. Vouchers already funded keep
-              their agreed amount and settle normally.
+              {t('clinic.delistNote')}
             </p>
           )}
         </Card>
@@ -218,31 +260,30 @@ export default function ClinicDeskPage() {
       {standing === 'Active' && (
         <Card className="space-y-3 p-5">
           <h2 className="font-medium">
-            {editing ? `Update service ${code}` : 'List a service'}
+            {editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <input
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="Code (101)"
+              placeholder={t('clinic.codePlaceholder')}
               className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
             />
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Outpatient consult"
+              placeholder={t('clinic.labelPlaceholder')}
               className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm sm:col-span-2"
             />
           </div>
           <input
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="Price in USDC, e.g. 3.00"
+            placeholder={t('clinic.pricePlaceholder')}
             className="mono w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
           />
           <p className="text-xs text-[var(--color-ink-soft)]">
-            Use a coarse service category, never a diagnosis. Codes are public. A new
-            price applies to vouchers funded from now on.
+            {t('clinic.serviceNote')}
           </p>
           <Button
             disabled={busy || !code || !label || !price}
@@ -258,14 +299,14 @@ export default function ClinicDeskPage() {
               )
             }
           >
-            {busy ? 'Confirming…' : editing ? 'Update service' : 'List service'}
+            {busy ? t('common.confirming') : editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
           </Button>
         </Card>
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Incoming vouchers</h2>
-        {vouchers.length === 0 && <Empty>No vouchers for this clinic yet.</Empty>}
+        <h2 className="text-lg font-semibold">{t('clinic.incomingVouchers')}</h2>
+        {vouchers.length === 0 && <Empty>{t('clinic.noIncoming')}</Empty>}
         <div className="space-y-3">
           {vouchers.map((v) => (
             <VoucherRow

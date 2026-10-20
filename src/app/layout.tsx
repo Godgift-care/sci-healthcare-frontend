@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 
-import { ConnectButton } from '@/components/ConnectButton';
 import { Analytics } from '@/components/Analytics';
 import { ErrorReporter } from '@/components/ErrorReporter';
-import { LowBandwidthToggle } from '@/components/LowBandwidthToggle';
-import { NetworkBadge } from '@/components/NetworkBadge';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
 import { ToastProvider } from '@/components/Toast';
-import { NavLink } from '@/components/ui';
+import { SiteHeader } from '@/components/SiteHeader';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
+
+import { LocaleProvider } from '@/i18n/LocaleContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 import './globals.css';
 
@@ -46,8 +47,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // suppressHydrationWarning: the theme init script sets data-theme before
+  // paint, which the server render cannot know (#10).
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      {/* Theme before paint (#10): stored override, else the OS setting. */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       <body>
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
@@ -58,49 +63,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (#75). The setting is read once here so every page below sees
               the same behaviour. */}
           <SwrProvider>
+            {/* Language for translated text (#5); defaults to English and
+                remembers the visitor's choice. */}
+            <LocaleProvider>
             <TestnetNotice />
-            <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
-              <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
-                <div className="flex min-w-0 items-center gap-6">
-                  <Link href="/" className="flex items-center gap-2 font-semibold">
-                    <span
-                      aria-hidden
-                      className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm text-white"
-                    >
-                      ✚
-                    </span>
-                    SCI Healthcare
-                  </Link>
-                  <nav className="hidden items-center gap-1 sm:flex">
-                    <NavLink href="/">Clinics</NavLink>
-                    <NavLink href="/how-it-works">How it works</NavLink>
-                    <NavLink href="/my">My vouchers</NavLink>
-                    <NavLink href="/clinic">Clinic desk</NavLink>
-                    <NavLink href="/attest">Attest</NavLink>
-                    <NavLink href="/faq">FAQ</NavLink>
-                  </nav>
-                </div>
-                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                  <LowBandwidthToggle />
-                  <NetworkBadge />
-                  <ConnectButton />
-                </div>
-              </div>
-            </header>
+            <SiteHeader />
 
-            <main className="mx-auto max-w-6xl px-6 py-8">
+            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
               <ToastProvider>{children}</ToastProvider>
             </main>
 
-            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-6 py-8 text-xs text-[var(--color-ink-soft)]">
+            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl">
                   {isTestnet
                     ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
                     : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
                 </p>
+                {/* Language choice for translated text (#5). */}
+                <LanguageSwitcher />
                 <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
                   <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
                     How it works
@@ -128,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </nav>
               </div>
             </footer>
+            </LocaleProvider>
           </SwrProvider>
         </WalletProvider>
       </body>

@@ -25,7 +25,16 @@ export type MockRpcCall = {
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
+    __SCI_MOCK_RPC__?: {
+      calls: MockRpcCall[];
+      /**
+       * Arguments of each recorded call, as base64 XDR, index-aligned with
+       * `calls`. Kept beside them rather than on them so a test asserting the
+       * calls it expects does not have to know their arguments.
+       */
+      args: string[][];
+      delayMs?: number;
+    };
     /** Playwright: the mock wallet has no USDC trustline yet (#1). */
     __SCI_NO_TRUSTLINE__?: boolean;
     /** Playwright: the mock wallet refuses to sign, as a real one can (#1). */
@@ -44,8 +53,11 @@ export function isMockRpc(): boolean {
   return typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_RPC__);
 }
 
-export function recordMockCall(call: MockRpcCall): void {
-  window.__SCI_MOCK_RPC__?.calls.push(call);
+export function recordMockCall(call: MockRpcCall, args: string[] = []): void {
+  const mock = window.__SCI_MOCK_RPC__;
+  if (!mock) return;
+  mock.calls.push(call);
+  mock.args.push(args);
 }
 
 /** True once Playwright has made the mock wallet refuse to sign (#1). */
