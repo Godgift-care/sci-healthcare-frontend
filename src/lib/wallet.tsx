@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import { config } from './config';
-import { mockWalletAddress } from './e2e-seam';
+import { mockWalletAddress, mockWalletNetworkPassphrase } from './e2e-seam';
 import {
   PASSKEY_WALLET_ID,
   PasskeyModule,
@@ -46,6 +46,7 @@ import {
 export type WalletState = {
   address: string | null;
   walletName: string | null;
+  networkPassphrase: string | null;
   connecting: boolean;
   isUnfunded: boolean;
   isLowXlm: boolean;
@@ -152,6 +153,7 @@ async function getKit() {
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [walletName, setWalletName] = useState<string | null>(null);
+  const [networkPassphrase, setNetworkPassphrase] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [isUnfunded, setIsUnfunded] = useState(false);
   const [isLowXlm, setIsLowXlm] = useState(false);
@@ -167,6 +169,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setAddress(mocked);
           setWalletName('Mock Wallet');
+          setNetworkPassphrase(
+            mockWalletNetworkPassphrase() ?? config.networkPassphrase,
+          );
         }
         return;
       }
@@ -194,6 +199,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (!cancelled && passkeyAddr) {
           setAddress(passkeyAddr);
           setWalletName('Passkey Smart Wallet');
+          setNetworkPassphrase((await new PasskeyModule().getNetwork()).networkPassphrase);
         }
         return;
       }
@@ -205,10 +211,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         const { address: addr } = await kit.getAddress();
         if (!cancelled && addr) {
+          const network = await kit.getNetwork().catch(() => null);
           setAddress(addr);
           setWalletName(
             getWalletDisplayName(savedWalletId || kit.selectedModule?.productId),
           );
+          setNetworkPassphrase(network?.networkPassphrase ?? null);
         }
       } catch {
         // Not connected yet or wallet locked.
@@ -257,18 +265,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (mocked) {
       setAddress(mocked);
       setWalletName('Mock Wallet');
+      setNetworkPassphrase(
+        mockWalletNetworkPassphrase() ?? config.networkPassphrase,
+      );
       return;
     }
     setConnecting(true);
     setError(null);
+    setNetworkPassphrase(null);
     try {
       let addr: string | null = null;
       let selectedId: string | null = null;
+      let activeNetworkPassphrase: string | null = null;
 
       if (walletId === PASSKEY_WALLET_ID) {
         const passkey = await connectPasskeyWallet();
         addr = passkey.address;
         selectedId = PASSKEY_WALLET_ID;
+        activeNetworkPassphrase = (await new PasskeyModule().getNetwork()).networkPassphrase;
       } else {
         const kit = await getKit();
         if (walletId) {
@@ -281,10 +295,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           addr = res.address;
           selectedId = kit.selectedModule?.productId || null;
         }
+        activeNetworkPassphrase =
+          (await kit.getNetwork().catch(() => null))?.networkPassphrase ?? null;
       }
 
       setAddress(addr);
       setWalletName(getWalletDisplayName(selectedId));
+      setNetworkPassphrase(activeNetworkPassphrase);
 
       try {
         window.localStorage.setItem(CONNECTED_FLAG, '1');
@@ -322,6 +339,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setAddress(null);
       setWalletName(null);
+      setNetworkPassphrase(null);
       setIsUnfunded(false);
       setIsLowXlm(false);
       setSpendableXlm(null);
@@ -359,6 +377,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     () => ({
       address,
       walletName,
+      networkPassphrase,
       connecting,
       isUnfunded,
       isLowXlm,
@@ -371,6 +390,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [
       address,
       walletName,
+      networkPassphrase,
       connecting,
       isUnfunded,
       isLowXlm,

@@ -16,8 +16,10 @@ import type { MockRpcCall } from '@/lib/e2e-seam';
 
 declare global {
   interface Window {
-    __SCI_MOCK_WALLET__?: { address: string };
+    __SCI_MOCK_WALLET__?: { address: string; networkPassphrase?: string };
     __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; args: string[][]; delayMs?: number };
+    __SCI_USDC_TRUSTLINE__?: boolean;
+    __SCI_USDC_BALANCE__?: string;
   }
 }
 
@@ -29,10 +31,20 @@ export async function useMockWallet(
   page: Page,
   address: string,
   delayMs = 0,
+  options: {
+    networkPassphrase?: string;
+    trustline?: boolean;
+    usdcBalance?: string;
+  } = {},
 ): Promise<void> {
   await page.addInitScript(
-    `window.__SCI_MOCK_WALLET__ = { address: '${address}' };
-     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };`,
+    `window.__SCI_MOCK_WALLET__ = ${JSON.stringify({
+      address,
+      ...(options.networkPassphrase ? { networkPassphrase: options.networkPassphrase } : {}),
+    })};
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };
+     ${options.trustline === undefined ? '' : `window.__SCI_USDC_TRUSTLINE__ = ${options.trustline};`}
+     ${options.usdcBalance === undefined ? '' : `window.__SCI_USDC_BALANCE__ = '${options.usdcBalance}';`}`,
   );
   // The analytics script tag is present in the test build; keep the request
   // itself inside the sandbox. (The analytics spec stubs window.plausible,

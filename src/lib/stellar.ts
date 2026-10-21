@@ -2,7 +2,13 @@ import type { xdr } from '@stellar/stellar-sdk';
 
 import { toBaseUnits } from './amounts';
 import { config } from './config';
-import { isMockRpc, mockRpcDelayMs, recordMockCall } from './e2e-seam';
+import {
+  isMockRpc,
+  mockRpcDelayMs,
+  mockUsdcBalance,
+  mockUsdcTrustline,
+  recordMockCall,
+} from './e2e-seam';
 import { beginPendingTransaction } from './pending-tx';
 
 /**
@@ -286,6 +292,30 @@ export async function getAccountSpendableBalance(
   }
 }
 
+/** Returns whether the account has a trustline for the configured USDC issuer. */
+export async function checkUsdcTrustline(address: string): Promise<boolean | null> {
+  if (!config.usdcIssuer) return null;
+  // Soroban contract accounts hold SAC tokens directly, without classic trustlines.
+  if (address.startsWith('C')) return true;
+  if (isMockRpc()) return mockUsdcTrustline();
+
+  try {
+    const response = await fetch(`${horizonBaseUrl()}/accounts/${address}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const account = (await response.json()) as {
+      balances?: Array<{ asset_code?: string; asset_issuer?: string }>;
+    };
+    return (account.balances ?? []).some(
+      (balance) =>
+        balance.asset_code === 'USDC' && balance.asset_issuer === config.usdcIssuer,
+    );
+  } catch {
+    return null;
+  }
+}
+
 /** How long to wait for a submitted transaction to reach a final status. */
 const CONFIRM_TIMEOUT_MS = 45_000;
 const POLL_INTERVAL_MS = 1_500;
@@ -508,7 +538,7 @@ async function mockReadResult<T>(method: string, args: xdr.ScVal[]): Promise<T> 
     case 'get_config':
       return { amount: 500000000n } as unknown as T;
     case 'balance':
-      return 100000000n as unknown as T;
+      return mockUsdcBalance() as unknown as T;
     default:
       throw new Error(`E2E mock has no canned read for ${method}`);
   }

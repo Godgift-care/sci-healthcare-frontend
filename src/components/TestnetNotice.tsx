@@ -32,8 +32,10 @@ function getSnapshot(): boolean {
 }
 
 function getServerSnapshot(): boolean {
-  // Hide during SSR to prevent hydration markup mismatches
-  return true;
+  // Render the default visible state in the server HTML. During hydration,
+  // useSyncExternalStore switches to the localStorage snapshot for returning
+  // visitors who already dismissed the notice.
+  return false;
 }
 
 export function TestnetNotice() {

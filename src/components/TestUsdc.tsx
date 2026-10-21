@@ -123,9 +123,11 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
 
   if (compact) return <div className="text-sm">{body}</div>;
   return (
-    <Card className="p-5">
-      <h2 className="mb-3 text-sm font-semibold">Test USDC (testnet demo)</h2>
-      {body}
-    </Card>
+    <div id="test-usdc">
+      <Card className="p-5">
+        <h2 className="mb-3 text-sm font-semibold">Test USDC (testnet demo)</h2>
+        {body}
+      </Card>
+    </div>
   );
 }
