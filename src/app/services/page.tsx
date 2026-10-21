@@ -84,13 +84,13 @@ export default function ServicesPage() {
             href="/"
             className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
-            Browse clinics &rarr;
+            Browse clinics →
           </Link>
           <Link
             href="/how-it-works"
             className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
-            How it works &rarr;
+            How it works →
           </Link>
         </div>
       </section>
@@ -192,7 +192,7 @@ function ServiceCard({
         </div>
 
         <p className="mt-3 text-xs text-[var(--color-brand)] font-medium underline underline-offset-2 hover:opacity-80">
-          Compare clinics &rarr;
+          Compare clinics →
         </p>
       </Card>
     </Link>
