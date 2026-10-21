@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
+import { CommandPalette } from '@/components/CommandPalette';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LocaleProvider>
             <TestnetNotice />
             <SiteHeader />
+            <CommandPalette />
 
             <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
               {/* Toasts live here so transaction results from any page appear
