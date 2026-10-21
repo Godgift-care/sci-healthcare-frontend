@@ -61,3 +61,34 @@ test('migrates the previous single-patient browser storage', async ({ page }) =>
   await expect(page.getByLabel('Saved patients')).toHaveValue('Saved patient');
   await expect(page.getByLabel('Patient reference')).toHaveValue('legacy-patient');
 });
+
+test('protects saved keys and requires a passphrase after reload', async ({ page }) => {
+  await page.goto('/my');
+
+  await page.getByLabel('Patient reference').fill('protected-patient');
+  await page.getByLabel('Secret key').fill('s'.repeat(43));
+  await page.getByLabel('Patient nickname').fill('Protected');
+  await page.getByRole('button', { name: 'Save patient' }).click();
+
+  await page.getByLabel('New passphrase').fill('correct horse battery');
+  await page.getByLabel('Confirm passphrase').fill('correct horse battery');
+  await page.getByRole('button', { name: 'Protect saved keys' }).click();
+
+  const storedPatients = await page.evaluate(() => localStorage.getItem('sci:saved-patients'));
+  expect(storedPatients).not.toContain('s'.repeat(43));
+  expect(storedPatients).not.toContain('protected-patient');
+
+  await page.reload();
+  await expect(page.getByText('Saved patient keys are protected.')).toBeVisible();
+  await page.getByLabel('Passphrase').fill('incorrect passphrase');
+  await page.getByRole('button', { name: 'Unlock saved patients' }).click();
+  await expect(page.getByText('Could not unlock saved patients. Check your passphrase and try again.'))
+    .toBeVisible();
+
+  await page.getByLabel('Passphrase').fill('correct horse battery');
+  await page.getByRole('button', { name: 'Unlock saved patients' }).click();
+  await expect(page.getByLabel('Saved patients')).toHaveValue('Protected');
+  await page.getByLabel('Saved patients').selectOption('Protected');
+  await expect(page.getByLabel('Patient reference')).toHaveValue('protected-patient');
+  await expect(page.getByLabel('Secret key')).toHaveValue('s'.repeat(43));
+});

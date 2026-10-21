@@ -302,7 +302,7 @@ export default function ClinicPage({
 
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
+      await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
       for (let i = 0; i < requests.length; i++) {
         const request = { ...requests[i], beneficiaryRef: ref };
