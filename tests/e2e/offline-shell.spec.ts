@@ -203,42 +203,38 @@ test('expiry reminders are opt-in and persist for offline delivery', async ({
 
   await page.getByRole('button', { name: 'Enable expiry reminders' }).click();
 
+  async function scheduledReminders() {
+    return page.evaluate(
+      () =>
+        new Promise<{ id: string; expiresAt: number; notifyAt: number }[]>(
+          (resolve, reject) => {
+            void navigator.serviceWorker.ready.then((registration) => {
+              const channel = new MessageChannel();
+              channel.port1.onmessage = (event) => {
+                channel.port1.close();
+                resolve(event.data.reminders);
+              };
+              channel.port1.onmessageerror = reject;
+              if (!registration.active) {
+                reject(new Error('No active service worker'));
+                return;
+              }
+              registration.active.postMessage(
+                { type: 'GET_EXPIRY_REMINDERS' },
+                [channel.port2],
+              );
+            }, reject);
+          },
+        ),
+    );
+  }
+
   await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<number>((resolve, reject) => {
-            const request = indexedDB.open('sci-healthcare-reminders-v1', 1);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-              const read = request.result
-                .transaction('reminders')
-                .objectStore('reminders')
-                .getAll();
-              read.onsuccess = () => resolve(read.result.length);
-              read.onerror = () => reject(read.error);
-            };
-          }),
-      ),
-    )
-    .toBe(1);
+    .poll(scheduledReminders, { timeout: 15_000, intervals: [100, 250, 500, 1_000] })
+    .toHaveLength(1);
 
   await context.setOffline(true);
-  const storedReminder = await page.evaluate(
-    () =>
-      new Promise<{ id: string; expiresAt: number; notifyAt: number }>((resolve, reject) => {
-        const request = indexedDB.open('sci-healthcare-reminders-v1', 1);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const read = request.result
-            .transaction('reminders')
-            .objectStore('reminders')
-            .get('expiry-reminder');
-          read.onsuccess = () => resolve(read.result);
-          read.onerror = () => reject(read.error);
-        };
-      }),
-  );
+  const storedReminder = (await scheduledReminders())[0];
   expect(storedReminder.expiresAt).toBe(expiresAt);
   expect(storedReminder.notifyAt).toBe(expiresAt - 3 * 24 * 60 * 60 * 1000);
 });

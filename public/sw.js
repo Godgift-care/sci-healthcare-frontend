@@ -71,8 +71,18 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type !== 'SET_EXPIRY_REMINDERS') return;
-  event.waitUntil(replaceReminders(event.data.reminders));
+  if (event.data?.type === 'SET_EXPIRY_REMINDERS') {
+    event.waitUntil(replaceReminders(event.data.reminders));
+    return;
+  }
+  if (event.data?.type === 'GET_EXPIRY_REMINDERS') {
+    event.waitUntil(
+      (async () => {
+        const reminders = await readReminders();
+        event.ports[0]?.postMessage({ reminders });
+      })(),
+    );
+  }
 });
 
 self.addEventListener('periodicsync', (event) => {
@@ -119,13 +129,19 @@ async function replaceReminders(reminders) {
   await showDueReminders();
 }
 
-async function showDueReminders() {
+async function readReminders() {
   const db = await openReminderDb();
   const reminders = await new Promise((resolve, reject) => {
     const request = db.transaction(REMINDER_STORE).objectStore(REMINDER_STORE).getAll();
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+  db.close();
+  return reminders;
+}
+
+async function showDueReminders() {
+  const reminders = await readReminders();
   const now = Date.now();
   const due = reminders.filter((reminder) => reminder.notifyAt <= now);
   for (const reminder of due) {
@@ -136,6 +152,7 @@ async function showDueReminders() {
     });
   }
   if (due.length) {
+    const db = await openReminderDb();
     const transaction = db.transaction(REMINDER_STORE, 'readwrite');
     const store = transaction.objectStore(REMINDER_STORE);
     for (const reminder of due) store.delete(reminder.id);
@@ -144,8 +161,8 @@ async function showDueReminders() {
       transaction.onerror = () => reject(transaction.error);
       transaction.onabort = () => reject(transaction.error);
     });
+    db.close();
   }
-  db.close();
 }
 
 /** Immutable build output and the shell's own files. */
