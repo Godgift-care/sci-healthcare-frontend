@@ -20,26 +20,25 @@ export default function ServicePage({
   const { service, error: loadError, rawError: loadRawError } = useService(code);
   const { providers: allProviders } = useProviders();
 
-  // An unknown service code is a missing page, not an API failure.
-  if (loadRawError instanceof ApiError && loadRawError.status === 404) notFound();
-  if (loadError) return <Alert>{loadError}</Alert>;
-  if (!service) {
-    return <p className="text-sm text-[var(--color-ink-soft)]">Loading service…</p>;
-  }
-
-  // Only active clinics may quote for the service: cross-reference the
-  // catalogue's listed providers with the provider directory's status.
   const activeAddresses = useMemo(
     () => new Set(allProviders.filter((p) => p.status === 'Active').map((p) => p.address)),
     [allProviders],
   );
 
   const clinics = useMemo(() => {
+    if (!service) return [];
     const listed = service.providers ?? [];
     return listed
       .filter((c) => activeAddresses.has(c.address))
-      .sort((a, b) => BigInt(a.price) - BigInt(b.price));
-  }, [service.providers, activeAddresses]);
+      .sort((a, b) => Number(BigInt(a.price) - BigInt(b.price)));
+  }, [service, activeAddresses]);
+
+  // An unknown service code is a missing page, not an API failure.
+  if (loadRawError instanceof ApiError && loadRawError.status === 404) notFound();
+  if (loadError) return <Alert>{loadError}</Alert>;
+  if (!service) {
+    return <p className="text-sm text-[var(--color-ink-soft)]">Loading service…</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -62,13 +61,13 @@ export default function ServicePage({
             href="/services"
             className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
-            Service catalogue &rarr;
+            Service catalogue →
           </Link>
           <Link
             href="/"
             className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
-            Browse clinics &rarr;
+            Browse clinics →
           </Link>
         </div>
       </section>
@@ -81,12 +80,12 @@ export default function ServicePage({
           </p>
         </div>
 
-        {error && <Alert>{error}</Alert>}
-        {!service && !error && (
+        {loadError && <Alert>{loadError}</Alert>}
+        {!service && !loadError && (
           <p className="text-sm text-[var(--color-ink-soft)]">Loading clinics…</p>
         )}
 
-        {!service && !error && clinics.length === 0 && (
+        {!service && !loadError && clinics.length === 0 && (
           <Empty>
             No active clinics list this service yet.
           </Empty>
@@ -131,7 +130,7 @@ export default function ServicePage({
                         href={`/clinics/${c.address}`}
                         className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-canvas)]"
                       >
-                        Fund care &rarr;
+                        Fund care →
                       </Link>
                     </td>
                   </tr>

@@ -6,6 +6,8 @@ import {
   type ListVouchersParams,
   type Provider,
   type Receipt,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
   type Voucher as ClientVoucher,
   type VoucherStatus,
