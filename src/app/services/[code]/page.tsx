@@ -128,7 +128,7 @@ export default function ServicePage({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <DetailLink
-                        target={{ kind: 'clinic', id: c.address }}
+                        detail={{ kind: 'clinic', id: c.address }}
                         className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-canvas)]"
                       >
                         Fund care →

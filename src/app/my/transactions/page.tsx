@@ -148,7 +148,7 @@ export default function TransactionsPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                       <DetailLink
-                        target={{ kind: 'voucher', id: row.voucherId }}
+                        detail={{ kind: 'voucher', id: row.voucherId }}
                         className="text-[var(--color-ink-soft)] underline underline-offset-2"
                       >
                         Voucher #{row.voucherId}

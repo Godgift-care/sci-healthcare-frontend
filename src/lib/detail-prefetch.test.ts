@@ -18,7 +18,7 @@ import { useProvider, useVoucher, useVoucherEvents } from './hooks/useData';
 
 beforeEach(() => {
   cleanup();
-  cache.clear();
+  for (const key of [...cache.keys()]) cache.delete(key);
   const preloaded = SWRGlobalState.get(cache)![3];
   for (const key of Object.keys(preloaded)) delete preloaded[key];
   window.localStorage.clear();
@@ -32,7 +32,7 @@ afterEach(cleanup);
 
 describe('detail prefetch', () => {
   it('has no speculative requests on render; hover warms route and matching clinic data once', async () => {
-    const view = render(createElement(DetailLink, { target: { kind: 'clinic', id: 'prefetched-clinic' } }, 'Clinic'));
+    const view = render(createElement(DetailLink, { detail: { kind: 'clinic', id: 'prefetched-clinic' } }, 'Clinic'));
     expect(fetchMock).not.toHaveBeenCalled();
     expect(routePrefetch).not.toHaveBeenCalled();
     fireEvent.mouseEnter(view.getByRole('link'));
@@ -48,7 +48,7 @@ describe('detail prefetch', () => {
   });
 
   it('keyboard focus preloads voucher and events into the keys consumed on navigation', async () => {
-    const view = render(createElement(DetailLink, { target: { kind: 'voucher', id: 'prefetched-voucher' } }, 'Voucher'));
+    const view = render(createElement(DetailLink, { detail: { kind: 'voucher', id: 'prefetched-voucher' } }, 'Voucher'));
     fireEvent.focus(view.getByRole('link'));
     expect(routePrefetch).toHaveBeenCalledWith('/vouchers/prefetched-voucher');
     const { result } = renderHook(() => ({ voucher: useVoucher('prefetched-voucher'), events: useVoucherEvents('prefetched-voucher') }));
@@ -59,7 +59,7 @@ describe('detail prefetch', () => {
 
   it.each(['clinic', 'voucher'] as const)('blocks route and data on hover and focus in stored low-data mode (%s)', (kind) => {
     window.localStorage.setItem('sci-low-bandwidth', '1');
-    const view = render(createElement(DetailLink, { target: { kind, id: 'blocked' } }, 'Detail'));
+    const view = render(createElement(DetailLink, { detail: { kind, id: 'blocked' } }, 'Detail'));
     fireEvent.mouseEnter(view.getByRole('link'));
     fireEvent.focus(view.getByRole('link'));
     expect(routePrefetch).not.toHaveBeenCalled();
@@ -67,7 +67,7 @@ describe('detail prefetch', () => {
   });
 
   it('checks the setting again after a mounted link is toggled, and permits prefetch when turned off', () => {
-    const view = render(createElement(DetailLink, { target: { kind: 'voucher', id: 'toggle-control' } }, 'Detail'));
+    const view = render(createElement(DetailLink, { detail: { kind: 'voucher', id: 'toggle-control' } }, 'Detail'));
     setLowBandwidth(true);
     fireEvent.focus(view.getByRole('link'));
     expect(routePrefetch).not.toHaveBeenCalled();

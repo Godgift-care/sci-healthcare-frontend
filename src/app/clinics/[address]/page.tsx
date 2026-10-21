@@ -365,7 +365,7 @@ export default function ClinicPage({
           {firstId && (
             <>
               {' '}
-              <DetailLink target={{ kind: 'voucher', id: firstId }} className="underline underline-offset-2">
+              <DetailLink detail={{ kind: 'voucher', id: firstId }} className="underline underline-offset-2">
                 Open voucher #{firstId}
               </DetailLink>
               {' '}

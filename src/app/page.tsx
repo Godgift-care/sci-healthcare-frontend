@@ -326,7 +326,7 @@ export default function HomePage() {
                   {unlocated.map((p) => (
                     <li key={p.address}>
                       <DetailLink
-                        target={{ kind: 'clinic', id: p.address }}
+                        detail={{ kind: 'clinic', id: p.address }}
                         className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-[var(--color-canvas)]"
                       >
                         <span>{p.name}</span>
@@ -379,7 +379,7 @@ function ViewToggle({
 
 function ClinicCard({ provider: p }: { provider: Provider }) {
   return (
-    <DetailLink target={{ kind: 'clinic', id: p.address }}>
+    <DetailLink detail={{ kind: 'clinic', id: p.address }}>
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

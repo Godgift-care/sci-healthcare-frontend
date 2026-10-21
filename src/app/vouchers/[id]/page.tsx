@@ -117,7 +117,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           </h1>
           <p className="text-sm text-[var(--color-ink-soft)]">
             {t('voucher.at')}{' '}
-            <DetailLink target={{ kind: 'clinic', id: v.provider.address }} className="underline underline-offset-2">
+            <DetailLink detail={{ kind: 'clinic', id: v.provider.address }} className="underline underline-offset-2">
               {v.provider.name}
             </DetailLink>{' '}
             · {v.provider.country}

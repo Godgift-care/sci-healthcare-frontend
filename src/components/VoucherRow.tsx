@@ -155,7 +155,7 @@ export function VoucherRow({
           <div>
             <div className="flex items-center gap-2">
               <DetailLink
-                target={{ kind: 'voucher', id: v.id }}
+                detail={{ kind: 'voucher', id: v.id }}
                 className="mono text-xs text-[var(--color-ink-soft)] underline-offset-2 hover:underline"
               >
                 #{v.id}
