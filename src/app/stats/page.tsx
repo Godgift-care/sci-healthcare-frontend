@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { formatUsdc } from '@/lib/amounts';
 import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
 import { Card, Empty } from '@/components/ui';
+import { DataTable } from '@/components/DataTable';
 import { WidgetBoundary } from '@/components/WidgetBoundary';
 
 type TimeRange = 7 | 14 | 30 | 90;
@@ -313,25 +314,33 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-start text-xs">
-                    <caption className="sr-only">Daily vouchers funded data table</caption>
-                    <thead>
-                      <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
-                        <th scope="col" className="py-1.5 font-medium">Date (UTC)</th>
-                        <th scope="col" className="py-1.5 text-end font-medium">Count</th>
-                        <th scope="col" className="py-1.5 text-end font-medium">Volume (USDC)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--color-line)]">
-                      {series.map((s) => (
-                        <tr key={s.date}>
-                          <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-end">{s.funded.count}</td>
-                          <td className="py-1.5 text-end font-mono">${formatUsdc(s.funded.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <DataTable
+                    caption="Daily vouchers funded data table"
+                    rows={series}
+                    getRowKey={(row) => row.date}
+                    columns={[
+                      {
+                        key: 'date',
+                        header: 'Date (UTC)',
+                        accessor: (row) => row.date,
+                        className: 'font-mono',
+                      },
+                      {
+                        key: 'count',
+                        header: 'Count',
+                        accessor: (row) => row.funded.count,
+                        align: 'right',
+                      },
+                      {
+                        key: 'amount',
+                        header: 'Volume (USDC)',
+                        accessor: (row) => row.funded.amount,
+                        align: 'right',
+                        className: 'font-mono',
+                        render: (row) => `$${formatUsdc(row.funded.amount)}`,
+                      },
+                    ]}
+                  />
                 </div>
               </div>
             )}
@@ -355,25 +364,33 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-start text-xs">
-                    <caption className="sr-only">Daily care settled data table</caption>
-                    <thead>
-                      <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
-                        <th scope="col" className="py-1.5 font-medium">Date (UTC)</th>
-                        <th scope="col" className="py-1.5 text-end font-medium">Count</th>
-                        <th scope="col" className="py-1.5 text-end font-medium">Volume (USDC)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--color-line)]">
-                      {series.map((s) => (
-                        <tr key={s.date}>
-                          <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-end">{s.settled.count}</td>
-                          <td className="py-1.5 text-end font-mono">${formatUsdc(s.settled.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <DataTable
+                    caption="Daily care settled data table"
+                    rows={series}
+                    getRowKey={(row) => row.date}
+                    columns={[
+                      {
+                        key: 'date',
+                        header: 'Date (UTC)',
+                        accessor: (row) => row.date,
+                        className: 'font-mono',
+                      },
+                      {
+                        key: 'count',
+                        header: 'Count',
+                        accessor: (row) => row.settled.count,
+                        align: 'right',
+                      },
+                      {
+                        key: 'amount',
+                        header: 'Volume (USDC)',
+                        accessor: (row) => row.settled.amount,
+                        align: 'right',
+                        className: 'font-mono',
+                        render: (row) => `$${formatUsdc(row.settled.amount)}`,
+                      },
+                    ]}
+                  />
                 </div>
               </div>
             )}
