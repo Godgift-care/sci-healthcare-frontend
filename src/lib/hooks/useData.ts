@@ -7,8 +7,10 @@ import {
   type Attester,
   type DailyStats,
   type Provider,
+  type ProviderStats,
   type ReceiptsResponse,
   type Stats,
+  type Voucher,
   type VoucherDetail,
   type VoucherEvent,
   type VouchersResponse,
@@ -111,6 +113,59 @@ export function useProvider(
 
   return {
     provider: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for one clinic's aggregate statistics (backend #10).
+ *
+ * Powers the earnings cards on the clinic desk. The indexer answers 404 for
+ * an address it has never seen registered, which the desk reads as "no
+ * earnings yet" rather than an error, so this does not retry on error.
+ */
+export function useProviderStats(
+  address: string | null | undefined,
+  config?: SWRConfiguration<ProviderStats>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ProviderStats>(
+    address ? ['provider-stats', address] : null,
+    () => api.providerStats(address!),
+    { shouldRetryOnError: false, ...config },
+  );
+
+  return {
+    stats: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for every voucher a clinic has received, across list-route pages.
+ *
+ * The monthly earnings table is an aggregate over the whole history, so it
+ * cannot be built from the first page the incoming-voucher list shows.
+ */
+export function useProviderVouchers(
+  address: string | null | undefined,
+  config?: SWRConfiguration<Voucher[]>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<Voucher[]>(
+    address ? ['provider-vouchers', address] : null,
+    () => api.providerVouchers(address!),
+    config,
+  );
+
+  return {
+    vouchers: data ?? [],
     error: error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
@@ -272,6 +327,10 @@ export async function invalidateProvider(providerAddress?: string): Promise<void
   }
   await globalMutate(
     (key) =>
-      Array.isArray(key) && (key[0] === 'providers' || key[0] === 'provider'),
+      Array.isArray(key) &&
+      (key[0] === 'providers' ||
+        key[0] === 'provider' ||
+        key[0] === 'provider-stats' ||
+        key[0] === 'provider-vouchers'),
   );
 }

@@ -61,6 +61,12 @@ export type BackendState = {
   voucherConverges?: { status: string; afterReads?: number };
   voucherEventsById?: Record<string, unknown[]>;
   dailyStats?: Record<string, unknown>;
+  /**
+   * `GET /providers/:address/stats` (backend #10). When omitted the mock
+   * derives the response from `vouchers`, matching what the indexer would
+   * report for the same fixtures.
+   */
+  providerStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
   receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
 };
@@ -133,6 +139,40 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
     }
 
     if (parts[0] === 'providers') {
+      if (parts.length === 3 && parts[2] === 'stats') {
+        if (state.providerStats) return json(state.providerStats);
+        const found = providers.find(
+          (p) => (p as { address?: string }).address === parts[1],
+        );
+        if (!found) return json({ error: 'provider_not_found' }, 404);
+        const vouchers = state.vouchers ?? [];
+        const byStatus: Record<string, number> = {
+          Funded: 0,
+          Claimed: 0,
+          Attested: 0,
+          Settled: 0,
+          Disputed: 0,
+          Refunded: 0,
+        };
+        let settledValue = 0n;
+        for (const v of vouchers) {
+          const status = String((v as { status?: unknown }).status ?? '');
+          byStatus[status] = (byStatus[status] ?? 0) + 1;
+          if (status === 'Settled') {
+            settledValue += BigInt(String((v as { amount?: unknown }).amount ?? '0'));
+          }
+        }
+        return json({
+          address: (found as { address: string }).address,
+          name: (found as { name?: string }).name ?? '',
+          status: (found as { status?: string }).status ?? 'Active',
+          vouchers: vouchers.length,
+          byStatus,
+          settledVouchers: byStatus.Settled,
+          settledValue: settledValue.toString(),
+          settledValueDisplay: '',
+        });
+      }
       if (parts.length === 2) {
         const found = providers.find(
           (p) => (p as { address?: string }).address === parts[1],
