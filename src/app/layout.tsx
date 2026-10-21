@@ -50,8 +50,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // suppressHydrationWarning: the theme init script sets data-theme before
   // paint, which the server render cannot know (#10).
+  //
+  // dir starts as `ltr` because the server renders English; LocaleProvider
+  // rewrites it from the stored locale (#131), the same way it rewrites
+  // `lang`. Every layout rule below is a logical utility, so the whole tree
+  // follows that one attribute.
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       {/* Theme before paint (#10): stored override, else the OS setting. */}
       <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       <body>

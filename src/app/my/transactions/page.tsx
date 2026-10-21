@@ -163,7 +163,7 @@ export default function TransactionsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="shrink-0 text-left sm:text-right">
+                  <div className="shrink-0 text-start sm:text-end">
                     <div className="mono text-sm font-semibold">${row.amountDisplay}</div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
                       {row.at ? formatDate(row.at, locale) : 'Date unknown'}

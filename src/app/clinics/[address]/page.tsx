@@ -449,7 +449,7 @@ export default function ClinicPage({
                 <button
                   key={s.code}
                   onClick={() => toggleService(s)}
-                  className={`flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[var(--color-canvas)] ${
+                  className={`flex w-full items-center justify-between px-5 py-4 text-start transition hover:bg-[var(--color-canvas)] ${
                     checked ? 'bg-[var(--color-brand-soft)]/40' : ''
                   }`}
                 >
@@ -741,11 +741,11 @@ export default function ClinicPage({
             <dl className="space-y-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4 text-sm">
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Clinic</dt>
-                <dd className="text-right font-medium">{provider.name}</dd>
+                <dd className="text-end font-medium">{provider.name}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Services</dt>
-                <dd className="text-right font-medium">
+                <dd className="text-end font-medium">
                   {selectedServices
                     .map((service) => `${service.label} · $${formatUsdc(service.price)}`)
                     .join(', ')}
@@ -753,28 +753,28 @@ export default function ClinicPage({
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Patient reference</dt>
-                <dd className="text-right font-medium">{identifier || 'Not set'}</dd>
+                <dd className="text-end font-medium">{identifier || 'Not set'}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Patient key</dt>
-                <dd className="mono text-right font-medium">{maskedSecret}</dd>
+                <dd className="mono text-end font-medium">{maskedSecret}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Amount</dt>
-                <dd className="mono text-right font-medium">${reviewAmount}</dd>
+                <dd className="mono text-end font-medium">${reviewAmount}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Protocol fee</dt>
-                <dd className="mono text-right font-medium">${reviewFee}</dd>
+                <dd className="mono text-end font-medium">${reviewFee}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Clinic payout</dt>
-                <dd className="mono text-right font-medium">${reviewNet}</dd>
+                <dd className="mono text-end font-medium">${reviewNet}</dd>
               </div>
               {xlmSwapQuote && (
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-[var(--color-ink-soft)]">Paid in XLM</dt>
-                  <dd className="mono text-right font-medium">
+                  <dd className="mono text-end font-medium">
                     up to {formatXlm(xlmSwapQuote.maxXlm)} XLM for {formatUsdc(xlmSwapQuote.usdcAmount)}{' '}
                     USDC
                   </dd>
@@ -782,7 +782,7 @@ export default function ClinicPage({
               )}
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Expires</dt>
-                <dd className="text-right font-medium">{expirySummary}</dd>
+                <dd className="text-end font-medium">{expirySummary}</dd>
               </div>
             </dl>
 

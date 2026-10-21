@@ -35,6 +35,63 @@ const SERVICES = [
   },
 ];
 
+/** Service catalogue items returned by `GET /services`. */
+export const SERVICE_CATALOGUE = [
+  {
+    code: 101,
+    labels: ['Outpatient consult'],
+    clinicCount: 2,
+    minPrice: '30000000',
+    maxPrice: '45000000',
+    medianPrice: '37500000',
+    minPriceDisplay: '3.00',
+    maxPriceDisplay: '4.50',
+    medianPriceDisplay: '3.75',
+    providers: [
+      {
+        address: PROVIDER,
+        name: 'Ikeja General Clinic',
+        country: 'NG',
+        price: '30000000',
+        priceDisplay: '3.00',
+      },
+      {
+        address: ATTESTER,
+        name: 'Lekki Care Centre',
+        country: 'NG',
+        price: '45000000',
+        priceDisplay: '4.50',
+      },
+    ],
+  },
+  {
+    code: 102,
+    labels: ['Malaria test'],
+    clinicCount: 1,
+    minPrice: '50000000',
+    maxPrice: '50000000',
+    medianPrice: '50000000',
+    minPriceDisplay: '5.00',
+    maxPriceDisplay: '5.00',
+    medianPriceDisplay: '5.00',
+    providers: [
+      {
+        address: PROVIDER,
+        name: 'Ikeja General Clinic',
+        country: 'NG',
+        price: '50000000',
+        priceDisplay: '5.00',
+      },
+    ],
+  },
+];
+
+/** `GET /services/:code` lookup keyed by code string. */
+export const SERVICE_BY_CODE: Record<string, (typeof SERVICE_CATALOGUE)[number]> = {
+  '101': SERVICE_CATALOGUE[0],
+  '102': SERVICE_CATALOGUE[1],
+};
+
 export const CLINIC = {
   address: PROVIDER,
   name: 'Ikeja General Clinic',

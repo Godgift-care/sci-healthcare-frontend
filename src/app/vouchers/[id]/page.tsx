@@ -123,7 +123,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             · {v.provider.country}
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-end">
           <div className="mono text-2xl font-semibold">${formatUsdc(v.amount, locale)}</div>
           <div className="text-xs text-[var(--color-ink-soft)]">{t('common.usdc')}</div>
         </div>

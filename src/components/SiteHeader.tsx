@@ -73,7 +73,7 @@ export function SiteHeader() {
           </nav>
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+        <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />

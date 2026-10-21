@@ -75,7 +75,7 @@ export function VoucherQr({
       {/* On-screen voucher presentation card */}
       <Card className="p-5 print:hidden">
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
-          <div className="space-y-3 flex-1 text-center sm:text-left">
+          <div className="space-y-3 flex-1 text-center sm:text-start">
             <div className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand)]">
               <span>{t('voucher.patientPass')}</span>
             </div>
@@ -158,7 +158,7 @@ export function VoucherQr({
             <h1 className="text-xl font-bold mt-1">{t('voucher.voucherPassTitle')}</h1>
           </div>
           {amount && (
-            <div className="text-right">
+            <div className="text-end">
               <div className="mono text-xl font-bold">${amount} USDC</div>
             </div>
           )}
