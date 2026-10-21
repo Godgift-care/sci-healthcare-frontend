@@ -34,6 +34,7 @@ import {
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { ExpiryReminders } from '@/components/ExpiryReminders';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -452,6 +453,7 @@ export default function MyPage() {
             )}
           </div>
         </div>
+        {address && !fundedError && <ExpiryReminders vouchers={walletFunded} />}
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
             <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">

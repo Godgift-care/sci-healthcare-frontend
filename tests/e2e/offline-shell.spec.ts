@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { CLAIMED_VOUCHER, CLINIC, FUNDER } from './fixtures';
+import { CLAIMED_VOUCHER, CLINIC, FUNDER, FUNDED_VOUCHER } from './fixtures';
 import { mockBackend, useMockWallet } from './helpers';
 
 /**
@@ -176,4 +176,69 @@ test('indexer data is never cached, however patient-shaped it is', async ({ page
   expect(urls.filter((url) => url.includes('localhost:8080'))).toEqual([]);
   expect(paths.filter((path) => /^\/(clinics|vouchers|my)\b/.test(path))).toEqual([]);
   expect(urls.filter((url) => url.includes('_rsc='))).toEqual([]);
+});
+
+test('expiry reminders are opt-in and persist for offline delivery', async ({
+  page,
+  context,
+}) => {
+  const expiresAt = Date.now() + 10 * 24 * 60 * 60 * 1000;
+  const voucher = FUNDED_VOUCHER('expiry-reminder');
+  voucher.expiresAt = new Date(expiresAt).toISOString();
+
+  await context.grantPermissions(['notifications']);
+  await useMockWallet(page, FUNDER);
+  await mockBackend(page, {
+    providers: [CLINIC],
+    vouchers: [voucher],
+    voucherById: { [voucher.id as string]: voucher },
+  });
+  await page.goto('/my');
+  await expect(page.getByRole('link', { name: '#expiry-reminder' })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => (await navigator.serviceWorker.ready).active !== null),
+    )
+    .toBe(true);
+
+  await page.getByRole('button', { name: 'Enable expiry reminders' }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<number>((resolve, reject) => {
+            const request = indexedDB.open('sci-healthcare-reminders-v1', 1);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+              const read = request.result
+                .transaction('reminders')
+                .objectStore('reminders')
+                .getAll();
+              read.onsuccess = () => resolve(read.result.length);
+              read.onerror = () => reject(read.error);
+            };
+          }),
+      ),
+    )
+    .toBe(1);
+
+  await context.setOffline(true);
+  const storedReminder = await page.evaluate(
+    () =>
+      new Promise<{ id: string; expiresAt: number; notifyAt: number }>((resolve, reject) => {
+        const request = indexedDB.open('sci-healthcare-reminders-v1', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const read = request.result
+            .transaction('reminders')
+            .objectStore('reminders')
+            .get('expiry-reminder');
+          read.onsuccess = () => resolve(read.result);
+          read.onerror = () => reject(read.error);
+        };
+      }),
+  );
+  expect(storedReminder.expiresAt).toBe(expiresAt);
+  expect(storedReminder.notifyAt).toBe(expiresAt - 3 * 24 * 60 * 60 * 1000);
 });
