@@ -218,6 +218,30 @@ const WALLETS = {
   icons: 'https://stellar.creit.tech',
 };
 
+/**
+ * WalletConnect / Reown AppKit (#163), only when the build configured a
+ * project id. The pairing relay is a WebSocket; the rest are the verify,
+ * explorer and wallet-icon endpoints AppKit reaches while the user picks a
+ * mobile wallet. Leaving these out would make the module fail under the
+ * enforcing policy in exactly the flow it exists to support.
+ */
+const WALLET_CONNECT_ENABLED = Boolean(
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim(),
+);
+
+const WALLET_CONNECT = {
+  relay: 'https://relay.walletconnect.com',
+  relaySocket: 'wss://relay.walletconnect.com',
+  verify: 'https://verify.walletconnect.com',
+  explorer: 'https://explorer-api.walletconnect.com',
+  pulse: 'https://pulse.walletconnect.org',
+  web3modal: 'https://api.web3modal.com',
+  reownApi: 'https://api.web3modal.org',
+  icons: 'https://walletconnect.com',
+  assets: 'https://assets.reown.com',
+  fonts: 'https://fonts.reown.com',
+} as const;
+
 /** OpenStreetMap raster tiles, requested only when the map view is opened. */
 const MAP_TILES = 'https://tile.openstreetmap.org';
 
@@ -249,8 +273,22 @@ function contentSecurityPolicy(): string {
     // Tailwind ships a stylesheet, but Leaflet positions markers with inline
     // style attributes, which need 'unsafe-inline' here.
     'style-src': ["'self'", "'unsafe-inline'"],
-    'img-src': ["'self'", 'data:', 'blob:', MAP_TILES, WALLETS.icons],
-    'font-src': ["'self'", 'data:'],
+    'img-src': [
+      "'self'",
+      'data:',
+      'blob:',
+      MAP_TILES,
+      WALLETS.icons,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.icons,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.explorer,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.assets,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.web3modal,
+    ],
+    'font-src': [
+      "'self'",
+      'data:',
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.fonts,
+    ],
     // Every fetch, EventSource and contract read/write the app performs.
     'connect-src': [
       "'self'",
@@ -261,11 +299,22 @@ function contentSecurityPolicy(): string {
       WALLETS.xbull,
       plausible,
       sentry,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.relay,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.relaySocket,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.verify,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.explorer,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.pulse,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.web3modal,
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.reownApi,
       isDev && 'ws:',
     ],
     // Wallet signing happens in a popup (window.open), never an iframe, so
-    // only this app's own frames are allowed.
-    'frame-src': ["'self'"],
+    // only this app's own frames are allowed. WalletConnect's Verify screen
+    // is the one exception: AppKit embeds it while a mobile wallet pairs.
+    'frame-src': [
+      "'self'",
+      WALLET_CONNECT_ENABLED && WALLET_CONNECT.verify,
+    ],
     'worker-src': ["'self'"],
     'manifest-src': ["'self'"],
   };

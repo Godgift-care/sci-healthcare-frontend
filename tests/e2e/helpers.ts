@@ -17,7 +17,12 @@ import type { MockRpcCall } from '@/lib/e2e-seam';
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; args: string[][]; delayMs?: number };
+    __SCI_MOCK_RPC__?: {
+      calls: MockRpcCall[];
+      args: string[][];
+      delayMs?: number;
+      reads?: Record<string, unknown>;
+    };
   }
 }
 
@@ -29,10 +34,11 @@ export async function useMockWallet(
   page: Page,
   address: string,
   delayMs = 0,
+  reads?: Record<string, unknown>,
 ): Promise<void> {
   await page.addInitScript(
     `window.__SCI_MOCK_WALLET__ = { address: '${address}' };
-     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };`,
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs}, reads: ${JSON.stringify(reads ?? {})} };`,
   );
   // The analytics script tag is present in the test build; keep the request
   // itself inside the sandbox. (The analytics spec stubs window.plausible,

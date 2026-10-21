@@ -307,6 +307,30 @@ export function useIsAttester(address: string | null | undefined) {
   };
 }
 
+/** Admin access requires the same wallet to administer both core contracts. */
+export function useAdminAccess(address: string | null | undefined) {
+  const { data, error, isLoading } = useSWR(
+    address ? ['adminAccess', address] : null,
+    async () => {
+      const { registry, voucher } = await import('../protocol');
+      const [registryAdmin, voucherAdmin] = await Promise.all([
+        registry.admin(),
+        voucher.admin(),
+      ]);
+      return { registryAdmin, voucherAdmin };
+    },
+  );
+
+  return {
+    isAdmin:
+      !!address &&
+      data?.registryAdmin === address &&
+      data?.voucherAdmin === address,
+    isLoading,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+  };
+}
+
 /** Invalidate all voucher-related cache entries after a transaction */
 export async function invalidateVouchers(voucherId?: string): Promise<void> {
   if (voucherId) {
@@ -316,7 +340,11 @@ export async function invalidateVouchers(voucherId?: string): Promise<void> {
   await globalMutate(
     (key) =>
       Array.isArray(key) &&
-      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher' || key[0] === 'voucher-events'),
+      (key[0] === 'vouchers' ||
+        key[0] === 'receipts' ||
+        key[0] === 'voucher' ||
+        key[0] === 'voucher-events' ||
+        key[0] === 'wallet-events'),
   );
 }
 

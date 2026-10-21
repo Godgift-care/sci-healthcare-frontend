@@ -32,6 +32,7 @@ declare global {
        */
       args: string[][];
       delayMs?: number;
+      reads?: Record<string, unknown>;
     };
   }
 }
@@ -62,4 +63,8 @@ export function mockRpcDelayMs(): number {
   if (typeof window === 'undefined') return 0;
   const delay = window.__SCI_MOCK_RPC__?.delayMs ?? 0;
   return Number.isFinite(delay) && delay > 0 ? delay : 0;
+}
+
+export function mockRpcRead(contractId: string, method: string): unknown {
+  return window.__SCI_MOCK_RPC__?.reads?.[`${contractId}:${method}`];
 }

@@ -167,7 +167,7 @@ export function VoucherRow({
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
           Dispute window closes in {timeUntil(v.disputeDeadline, now)} — settles after
           that.
-          <InfoTip content="Anyone can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
+          <InfoTip content="The funder can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
         </p>
       )}
       {v.status === 'Funded' && (
