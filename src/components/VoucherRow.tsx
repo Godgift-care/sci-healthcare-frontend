@@ -152,7 +152,7 @@ export function VoucherRow({
               {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-end">
             <div className="mono text-lg font-semibold">${formatUsdc(v.amount)}</div>
             {v.status === 'Settled' && v.settledNet && (
               <div className="text-xs text-[var(--color-ink-soft)]">

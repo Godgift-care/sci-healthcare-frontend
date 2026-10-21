@@ -299,20 +299,20 @@ export default function ClinicDeskPage() {
               ) : months.length === 0 ? (
                 <Empty>{t('clinic.earningsEmpty')}</Empty>
               ) : (
-                <table className="block w-full text-left text-sm sm:table">
+                <table className="block w-full text-start text-sm sm:table">
                   <caption className="sr-only">{t('clinic.earningsMonthly')}</caption>
                   <thead className="hidden sm:table-header-group">
                     <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
                       <th scope="col" className="pb-2 font-medium">
                         {t('clinic.earningsMonth')}
                       </th>
-                      <th scope="col" className="pb-2 text-right font-medium">
+                      <th scope="col" className="pb-2 text-end font-medium">
                         {t('clinic.earningsSettled')}
                       </th>
-                      <th scope="col" className="pb-2 text-right font-medium">
+                      <th scope="col" className="pb-2 text-end font-medium">
                         {t('clinic.earningsPending')}
                       </th>
-                      <th scope="col" className="pb-2 text-right font-medium">
+                      <th scope="col" className="pb-2 text-end font-medium">
                         {t('clinic.earningsFees')}
                       </th>
                     </tr>
@@ -325,23 +325,23 @@ export default function ClinicDeskPage() {
                       >
                         <th
                           scope="row"
-                          className="col-span-3 text-left font-medium sm:table-cell sm:py-2.5"
+                          className="col-span-3 text-start font-medium sm:table-cell sm:py-2.5"
                         >
                           {monthLabel(month.month, locale)}
                         </th>
-                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <td className="sm:table-cell sm:py-2.5 sm:text-end">
                           <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                             {t('clinic.earningsSettled')}
                           </span>
                           <span className="mono">${formatUsdc(month.settled, locale)}</span>
                         </td>
-                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <td className="sm:table-cell sm:py-2.5 sm:text-end">
                           <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                             {t('clinic.earningsPending')}
                           </span>
                           <span className="mono">${formatUsdc(month.pending, locale)}</span>
                         </td>
-                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <td className="sm:table-cell sm:py-2.5 sm:text-end">
                           <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                             {t('clinic.earningsFees')}
                           </span>
@@ -352,22 +352,22 @@ export default function ClinicDeskPage() {
                   </tbody>
                   <tfoot className="block border-t border-[var(--color-line)] font-medium sm:table-footer-group">
                     <tr className="grid grid-cols-3 gap-x-3 gap-y-1 pt-3 sm:table-row sm:pt-0">
-                      <th scope="row" className="col-span-3 text-left sm:table-cell sm:py-2.5">
+                      <th scope="row" className="col-span-3 text-start sm:table-cell sm:py-2.5">
                         {t('clinic.earningsTotal')}
                       </th>
-                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                      <td className="sm:table-cell sm:py-2.5 sm:text-end">
                         <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                           {t('clinic.earningsSettled')}
                         </span>
                         <span className="mono">${formatUsdc(earnings.settled, locale)}</span>
                       </td>
-                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                      <td className="sm:table-cell sm:py-2.5 sm:text-end">
                         <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                           {t('clinic.earningsPending')}
                         </span>
                         <span className="mono">${formatUsdc(earnings.pending, locale)}</span>
                       </td>
-                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                      <td className="sm:table-cell sm:py-2.5 sm:text-end">
                         <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
                           {t('clinic.earningsFees')}
                         </span>

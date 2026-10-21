@@ -283,21 +283,21 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-start text-xs">
                     <caption className="sr-only">Daily vouchers funded data table</caption>
                     <thead>
                       <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
                         <th scope="col" className="py-1.5 font-medium">Date (UTC)</th>
-                        <th scope="col" className="py-1.5 text-right font-medium">Count</th>
-                        <th scope="col" className="py-1.5 text-right font-medium">Volume (USDC)</th>
+                        <th scope="col" className="py-1.5 text-end font-medium">Count</th>
+                        <th scope="col" className="py-1.5 text-end font-medium">Volume (USDC)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-line)]">
                       {series.map((s) => (
                         <tr key={s.date}>
                           <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-right">{s.funded.count}</td>
-                          <td className="py-1.5 text-right font-mono">${formatUsdc(s.funded.amount)}</td>
+                          <td className="py-1.5 text-end">{s.funded.count}</td>
+                          <td className="py-1.5 text-end font-mono">${formatUsdc(s.funded.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -323,21 +323,21 @@ export default function StatsPage() {
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
                 <div className="max-h-60 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-start text-xs">
                     <caption className="sr-only">Daily care settled data table</caption>
                     <thead>
                       <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
                         <th scope="col" className="py-1.5 font-medium">Date (UTC)</th>
-                        <th scope="col" className="py-1.5 text-right font-medium">Count</th>
-                        <th scope="col" className="py-1.5 text-right font-medium">Volume (USDC)</th>
+                        <th scope="col" className="py-1.5 text-end font-medium">Count</th>
+                        <th scope="col" className="py-1.5 text-end font-medium">Volume (USDC)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-line)]">
                       {series.map((s) => (
                         <tr key={s.date}>
                           <td className="py-1.5 font-mono">{s.date}</td>
-                          <td className="py-1.5 text-right">{s.settled.count}</td>
-                          <td className="py-1.5 text-right font-mono">${formatUsdc(s.settled.amount)}</td>
+                          <td className="py-1.5 text-end">{s.settled.count}</td>
+                          <td className="py-1.5 text-end font-mono">${formatUsdc(s.settled.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -353,7 +353,7 @@ export default function StatsPage() {
       <section className="space-y-3">
         <h2 className="text-base font-semibold">Clinics by country</h2>
         <Card className="overflow-x-auto p-4">
-          <table className="block w-full text-left text-sm sm:table">
+          <table className="block w-full text-start text-sm sm:table">
             <caption className="sr-only">Registered clinics grouped by country</caption>
             <thead className="hidden sm:table-header-group">
               <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
