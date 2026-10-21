@@ -22,7 +22,9 @@ export type MockRpcCall = {
 
 declare global {
   interface Window {
-    __SCI_MOCK_WALLET__?: { address: string };
+    __SCI_MOCK_WALLET__?: { address: string; networkPassphrase?: string };
+    __SCI_USDC_TRUSTLINE__?: boolean;
+    __SCI_USDC_BALANCE__?: string;
     __SCI_MOCK_RPC__?: {
       calls: MockRpcCall[];
       /**
@@ -40,6 +42,21 @@ declare global {
 export function mockWalletAddress(): string | null {
   if (typeof window === 'undefined') return null;
   return window.__SCI_MOCK_WALLET__?.address ?? null;
+}
+
+export function mockWalletNetworkPassphrase(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.__SCI_MOCK_WALLET__?.networkPassphrase ?? null;
+}
+
+export function mockUsdcTrustline(): boolean {
+  return typeof window === 'undefined' ? true : window.__SCI_USDC_TRUSTLINE__ ?? true;
+}
+
+export function mockUsdcBalance(): bigint {
+  if (typeof window === 'undefined') return 100_000_000n;
+  const value = window.__SCI_USDC_BALANCE__;
+  return value === undefined ? 100_000_000n : BigInt(value);
 }
 
 /** True once Playwright has installed the RPC mock for this page. */

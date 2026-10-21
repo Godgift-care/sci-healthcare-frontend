@@ -34,6 +34,7 @@ import {
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { FunderChecklist } from '@/components/FunderChecklist';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -104,6 +105,7 @@ export default function MyPage() {
   const {
     vouchers: walletFunded,
     error: fundedError,
+    isLoading: fundedLoading,
     mutate: mutateFunded,
   } = useVouchers(address ? { funder: address } : null);
 
@@ -428,6 +430,12 @@ export default function MyPage() {
 
   return (
     <div className="space-y-8">
+      <FunderChecklist
+        fundedVoucherCount={walletFunded.length}
+        vouchersLoading={Boolean(address) && fundedLoading}
+        vouchersUnavailable={Boolean(address) && Boolean(fundedError)}
+        onRetryVouchers={() => void mutateFunded()}
+      />
       <TestUsdc />
 
       <section className="space-y-3">
