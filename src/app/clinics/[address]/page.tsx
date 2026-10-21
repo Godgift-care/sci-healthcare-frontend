@@ -30,6 +30,7 @@ import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
@@ -249,6 +250,9 @@ export default function ClinicPage({
   // reads the voucher's last valid day rather than the picker's raw value.
   const customExpiresAt =
     expiryChoice === 'custom' ? expiresAtFor('custom', customExpiry) : null;
+  // Shared by both funding paths: the local wallet signer and the SEP-7 link
+  // must put the same expiry on chain.
+  const fundingExpiresAt = expiresAtFor(expiryChoice, customExpiry);
   const expirySummary =
     expiryChoice === 'custom'
       ? customExpiresAt === null
@@ -724,6 +728,28 @@ export default function ClinicPage({
                     : `Fund ${selectedServices.length === 1 ? 'voucher' : `${selectedServices.length} vouchers`}`
                   : 'Connect wallet'}
             </Button>
+
+            {selected && baseAmount !== null && (
+              <Sep7FundPanel
+                amount={baseAmount}
+                expiresAt={fundingExpiresAt}
+                provider={address}
+                serviceCode={selected.code}
+                identifier={identifier}
+                secret={secret}
+                walletAddress={wallet}
+                onFunded={({ hash }) => {
+                  void invalidateVouchers();
+                  trackEvent('voucher_funded');
+                  toast.success(
+                    <>
+                      Voucher funded from a SEP-7 wallet.{' '}
+                      <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>
+                    </>,
+                  );
+                }}
+              />
+            )}
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
               Funds are escrowed by the contract at{' '}
