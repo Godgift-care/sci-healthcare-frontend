@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { use, useEffect, useMemo, useState } from 'react';
 
 import { notFound } from 'next/navigation';
@@ -365,9 +365,9 @@ export default function ClinicPage({
           {firstId && (
             <>
               {' '}
-              <Link href={`/vouchers/${firstId}`} className="underline underline-offset-2">
+              <DetailLink target={{ kind: 'voucher', id: firstId }} className="underline underline-offset-2">
                 Open voucher #{firstId}
-              </Link>
+              </DetailLink>
               {' '}
               ·{' '}
             </>
