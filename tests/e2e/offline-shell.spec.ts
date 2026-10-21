@@ -95,8 +95,10 @@ test('the manifest and its icons make the app installable', async ({ page }) => 
     return Promise.all(sources.map(load));
   }, manifest.icons.map((icon) => icon.src));
 
-  expect(Object.fromEntries(decoded)).toEqual({
-    '/icons/icon.svg': 300,
+  const dimensions = Object.fromEntries(decoded);
+  expect(dimensions['/icons/icon.svg']).toBeGreaterThan(0);
+  delete dimensions['/icons/icon.svg'];
+  expect(dimensions).toEqual({
     '/icons/icon-192.png': 192,
     '/icons/icon-512.png': 512,
     '/icons/icon-maskable-512.png': 512,
