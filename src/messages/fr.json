@@ -60,7 +60,10 @@
     "clinic": "Clinique",
     "voucherContract": "Contrat de bon",
     "scanWithClinicScanner": "Scanner avec le scanner de la clinique",
-    "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel."
+    "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
+    "reportProblem": "Signaler un problème",
+    "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
+    "reportProblemAction": "Signaler un problème"
   },
   "clinic": {
     "title": "Bureau clinique",
@@ -83,9 +86,23 @@
     "labelPlaceholder": "Consultation externe",
     "pricePlaceholder": "Prix en USDC, ex. 3.00",
     "serviceNote": "Utilisez une catégorie de service générale, jamais un diagnostic. Les codes sont publics. Un nouveau prix s'applique aux bons financés à partir de maintenant.",
-    "incomingVouchers": "Bons entrants",
-    "noIncoming": "Aucun bon pour cette clinique pour le moment.",
-    "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau."
+  "incomingVouchers": "Bons entrants",
+  "noIncoming": "Aucun bon pour cette clinique pour le moment.",
+  "earnings": "Revenus",
+  "earningsNote": "Trésorerie de cette clinique : soins réglés, paiements en attente et frais de protocole payés.",
+  "earningsSettled": "Réglé",
+  "earningsSettledDetail": "{count} bons · {net} net après frais",
+  "earningsPending": "Paiement en attente",
+  "earningsPendingDetail": "{count} réclamés, attestés ou contestés, avant frais",
+  "earningsFees": "Frais payés",
+  "earningsFeesDetail": "Frais de protocole sur les soins réglés",
+  "earningsMonthly": "Revenus mensuels",
+  "earningsMonthlyNote": "Regroupés par mois de financement de chaque bon (UTC).",
+  "earningsMonth": "Mois",
+  "earningsTotal": "Total",
+  "earningsEmpty": "Aucun revenu réglé ou en attente pour le moment.",
+  "earningsUnavailable": "Les revenus sont temporairement indisponibles. Le reste du bureau fonctionne toujours.",
+  "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau."
   },
   "scanner": {
     "title": "Scanner le QR du bon patient",
@@ -99,6 +116,7 @@
   "language": {
     "en": "English",
     "fr": "Français",
-    "sw": "Kiswahili"
+    "sw": "Kiswahili",
+    "select": "Choisir la langue"
   }
 }

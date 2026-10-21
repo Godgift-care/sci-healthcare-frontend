@@ -60,7 +60,10 @@
     "clinic": "Kliniki",
     "voucherContract": "Mkataba wa Vocha",
     "scanWithClinicScanner": "Changanua na kichanganuzi cha kliniki",
-    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho."
+    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
+    "reportProblem": "Ripoti tatizo",
+    "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa, au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
+    "reportProblemAction": "Ripoti tatizo"
   },
   "clinic": {
     "title": "Dawati la kliniki",
@@ -83,9 +86,23 @@
     "labelPlaceholder": "Ushauri wa wagonjwa wa nje",
     "pricePlaceholder": "Bei kwa USDC, k.m. 3.00",
     "serviceNote": "Tumia kategoria ya jumla ya huduma, kamwe usiweke utambuzi wa ugonjwa. Misimbo iko wazi kwa umma. Bei mpya inatumika kwa vocha zinazofadhiliwa kuanzia sasa.",
-    "incomingVouchers": "Vocha zinazoingia",
-    "noIncoming": "Bado hakuna vocha kwa kliniki hii.",
-    "connectWallet": "Unganisha pochi ya kliniki ili kusimamia dawati hili."
+  "incomingVouchers": "Vocha zinazoingia",
+  "noIncoming": "Bado hakuna vocha kwa kliniki hii.",
+  "earnings": "Mapato",
+  "earningsNote": "Mtiririko wa fedha wa kliniki hii: huduma zilizolipwa, malipo yanayosubiri, na ada za itifaki zilizolipwa.",
+  "earningsSettled": "Imelipwa",
+  "earningsSettledDetail": "Vocha {count} · {net} halisi baada ya ada",
+  "earningsPending": "Malipo yanayosubiri",
+  "earningsPendingDetail": "{count} zilizodaiwa, kuthibitishwa au kupingwa, kabla ya ada",
+  "earningsFees": "Ada zilizolipwa",
+  "earningsFeesDetail": "Ada ya itifaki kwa huduma zilizolipwa",
+  "earningsMonthly": "Mapato ya kila mwezi",
+  "earningsMonthlyNote": "Zimepangwa kwa mwezi ambapo kila vocha ilifadhiliwa (UTC).",
+  "earningsMonth": "Mwezi",
+  "earningsTotal": "Jumla",
+  "earningsEmpty": "Bado hakuna mapato yaliyolipwa au yanayosubiri.",
+  "earningsUnavailable": "Mapato hayapatikani kwa sasa. Sehemu nyingine za dawati zinaendelea kufanya kazi.",
+  "connectWallet": "Unganisha pochi ya kliniki ili kusimamia dawati hili."
   },
   "scanner": {
     "title": "Changanua QR ya vocha ya mgonjwa",
@@ -99,6 +116,7 @@
   "language": {
     "en": "English",
     "fr": "Français",
-    "sw": "Kiswahili"
+    "sw": "Kiswahili",
+    "select": "Chagua lugha"
   }
 }

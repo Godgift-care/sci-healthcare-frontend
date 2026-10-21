@@ -56,6 +56,33 @@ body {
   border-radius: 4px;
 }
 
+/*
+ * Monospaced values — Stellar addresses, hex hashes, receipts — are
+ * left-to-right runs even on a right-to-left page (#131). Isolating them
+ * keeps the surrounding direction from reordering the characters around a
+ * trailing ellipsis or a leading `$`, without changing how the run itself
+ * reads.
+ */
 .mono {
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  unicode-bidi: isolate;
 }
+
+/*
+ * Right-to-left readiness (#131).
+ *
+ * Layout follows the `dir` attribute on `<html>`, which `LocaleProvider`
+ * writes from the active locale (src/i18n/direction.ts), through Tailwind's
+ * logical utilities: `ms-`/`me-`, `ps-`/`pe-`, `text-start`/`text-end`,
+ * `border-s`/`border-e`, `start-`/`end-`. No component needs a second set of
+ * RTL rules.
+ *
+ * The one thing utilities cannot express is a glyph whose meaning is a
+ * direction: an arrow that says "onwards" has to point the other way when
+ * the text does. `.rtl-flip` mirrors just that glyph; it is not a layout
+ * rule, so it is applied per icon rather than globally.
+ */
+[dir='rtl'] .rtl-flip {
+  transform: scaleX(-1);
+}
+

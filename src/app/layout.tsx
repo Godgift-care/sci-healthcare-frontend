@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
+import { AnalyticsToggle } from '@/components/AnalyticsToggle';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -49,8 +50,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // suppressHydrationWarning: the theme init script sets data-theme before
   // paint, which the server render cannot know (#10).
+  //
+  // dir starts as `ltr` because the server renders English; LocaleProvider
+  // rewrites it from the stored locale (#131), the same way it rewrites
+  // `lang`. Every layout rule below is a logical utility, so the whole tree
+  // follows that one attribute.
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       {/* Theme before paint (#10): stored override, else the OS setting. */}
       <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       <body>
@@ -84,6 +90,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </p>
                 {/* Language choice for translated text (#5). */}
                 <LanguageSwitcher />
+                {/* Explicit analytics opt-out (#143); hidden when analytics
+                    is not configured at build time. */}
+                <AnalyticsToggle />
                 <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
                   <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
                     How it works

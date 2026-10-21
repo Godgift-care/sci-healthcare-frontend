@@ -60,7 +60,10 @@
     "clinic": "Clinic",
     "voucherContract": "Voucher Contract",
     "scanWithClinicScanner": "Scan with clinic scanner",
-    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records."
+    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records.",
+    "reportProblem": "Report a problem",
+    "reportProblemIntro": "Only the funder can open a dispute. If you are the patient, a relative, or anyone else who has noticed a problem with this voucher, open a report. It is prefilled with the public voucher number, status, service and clinic only — never the patient reference.",
+    "reportProblemAction": "Report a problem"
   },
   "clinic": {
     "title": "Clinic desk",
@@ -83,9 +86,23 @@
     "labelPlaceholder": "Outpatient consult",
     "pricePlaceholder": "Price in USDC, e.g. 3.00",
     "serviceNote": "Use a coarse service category, never a diagnosis. Codes are public. A new price applies to vouchers funded from now on.",
-    "incomingVouchers": "Incoming vouchers",
-    "noIncoming": "No vouchers for this clinic yet.",
-    "connectWallet": "Connect the clinic's wallet to manage this desk."
+  "incomingVouchers": "Incoming vouchers",
+  "noIncoming": "No vouchers for this clinic yet.",
+  "earnings": "Earnings",
+  "earningsNote": "Cash flow for this clinic: settled care, payouts still in flight, and the protocol fees paid.",
+  "earningsSettled": "Settled",
+  "earningsSettledDetail": "{count} vouchers · {net} net after fees",
+  "earningsPending": "Pending payout",
+  "earningsPendingDetail": "{count} claimed, attested or disputed, before fees",
+  "earningsFees": "Fees paid",
+  "earningsFeesDetail": "Protocol fee on settled care",
+  "earningsMonthly": "Monthly earnings",
+  "earningsMonthlyNote": "Grouped by the month each voucher was funded (UTC).",
+  "earningsMonth": "Month",
+  "earningsTotal": "Total",
+  "earningsEmpty": "No settled or pending earnings yet.",
+  "earningsUnavailable": "Earnings are temporarily unavailable. The rest of the desk still works.",
+  "connectWallet": "Connect the clinic's wallet to manage this desk."
   },
   "scanner": {
     "title": "Scan patient voucher QR",
@@ -99,6 +116,7 @@
   "language": {
     "en": "English",
     "fr": "Français",
-    "sw": "Kiswahili"
+    "sw": "Kiswahili",
+    "select": "Select language"
   }
 }

@@ -89,3 +89,25 @@ export function timeUntil(iso: string | Date | null, now?: number | Date | null)
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
 }
+
+/**
+ * Formats elapsed time since a timestamp (e.g., "2h ago", "3d ago").
+ * Returns 'just now' for times less than a minute.
+ */
+export function timeSince(iso: string | Date | null, now?: number | Date | null): string {
+  if (!iso) return '—';
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const currentMs =
+    now != null && (typeof now !== 'number' || now > 0)
+      ? typeof now === 'number'
+        ? now
+        : now.getTime()
+      : Date.now();
+  const ms = currentMs - d.getTime();
+  if (ms <= 0) return 'just now';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
