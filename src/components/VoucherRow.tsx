@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
 import { formatDate, formatUsdc, timeUntil, timeSince } from '@/lib/amounts';
@@ -36,12 +36,20 @@ function isUrgent(iso: string | Date | null, now: number): boolean {
   return ms > 0 && ms <= 48 * 60 * 60 * 1000;
 }
 
+/**
+ * Lets a list drive a row from the keyboard (#160). `startAttest` opens the
+ * same confirmation modal the button does — it never submits on its own —
+ * and returns false when attesting is not on offer right now.
+ */
+export type VoucherRowHandle = { startAttest: () => boolean };
+
 export function VoucherRow({
   v,
   actions,
   onDone,
   summary = true,
   now: nowProp,
+  ref,
 }: {
   v: Voucher;
   actions: Action[];
@@ -50,6 +58,7 @@ export function VoucherRow({
   summary?: boolean;
   /** Optional current time in ms (e.g., from parent using useNow). Falls back to internal useNow. */
   now?: number;
+  ref?: Ref<VoucherRowHandle>;
 }) {
   const { address, signTransaction, connect } = useWallet();
   const nowInternal = useNow();
@@ -129,6 +138,14 @@ export function VoucherRow({
     { isSettleable: v.isSettleable, isRefundable: v.isRefundable },
     actions,
   );
+
+  useImperativeHandle(ref, () => ({
+    startAttest: () => {
+      if (!available.includes('attest') || busy !== null || reconciling !== null) return false;
+      setAttesting(true);
+      return true;
+    },
+  }));
 
   return (
     // Without the summary, the first hint or button row sits at the top.
