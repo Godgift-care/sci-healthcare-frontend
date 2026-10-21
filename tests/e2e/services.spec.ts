@@ -61,12 +61,17 @@ test('service catalogue lists services with clinic counts and price ranges', asy
 test('search box filters services', async ({ page }) => {
   await page.goto('/services');
 
-  await page.getByLabel('Search service name').fill('Malaria');
+  await expect(page.getByText('Outpatient consult')).toBeVisible();
   await expect(page.getByText('Malaria test')).toBeVisible();
+
+  await page.getByLabel('Search service name').fill('Nonexistent');
+  await expect(page.getByText('No services match your search.')).toBeVisible();
   await expect(page.getByText('Outpatient consult')).toHaveCount(0);
+  await expect(page.getByText('Malaria test')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(page.getByText('Outpatient consult')).toBeVisible();
+  await expect(page.getByText('Malaria test')).toBeVisible();
 });
 
 test('service comparison page lists clinics sorted by price, active only', async ({ page }) => {
