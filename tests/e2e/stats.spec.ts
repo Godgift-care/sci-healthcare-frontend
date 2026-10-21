@@ -51,10 +51,15 @@ test('renders voucher activity by country with data', async ({ page }) => {
   // NG: 1 funded (3.00) + 1 settled (3.00); KE: 1 settled (5.00).
   await expect(page.getByText('NG', { exact: true })).toBeVisible();
   await expect(page.getByText('KE', { exact: true })).toBeVisible();
-  await expect(page.getByText('1 funded')).toBeVisible();
-  await expect(page.getByText('1 settled')).toBeVisible();
-  await expect(page.getByText('$3.00')).toBeVisible();
-  await expect(page.getByText('$5.00')).toBeVisible();
+
+  // NG row: 1 funded, 1 settled, $3.00
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('1 funded');
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('1 settled');
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('$3.00');
+
+  // KE row: 1 settled, $5.00
+  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText('1 settled');
+  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText('$5.00');
 });
 
 test('renders empty state when there is no voucher activity', async ({ page }) => {
