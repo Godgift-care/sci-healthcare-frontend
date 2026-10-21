@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
-import { useDailyStats, useProviders, useStats } from '@/lib/hooks';
+import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
 import { Card, Empty } from '@/components/ui';
 
 type TimeRange = 7 | 14 | 30 | 90;
@@ -132,6 +132,7 @@ export default function StatsPage() {
   const { stats } = useStats();
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
   const { providers } = useProviders();
+  const { vouchers } = useVouchers(null);
 
   // Aggregate country statistics
   const countryCounts = useMemo(() => {
@@ -144,6 +145,31 @@ export default function StatsPage() {
     }
     return Array.from(map.entries()).sort((a, b) => b[1].count - a[1].count);
   }, [providers]);
+
+  // Voucher activity per country: funded and settled counts plus settled value.
+  const countryVouchers = useMemo(() => {
+    const map = new Map<
+      string,
+      { funded: number; fundedValue: bigint; settled: number; settledValue: bigint }
+    >();
+    for (const v of vouchers) {
+      const country = String(v.provider?.country ?? '');
+      const entry =
+        map.get(country) ?? { funded: 0, fundedValue: 0n, settled: 0, settledValue: 0n };
+      if (v.status === 'Funded') {
+        entry.funded += 1;
+        entry.fundedValue += BigInt(v.amount || '0');
+      }
+      if (v.status === 'Settled') {
+        entry.settled += 1;
+        entry.settledValue += BigInt(v.amount || '0');
+      }
+      map.set(country, entry);
+    }
+    return Array.from(map.entries()).sort(
+      (a, b) => Number(b[1].settledValue - a[1].settledValue) || b[1].settled - a[1].settled,
+    );
+  }, [vouchers]);
 
   const series = useMemo(() => dailyStats?.series ?? [], [dailyStats]);
 
@@ -384,6 +410,58 @@ export default function StatsPage() {
                     </td>
                     <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm">
                       {stats.active} active
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </Card>
+      </section>
+
+      {/* Vouchers by country */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">Voucher activity by country</h2>
+        <Card className="overflow-x-auto p-4">
+          <table className="block w-full text-left text-sm sm:table">
+            <caption className="sr-only">
+              Vouchers funded, settled and value grouped by clinic country
+            </caption>
+            <thead className="hidden sm:table-header-group">
+              <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
+                <th scope="col" className="pb-2 font-medium">Country code</th>
+                <th scope="col" className="pb-2 font-medium text-right">Vouchers funded</th>
+                <th scope="col" className="pb-2 font-medium text-right">Care settled</th>
+                <th scope="col" className="pb-2 font-medium text-right">Value settled</th>
+              </tr>
+            </thead>
+            <tbody className="block divide-y divide-[var(--color-line)] sm:table-row-group">
+              {countryVouchers.length === 0 ? (
+                <tr className="block sm:table-row">
+                  <td
+                    colSpan={4}
+                    className="block py-4 text-center text-xs text-[var(--color-ink-soft)] sm:table-cell"
+                  >
+                    No voucher activity recorded yet.
+                  </td>
+                </tr>
+              ) : (
+                countryVouchers.map(([country, activity]) => (
+                  <tr
+                    key={country}
+                    className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3 sm:table-row sm:py-0"
+                  >
+                    <td className="block font-medium sm:table-cell sm:py-2.5">
+                      {country}
+                    </td>
+                    <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
+                      {activity.funded} funded
+                    </td>
+                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                      {activity.settled} settled
+                    </td>
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">
+                      ${formatUsdc(activity.settledValue.toString())}
                     </td>
                   </tr>
                 ))
