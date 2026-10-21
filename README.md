@@ -194,7 +194,10 @@ Suited to a platform built for Next.js, such as Vercel.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md). New to the code? Start with the
+[architecture map](docs/architecture.md) — it shows how the pages, the hooks,
+the API client, the contracts, the wallet and the offline shell fit together.
+Security reports go through [SECURITY.md](SECURITY.md).
 
 ## Contributors
 

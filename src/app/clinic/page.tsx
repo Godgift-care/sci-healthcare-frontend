@@ -1,13 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
-import { useLiveUpdates, useProvider, useVouchers } from '@/lib/hooks';
+import {
+  useLiveUpdates,
+  useProvider,
+  useProviderStats,
+  useProviderVouchers,
+  useVouchers,
+} from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { QrScannerModal } from '@/components/QrScannerModal';
@@ -28,6 +35,17 @@ const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Suspended:
     'This clinic is suspended. It cannot list services, receive new vouchers or claim funded ones. Contact the administrator.',
 };
+
+/** `YYYY-MM` as a localised short month and year, read in UTC. */
+function monthLabel(month: string, locale: string): string {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const tag = locale === 'fr' ? 'fr-FR' : locale === 'sw' ? 'sw-KE' : 'en-GB';
+  return new Intl.DateTimeFormat(tag, {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, monthNumber - 1, 1)));
+}
 
 /**
  * Clinic desk.
@@ -64,6 +82,34 @@ export default function ClinicDeskPage() {
     () => registry.providerStatus(address!),
   );
 
+  const standing: Standing =
+    status !== undefined
+      ? (status ?? 'Unregistered')
+      : provider
+        ? provider.status
+        : null;
+
+  // Only a registered clinic has statistics to read; an unregistered wallet
+  // would get a 404 from the endpoint on every page load.
+  const earningsAddress = standing && standing !== 'Unregistered' ? address : null;
+  const {
+    stats: clinicStats,
+    error: statsError,
+    mutate: mutateStats,
+  } = useProviderStats(earningsAddress);
+  const {
+    vouchers: earningsVouchers,
+    error: earningsError,
+    isLoading: earningsLoading,
+    mutate: mutateEarningsVouchers,
+  } = useProviderVouchers(earningsAddress);
+
+  const earnings = useMemo(() => summariseEarnings(earningsVouchers), [earningsVouchers]);
+  const months = useMemo(() => monthlyEarnings(earningsVouchers), [earningsVouchers]);
+  // Distinguish "nothing earned yet" from "the vouchers could not be read":
+  // the first is worth showing as zero, the second is not.
+  const earningsReady = !earningsLoading && !earningsError;
+
   // Live SSE stream with automatic fallback to polling (#64)
   useLiveUpdates({ providerAddress: address ?? undefined });
 
@@ -71,14 +117,9 @@ export default function ClinicDeskPage() {
     void mutateProvider();
     void mutateVouchers();
     void mutateStatus();
+    void mutateStats();
+    void mutateEarningsVouchers();
   };
-
-  const standing: Standing =
-    status !== undefined
-      ? (status ?? 'Unregistered')
-      : provider
-        ? provider.status
-        : null;
 
   const services = (provider?.services ?? []).filter((s) => s.active !== false);
 
@@ -159,6 +200,187 @@ export default function ClinicDeskPage() {
           router.push(`/vouchers/${voucherId}`);
         }}
       />
+
+      {standing !== null && standing !== 'Unregistered' && (
+        <section aria-labelledby="clinic-earnings" className="space-y-5">
+          <div>
+            <h2 id="clinic-earnings" className="text-lg font-semibold">
+              {t('clinic.earnings')}
+            </h2>
+            <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+              {t('clinic.earningsNote')}
+            </p>
+          </div>
+
+          {(statsError || earningsError) && (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              {t('clinic.earningsUnavailable')}
+            </p>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div role="group" aria-label={t('clinic.earningsSettled')}>
+              <Card className="h-full p-4">
+                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('clinic.earningsSettled')}
+                </div>
+                <div className="mt-1 text-2xl font-bold">
+                  {clinicStats
+                    ? `$${formatUsdc(clinicStats.settledValue, locale)}`
+                    : earningsReady
+                      ? `$${formatUsdc(earnings.settled, locale)}`
+                      : '—'}
+                </div>
+                <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                  {earningsLoading
+                    ? t('common.loading')
+                    : t('clinic.earningsSettledDetail', {
+                        count: clinicStats?.settledVouchers ?? earnings.settledCount,
+                        net: earningsReady
+                          ? `$${formatUsdc(earnings.netReceived, locale)}`
+                          : '—',
+                      })}
+                </div>
+              </Card>
+            </div>
+
+            <div role="group" aria-label={t('clinic.earningsPending')}>
+              <Card className="h-full p-4">
+                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('clinic.earningsPending')}
+                </div>
+                <div className="mt-1 text-2xl font-bold">
+                  {earningsReady ? `$${formatUsdc(earnings.pending, locale)}` : '—'}
+                </div>
+                <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                  {earningsLoading
+                    ? t('common.loading')
+                    : earningsReady
+                      ? t('clinic.earningsPendingDetail', {
+                          count: earnings.pendingCount,
+                        })
+                      : t('clinic.earningsUnavailable')}
+                </div>
+              </Card>
+            </div>
+
+            <div role="group" aria-label={t('clinic.earningsFees')}>
+              <Card className="h-full p-4">
+                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('clinic.earningsFees')}
+                </div>
+                <div className="mt-1 text-2xl font-bold">
+                  {earningsReady ? `$${formatUsdc(earnings.fees, locale)}` : '—'}
+                </div>
+                <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                  {t('clinic.earningsFeesDetail')}
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-base font-semibold">{t('clinic.earningsMonthly')}</h3>
+              <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                {t('clinic.earningsMonthlyNote')}
+              </p>
+            </div>
+
+            <Card className="p-4">
+              {earningsLoading ? (
+                <p className="text-sm text-[var(--color-ink-soft)]">
+                  {t('common.loading')}
+                </p>
+              ) : earningsError ? (
+                <p className="text-sm text-[var(--color-ink-soft)]">
+                  {t('clinic.earningsUnavailable')}
+                </p>
+              ) : months.length === 0 ? (
+                <Empty>{t('clinic.earningsEmpty')}</Empty>
+              ) : (
+                <table className="block w-full text-left text-sm sm:table">
+                  <caption className="sr-only">{t('clinic.earningsMonthly')}</caption>
+                  <thead className="hidden sm:table-header-group">
+                    <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
+                      <th scope="col" className="pb-2 font-medium">
+                        {t('clinic.earningsMonth')}
+                      </th>
+                      <th scope="col" className="pb-2 text-right font-medium">
+                        {t('clinic.earningsSettled')}
+                      </th>
+                      <th scope="col" className="pb-2 text-right font-medium">
+                        {t('clinic.earningsPending')}
+                      </th>
+                      <th scope="col" className="pb-2 text-right font-medium">
+                        {t('clinic.earningsFees')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="block divide-y divide-[var(--color-line)] sm:table-row-group">
+                    {months.map((month) => (
+                      <tr
+                        key={month.month}
+                        className="grid grid-cols-3 gap-x-3 gap-y-1 py-3 sm:table-row sm:py-0"
+                      >
+                        <th
+                          scope="row"
+                          className="col-span-3 text-left font-medium sm:table-cell sm:py-2.5"
+                        >
+                          {monthLabel(month.month, locale)}
+                        </th>
+                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                            {t('clinic.earningsSettled')}
+                          </span>
+                          <span className="mono">${formatUsdc(month.settled, locale)}</span>
+                        </td>
+                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                            {t('clinic.earningsPending')}
+                          </span>
+                          <span className="mono">${formatUsdc(month.pending, locale)}</span>
+                        </td>
+                        <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                            {t('clinic.earningsFees')}
+                          </span>
+                          <span className="mono">${formatUsdc(month.fees, locale)}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="block border-t border-[var(--color-line)] font-medium sm:table-footer-group">
+                    <tr className="grid grid-cols-3 gap-x-3 gap-y-1 pt-3 sm:table-row sm:pt-0">
+                      <th scope="row" className="col-span-3 text-left sm:table-cell sm:py-2.5">
+                        {t('clinic.earningsTotal')}
+                      </th>
+                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          {t('clinic.earningsSettled')}
+                        </span>
+                        <span className="mono">${formatUsdc(earnings.settled, locale)}</span>
+                      </td>
+                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          {t('clinic.earningsPending')}
+                        </span>
+                        <span className="mono">${formatUsdc(earnings.pending, locale)}</span>
+                      </td>
+                      <td className="sm:table-cell sm:py-2.5 sm:text-right">
+                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          {t('clinic.earningsFees')}
+                        </span>
+                        <span className="mono">${formatUsdc(earnings.fees, locale)}</span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+            </Card>
+          </div>
+        </section>
+      )}
 
       {standing === 'Unregistered' && (
         <Card className="space-y-3 p-5">
