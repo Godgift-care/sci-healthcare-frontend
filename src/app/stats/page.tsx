@@ -132,7 +132,7 @@ export default function StatsPage() {
   const { stats } = useStats();
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
   const { providers } = useProviders();
-  const { vouchers } = useVouchers(null);
+  const { vouchers } = useVouchers({});
 
   // Aggregate country statistics
   const countryCounts = useMemo(() => {
