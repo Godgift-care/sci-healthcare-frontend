@@ -70,9 +70,11 @@ test('protects saved keys and requires a passphrase after reload', async ({ page
   await page.getByLabel('Patient nickname').fill('Protected');
   await page.getByRole('button', { name: 'Save patient' }).click();
 
+  await page.getByRole('button', { name: 'Manage', exact: true }).click();
   await page.getByLabel('New passphrase').fill('correct horse battery');
   await page.getByLabel('Confirm passphrase').fill('correct horse battery');
   await page.getByRole('button', { name: 'Protect saved keys' }).click();
+  await expect(page.getByText('Saved patient keys are encrypted on this device.')).toBeVisible();
 
   const storedPatients = await page.evaluate(() => localStorage.getItem('sci:saved-patients'));
   expect(storedPatients).not.toContain('s'.repeat(43));

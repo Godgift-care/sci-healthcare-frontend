@@ -175,11 +175,12 @@ export function SavedPatientControls({
         </Button>
       </div>
       <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-        Saved references and keys stay in this browser and are never sent to the service.
+        Saved references and keys stay in this browser only and are never sent to the
+        service. Anyone with access to this browser profile can use them.
       </p>
       </>}
 
-      {saved.locked ? (
+      {saved.locked && (
         <div className="space-y-2">
           <p className="text-sm font-medium">Saved patient keys are protected.</p>
           <label className="block">
@@ -197,55 +198,6 @@ export function SavedPatientControls({
           </label>
           <Button onClick={unlockSavedPatients}>Unlock saved patients</Button>
         </div>
-      ) : saved.encrypted ? (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            Saved patient keys are encrypted on this device.
-          </p>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              localIdentity.lock();
-              onSelect(null);
-              setSaveName('');
-            }}
-          >
-            Lock saved patients
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-2 border-t border-[var(--color-line)] pt-3">
-          <p className="text-sm font-medium">Protect saved keys with a passphrase</p>
-          <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              New passphrase (12 characters minimum)
-            </span>
-            <input
-              aria-label="New passphrase"
-              type="password"
-              autoComplete="new-password"
-              value={passphrase}
-              onChange={(event) => setPassphrase(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              Confirm passphrase
-            </span>
-            <input
-              aria-label="Confirm passphrase"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassphrase}
-              onChange={(event) => setConfirmPassphrase(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
-            />
-          </label>
-          <Button variant="ghost" onClick={protectSavedPatients}>
-            Protect saved keys
-          </Button>
-        </div>
       )}
       {message && <Alert>{message}</Alert>}
 
@@ -259,6 +211,57 @@ export function SavedPatientControls({
           </Button>
         }
       >
+        {saved.encrypted ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-4">
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              Saved patient keys are encrypted on this device.
+            </p>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                localIdentity.lock();
+                onSelect(null);
+                setSaveName('');
+                setManaging(false);
+              }}
+            >
+              Lock saved patients
+            </Button>
+          </div>
+        ) : (
+          <div className="mb-4 space-y-2 border-b border-[var(--color-line)] pb-4">
+            <p className="text-sm font-medium">Protect saved keys with a passphrase</p>
+            <label className="block">
+              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                New passphrase (12 characters minimum)
+              </span>
+              <input
+                aria-label="New passphrase"
+                type="password"
+                autoComplete="new-password"
+                value={passphrase}
+                onChange={(event) => setPassphrase(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                Confirm passphrase
+              </span>
+              <input
+                aria-label="Confirm passphrase"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassphrase}
+                onChange={(event) => setConfirmPassphrase(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+            <Button variant="ghost" onClick={protectSavedPatients}>
+              Protect saved keys
+            </Button>
+          </div>
+        )}
         <p className="mb-3 text-xs text-[var(--color-ink-soft)]">
           Patient references and keys are not shown here.
         </p>
