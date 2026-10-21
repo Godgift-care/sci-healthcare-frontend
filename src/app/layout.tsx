@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
+import { AnalyticsToggle } from '@/components/AnalyticsToggle';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -84,6 +85,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </p>
                 {/* Language choice for translated text (#5). */}
                 <LanguageSwitcher />
+                {/* Explicit analytics opt-out (#143); hidden when analytics
+                    is not configured at build time. */}
+                <AnalyticsToggle />
                 <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
                   <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
                     How it works
