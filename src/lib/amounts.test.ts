@@ -5,6 +5,7 @@ import {
   formatDate,
   formatUsdc,
   shortAddress,
+  timeSince,
   timeUntil,
   toAmountInput,
   toBaseUnits,
@@ -178,5 +179,39 @@ describe('timeUntil', () => {
     vi.setSystemTime(now);
     expect(timeUntil('2026-05-20T11:00:00.000Z', 0)).toBe('1h');
     expect(timeUntil('2026-05-20T11:00:00.000Z', null)).toBe('1h');
+  });
+});
+
+describe('timeSince', () => {
+  const now = Date.parse('2026-05-20T10:00:00.000Z');
+
+  it('renders a dash with no date', () => {
+    expect(timeSince(null)).toBe('—');
+  });
+
+  it('returns "just now" for the present or future', () => {
+    expect(timeSince('2026-05-20T10:00:00.000Z', now)).toBe('just now');
+    expect(timeSince('2026-05-20T11:00:00.000Z', now)).toBe('just now');
+  });
+
+  it('picks the largest whole unit', () => {
+    expect(timeSince('2026-05-20T09:30:00.000Z', now)).toBe('30m ago');
+    expect(timeSince('2026-05-20T05:00:00.000Z', now)).toBe('5h ago');
+    expect(timeSince('2026-05-17T10:00:00.000Z', now)).toBe('3d ago');
+  });
+
+  it('accepts a Date as the reference point', () => {
+    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30m ago');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('falls back to the wall clock when now is 0 or null', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    expect(timeSince('2026-05-20T09:00:00.000Z', 0)).toBe('1h ago');
+    expect(timeSince('2026-05-20T09:00:00.000Z', null)).toBe('1h ago');
   });
 });

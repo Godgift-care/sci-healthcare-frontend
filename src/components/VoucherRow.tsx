@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
-import { formatDate, formatUsdc, timeUntil } from '@/lib/amounts';
+import { formatDate, formatUsdc, timeUntil, timeSince } from '@/lib/amounts';
 import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
@@ -28,20 +28,32 @@ const ACTION_EVENTS = {
   refund: 'voucher_refunded',
 } as const satisfies Record<Action, AnalyticsEvent>;
 
+/** Returns true if the deadline is within 48 hours. */
+function isUrgent(iso: string | Date | null, now: number): boolean {
+  if (!iso) return false;
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const ms = d.getTime() - now;
+  return ms > 0 && ms <= 48 * 60 * 60 * 1000;
+}
+
 export function VoucherRow({
   v,
   actions,
   onDone,
   summary = true,
+  now: nowProp,
 }: {
   v: Voucher;
   actions: Action[];
   onDone?: () => void;
   /** False on the voucher's own page, which already shows the summary. */
   summary?: boolean;
+  /** Optional current time in ms (e.g., from parent using useNow). Falls back to internal useNow. */
+  now?: number;
 }) {
   const { address, signTransaction, connect } = useWallet();
-  const now = useNow();
+  const nowInternal = useNow();
+  const now = nowProp ?? nowInternal;
   const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
@@ -165,11 +177,20 @@ export function VoucherRow({
         </p>
       )}
       {v.status === 'Claimed' && v.refundableAt && !v.isRefundable && (
-        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Waiting for an attester to confirm. If nobody does, this becomes
-          refundable on {formatDate(v.refundableAt)}.
-          <InfoTip content="An independent attester must confirm care was delivered. Without confirmation the funder can reclaim after this date." />
-        </p>
+        <>
+          {v.claimedAt && (
+            <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+              Claimed {timeSince(v.claimedAt, now)}.
+            </p>
+          )}
+          <p className="mt-1 text-xs">
+            Refundable in <span className={isUrgent(v.refundableAt, now) ? 'font-semibold text-[var(--color-danger)]' : ''}>
+              {timeUntil(v.refundableAt, now)}
+            </span>
+            ({formatDate(v.refundableAt)}).
+            <InfoTip content="An independent attester must confirm care was delivered. Without confirmation the funder can reclaim after this date." />
+          </p>
+        </>
       )}
       {v.status === 'Disputed' && v.disputeReason != null && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
