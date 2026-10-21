@@ -104,6 +104,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Link href="/faq" className="hover:text-[var(--color-brand)]">
                     FAQ
                   </Link>
+                  <Link href="/status" className="hover:text-[var(--color-brand)]">
+                    Status
+                  </Link>
                   <a
                     href="https://godgift-care.github.io/sci-healthcare-contracts/"
                     target="_blank"
