@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import { ApiError } from '@/lib/api';
 import { formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
 import { useLiveUpdates, useNameIndex, useNow, useVoucher, useVoucherEvents } from '@/lib/hooks';
 import { problemReportUrl } from '@/lib/report-problem';
+import { rememberRecentVoucherId } from '@/lib/recent-vouchers';
 import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
@@ -44,6 +45,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   }
 
   const { voucher: v, error, rawError, mutate } = useVoucher(id);
+  const loadedVoucherId = v?.id;
+  useEffect(() => {
+    if (loadedVoucherId) rememberRecentVoucherId(loadedVoucherId);
+  }, [loadedVoucherId]);
+
   // Per-step transaction hashes (#18). An indexer without the events
   // endpoint (backend #13) yields an empty list and the history renders
   // exactly as before, only without the "view transaction" links.

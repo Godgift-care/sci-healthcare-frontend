@@ -18,6 +18,7 @@ import {
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 import { QrScannerModal } from '@/components/QrScannerModal';
+import { RecentVouchers } from '@/components/RecentVouchers';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
 import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
@@ -200,6 +201,8 @@ export default function ClinicDeskPage() {
           router.push(`/vouchers/${voucherId}`);
         }}
       />
+
+      <RecentVouchers />
 
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">
