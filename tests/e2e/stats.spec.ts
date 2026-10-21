@@ -49,8 +49,8 @@ test('renders voucher activity by country with data', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Voucher activity by country' })).toBeVisible();
 
   // NG: 1 funded (3.00) + 1 settled (3.00); KE: 1 settled (5.00).
-  await expect(page.getByText('NG')).toBeVisible();
-  await expect(page.getByText('KE')).toBeVisible();
+  await expect(page.getByText('NG', { exact: true })).toBeVisible();
+  await expect(page.getByText('KE', { exact: true })).toBeVisible();
   await expect(page.getByText('1 funded')).toBeVisible();
   await expect(page.getByText('1 settled')).toBeVisible();
   await expect(page.getByText('$3.00')).toBeVisible();
