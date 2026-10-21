@@ -64,6 +64,10 @@ jobs:
       NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
       NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
       NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
+      NEXT_PUBLIC_FAUCET_CONTRACT_ID: CCB25WG7DQ2CSNXPTOHZO2PDZ324FQPZLH3LSNCCLWYM3FEH52GEXC47
+      NEXT_PUBLIC_USDC_ISSUER: GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR
+      NEXT_PUBLIC_PLAUSIBLE_DOMAIN: test.sci-healthcare.example
+      NEXT_PUBLIC_SENTRY_DSN: https://abc123abc123abc123abc123abc123ab@sentry-test.local/42
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -86,6 +90,11 @@ jobs:
           fi
           cat /tmp/build-without-config.log
           grep -q 'NEXT_PUBLIC_VOUCHER_CONTRACT_ID' /tmp/build-without-config.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: .next/
+          include-hidden-files: true
 
   storybook:
     name: storybook
@@ -101,8 +110,9 @@ jobs:
 
   lighthouse:
     name: lighthouse
+    needs: build
     runs-on: ubuntu-latest
-    # Same build-time env as the build job; the app is measured as built.
+    # Runtime values keep the server's CSP aligned with the built app.
     env:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
@@ -119,7 +129,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
       # Fails when LCP, total JS or accessibility exceed the budgets in
       # lighthouserc.json. Uploads a temporary-public-storage report whose
       # URL appears in the logs, linked from the PR.
@@ -132,7 +145,10 @@ jobs:
 
   visual:
     name: visual
+    needs: build
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_USE_BUILD_ARTIFACT: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -140,9 +156,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
       - run: npx playwright install --with-deps chromium
-      # The web server builds the app itself (see playwright.config.ts), so
-      # this compares screenshots with the backend mocked and the clock
+      # This compares screenshots with the backend mocked and the clock
       # frozen. After an intentional UI change, run
       # `npm run test:visual:update` locally and commit the new snapshots.
       - run: npm run test:visual
@@ -156,7 +175,10 @@ jobs:
 
   e2e:
     name: e2e
+    needs: build
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_USE_BUILD_ARTIFACT: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -164,8 +186,11 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
       - run: npx playwright install --with-deps chromium
-      # The web server builds the app itself (see playwright.config.ts).
       # Each flow runs against a mocked API with a mock wallet and mock RPC
       # (see src/lib/e2e-seam.ts): no testnet, indexer or wallet needed.
       - run: npm run test:e2e
