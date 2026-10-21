@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { formatUsdc } from '@/lib/amounts';
 import { useDailyStats, useProviders, useStats } from '@/lib/hooks';
 import { Card, Empty } from '@/components/ui';
+import { WidgetBoundary } from '@/components/WidgetBoundary';
 
 type TimeRange = 7 | 14 | 30 | 90;
 
@@ -274,11 +275,14 @@ export default function StatsPage() {
               Total {days}d volume: ${formatUsdc(totalFundedVolume)}
             </p>
             <div className="mt-4">
-              <ActivityChart
-                title="Daily Vouchers Funded"
-                data={fundedSeries}
-                color="var(--color-brand)"
-              />
+              {/* One broken chart leaves the totals, tables and the other chart up (#169). */}
+              <WidgetBoundary label="This chart">
+                <ActivityChart
+                  title="Daily Vouchers Funded"
+                  data={fundedSeries}
+                  color="var(--color-brand)"
+                />
+              </WidgetBoundary>
             </div>
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
@@ -314,11 +318,13 @@ export default function StatsPage() {
               Total {days}d volume: ${formatUsdc(totalSettledVolume)}
             </p>
             <div className="mt-4">
-              <ActivityChart
-                title="Daily Care Settled"
-                data={settledSeries}
-                color="#059669"
-              />
+              <WidgetBoundary label="This chart">
+                <ActivityChart
+                  title="Daily Care Settled"
+                  data={settledSeries}
+                  color="#059669"
+                />
+              </WidgetBoundary>
             </div>
             {showTables && (
               <div className="mt-6 border-t border-[var(--color-line)] pt-4">
