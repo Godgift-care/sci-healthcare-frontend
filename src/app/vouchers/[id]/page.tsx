@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import { formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
 import { useLiveUpdates, useNameIndex, useNow, useVoucher, useVoucherEvents } from '@/lib/hooks';
+import { problemReportUrl } from '@/lib/report-problem';
 import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
@@ -64,6 +65,15 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         : (['settle', 'refund'] as const);
 
   const steps = voucherTimeline(v, v.receipt, now, stepTxHashes(events));
+  // Public facts only: the builder takes a narrow shape and deliberately
+  // drops the beneficiary reference, funder address and every patient value
+  // (#138).
+  const reportHref = problemReportUrl({
+    id: v.id,
+    status: v.status,
+    service: v.serviceLabel ?? `Service ${v.serviceCode}`,
+    clinic: v.provider.name,
+  });
 
   return (
     <div className="space-y-6">
@@ -214,6 +224,25 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           summary={false}
         />
       </div>
+
+      {/* Only the funder can dispute, but anyone who notices a problem can
+          report it (#138). The prefilled issue carries public voucher
+          details only — never the patient reference. */}
+      <Card className="print:hidden space-y-2 p-5">
+        <h2 className="text-sm font-semibold">{t('voucher.reportProblem')}</h2>
+        <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+          {t('voucher.reportProblemIntro')}
+        </p>
+        <a
+          href={reportHref}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-brand)] underline underline-offset-2 hover:opacity-80"
+        >
+          {t('voucher.reportProblemAction')}
+          <span aria-hidden="true">↗</span>
+        </a>
+      </Card>
     </div>
   );
 }

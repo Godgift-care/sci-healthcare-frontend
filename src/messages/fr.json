@@ -60,7 +60,10 @@
     "clinic": "Clinique",
     "voucherContract": "Contrat de bon",
     "scanWithClinicScanner": "Scanner avec le scanner de la clinique",
-    "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel."
+    "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
+    "reportProblem": "Signaler un problème",
+    "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
+    "reportProblemAction": "Signaler un problème"
   },
   "clinic": {
     "title": "Bureau clinique",
