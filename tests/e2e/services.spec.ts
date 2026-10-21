@@ -61,7 +61,7 @@ test('service catalogue lists services with clinic counts and price ranges', asy
 test('search box filters services', async ({ page }) => {
   await page.goto('/services');
 
-  await page.getByRole('search', { name: /Search service name/i }).fill('Malaria');
+  await page.getByLabel('Search service name').fill('Malaria');
   await expect(page.getByText('Malaria test')).toBeVisible();
   await expect(page.getByText('Outpatient consult')).toHaveCount(0);
 
