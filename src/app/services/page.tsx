@@ -75,7 +75,7 @@ export default function ServicesPage() {
           </h1>
           <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink-soft)]">
             Search for the care you want to pay for and compare what clinics
-            charge for it, then fund a voucher from the clinic's page.
+            charge for it, then fund a voucher from the clinic page.
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export default function ServicesPage() {
 
         <div role="search" className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
           <label className="block">
-            <span className="sr-only">Search services by name</span>
+            <span className="sr-only">Search service name</span>
             <input
               type="search"
               value={searchTerm}
