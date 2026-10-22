@@ -17,6 +17,7 @@ import {
 } from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
+import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
@@ -200,6 +201,14 @@ export default function ClinicDeskPage() {
           router.push(`/vouchers/${voucherId}`);
         }}
       />
+
+      {standing !== null && (standing === 'Unregistered' || provider !== null) && (
+        <ClinicChecklist
+          status={standing}
+          services={provider?.services ?? []}
+          vouchers={earningsVouchers}
+        />
+      )}
 
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">
