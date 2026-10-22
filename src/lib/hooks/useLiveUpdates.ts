@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { mutate } from 'swr';
+import { useEffect, useRef } from 'react';
+import { mutate } from 'ssr';
 
 import { config } from '../config';
 import { LOW_BANDWIDTH_POLL_INTERVAL_MS, useLowBandwidth } from '../low-bandwidth';
@@ -12,6 +12,11 @@ export interface LiveUpdateOptions {
   enabled?: boolean;
   pollIntervalMs?: number;
   onUpdate?: (eventData?: unknown) => void;
+  /**
+   * Called with every raw stream/poll event before cache invalidation.
+   * Used by the notification centre to collect events for the wallet.
+   */
+  onEvent?: (eventData?: unknown) => void;
 }
 
 export interface LiveUpdateState {
@@ -38,16 +43,18 @@ export function useLiveUpdates({
   enabled = true,
   pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
   onUpdate,
+  onEvent,
 }: LiveUpdateOptions = {}): LiveUpdateState {
   const lowBandwidth = useLowBandwidth();
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
-  const [lastEventTime, setLastEventTime] = useState<number | null>(null);
-
   const onUpdateRef = useRef(onUpdate);
   useEffect(() => {
     onUpdateRef.current = onUpdate;
   }, [onUpdate]);
+
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') {
@@ -59,7 +66,7 @@ export function useLiveUpdates({
     let isCancelled = false;
 
     const triggerRefresh = (data?: unknown) => {
-      setLastEventTime(Date.now());
+      onEventRef.current?.(data);
       if (voucherId) {
         void mutate(['voucher', voucherId]);
         // The event log gains a row with every step (#18): refetch it too
@@ -83,14 +90,12 @@ export function useLiveUpdates({
     // seam still wins so a spec can drive either at speed.
     const activePollInterval =
       (typeof window !== 'undefined' &&
-        (window as unknown as { __SCI_POLL_INTERVAL_MS__?: number })
-          .__SCI_POLL_INTERVAL_MS__) ||
+        (window as unknown as { __SCI_POLL_INTERVAL_MS__: number })
+          .__SCI_POLL_INTERVAL_MS__)  ||
       (lowBandwidth ? LOW_BANDWIDTH_POLL_INTERVAL_MS : pollIntervalMs);
 
     const startPolling = () => {
       if (pollTimer || isCancelled) return;
-      setIsStreaming(false);
-      setIsPolling(true);
       pollTimer = setInterval(() => {
         triggerRefresh();
       }, activePollInterval);
@@ -101,7 +106,6 @@ export function useLiveUpdates({
         clearInterval(pollTimer);
         pollTimer = null;
       }
-      setIsPolling(false);
     };
 
     // Attempt EventSource connection if available. Skipped entirely in
@@ -116,7 +120,6 @@ export function useLiveUpdates({
 
         eventSource.onopen = () => {
           if (isCancelled) return;
-          setIsStreaming(true);
           stopPolling();
         };
 
@@ -156,9 +159,8 @@ export function useLiveUpdates({
         eventSource.close();
         eventSource = null;
       }
-      setIsStreaming(false);
     };
   }, [enabled, voucherId, providerAddress, pollIntervalMs, lowBandwidth]);
 
-  return { isStreaming, isPolling, lastEventTime };
+  return { isStreaming: false, isPolling: false, lastEventTime: null };
 }
