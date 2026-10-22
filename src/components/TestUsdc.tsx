@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
 import { config } from '@/lib/config';
-import { FAUCET_ERRORS, humaniseError } from '@/lib/errors';
+import { FAUCET_ERRORS, humaniseError, isWalletRejection } from '@/lib/errors';
+import { useTransactionStage } from '@/lib/hooks';
 import { faucet, usdc } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
@@ -22,8 +23,8 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
   // Ledger time of the next allowed drip; 0 when one is allowed now.
   const [nextAt, setNextAt] = useState<number>(0);
   const [drip, setDrip] = useState<bigint | null>(null);
-  const [busy, setBusy] = useState(false);
   const [needsTrustline, setNeedsTrustline] = useState(false);
+  const tx = useTransactionStage();
   const toast = useToast();
 
   const [reloads, setReloads] = useState(0);
@@ -53,22 +54,27 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
 
   async function getUsdc() {
     if (!address) return void connect();
-    setBusy(true);
+    tx.reset();
     setNeedsTrustline(false);
     try {
-      await faucet.drip(address, signTransaction);
+      await faucet.drip(address, signTransaction, { onStage: tx.onStage });
       refresh();
     } catch (err) {
+      if (isWalletRejection(err)) {
+        tx.onCancelled();
+        return;
+      }
       const msg = humaniseError(err, FAUCET_ERRORS);
       if (/trustline/i.test(msg)) setNeedsTrustline(true);
       else toast.error(msg);
     } finally {
-      setBusy(false);
+      tx.reset();
     }
   }
 
   const coolingDown = nextAt > 0;
-  const label = drip ? `Get ${formatUsdc(drip)} test USDC` : 'Get test USDC';
+  const idleLabel = drip ? `Get ${formatUsdc(drip)} test USDC` : 'Get test USDC';
+  const buttonLabel = tx.label ?? (coolingDown ? 'Come back tomorrow' : idleLabel);
 
   const body = (
     <>
@@ -87,17 +93,17 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
         </div>
         <Button
           variant="ghost"
-          disabled={busy || coolingDown}
+          disabled={tx.busy || coolingDown }
           onClick={() => void getUsdc()}
         >
-          {busy ? 'Confirming…' : coolingDown ? 'Come back tomorrow' : label}
+          {buttonLabel}
         </Button>
       </div>
 
       {coolingDown && (
         <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-          One top-up per wallet per day. Next one from{' '}
-          {new Date(nextAt * 1000).toLocaleString('en-GB', {
+          One top-up per wallet per day. Next one from&#39;{' '}
+          {new Date(nextAt * 1000).toLocaleString('up-GB', {
             day: 'numeric',
             month: 'short',
             hour: '2-digit',

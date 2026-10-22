@@ -12,6 +12,7 @@ import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
+import { type TxStage } from '@/lib/tx-stage';
 import { useWallet } from '@/lib/wallet';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
@@ -73,6 +74,8 @@ export function VoucherRow({
   const now = nowProp ?? nowInternal;
   const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
+  // Which step of the transaction the user is on (simulating, signing, …).
+  const [stage, setStage] = useState<TxStage | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
   // polling, the row shows a pending state instead of the stale status.
   const [reconciling, setReconciling] = useState<Action | null>(null);
@@ -97,13 +100,17 @@ export function VoucherRow({
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
+    setStage('simulating');
     try {
+      const onStage = (s: TxStage) => {
+        if (mounted.current) setStage(s);
+      };
       const fns: Record<Action, () => Promise<{ hash: string }>> = {
-        claim: () => protocol.claim(address, v.id, signTransaction),
-        attest: () => protocol.attest(address, v.id, signTransaction),
-        settle: () => protocol.settle(address, v.id, signTransaction),
-        refund: () => protocol.refund(address, v.id, signTransaction),
-        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
+        claim: () => protocol.claim(address, v.id, signTransaction, onStage),
+        attest: () => protocol.attest(address, v.id, signTransaction, onStage),
+        settle: () => protocol.settle(address, v.id, signTransaction, onStage),
+        refund: () => protocol.refund(address, v.id, signTransaction, onStage),
+        dispute: () => protocol.dispute(address, v.id, reason, signTransaction, onStage),
       };
       const res = await fns[action]();
       setDisputing(false);
@@ -112,6 +119,7 @@ export function VoucherRow({
       // The transaction is confirmed on chain; wait for the indexer to
       // catch up instead of refetching a stale row immediately (#9).
       setBusy(null);
+      setStage(null);
       setStaleTx(null);
       setReconciling(action);
       const outcome = await pollVoucherStatus(
@@ -139,9 +147,16 @@ export function VoucherRow({
         );
       }
     } catch (err) {
-      toast.error(humaniseError(err));
+      if (isWalletRejection(err)) {
+        toast.info('Cancelled in wallet');
+      } else {
+        toast.error(humaniseError(err));
+      }
     } finally {
-      if (mounted.current) setBusy(null);
+      if (mounted.current) {
+        setBusy(null);
+        setStage(null);
+      }
     }
   }
 
@@ -253,7 +268,7 @@ export function VoucherRow({
                 else void run(a);
               }}
             >
-              {busy === a ? 'Confirming…' : reconciling === a ? 'Updating…' : LABELS[a]}
+              {busy === a ? stageLabel(stage) : reconciling === a ? 'Updating…' : LABELS[a]}
             </Button>
           ))}
         </div>
@@ -327,7 +342,7 @@ export function VoucherRow({
               disabled={busy !== null}
               onClick={() => void run('dispute')}
             >
-              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+              {busy === 'dispute' ? stageLabel(stage) : 'Open dispute'}
             </Button>
             <Button
               variant="ghost"
@@ -376,7 +391,7 @@ export function VoucherRow({
               disabled={busy !== null}
               onClick={() => void run('attest')}
             >
-              {busy === 'attest' ? 'Confirming…' : 'Confirm'}
+              {busy === 'attest' ? stageLabel(stage) : 'Confirm'}
             </Button>
             <Button
               variant="ghost"
@@ -407,3 +422,25 @@ const LABELS: Record<Action, string> = {
   refund: 'Refund me',
   dispute: 'Dispute',
 };
+
+/** Human label for each transaction stage. */
+export function stageLabel(stage: TxStage | null): string {
+  switch (stage) {
+    case 'simulating':
+      return 'Preparing…';
+    case 'signing':
+      return 'Approve in your wallet…';
+    case 'submitting':
+      return 'Submitting…';
+    case 'confirming':
+      return 'Confirming…';
+    default:
+      return 'Confirming…';
+  }
+}
+
+/** True when the wallet rejected the signature (user cancelled). */
+export function isWalletRejection(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /reject|cancel|denied|declin/i.test(msg);
+}

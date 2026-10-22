@@ -29,12 +29,32 @@ import {
 import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
+import { useTxStage } from '@/lib/useTxStage';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
+
+/**
+ * A wallet rejection is not a failure: the user chose to stop. Detecting it
+ * keeps the message calm instead of surfacing a raw signing error.
+ */
+function isWalletRejection(err: unknown): boolean {
+  if (!err) return false;
+  const message =
+    typeof err === 'string'
+      ? err
+      : err instanceof Error
+        ? err.message
+        : typeof (err as { message?: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : '';
+  return /user (rejected|declined|cancel)|rejected by (the )?user|request rejected|denied (the )?request|user denied/i.test(
+    message,
+  );
+}
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -116,6 +136,7 @@ export default function ClinicPage({
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const txStage = useTxStage();
   const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
     ReturnType<typeof quoteXlmForUsdc>
   > | null>(null);
@@ -289,6 +310,7 @@ export default function ClinicPage({
     }
 
     setBusy(true);
+    txStage.reset();
     setBatchSummary(null);
     const requests = selectedServices.map((service) => ({
       funder: wallet,
@@ -329,10 +351,12 @@ export default function ClinicPage({
                   { ...request, swapAmount: missingUsdc },
                   signTransaction,
                   100,
+                  txStage.onStage,
                 )
-              : await voucher.create(request, signTransaction);
+              : await voucher.create(request, signTransaction, txStage.onStage);
           const balance = await usdc.balance(wallet).catch(() => null);
           if (balance !== null) setWalletBalance(balance);
+          txStage.reset();
 
           let newId: string | null = null;
           if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
@@ -352,6 +376,7 @@ export default function ClinicPage({
           });
           setBatchProgress(null);
           setBatchSummary({ succeeded, failed });
+          txStage.reset();
           toast.error(
             `Funded ${succeeded.length} of ${requests.length} service${requests.length === 1 ? '' : 's'} before ${selectedServices[i].label} failed: ${failed[failed.length - 1].error}`,
           );
@@ -382,6 +407,7 @@ export default function ClinicPage({
     } catch (err) {
       const message = humaniseError(err, VOUCHER_ERRORS);
       setBatchProgress(null);
+      txStage.reset();
       setBatchSummary({ succeeded, failed: [{ label: 'Funding', error: message }] });
       toast.error(message);
     } finally {
@@ -721,7 +747,7 @@ export default function ClinicPage({
               className="w-full"
             >
               {busy
-                ? 'Confirming…'
+                ? txStage.label ?? 'Confirming…'
                 : wallet
                   ? xlmSwapQuote && selectedServices.length === 1
                     ? 'Swap XLM & fund voucher'
@@ -831,7 +857,7 @@ export default function ClinicPage({
                 onClick={() => void fund()}
                 disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
               >
-                {busy ? 'Confirming…' : 'Confirm'}
+                {busy ? txStage.label ?? 'Confirming…' : 'Confirm'}
               </Button>
             </div>
           </div>
