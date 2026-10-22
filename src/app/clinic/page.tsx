@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
