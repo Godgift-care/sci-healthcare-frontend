@@ -214,6 +214,8 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         </Card>
       </div>
 
+      {/* The clinic can also claim from a scanned voucher link; the patient
+          check guards that path too (#33). */}
       <div className="print:hidden">
         <VoucherRow
           v={v}
@@ -222,6 +224,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             void mutate();
           }}
           summary={false}
+          requirePatientMatch
         />
       </div>
 
