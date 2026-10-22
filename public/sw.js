@@ -1,4 +1,4 @@
-/**
+/*
  * Service worker: the installable offline shell (#74).
  *
  * What it caches, and why that is the whole of it:
@@ -7,7 +7,7 @@
  *   on a bad connection can open the app and get a usable frame instead of
  *   the browser's dinosaur. The frame then says it cannot reach the indexer,
  *   which is the truth.
- * - `/_next/static/*` — content-hashed build output, immutable by
+ * -  /_next/static/* — content-hashed build output, immutable by
  *   construction, so cache-first is both safe and what makes the shell
  *   actually render offline.
  *
@@ -25,6 +25,12 @@
  *
  * Writes are untouched — they were never cacheable — and no request is ever
  * served from cache while the network answers.
+ *
+ * Push notifications (#clinic-push): the worker also receives Web Push
+ * messages from the backend webhook fan-out. A push carries only a voucher
+ * id and a generic title — never patient data — and clicking it opens
+ * the voucher's page. Subscriptions are opt-in from the clinic desk; the worker
+ * itself never asks for permission.
  */
 
 const CACHE = 'sci-healthcare-shell-v1';
@@ -126,3 +132,72 @@ async function cacheFirst(request) {
   if (response.ok) await cache.put(request, response.clone());
   return response;
 }
+
+/**
+ * Web Push: a new voucher is waiting.
+ *
+ * The payload is deliberately tiny and contains no patient data — only a
+ * voucher id (used to build the click-through URL) and a generic title. If 
+ * the payload is missing or unparseable we still show a generic notification
+ * so the clinic is not left in the dark.
+ */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const voucherId =
+    typeof data.voucherId === 'string' && data.voucherId.length > 0
+      ? data.voucherId
+      : null;
+  const title =
+    typeof data.title === 'string' && data.title.length > 0
+      ? data.title
+      : 'New voucher available';
+  const body =
+    typeof data.body === 'string' && data.body.length > 0
+      ? data.body
+      : 'A new voucher is waiting for a clinic. Open the app to claim it.';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: voucherId ? `voucher-${voucherId}` : 'voucher',
+      data: voucherId ? { voucherId } : {},
+    }),
+  );
+});
+
+/** Clicking a notification focuses an existing tab or opens the voucher. */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const voucherId = event.notification.data && event.notification.data.voucherId;
+  const target = voucherId
+    ? `/vouchers/${encodeURIComponent(voucherId)}`
+    : '/';
+  const targetUrl = new URL(target, self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+      return undefined;
+    })(),
+  );
+});
