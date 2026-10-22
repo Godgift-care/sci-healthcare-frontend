@@ -200,7 +200,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           {v.receipt && (
             <Field label={t('voucher.careReceipt')}>{t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}</Field>
           )}
-          <div className="print:hidden">
+          <div className="space-y-4 print:hidden">
             <Field label={t('voucher.patientReference')}>
               <CopyValue
                 value={v.beneficiaryRef}
@@ -208,7 +208,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
                 label="patient reference"
               />
             </Field>
-            <p className="mt-4 text-xs text-[var(--color-ink-soft)]">
+            <p className="text-xs text-[var(--color-ink-soft)]">
               {t('voucher.patientReferenceNote')}
             </p>
             <ExplorerLink href={explorerContract(config.contracts.voucher)}>
