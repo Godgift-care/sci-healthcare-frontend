@@ -124,7 +124,7 @@ jobs:
       # lighthouserc.json. Uploads a temporary-public-storage report whose
       # URL appears in the logs, linked from the PR.
       - run: npx lhci autorun
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lighthouse-results
@@ -146,7 +146,7 @@ jobs:
       # frozen. After an intentional UI change, run
       # `npm run test:visual:update` locally and commit the new snapshots.
       - run: npm run test:visual
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: visual-test-results
@@ -169,7 +169,7 @@ jobs:
       # Each flow runs against a mocked API with a mock wallet and mock RPC
       # (see src/lib/e2e-seam.ts): no testnet, indexer or wallet needed.
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-test-results
