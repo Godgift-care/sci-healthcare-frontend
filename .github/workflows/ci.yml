@@ -149,8 +149,8 @@ jobs:
         id: playwright-cache
         uses: actions/cache@v4
         with:
-          path: \~/.cache/ms-playwright
-          key: playwright-\( {{ runner.os }}- \){{ steps.playwright-version.outputs.version }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
           restore-keys: |
             playwright-${{ runner.os }}-
       - name: Install Playwright Chromium
@@ -191,8 +191,8 @@ jobs:
         id: playwright-cache
         uses: actions/cache@v4
         with:
-          path: \~/.cache/ms-playwright
-          key: playwright-\( {{ runner.os }}- \){{ steps.playwright-version.outputs.version }}
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
           restore-keys: |
             playwright-${{ runner.os }}-
       - name: Install Playwright Chromium
