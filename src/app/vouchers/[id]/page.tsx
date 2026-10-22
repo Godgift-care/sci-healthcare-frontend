@@ -14,7 +14,8 @@ import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { Alert, Button, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /**
@@ -65,6 +66,26 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         : (['settle', 'refund'] as const);
 
   const steps = voucherTimeline(v, v.receipt, now, stepTxHashes(events));
+
+  function addToCalendar() {
+    if (typeof window === 'undefined') return;
+    const ics = buildVoucherExpiryIcs({
+      id: v.id,
+      expiresAt: v.expiresAt,
+      serviceLabel: v.serviceLabel ?? `Service ${v.serviceCode}`,
+      voucherUrl: window.location.href,
+    });
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voucher-${v.id}-expiry.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // Public facts only: the builder takes a narrow shape and deliberately
   // drops the beneficiary reference, funder address and every patient value
   // (#138).
@@ -175,7 +196,19 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           <Field label={t('voucher.fundedBy')}>
             <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
           </Field>
-          <Field label={t('voucher.expires')}>{formatDate(v.expiresAt, locale)}</Field>
+          <Field label={t('voucher.expires')}>
+            <div className="flex items-center gap-2">
+              {formatDate(v.expiresAt, locale)}
+              <button
+                type="button"
+                onClick={addToCalendar}
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+                aria-label={t('voucher.addToCalendar')}
+              >
+                {t('voucher.addToCalendar')}
+              </button>
+            </div>
+          </Field>
           {v.status === 'Settled' && v.settledNet && (
             <Field label={t('voucher.clinicReceived')}>
               <span className="mono">${formatUsdc(v.settledNet, locale)}</span>

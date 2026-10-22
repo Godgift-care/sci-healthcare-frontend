@@ -48,6 +48,7 @@
     "viewContract": "Tazama mkataba wa vocha",
     "copyLink": "Nakili kiungo",
     "linkCopied": "Kiungo kimenakiliwa!",
+    "addToCalendar": "Ongeza kalenda",
     "presentAtDesk": "Onyesha kwenye Dawati la Kliniki",
     "presentNote": "Onyesha msimbo huu wa QR unapofika kliniki. Dawati linaweza kuuchanganua mara moja ili kutafuta na kudai vocha yako.",
     "scanToView": "Changanua kutazama #{id}",
