@@ -1,6 +1,7 @@
 'use client';
 
 import { setLowBandwidth, useLowBandwidth } from '@/lib/low-bandwidth';
+import { useId } from 'react';
 
 /**
  * Header switch for low-bandwidth mode (#75).
@@ -12,6 +13,7 @@ import { setLowBandwidth, useLowBandwidth } from '@/lib/low-bandwidth';
  */
 export function LowBandwidthToggle() {
   const lowBandwidth = useLowBandwidth();
+  const descriptionId = useId();
 
   const explanation = lowBandwidth
     ? 'Low-data mode is on: no live stream, no map tiles, no analytics. Turn it off for live updates and the clinic map.'
@@ -22,6 +24,7 @@ export function LowBandwidthToggle() {
       type="button"
       aria-pressed={lowBandwidth}
       aria-label="Low data mode"
+      aria-describedby={descriptionId}
       title={explanation}
       onClick={() => setLowBandwidth(!lowBandwidth)}
       className={`inline-flex max-sm:min-h-11 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition max-sm:px-3 ${
@@ -34,6 +37,9 @@ export function LowBandwidthToggle() {
         {lowBandwidth ? '●' : '○'}
       </span>
       Low data
+      <span id={descriptionId} className="sr-only">
+        {explanation}
+      </span>
     </button>
   );
 }

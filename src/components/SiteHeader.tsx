@@ -9,9 +9,7 @@ import { useAdminAccess } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
 
 import { ConnectButton } from './ConnectButton';
-import { LowBandwidthToggle } from './LowBandwidthToggle';
 import { NetworkBadge } from './NetworkBadge';
-import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
   { href: '/', label: 'Clinics' },
@@ -20,6 +18,7 @@ const LINKS = [
   { href: '/clinic', label: 'Clinic desk' },
   { href: '/attest', label: 'Attest' },
   { href: '/faq', label: 'FAQ' },
+  { href: '/settings', label: 'Settings' },
 ] as const;
 
 /**
@@ -30,6 +29,9 @@ const LINKS = [
  * target already fill the row. The panel opens under the row and closes on a
  * link press (a client-side navigation would otherwise leave it open), on
  * Escape, or when the route changes.
+ *
+ * Preferences now live on /settings (issue: settings page), so the
+ * header keeps only the network badge and the wallet button as controls.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -53,8 +55,8 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+      <div className="mx-auto flex max-w-6x, flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span
               aria-hidden
@@ -74,8 +76,6 @@ export function SiteHeader() {
         </div>
 
         <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          <LowBandwidthToggle />
-          <ThemeToggle />
           <NetworkBadge />
           <ConnectButton />
           <button
@@ -87,7 +87,7 @@ export function SiteHeader() {
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] sm:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
-              {open ? '×' : '☰'}
+              {open ? '×' : '—'}
             </span>
           </button>
         </div>

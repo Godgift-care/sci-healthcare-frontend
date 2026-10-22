@@ -12,7 +12,8 @@ import { setAnalyticsOptOut, useAnalyticsOptOut } from '@/lib/analytics-preferen
  * default, off when the visitor opted out or the browser sends DNT.
  *
  * The explanation lives in the accessible label and the tooltip, because
- * the footer already has to fit a language picker and navigation at 390px.
+ * the settings page also has to fit alongside other preference controls at
+ * 390px.
  */
 export function AnalyticsToggle() {
   const optedOut = useAnalyticsOptOut();
@@ -31,7 +32,7 @@ export function AnalyticsToggle() {
       aria-label="Usage analytics"
       title={explanation}
       onClick={() => setAnalyticsOptOut(!optedOut)}
-      className={`inline-flex max-sm:min-h-11 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition max-sm:px-3 ${
+      className={`inline-flex max-sm:min-h-11 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition max-sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] ${
         optedOut
           ? 'bg-[var(--color-canvas)] text-[var(--color-ink-soft)] ring-[var(--color-line)] hover:text-[var(--color-ink)]'
           : 'bg-emerald-50 text-emerald-800 ring-emerald-200'

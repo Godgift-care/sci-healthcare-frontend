@@ -1,6 +1,7 @@
 'use client';
 
 import { setTheme, useTheme } from '@/lib/theme';
+import { usePathname } from 'next/navigation';
 
 /**
  * Header light/dark switch (#10).
@@ -12,6 +13,11 @@ import { setTheme, useTheme } from '@/lib/theme';
 export function ThemeToggle() {
   const theme = useTheme();
   const dark = theme === 'dark';
+  const pathname = usePathname();
+
+  // The settings page owns the full preference controls; hide the header
+  // shortcut there so preferences live in one place.
+  if (pathname === '/settings') return null;
 
   return (
     <button
