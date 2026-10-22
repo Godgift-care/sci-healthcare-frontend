@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   beneficiaryRef,
   generateKey,
   isValidRef,
+  localIdentity,
   parsePatientBackup,
   serialisePatientBackup,
 } from './beneficiary';
@@ -15,6 +16,74 @@ import {
  */
 
 const KEY = 'test-secret-key-0123456789abcdef';
+
+function createStorage() {
+  const values = new Map<string, string>();
+  return {
+    getItem: (name: string) => values.get(name) ?? null,
+    setItem: (name: string, value: string) => values.set(name, value),
+    removeItem: (name: string) => values.delete(name),
+  };
+}
+
+describe('localIdentity encryption', () => {
+  beforeEach(() => {
+    localIdentity.lock();
+    vi.stubGlobal('window', { dispatchEvent: vi.fn() });
+    vi.stubGlobal('localStorage', createStorage());
+  });
+
+  afterEach(() => {
+    localIdentity.lock();
+    vi.unstubAllGlobals();
+  });
+
+  it('encrypts saved patients and rejects a wrong passphrase safely', async () => {
+    const patientKey = 'p'.repeat(43);
+    localStorage.setItem(
+      'sci:saved-patients',
+      JSON.stringify([{ nickname: 'Mum', identifier: 'patient-001', key: patientKey }]),
+    );
+    localStorage.setItem('sci:selected-patient', 'Mum');
+
+    await expect(localIdentity.enableEncryption('correct horse battery')).resolves.toBe(true);
+    const encryptedValue = localStorage.getItem('sci:saved-patients') ?? '';
+    expect(encryptedValue).not.toContain(patientKey);
+    expect(encryptedValue).not.toContain('patient-001');
+    expect(encryptedValue).not.toContain('Mum');
+    expect(localStorage.getItem('sci:selected-patient')).toBeNull();
+    expect(localIdentity.load()).toMatchObject({ encrypted: true, locked: false });
+
+    localIdentity.lock();
+    expect(localIdentity.load()).toMatchObject({ patients: [], encrypted: true, locked: true });
+    await expect(localIdentity.unlock('wrong passphrase')).resolves.toBe(false);
+    expect(localStorage.getItem('sci:saved-patients')).toBe(encryptedValue);
+    expect(localIdentity.load()).toMatchObject({ patients: [], encrypted: true, locked: true });
+
+    await expect(localIdentity.unlock('correct horse battery')).resolves.toBe(true);
+    expect(localIdentity.load().patients).toEqual([
+      { nickname: 'Mum', identifier: 'patient-001', key: patientKey },
+    ]);
+  });
+
+  it('migrates the legacy single-patient keys into encrypted storage', async () => {
+    const patientKey = 'l'.repeat(43);
+    localStorage.setItem('sci:beneficiary-id', 'legacy-patient');
+    localStorage.setItem('sci:beneficiary-key', patientKey);
+
+    await expect(localIdentity.enableEncryption('a strong passphrase')).resolves.toBe(true);
+    expect(localStorage.getItem('sci:beneficiary-id')).toBeNull();
+    expect(localStorage.getItem('sci:beneficiary-key')).toBeNull();
+    const encryptedValue = localStorage.getItem('sci:saved-patients') ?? '';
+    expect(encryptedValue).not.toContain(patientKey);
+
+    localIdentity.lock();
+    await expect(localIdentity.unlock('a strong passphrase')).resolves.toBe(true);
+    expect(localIdentity.load().patients).toEqual([
+      { nickname: 'Saved patient', identifier: 'legacy-patient', key: patientKey },
+    ]);
+  });
+});
 
 describe('beneficiaryRef', () => {
   it('matches the known HMAC-SHA-256 vector', async () => {
