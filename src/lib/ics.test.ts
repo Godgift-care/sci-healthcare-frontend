@@ -40,7 +40,7 @@ describe('buildVoucherExpiryIcs', () => {
     expect(ics).toContain('SUMMARY:Voucher expiry — Voucher #42\r\n');
     expect(ics).toContain('Service: Outpatient consult');
     expect(ics).not.toContain('beneficiary');
-    expect(ics).not.toContain('patient');
+    expect(ics).not.toMatch(/[0-9a-f]{64}/);
   });
 
   it('links to the public voucher page only', () => {
