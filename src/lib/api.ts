@@ -6,6 +6,8 @@ import {
   type ListVouchersParams,
   type Provider,
   type Receipt,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
   type Voucher as ClientVoucher,
   type VoucherStatus,
@@ -34,6 +36,8 @@ export {
   type Receipt,
   type ReceiptsResponse,
   type Service,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
   type VoucherStatus,
   type VouchersResponse,
@@ -248,4 +252,8 @@ export const api = {
 
   attester: (address: string): Promise<Attester> =>
     client.rawGet<Attester>(`/attesters/${encodeURIComponent(address)}`),
+
+  services: (): Promise<ServicesResponse> => client.services(),
+
+  service: (code: number): Promise<ServiceCatalogueItem> => client.service(code),
 };

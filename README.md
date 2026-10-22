@@ -108,6 +108,7 @@ Every one of these is inlined into the client bundle at **build** time.
 | `NEXT_PUBLIC_USDC_ISSUER` | `GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR` |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | `(optional) analytics domain, e.g. `app.example.com`; unset disables analytics entirely` |
 | `NEXT_PUBLIC_SENTRY_DSN` | `(optional) Sentry DSN for error reporting; unset disables it entirely` |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | `(optional) Reown project id for mobile wallets; unset offers extension and passkey wallets only` |
 
 > If the deployed app still calls `localhost`, these were set in the host's **runtime** environment but not its **build** environment. Next inlines `NEXT_PUBLIC_*` at build time; setting them afterwards changes nothing. This is the single most common deployment failure for this shape of app.
 
@@ -193,7 +194,10 @@ Suited to a platform built for Next.js, such as Vercel.
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [SECURITY.md](SECURITY.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md). New to the code? Start with the
+[architecture map](docs/architecture.md) — it shows how the pages, the hooks,
+the API client, the contracts, the wallet and the offline shell fit together.
+Security reports go through [SECURITY.md](SECURITY.md).
 
 ## Contributors
 

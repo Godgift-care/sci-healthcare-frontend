@@ -44,6 +44,13 @@ export const config = {
    * never initialised and no report leaves the browser.
    */
   sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN ?? '',
+  /**
+   * WalletConnect (Reown) project id (#163). Empty keeps the kit to
+   * browser-extension and passkey wallets; set it to offer mobile wallets
+   * through WalletConnect.
+   */
+  walletConnectProjectId:
+    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
 } as const;
 
 /**

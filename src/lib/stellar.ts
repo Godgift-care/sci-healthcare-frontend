@@ -2,7 +2,7 @@ import type { xdr } from '@stellar/stellar-sdk';
 
 import { toBaseUnits } from './amounts';
 import { config } from './config';
-import { isMockRpc, mockRpcDelayMs, recordMockCall } from './e2e-seam';
+import { isMockRpc, mockRpcDelayMs, mockRpcRead, recordMockCall } from './e2e-seam';
 import { beginPendingTransaction } from './pending-tx';
 
 /**
@@ -436,7 +436,7 @@ export async function readContract<T>(
 ): Promise<T> {
   if (isMockRpc()) {
     recordMockCall({ kind: 'read', contractId, method }, recordArgs(args));
-    return mockReadResult<T>(method, args);
+    return mockReadResult<T>(contractId, method, args);
   }
 
   const { BASE_FEE, Account, Contract, rpc, TransactionBuilder, scValToNative } =
@@ -491,8 +491,17 @@ function mockReturnValue(method: string): unknown {
  * `scValToNative`, but mock mode is test-only so the extra chunk is never
  * part of the production read-only bundle.
  */
-async function mockReadResult<T>(method: string, args: xdr.ScVal[]): Promise<T> {
+async function mockReadResult<T>(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+): Promise<T> {
+  const override = mockRpcRead(contractId, method);
+  if (override !== undefined) return override as T;
+
   switch (method) {
+    case 'get_admin':
+      return '' as T;
     case 'quote': {
       const { scValToNative } = await loadSdk();
       const amount = scValToNative(args[0]) as bigint;

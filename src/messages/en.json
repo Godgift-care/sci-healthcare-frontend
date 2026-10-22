@@ -60,7 +60,10 @@
     "clinic": "Clinic",
     "voucherContract": "Voucher Contract",
     "scanWithClinicScanner": "Scan with clinic scanner",
-    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records."
+    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records.",
+    "reportProblem": "Report a problem",
+    "reportProblemIntro": "Only the funder can open a dispute. If you are the patient, a relative, or anyone else who has noticed a problem with this voucher, open a report. It is prefilled with the public voucher number, status, service and clinic only — never the patient reference.",
+    "reportProblemAction": "Report a problem"
   },
   "clinic": {
     "title": "Clinic desk",
