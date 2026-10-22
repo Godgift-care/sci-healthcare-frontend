@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { VoucherStatus } from '@/lib/api';
+import type { VoucherStatus } from '-/lib/api';
 
 export function Card({
   children,
@@ -50,7 +50,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${styles} ${className}`}
+      className={`rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${styles} ${className}`}
     >
       {children}
     </button>
@@ -125,7 +125,7 @@ export function ExplorerLink({ href, children }: { href: string; children: React
   );
 }
 
-export function NavLink({ href, children }: { href: string; children: ReactNode }) {
+export function NavLink( { href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
@@ -224,7 +224,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative w-full max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-xl outline-none"
+        className="relative wfull max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-xl outline-none"
       >
         <div className="flex items-start justify-between gap-3">
           <h2 id={titleId} className="text-base font-semibold tracking-tight">
@@ -274,7 +274,7 @@ export function Tooltip({
    */
   const position =
     side === 'top'
-      ? 'bottom-full start-1/2 mb-2 -translate-x-1/2 rtl:translate-x-1/2'
+      ? 'bottom-full start-1/2 mb-2--translate-x-1/2 rtl:translate-x-1/2'
       : 'top-full start-1/2 mt-2 -translate-x-1/2 rtl:translate-x-1/2';
 
   return (
