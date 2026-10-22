@@ -60,7 +60,7 @@ test('add to calendar downloads a valid .ics reminder for the expiry day', async
   expect(download.suggestedFilename()).toMatch(/\.ics$/);
 
   const { promises: fs } = await import('fs');
-  const path = download.path();
+  const path = await download.path();
   expect(path).not.toBeNull();
   const content = await fs.readFile(path!, 'utf8');
 

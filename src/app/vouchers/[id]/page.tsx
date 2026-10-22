@@ -68,10 +68,13 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const steps = voucherTimeline(v, v.receipt, now, stepTxHashes(events));
 
   function addToCalendar() {
-    if (typeof window === 'undefined') return;
+    if (!v || typeof window === 'undefined') return;
+    const expiresAtMs =
+      typeof v.expiresAt === 'string' ? Date.parse(v.expiresAt) : v.expiresAt.getTime();
+    const expiresAt = Math.floor(expiresAtMs / 1000);
     const ics = buildVoucherExpiryIcs({
       id: v.id,
-      expiresAt: v.expiresAt,
+      expiresAt,
       serviceLabel: v.serviceLabel ?? `Service ${v.serviceCode}`,
       voucherUrl: window.location.href,
     });

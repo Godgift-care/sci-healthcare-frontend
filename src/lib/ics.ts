@@ -37,7 +37,7 @@ export function buildVoucherExpiryIcs({
     `DTSTART;VALUE=DATE:${formatIcsDate(expiry)}`,
     `DTEND;VALUE=DATE:${formatIcsDate(dayAfter)}`,
     `SUMMARY:Voucher expiry — Voucher #${id}`,
-    `DESCRIPTION:Care must be provided before this voucher expires.\\n\\nVoucher: #${id}\\nService: ${escapeText(serviceLabel)}\\n\\nThis calendar entry contains no patient data.`,
+    `DESCRIPTION:Care must be provided before this voucher expires.\\n\\nVoucher: #${id}\\nService: ${escapeText(serviceLabel)}\\n\\nThis calendar entry contains no personal data.`,
     `URL:${voucherUrl}`,
     'END:VEVENT',
     'END:VCALENDAR',
