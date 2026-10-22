@@ -102,6 +102,13 @@
     "earningsTotal": "Total",
     "earningsEmpty": "Aucun revenu réglé ou en attente pour le moment.",
     "earningsUnavailable": "Les revenus sont temporairement indisponibles. Le reste du bureau fonctionne toujours.",
+    "filterByStatus": "Filtrer par statut",
+    "allStatuses": "Tous",
+    "searchVoucherNumber": "Numéro de bon",
+    "searchVoucherPlaceholder": "ex. 21 ou #21",
+    "showingVouchers": "Affichage de {shown} bons sur {total}",
+    "noMatchingVouchers": "Aucun bon ne correspond à cette recherche.",
+    "clearFilters": "Effacer les filtres",
     "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau.",
     "checklist": {
       "title": "Jusqu'à votre premier paiement",

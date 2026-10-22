@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import type { VoucherStatus } from '@/lib/api';
 import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
@@ -16,6 +17,11 @@ import {
   useVouchers,
 } from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
+import {
+  VOUCHER_STATUSES,
+  filterVouchers,
+  statusCounts,
+} from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
@@ -27,6 +33,44 @@ import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
 type Standing = ProviderStanding | 'Unregistered' | null;
+
+/**
+ * One status tab. `aria-pressed` rather than a tablist: the list below is not
+ * a separate panel, and a pressed filter button is announced as one.
+ */
+function StatusTab({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        active
+          ? 'border-transparent bg-[var(--color-brand)] text-white'
+          : 'border-[var(--color-line)] bg-white text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
+      }`}
+    >
+      <span>{children}</span>
+      <span
+        className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+          active ? 'bg-white/20' : 'bg-[var(--color-canvas)]'
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
 
 const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Unregistered: 'This wallet is not registered as a clinic yet. Register below.',
@@ -72,6 +116,10 @@ export default function ClinicDeskPage() {
   const [price, setPrice] = useState('');
   // Delisting takes a second click, like disputing.
   const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
+  // Incoming-voucher filters. A clerk reads one number off a patient's pass,
+  // so the list narrows by status and by that number, together.
+  const [statusFilter, setStatusFilter] = useState<VoucherStatus | null>(null);
+  const [search, setSearch] = useState('');
 
   // SWR cached reads (#63)
   const { provider, mutate: mutateProvider } = useProvider(address);
@@ -156,6 +204,24 @@ export default function ClinicDeskPage() {
   }
 
   const editing = services.some((s) => String(s.code) === code);
+
+  // Counts cover the whole inbox, not the current search, so the tabs stay a
+  // map of what is waiting rather than shrinking as a number is typed.
+  const counts = statusCounts(vouchers);
+  const statusTabs = VOUCHER_STATUSES.filter(
+    (s) => counts[s] > 0 || s === statusFilter,
+  );
+  const visibleVouchers = filterVouchers(vouchers, {
+    status: statusFilter,
+    clinic: null,
+    search,
+  });
+  const filtering = statusFilter !== null || search.trim() !== '';
+
+  function clearFilters() {
+    setStatusFilter(null);
+    setSearch('');
+  }
 
   return (
     <div className="space-y-8">
@@ -538,8 +604,76 @@ export default function ClinicDeskPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('clinic.incomingVouchers')}</h2>
         {vouchers.length === 0 && <Empty>{t('clinic.noIncoming')}</Empty>}
+        {vouchers.length > 0 && (
+          <Card className="space-y-3 p-4">
+            <div
+              role="group"
+              aria-label={t('clinic.filterByStatus')}
+              className="flex flex-wrap gap-2"
+            >
+              <StatusTab
+                active={statusFilter === null}
+                count={vouchers.length}
+                onClick={() => setStatusFilter(null)}
+              >
+                {t('clinic.allStatuses')}
+              </StatusTab>
+              {statusTabs.map((s) => (
+                <StatusTab
+                  key={s}
+                  active={statusFilter === s}
+                  count={counts[s]}
+                  onClick={() => setStatusFilter(s)}
+                >
+                  {s}
+                </StatusTab>
+              ))}
+            </div>
+            <label className="block">
+              <span className="block text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                {t('clinic.searchVoucherNumber')}
+              </span>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('clinic.searchVoucherPlaceholder')}
+                className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm sm:max-w-xs"
+              />
+            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span aria-live="polite">
+                {t('clinic.showingVouchers', {
+                  shown: visibleVouchers.length,
+                  total: vouchers.length,
+                })}
+              </span>
+              {filtering && (
+                <Button
+                  variant="ghost"
+                  className="px-3 py-1.5 text-xs"
+                  onClick={clearFilters}
+                >
+                  {t('clinic.clearFilters')}
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+        {vouchers.length > 0 && visibleVouchers.length === 0 && (
+          <Empty>
+            {t('clinic.noMatchingVouchers')}{' '}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="font-medium underline underline-offset-2 hover:no-underline"
+            >
+              {t('clinic.clearFilters')}
+            </button>
+          </Empty>
+        )}
         <div className="space-y-3">
-          {vouchers.map((v) => (
+          {visibleVouchers.map((v) => (
             <VoucherRow
               key={v.id}
               v={v}

@@ -102,6 +102,13 @@
     "earningsTotal": "Total",
     "earningsEmpty": "No settled or pending earnings yet.",
     "earningsUnavailable": "Earnings are temporarily unavailable. The rest of the desk still works.",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All",
+    "searchVoucherNumber": "Voucher number",
+    "searchVoucherPlaceholder": "e.g. 21 or #21",
+    "showingVouchers": "Showing {shown} of {total} vouchers",
+    "noMatchingVouchers": "No vouchers match this search.",
+    "clearFilters": "Clear filters",
     "connectWallet": "Connect the clinic's wallet to manage this desk.",
     "checklist": {
       "title": "Getting to your first payment",

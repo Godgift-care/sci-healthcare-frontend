@@ -102,6 +102,13 @@
     "earningsTotal": "Jumla",
     "earningsEmpty": "Bado hakuna mapato yaliyolipwa au yanayosubiri.",
     "earningsUnavailable": "Mapato hayapatikani kwa sasa. Sehemu nyingine za dawati zinaendelea kufanya kazi.",
+    "filterByStatus": "Chuja kwa hali",
+    "allStatuses": "Zote",
+    "searchVoucherNumber": "Nambari ya vocha",
+    "searchVoucherPlaceholder": "k.m. 21 au #21",
+    "showingVouchers": "Inaonyesha vocha {shown} kati ya {total}",
+    "noMatchingVouchers": "Hakuna vocha inayolingana na utafutaji huu.",
+    "clearFilters": "Ondoa vichujio",
     "connectWallet": "Unganisha pochi ya kliniki ili kusimamia dawati hili.",
     "checklist": {
       "title": "Kufikia malipo yako ya kwanza",
