@@ -1,5 +1,6 @@
 'use client';
 
+import { StrKey } from '@stellar/stellar-sdk';
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
@@ -60,6 +61,10 @@ const UNKNOWN_STATUS = {
   className: 'bg-slate-100 text-slate-600 ring-slate-200',
 };
 
+function isValidAddress(value: string): boolean {
+  return StrKey.isValidEd25519PublicKey(value);
+}
+
 export default function ClinicPage({
   params,
 }: {
@@ -67,6 +72,9 @@ export default function ClinicPage({
 }) {
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
+
+  // Validate the route parameter before it reaches any API or contract call.
+  if (!isValidAddress(address)) notFound();
 
   const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
   // Until the funder changes the basket, the clinic's first active service

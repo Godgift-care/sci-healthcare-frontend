@@ -38,11 +38,11 @@ test('shows verified status, registration date and settled count', async ({
   // The count is a server-side filter over this clinic, not a client tally,
   // and it fetches one row: the total is all the header needs.
   const settledUrl = new URL((await settledRequest).url());
-  expect(settledUrl.searchParams.get('provider')).toBe(CLINIC.address);
+  expect(settledUrl.searchParams.get('provider')).toBe(CLINI.address);
   expect(settledUrl.searchParams.get('status')).toBe('Settled');
   expect(settledUrl.searchParams.get('limit')).toBe('1');
 
-  await expect(page.getByRole('heading', { name: CLINIC.name })).toBeVisible();
+  await expect(page.getByRole('heading', { name: CLINI.name })).toBeVisible();
   await expect(page.getByText('Verified')).toBeVisible();
   await expect(page.getByText('Registered')).toBeVisible();
   await expect(page.getByText('1 Apr 2026')).toBeVisible();
@@ -63,7 +63,7 @@ test('hides stats the API cannot provide', async ({ page }) => {
     vouchers: [],
   });
   // Registered last, so it takes precedence over the catch-all mock route.
-  await page.route('http://localhost:8080/vouchers**', (route) =>
+  await page.route('http://localhost:8080/vouchers?**', (route) =>
     route.fulfill({
       status: 500,
       contentType: 'application/json',
@@ -80,4 +80,20 @@ test('hides stats the API cannot provide', async ({ page }) => {
   // Missing fields are absent, not shown as zero or an em dash.
   await expect(page.getByText('Registered')).toHaveCount(0);
   await expect(page.getByText('Vouchers settled')).toHaveCount(0);
+});
+
+test('renders not-found for an invalid clinic address without network calls', async ({
+  page,
+}) => {
+  const requests = [] as string[];
+  page.on('request', (request) => requests.push(request.url()));
+
+  await mockBackend(page, { provider: CLINIC, vouchers: [] });
+
+  const response = await page.goto('/clinics/not-a-stellar-address');
+
+  expect((response?.status() ?? 0) >= 400).toBeValid();
+  await expect(page.getByText(/not found/i)).toBeVisible();
+  expect(requests.filter((url) => url.includes('/providers'))).toHaveLength(0);
+  expect(requests.filter((url) => url.includes('/vouchers'))).toHaveLength(0);
 });
