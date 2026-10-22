@@ -4,6 +4,7 @@ import {
   RegistryClient,
   VoucherClient,
 } from './contracts';
+import { ProviderStatus } from './contracts/generated/registry';
 import {
   arg,
   invokeContract,
@@ -51,6 +52,15 @@ function getFaucetClient() {
 }
 
 export const voucher = {
+  /** get_config() -> Config */
+  async admin(): Promise<string> {
+    const result = await readContract<{ admin: string }>(
+      config.contracts.voucher,
+      'get_config',
+    );
+    return result.admin;
+  },
+
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
   async create(
     params: {
@@ -244,6 +254,28 @@ export const voucher = {
     const args = client.spec.funcArgsToScVals('quote', { amount });
     return readContract<[bigint, bigint]>(config.contracts.voucher, 'quote', args);
   },
+
+  /** resolve_dispute(admin, voucher_id, refund_funder) */
+  async resolveDispute(
+    admin: string,
+    voucherId: string,
+    refundFunder: boolean,
+    sign: SignFn,
+  ) {
+    const client = getVoucherClient();
+    const args = client.spec.funcArgsToScVals('resolve_dispute', {
+      admin,
+      voucher_id: BigInt(voucherId),
+      refund_funder: refundFunder,
+    });
+    return invokeContract(
+      config.contracts.voucher,
+      'resolve_dispute',
+      args,
+      admin,
+      sign,
+    );
+  },
 };
 
 /** ProviderStatus discriminants in the registry contract, in order. */
@@ -251,6 +283,64 @@ const PROVIDER_STATUSES = ['Pending', 'Active', 'Suspended'] as const;
 export type ProviderStanding = (typeof PROVIDER_STATUSES)[number];
 
 export const registry = {
+  /** get_admin() */
+  async admin(): Promise<string> {
+    return readContract<string>(config.contracts.registry, 'get_admin');
+  },
+
+  /** set_provider_status(admin, provider_addr, status) */
+  async setProviderStatus(
+    admin: string,
+    provider: string,
+    status: ProviderStanding,
+    sign: SignFn,
+  ) {
+    const client = getRegistryClient();
+    const statusValue = {
+      Pending: ProviderStatus.Pending,
+      Active: ProviderStatus.Active,
+      Suspended: ProviderStatus.Suspended,
+    }[status];
+    const args = client.spec.funcArgsToScVals('set_provider_status', {
+      admin,
+      provider_addr: provider,
+      status: statusValue,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'set_provider_status',
+      args,
+      admin,
+      sign,
+    );
+  },
+
+  /** add_attester(admin, attester) */
+  async addAttester(admin: string, attester: string, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('add_attester', { admin, attester });
+    return invokeContract(
+      config.contracts.registry,
+      'add_attester',
+      args,
+      admin,
+      sign,
+    );
+  },
+
+  /** remove_attester(admin, attester) */
+  async removeAttester(admin: string, attester: string, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('remove_attester', { admin, attester });
+    return invokeContract(
+      config.contracts.registry,
+      'remove_attester',
+      args,
+      admin,
+      sign,
+    );
+  },
+
   /** register_provider(owner, name, country) */
   async registerProvider(
     owner: string,

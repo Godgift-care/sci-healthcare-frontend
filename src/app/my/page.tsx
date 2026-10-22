@@ -434,6 +434,12 @@ export default function MyPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/my/transactions"
+              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            >
+              Transaction history
+            </Link>
             {walletFunded.length > 0 && (
               <Button variant="ghost" onClick={() => void downloadFundedVouchersCsv()}>
                 Download CSV

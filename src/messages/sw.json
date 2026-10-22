@@ -60,7 +60,10 @@
     "clinic": "Kliniki",
     "voucherContract": "Mkataba wa Vocha",
     "scanWithClinicScanner": "Changanua na kichanganuzi cha kliniki",
-    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho."
+    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
+    "reportProblem": "Ripoti tatizo",
+    "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa, au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
+    "reportProblemAction": "Ripoti tatizo"
   },
   "clinic": {
     "title": "Dawati la kliniki",

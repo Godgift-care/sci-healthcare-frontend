@@ -27,6 +27,19 @@ npm run build
 missing (see `next.config.ts`, #76). Fill in `.env.local` before building —
 `next dev` and Storybook are not affected by that check.
 
+## Architecture
+
+The map lives in [`docs/architecture.md`](docs/architecture.md). It covers the
+layers of the app — pages, providers, hooks, the API client, the contract
+wrappers, the wallet and the offline shell — and ends with the behaviours that
+surprise people reading the code for the first time. Read it before changing
+anything that crosses a layer: the SWR cache keys, the write path and the
+service worker's rules are all written down there.
+
+Two sentences it makes concrete, and that the rest of this file depends on:
+**reads go to the indexer over HTTP, and writes go from the browser straight
+to Soroban RPC.** The backend is never in the write path.
+
 ## Non-negotiables
 
 - **Non-custodial, always.** The app must never hold, request, or transmit a

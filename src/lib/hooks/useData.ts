@@ -9,6 +9,8 @@ import {
   type Provider,
   type ProviderStats,
   type ReceiptsResponse,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
   type Voucher,
   type VoucherDetail,
@@ -262,6 +264,50 @@ export function useAttesters(
   };
 }
 
+/**
+ * Hook for fetching and caching the service catalogue (GET /services).
+ */
+export function useServices(config?: SWRConfiguration<ServicesResponse>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ServicesResponse>(
+    'services',
+    () => api.services(),
+    config,
+  );
+
+  return {
+    services: data?.services ?? [],
+    total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching a single service's clinic price comparison (GET /services/:code).
+ */
+export function useService(
+  code: number | null | undefined,
+  config?: SWRConfiguration<ServiceCatalogueItem>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ServiceCatalogueItem>(
+    code ? ['service', code] : null,
+    () => api.service(code!),
+    config,
+  );
+
+  return {
+    service: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
 
 /**
  * Hook for fetching and caching receipts for a patient beneficiary ref (#63).
@@ -307,6 +353,30 @@ export function useIsAttester(address: string | null | undefined) {
   };
 }
 
+/** Admin access requires the same wallet to administer both core contracts. */
+export function useAdminAccess(address: string | null | undefined) {
+  const { data, error, isLoading } = useSWR(
+    address ? ['adminAccess', address] : null,
+    async () => {
+      const { registry, voucher } = await import('../protocol');
+      const [registryAdmin, voucherAdmin] = await Promise.all([
+        registry.admin(),
+        voucher.admin(),
+      ]);
+      return { registryAdmin, voucherAdmin };
+    },
+  );
+
+  return {
+    isAdmin:
+      !!address &&
+      data?.registryAdmin === address &&
+      data?.voucherAdmin === address,
+    isLoading,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+  };
+}
+
 /** Invalidate all voucher-related cache entries after a transaction */
 export async function invalidateVouchers(voucherId?: string): Promise<void> {
   if (voucherId) {
@@ -316,7 +386,11 @@ export async function invalidateVouchers(voucherId?: string): Promise<void> {
   await globalMutate(
     (key) =>
       Array.isArray(key) &&
-      (key[0] === 'vouchers' || key[0] === 'receipts' || key[0] === 'voucher' || key[0] === 'voucher-events'),
+      (key[0] === 'vouchers' ||
+        key[0] === 'receipts' ||
+        key[0] === 'voucher' ||
+        key[0] === 'voucher-events' ||
+        key[0] === 'wallet-events'),
   );
 }
 
