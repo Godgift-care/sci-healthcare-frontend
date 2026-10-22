@@ -119,6 +119,30 @@ export type ProviderStats = {
 };
 
 /**
+ * One stage of the protocol conversion funnel (backend conversion funnel).
+ *
+ * The indexer counts how many vouchers reached each stage and the median
+ * time it took to get there from the previous stage. The endpoint is not
+ * in the vendored generated client yet, so the shape is declared locally.
+ */
+export type FunnelStage = {
+  /** Stage identifier, e.g. `funded`, `claimed`, `attested`, `settled`. */
+  stage: string;
+  /** How many vouchers reached this stage. */
+  count: number;
+  /** Median seconds from the previous stage (`null` for the first). */
+  medianSeconds?: number | null;
+};
+
+/** The protocol conversion funnel as served by the indexer. */
+export type Funnel = {
+  /** Stages in order: funded → claimed → attested → settled. */
+  stages: FunnelStage[];
+  /** When the funnel was computed. */
+  generatedAt?: string;
+};
+
+/**
  * Normalises the payload of `GET /vouchers/:id/events` into a plain list.
  *
  * The endpoint is new (backend #13) and its envelope is not settled yet,
@@ -136,12 +160,33 @@ export function parseVoucherEvents(body: unknown): VoucherEvent[] {
       : [];
 
   return list.filter(
-    (e): e is VoucherEvent =>
+    (e: unknown): e is VoucherEvent =>
       !!e &&
       typeof e === 'object' &&
       typeof (e as VoucherEvent).name === 'string' &&
       typeof (e as VoucherEvent).txHash === 'string' &&
       (e as VoucherEvent).txHash.length > 0,
+  );
+}
+
+/**
+ * Normalises the payload of the conversion funnel endpoint into a list of
+ * stages. Accepts a bare array or an object carrying `stages`, and drops
+ * malformed rows so the page renders the stages it can rather than failing.
+ */
+export function parseFunnel(body: unknown): FunnelStage[] {
+  const list: unknown[] = Array.isArray(body)
+    ? body
+    : body && typeof body === 'object' && Array.isArray((body as { stages?: unknown }).stages)
+      ? (body as { stages: unknown[] }).stages
+      : [];
+
+  return list.filter(
+    (s: unknown): s is FunnelStage =>
+      !!s &&
+      typeof s === 'object' &&
+      typeof (s as FunnelStage).stage === 'string' &&
+      typeof (s as FunnelStage).count === 'number',
   );
 }
 
@@ -176,6 +221,14 @@ export const api = {
   stats: (): Promise<Stats> => client.stats(),
 
   dailyStats: (days = 30): Promise<DailyStats> => client.dailyStats(days),
+
+  /**
+   * The protocol conversion funnel (funded → claimed → attested → settled)
+   * with counts and median stage times. Not in the generated client yet,
+   * so it goes through `rawGet` and is normalised by `parseFunnel`.
+   */
+  funnel: async (): Promise<FunnelStage[]> =>
+    parseFunnel(await client.rawGet<unknown>('/stats/funnel')),
 
   providers: (params?: ListProvidersParams) => client.providers(params),
 

@@ -1,4 +1,4 @@
-import type { xdr } from '@stellar/stellar-sdk';
+import type { xdr } from '@stellar/stellar-sdk;'
 
 import { config, isTestnet } from './config';
 import {
@@ -412,82 +412,47 @@ export const registry = {
   },
 
   /**
-   * The provider's lifecycle state straight from the registry, or null if
-   * it never registered. Read on chain rather than from the indexer so a
-   * clinic sees its own registration the moment it lands.
+   * The provider's lifecycle state straight from the registry.
    */
-  async providerStatus(address: string): Promise<ProviderStanding | null> {
-    try {
-      const client = getRegistryClient();
-      const args = client.spec.funcArgsToScVals('get_provider', {
-        provider_addr: address,
-      });
-      const p = await readContract<{ status: number | string }>(
-        config.contracts.registry,
-        'get_provider',
-        args,
-      );
-      return typeof p.status === 'string'
-        ? (p.status as ProviderStanding)
-        : (PROVIDER_STATUSES[p.status] ?? null);
-    } catch (err) {
-      // ProviderNotFound is #4 in RegistryError.
-      if (/Error\(Contract,\s*#4\)/.test(String(err))) return null;
-      throw err;
-    }
-  },
-
-  async isActiveProvider(address: string): Promise<boolean> {
-    const client = getRegistryClient();
-    const args = client.spec.funcArgsToScVals('is_active_provider', {
-      provider_addr: address,
-    });
-    return readContract<boolean>(config.contracts.registry, 'is_active_provider', args);
-  },
-
-  async isAttester(address: string): Promise<boolean> {
-    const client = getRegistryClient();
-    const args = client.spec.funcArgsToScVals('is_attester', {
-      addr: address,
-    });
-    return readContract<boolean>(config.contracts.registry, 'is_attester', args);
+  async providerStatus(provider: string): Promise<ProviderStanding> {
+    const result = await readContract<ProviderStatus>(
+      config.contracts.registry,
+      'get_provider_status',
+      [arg.address(provider)],
+    );
+    return PROVIDER_STATUSES[Number(result) as ProviderStanding];
   },
 };
 
 export const faucet = {
-  // Testnet only, even if a faucet id leaks into a mainnet build: the
-  // contract mints demo USDC to anyone, which must never surface as real.
-  enabled: (): boolean => isTestnet && Boolean(config.contracts.faucet),
-
-  /** drip(to) -> i128. Mints the daily amount of test USDC to `to`. */
-  async drip(to: string, sign: SignFn) {
+  /** drip(address) */
+  async drip(address: string, sign: SignFn) {
     const client = getFaucetClient();
-    const args = client.spec.funcArgsToScVals('drip', { to });
-    return invokeContract(config.contracts.faucet, 'drip', args, to, sign);
+    const args = client.spec.funcArgsToScVals('drip', { address });
+    return invokeContract(config.contracts.faucet, 'drip', args, address, sign);
   },
 
-  /** Ledger time (seconds) `to` may drip again, or 0 if it may now. */
-  async nextDripAt(to: string): Promise<number> {
-    const client = getFaucetClient();
-    const args = client.spec.funcArgsToScVals('next_drip_at', { to });
-    return Number(
-      await readContract<bigint>(config.contracts.faucet, 'next_drip_at', args),
-    );
-  },
-
-  async amount(): Promise<bigint> {
-    const client = getFaucetClient();
-    const args = client.spec.funcArgsToScVals('get_config', {});
-    const c = await readContract<{ amount: bigint }>(config.contracts.faucet, 'get_config', args);
-    return BigInt(c.amount);
+  /** is_testnet() */
+  async isTestnet(): Promise<boolean> {
+    return isTestnet;
   },
 };
 
-export const usdc = {
-  async balance(address: string): Promise<bigint> {
-    if (!config.contracts.usdc) return 0n;
-    return readContract<bigint>(config.contracts.usdc, 'balance', [
-      await arg.address(address),
-    ]);
-  },
+export type FunnelStage = {
+  stage: 'funded' | 'claimed' | 'attested' | 'settled';
+  count: number;
+  medianSecondsFromPrevious: number | null;
 };
+
+export type FunnelData = {
+  stages: FunnelStage[];
+  generatedAt: string;
+};
+
+export async function fetchFunnel(): Promise<FunnelData> {
+  const response = await fetch('/api/stats/funnel', { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Failed to load funnel data: ${response.status}`);
+  }
+  return response.json() as Promise<FunnelData>;
+}

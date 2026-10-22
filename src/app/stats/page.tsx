@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
-import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
+import { useDailyStats, useFunnel, useProviders, useStats, useVouchers } from '@/lib/hooks';
 import { Card, Empty } from '@/components/ui';
 import { DataTable } from '@/components/DataTable';
 import { WidgetBoundary } from '@/components/WidgetBoundary';
@@ -127,6 +127,72 @@ function ActivityChart({
   );
 }
 
+type FunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  medianSeconds?: number | null;
+};
+
+/** Read a median-seconds value from either camelCase or snake_case API shapes. */
+function readMedianSeconds(stage: {
+  medianSeconds?: number | null;
+  median_seconds?: number | null;
+}): number | null {
+  const value = stage.medianSeconds ?? stage.median_seconds ?? null;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/** Format a duration in seconds as a compact human-readable string. */
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds)) return '—';
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
+  return `${(seconds / 86400).toFixed(1)}d`;
+}
+
+/** Horizontal conversion funnel with counts and median times per stage. */
+function ConversionFunnel({ stages }: { stages: FunnelStage[] }) {
+  const maxCount = Math.max(...stages.map((s) => s.count), 1);
+
+  return (
+    <div className="space-y-3">
+      <ol className="space-y-2" aria-label="Voucher conversion funnel">
+        {stages.map((stage, i) => {
+          const prev = i > 0 ? stages[i - 1] : null;
+          const widthPct = Math.max(4, (stage.count / maxCount) * 100);
+          const dropoff =
+            prev && prev.count > 0
+              ? Math.round(((prev.count - stage.count) / prev.count) * 100)
+              : null;
+
+          return (
+            <li key={stage.key} className="space-y-1">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-xs">
+                <span className="font-medium">{stage.label}</span>
+                <span className="text-[var(--color-ink-soft)]">
+                  {stage.count.toLocaleString()} · median{' '}
+                  {formatDuration(stage.medianSeconds)}
+                  {dropoff != null && dropoff > 0 ? ` · −${dropoff}%` : ''}
+                </span>
+              </div>
+              <div
+                className="h-6 rounded-md bg-[var(--color-brand)] transition-all"
+                style={{ width: `${widthPct}%`, opacity: 1 - i * 0.12 }}
+                role="img"
+                aria-label={`${stage.label}: ${stage.count} vouchers, median ${formatDuration(
+                  stage.medianSeconds,
+                )}`}
+              />
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 export default function StatsPage() {
   const [days, setDays] = useState<TimeRange>(30);
   const [showTables, setShowTables] = useState<boolean>(false);
@@ -135,6 +201,37 @@ export default function StatsPage() {
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
   const { providers } = useProviders();
   const { vouchers } = useVouchers({});
+  const { funnel, isLoading: funnelLoading } = useFunnel(days);
+
+  const funnelStages = useMemo<FunnelStage[]>(() => {
+    if (!funnel) return [];
+    return [
+      {
+        key: 'funded',
+        label: 'Funded',
+        count: funnel.funded.count,
+        medianSeconds: readMedianSeconds(funnel.funded),
+      },
+      {
+        key: 'claimed',
+        label: 'Claimed',
+        count: funnel.claimed.count,
+        medianSeconds: readMedianSeconds(funnel.claimed),
+      },
+      {
+        key: 'attested',
+        label: 'Attested',
+        count: funnel.attested.count,
+        medianSeconds: readMedianSeconds(funnel.attested),
+      },
+      {
+        key: 'settled',
+        label: 'Settled',
+        count: funnel.settled.count,
+        medianSeconds: readMedianSeconds(funnel.settled),
+      },
+    ];
+  }, [funnel]);
 
   // Aggregate country statistics
   const countryCounts = useMemo(() => {
@@ -271,6 +368,66 @@ export default function StatsPage() {
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
             {stats ? `${stats.settledVouchers} vouchers paid` : '…'}
           </div>
+        </Card>
+      </section>
+
+      {/* Conversion Funnel */}
+      <section className="space-y-3" aria-label="Conversion funnel">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-base font-semibold">Conversion funnel</h2>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              How vouchers move from funded to claimed, attested and settled over the last{' '}
+              {days} days.
+            </p>
+          </div>
+        </div>
+        <Card className="p-5">
+          {funnelLoading && (
+            <p className="text-sm text-[var(--color-ink-soft)]">Loading funnel…</p>
+          )}
+          {!funnelLoading && funnelStages.length === 0 && (
+            <Empty>No funnel data recorded in this period.</Empty>
+          )}
+          {!funnelLoading && funnelStages.length > 0 && (
+            <>
+              <WidgetBoundary label="This funnel">
+                <ConversionFunnel stages={funnelStages} />
+              </WidgetBoundary>
+              {showTables && (
+                <div className="mt-6 border-t border-[var(--color-line)] pt-4">
+                  <div className="max-h-60 overflow-y-auto">
+                    <DataTable
+                      caption="Conversion funnel data table"
+                      rows={funnelStages}
+                      getRowKey={(row) => row.key}
+                      columns={[
+                        {
+                          key: 'stage',
+                          header: 'Stage',
+                          accessor: (row) => row.label,
+                        },
+                        {
+                          key: 'count',
+                          header: 'Count',
+                          accessor: (row) => row.count,
+                          align: 'right',
+                        },
+                        {
+                          key: 'median',
+                          header: 'Median time',
+                          accessor: (row) => row.medianSeconds ?? '',
+                          align: 'right',
+                          className: 'font-mono',
+                          render: (row) => formatDuration(row.medianSeconds),
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </Card>
       </section>
 
