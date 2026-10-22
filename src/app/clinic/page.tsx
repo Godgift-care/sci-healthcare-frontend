@@ -536,6 +536,7 @@ export default function ClinicDeskPage() {
               v={v}
               actions={['claim', 'settle']}
               onDone={refreshAll}
+              requirePatientMatch
             />
           ))}
         </div>

@@ -12,6 +12,7 @@ import {
   formatXlm,
   toAmountInput,
   toBaseUnits,
+  validateAmountInput,
 } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
@@ -34,6 +35,7 @@ import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
@@ -110,6 +112,9 @@ export default function ClinicPage({
       : selectedServices.length > 0
         ? toAmountInput(String(selectionTotal))
         : '');
+  const amountMinimum = selected ? BigInt(selected.price) : selectionTotal;
+  const amountError =
+    selectedServices.length > 0 ? validateAmountInput(amount, amountMinimum) : null;
   const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
   const [customExpiry, setCustomExpiry] = useState('');
@@ -258,6 +263,9 @@ export default function ClinicPage({
   // reads the voucher's last valid day rather than the picker's raw value.
   const customExpiresAt =
     expiryChoice === 'custom' ? expiresAtFor('custom', customExpiry) : null;
+  // Shared by both funding paths: the local wallet signer and the SEP-7 link
+  // must put the same expiry on chain.
+  const fundingExpiresAt = expiresAtFor(expiryChoice, customExpiry);
   const expirySummary =
     expiryChoice === 'custom'
       ? customExpiresAt === null
@@ -291,16 +299,11 @@ export default function ClinicPage({
     // A basket of several funds each service at its listed price.
     let singleAmount: bigint | null = null;
     if (selected) {
-      try {
-        singleAmount = toBaseUnits(amount);
-      } catch {
-        toast.error('Enter a valid amount.');
+      if (amountError) {
+        toast.error(amountError);
         return;
       }
-      if (singleAmount < BigInt(selected.price)) {
-        toast.error(`The listed price is $${formatUsdc(selected.price)}. Enter at least that.`);
-        return;
-      }
+      singleAmount = toBaseUnits(amount);
     }
 
     setBusy(true);
@@ -635,8 +638,19 @@ export default function ClinicPage({
                 onChange={(e) => setAmountOverride(e.target.value)}
                 inputMode="decimal"
                 readOnly={selectedServices.length > 1}
-                className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+                aria-invalid={Boolean(amountError)}
+                aria-describedby={amountError ? 'clinic-amount-error' : undefined}
+                className={`mono mt-1 w-full rounded-lg border px-3 py-2 text-sm ${amountError ? 'border-red-500' : 'border-[var(--color-line)]'}`}
               />
+              {amountError ? (
+                <span id="clinic-amount-error" className="mt-1 block text-xs text-red-600">
+                  {amountError}
+                </span>
+              ) : selectedServices.length > 0 ? (
+                <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
+                  Minimum ${formatUsdc(amountMinimum)}. Up to 7 decimal places.
+                </span>
+              ) : null}
               <div className="mt-2 flex items-center justify-between gap-3 text-xs">
                 <span className="text-[var(--color-ink-soft)]">
                   Wallet USDC balance:{' '}
@@ -773,6 +787,28 @@ export default function ClinicPage({
                       : `Fund ${selectedServices.length === 1 ? 'voucher' : `${selectedServices.length} vouchers`}`
                     : 'Connect wallet'}
               </Button>
+            )}
+
+            {selected && baseAmount !== null && (
+              <Sep7FundPanel
+                amount={baseAmount}
+                expiresAt={fundingExpiresAt}
+                provider={address}
+                serviceCode={selected.code}
+                identifier={identifier}
+                secret={secret}
+                walletAddress={wallet}
+                onFunded={({ hash }) => {
+                  void invalidateVouchers();
+                  trackEvent('voucher_funded');
+                  toast.success(
+                    <>
+                      Voucher funded from a SEP-7 wallet.{' '}
+                      <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>
+                    </>,
+                  );
+                }}
+              />
             )}
 
             <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">

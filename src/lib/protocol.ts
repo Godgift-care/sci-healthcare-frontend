@@ -1,3 +1,5 @@
+import type { xdr } from '@stellar/stellar-sdk';
+
 import { config, isTestnet } from './config';
 import {
   FaucetClient,
@@ -10,8 +12,10 @@ import {
   invokeContract,
   invokeContractBatch,
   invokePathPaymentThenContract,
+  prepareContractInvocation,
   readContract,
   type ContractCall,
+  type PreparedInvocation,
   type SignFn,
 } from './stellar';
 
@@ -51,6 +55,34 @@ function getFaucetClient() {
   });
 }
 
+export type CreateVoucherParams = {
+  funder: string;
+  beneficiaryRef: string;
+  provider: string;
+  serviceCode: number;
+  amount: bigint;
+  expiresAt: number;
+};
+
+/**
+ * `create_voucher` arguments, shared by the signing flow and the SEP-7
+ * preparation flow so both put exactly the same values on chain.
+ */
+function createVoucherArgs(params: CreateVoucherParams): xdr.ScVal[] {
+  const client = getVoucherClient();
+  const clean = params.beneficiaryRef.startsWith('0x')
+    ? params.beneficiaryRef.slice(2)
+    : params.beneficiaryRef;
+  return client.spec.funcArgsToScVals('create_voucher', {
+    funder: params.funder,
+    beneficiary_ref: Buffer.from(clean, 'hex'),
+    provider: params.provider,
+    service_code: params.serviceCode,
+    amount: params.amount,
+    expires_at: BigInt(params.expiresAt),
+  });
+}
+
 export const voucher = {
   /** get_config() -> Config */
   async admin(): Promise<string> {
@@ -62,35 +94,30 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(
-    params: {
-      funder: string;
-      beneficiaryRef: string;
-      provider: string;
-      serviceCode: number;
-      amount: bigint;
-      expiresAt: number;
-    },
-    sign: SignFn,
-  ) {
-    const client = getVoucherClient();
-    const clean = params.beneficiaryRef.startsWith('0x')
-      ? params.beneficiaryRef.slice(2)
-      : params.beneficiaryRef;
-    const args = client.spec.funcArgsToScVals('create_voucher', {
-      funder: params.funder,
-      beneficiary_ref: Buffer.from(clean, 'hex'),
-      provider: params.provider,
-      service_code: params.serviceCode,
-      amount: params.amount,
-      expires_at: BigInt(params.expiresAt),
-    });
+  async create(params: CreateVoucherParams, sign: SignFn) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
-      args,
+      createVoucherArgs(params),
       params.funder,
       sign,
+    );
+  },
+
+  /**
+   * Builds and simulates the same call without signing it, for a SEP-7
+   * payment link (#162): the user's wallet signs and submits the envelope.
+   * `source` is the account that pays, which is the funder.
+   */
+  async prepareCreate(
+    params: CreateVoucherParams,
+    source: string,
+  ): Promise<PreparedInvocation> {
+    return prepareContractInvocation(
+      config.contracts.voucher,
+      'create_voucher',
+      createVoucherArgs(params),
+      source,
     );
   },
 
@@ -99,30 +126,11 @@ export const voucher = {
    * then creates the voucher, in one transaction (#27).
    */
   async createWithXlmSwap(
-    params: {
-      funder: string;
-      beneficiaryRef: string;
-      provider: string;
-      serviceCode: number;
-      amount: bigint;
-      expiresAt: number;
-      swapAmount: bigint;
-    },
+    params: CreateVoucherParams & { swapAmount: bigint },
     sign: SignFn,
     slippageBps = 100,
   ) {
-    const client = getVoucherClient();
-    const clean = params.beneficiaryRef.startsWith('0x')
-      ? params.beneficiaryRef.slice(2)
-      : params.beneficiaryRef;
-    const args = client.spec.funcArgsToScVals('create_voucher', {
-      funder: params.funder,
-      beneficiary_ref: Buffer.from(clean, 'hex'),
-      provider: params.provider,
-      service_code: params.serviceCode,
-      amount: params.amount,
-      expires_at: BigInt(params.expiresAt),
-    });
+    const args = createVoucherArgs(params);
     return invokePathPaymentThenContract(
       config.contracts.voucher,
       'create_voucher',
