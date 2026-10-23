@@ -40,6 +40,37 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+@media print {
+  :root {
+    --color-ink: #0d1b2a;
+    --color-ink-soft: #48566b;
+    --color-line: #cbd5e1;
+    --color-surface: #ffffff;
+    --color-canvas: #ffffff;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0d1b2a !important;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-size: 10pt;
+  }
+
+  .voucher-print-document,
+  .voucher-print-history {
+    break-inside: avoid-page;
+  }
+}
+
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -85,4 +116,3 @@ body {
 [dir='rtl'] .rtl-flip {
   transform: scaleX(-1);
 }
-

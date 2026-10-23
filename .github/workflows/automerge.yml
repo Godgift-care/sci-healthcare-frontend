@@ -36,7 +36,7 @@ jobs:
   auto-merge:
     # Every run sweeps all open pull requests, so CI finishing anywhere
     # (including on main) is a reason to look again.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
