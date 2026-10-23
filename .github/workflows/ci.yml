@@ -12,7 +12,7 @@ on:
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,7 +24,7 @@ jobs:
 
   typecheck:
     name: typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,7 +36,7 @@ jobs:
 
   unit:
     name: unit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,7 +50,7 @@ jobs:
 
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Every NEXT_PUBLIC_* value is inlined at build time and a production
     # build now refuses to start without the required ones (#76), so CI
     # supplies the testnet deployment's public contract ids (the same values
@@ -89,7 +89,7 @@ jobs:
 
   storybook:
     name: storybook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,7 +101,7 @@ jobs:
 
   lighthouse:
     name: lighthouse
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Same build-time env as the build job; the app is measured as built.
     env:
       NEXT_PUBLIC_API_URL: http://localhost:8080
@@ -132,7 +132,7 @@ jobs:
 
   visual:
     name: visual
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -156,7 +156,7 @@ jobs:
 
   e2e:
     name: e2e
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -179,7 +179,7 @@ jobs:
 
   bot:
     name: auto-merge bot tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
