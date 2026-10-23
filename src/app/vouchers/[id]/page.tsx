@@ -76,8 +76,8 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="voucher-print-page space-y-6 print:space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="mono text-xs text-[var(--color-ink-soft)]">
@@ -138,10 +138,10 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         expiresAt={formatDate(v.expiresAt, locale)}
       />
 
-      <div className="grid gap-6 md:grid-cols-[2fr_1fr] print:hidden">
-        <Card className="p-5">
+      <div className="grid gap-6 md:grid-cols-[2fr_1fr] print:grid-cols-[2fr_1fr] print:gap-3">
+        <Card className="voucher-print-history p-5 print:p-3">
           <h2 className="text-sm font-semibold">{t('voucher.history')}</h2>
-          <ol className="mt-4 space-y-4">
+          <ol className="mt-4 space-y-4 print:mt-2 print:space-y-2">
             {steps.map((s) => (
               <li key={s.label} className="flex gap-3">
                 <span
@@ -171,10 +171,12 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           </ol>
         </Card>
 
-        <Card className="space-y-4 p-5">
-          <Field label={t('voucher.fundedBy')}>
-            <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
-          </Field>
+        <Card className="voucher-print-history space-y-4 p-5 print:space-y-2 print:p-3">
+          <div className="print:hidden">
+            <Field label={t('voucher.fundedBy')}>
+              <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
+            </Field>
+          </div>
           <Field label={t('voucher.expires')}>{formatDate(v.expiresAt, locale)}</Field>
           {v.status === 'Settled' && v.settledNet && (
             <Field label={t('voucher.clinicReceived')}>
@@ -198,19 +200,21 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           {v.receipt && (
             <Field label={t('voucher.careReceipt')}>{t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}</Field>
           )}
-          <Field label={t('voucher.patientReference')}>
-            <CopyValue
-              value={v.beneficiaryRef}
-              display={`${v.beneficiaryRef.slice(0, 16)}…`}
-              label="patient reference"
-            />
-          </Field>
-          <p className="text-xs text-[var(--color-ink-soft)]">
-            {t('voucher.patientReferenceNote')}
-          </p>
-          <ExplorerLink href={explorerContract(config.contracts.voucher)}>
-            {t('voucher.viewContract')}
-          </ExplorerLink>
+          <div className="space-y-4 print:hidden">
+            <Field label={t('voucher.patientReference')}>
+              <CopyValue
+                value={v.beneficiaryRef}
+                display={`${v.beneficiaryRef.slice(0, 16)}…`}
+                label="patient reference"
+              />
+            </Field>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('voucher.patientReferenceNote')}
+            </p>
+            <ExplorerLink href={explorerContract(config.contracts.voucher)}>
+              {t('voucher.viewContract')}
+            </ExplorerLink>
+          </div>
         </Card>
       </div>
 
