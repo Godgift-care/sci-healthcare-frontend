@@ -10,6 +10,7 @@ import {
   recordMockCall,
 } from './e2e-seam';
 import { beginPendingTransaction } from './pending-tx';
+import { humaniseHorizonResult } from './errors';
 
 /**
  * Stellar SDK access.
