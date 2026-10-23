@@ -52,7 +52,7 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
+    <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)] print:hidden">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
         <div className="flex min-w-0 items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
