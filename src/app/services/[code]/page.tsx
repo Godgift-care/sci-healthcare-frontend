@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { notFound } from 'next/navigation';
 import { use, useMemo } from 'react';
 
@@ -126,12 +127,12 @@ export default function ServicePage({
                       ${formatUsdc(c.price)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/clinics/${c.address}`}
+                      <DetailLink
+                        detail={{ kind: 'clinic', id: c.address }}
                         className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-canvas)]"
                       >
                         Fund care →
-                      </Link>
+                      </DetailLink>
                     </td>
                   </tr>
                 ))}

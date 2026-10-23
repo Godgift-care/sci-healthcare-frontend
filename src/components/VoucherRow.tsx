@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
@@ -168,12 +168,12 @@ export function VoucherRow({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <Link
-                href={`/vouchers/${v.id}`}
+              <DetailLink
+                detail={{ kind: 'voucher', id: v.id }}
                 className="mono text-xs text-[var(--color-ink-soft)] underline-offset-2 hover:underline"
               >
                 #{v.id}
-              </Link>
+              </DetailLink>
               <StatusBadge status={v.status} />
             </div>
             <h3 className="mt-1 font-medium">

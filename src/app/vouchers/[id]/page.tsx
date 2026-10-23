@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { notFound } from 'next/navigation';
 import { use, useState } from 'react';
 
@@ -117,9 +117,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           </h1>
           <p className="text-sm text-[var(--color-ink-soft)]">
             {t('voucher.at')}{' '}
-            <Link href={`/clinics/${v.provider.address}`} className="underline underline-offset-2">
+            <DetailLink detail={{ kind: 'clinic', id: v.provider.address }} className="underline underline-offset-2">
               {v.provider.name}
-            </Link>{' '}
+            </DetailLink>{' '}
             · {v.provider.country}
           </p>
         </div>

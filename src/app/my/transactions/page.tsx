@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useMemo, useState } from 'react';
 
 import { useLocaleContext } from '@/i18n/LocaleContext';
@@ -146,12 +147,12 @@ export default function TransactionsPage() {
                       {row.serviceLabel}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                      <Link
-                        href={`/vouchers/${row.voucherId}`}
+                      <DetailLink
+                        detail={{ kind: 'voucher', id: row.voucherId }}
                         className="text-[var(--color-ink-soft)] underline underline-offset-2"
                       >
                         Voucher #{row.voucherId}
-                      </Link>
+                      </DetailLink>
                       {row.txHash ? (
                         <ExplorerLink href={explorerTx(row.txHash)}>
                           View transaction
