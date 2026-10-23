@@ -79,16 +79,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Language for translated text (#5); defaults to English and
                 remembers the visitor's choice. */}
             <LocaleProvider>
-            <TestnetNotice />
+            <div className="print:hidden">
+              <TestnetNotice />
+            </div>
             <SiteHeader />
 
-            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0">
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
               <ToastProvider>{children}</ToastProvider>
             </main>
 
-            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6">
+            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl">
                   {isTestnet
