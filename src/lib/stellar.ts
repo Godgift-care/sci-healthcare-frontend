@@ -2,7 +2,13 @@ import type { xdr } from '@stellar/stellar-sdk';
 
 import { toBaseUnits } from './amounts';
 import { config } from './config';
-import { isMockRpc, mockRpcDelayMs, mockRpcRead, recordMockCall } from './e2e-seam';
+import {
+  isMockRpc,
+  mockRpcDelayMs,
+  mockRpcRead,
+  mockSep7Submission,
+  recordMockCall,
+} from './e2e-seam';
 import { beginPendingTransaction } from './pending-tx';
 
 /**
@@ -348,24 +354,95 @@ async function invoke(
   walletAddress: string,
   sign: SignFn,
 ): Promise<{ hash: string; returnValue: unknown }> {
+  const { TransactionBuilder, scValToNative } = await loadSdk();
+
   // Playwright end-to-end tests (see e2e-seam.ts): record the invocation and
   // return a canned submission instead of building, simulating and sending
   // a real transaction. Crafting Soroban simulation payloads over HTTP
   // would couple the tests to SDK internals; this keeps the same
   // `{ hash, returnValue }` shape the UI consumes.
+  const prepared = await prepareContractInvocation(
+    contractId,
+    method,
+    args,
+    walletAddress,
+  );
   if (isMockRpc()) {
-    recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
-    // A test can keep a write in flight to observe the unload guard.
     const delay = mockRpcDelayMs();
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
 
-  const { BASE_FEE, Contract, rpc, TransactionBuilder, scValToNative } =
-    await loadSdk();
+  const signedXdr = await sign(prepared.xdr);
+  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+
+  const server = await getServer();
+  const sent = await server.sendTransaction(signed);
+  if (sent.status === 'ERROR') {
+    throw new Error(
+      `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,
+    );
+  }
+
+  const result = await waitForTransaction(sent.hash);
+  return {
+    hash: sent.hash,
+    returnValue: result.returnValue ? scValToNative(result.returnValue) : null,
+  };
+}
+
+/**
+ * A contract invocation that has been built and simulated but not signed.
+ *
+ * This is what a SEP-7 payment link carries (#162): the wallet signs and
+ * submits it, so the app needs the exact envelope rather than the result.
+ * `sequence` is the transaction's own sequence number, which is how the
+ * poller recognises *this* transaction once it reaches the ledger.
+ */
+export type PreparedInvocation = {
+  /** Base64 transaction envelope XDR, unsigned. */
+  xdr: string;
+  /** The account that must sign (and pay the fee). */
+  source: string;
+  /** The envelope's sequence number, as a decimal string. */
+  sequence: string;
+  contractId: string;
+  method: string;
+  networkPassphrase: string;
+};
+
+/**
+ * Builds and simulates a contract invocation without signing it.
+ *
+ * Simulation happens before the user is asked to sign, so a transaction that
+ * is known to fail surfaces as a readable error rather than in the wallet.
+ * The returned envelope already carries the simulated footprint, resource
+ * fees and auth entries, which is what makes it safe to hand to a wallet.
+ */
+export async function prepareContractInvocation(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  source: string,
+): Promise<PreparedInvocation> {
+  if (isMockRpc()) {
+    recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
+    return {
+      // Not a real envelope: Playwright only checks that the SEP-7 URI is
+      // built and that the UI advances when the mock reports a submission.
+      xdr: globalThis.btoa(`sci-sep7-mock:${method}`),
+      source,
+      sequence: '1',
+      contractId,
+      method,
+      networkPassphrase: config.networkPassphrase,
+    };
+  }
+
+  const { BASE_FEE, Contract, rpc, TransactionBuilder } = await loadSdk();
   const server = await getServer();
 
-  const account = await server.getAccount(walletAddress);
+  const account = await server.getAccount(source);
   const contract = new Contract(contractId);
 
   const built = new TransactionBuilder(account, {
@@ -385,21 +462,115 @@ async function invoke(
   // auth entries. Submitting without this fails with a resource error.
   const prepared = rpc.assembleTransaction(built, sim).build();
 
-  const signedXdr = await sign(prepared.toXDR());
-  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  return {
+    xdr: prepared.toXDR(),
+    source,
+    sequence: prepared.sequence,
+    contractId,
+    method,
+    networkPassphrase: config.networkPassphrase,
+  };
+}
 
-  const sent = await server.sendTransaction(signed);
-  if (sent.status === 'ERROR') {
-    throw new Error(
-      `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,
-    );
+/** How long to wait for a wallet to sign and submit a SEP-7 transaction. */
+export const SEP7_CONFIRM_TIMEOUT_MS = 180_000;
+export const SEP7_POLL_INTERVAL_MS = 3_000;
+
+export type Sep7PollOptions = {
+  timeoutMs?: number;
+  intervalMs?: number;
+  signal?: AbortSignal;
+};
+
+/**
+ * Waits until the wallet has submitted the prepared transaction.
+ *
+ * SEP-7 wallets submit to their own infrastructure, so there is no response
+ * to await: the ledger is the only source of truth. The poller watches the
+ * source account's sequence number (cheap) and, once it has advanced, looks
+ * for the transaction whose envelope sequence matches the prepared one. That
+ * proves *this* transaction landed rather than some other payment from the
+ * same account.
+ */
+export async function waitForPreparedInvocation(
+  prepared: PreparedInvocation,
+  options: Sep7PollOptions = {},
+): Promise<{ hash: string }> {
+  const timeoutMs = options.timeoutMs ?? SEP7_CONFIRM_TIMEOUT_MS;
+  const intervalMs = options.intervalMs ?? SEP7_POLL_INTERVAL_MS;
+  const deadline = Date.now() + timeoutMs;
+  const expectedSequence = BigInt(prepared.sequence);
+
+  while (Date.now() < deadline) {
+    if (options.signal?.aborted) throw new Error('Stopped waiting for the wallet.');
+
+    if (isMockRpc()) {
+      const submitted = mockSep7Submission();
+      if (submitted) return { hash: submitted.hash };
+    } else {
+      try {
+        const hash = await findSubmittedTransaction(prepared, expectedSequence);
+        if (hash) return { hash };
+      } catch {
+        // A transient Horizon failure is not a failed payment: keep polling
+        // until the deadline rather than telling the funder it went wrong.
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 
-  const result = await waitForTransaction(sent.hash);
-  return {
-    hash: sent.hash,
-    returnValue: result.returnValue ? scValToNative(result.returnValue) : null,
+  throw new Error(
+    'The wallet has not submitted the payment yet. It may still be open — ' +
+      'check the wallet, then try again.',
+  );
+}
+
+async function findSubmittedTransaction(
+  prepared: PreparedInvocation,
+  expectedSequence: bigint,
+): Promise<string | null> {
+  const { TransactionBuilder } = await loadSdk();
+  const server = await getHorizonServer();
+
+  const account = (await server.accounts().accountId(prepared.source).call()) as {
+    sequence?: string;
   };
+  const currentSequence = account.sequence ? BigInt(account.sequence) : 0n;
+  if (currentSequence <= expectedSequence) return null;
+
+  const page = (await server
+    .transactions()
+    .forAccount(prepared.source)
+    .order('desc')
+    .limit(10)
+    .call()) as {
+    records?: Array<{
+      hash: string;
+      source_account: string;
+      successful?: boolean;
+      envelope_xdr: string;
+    }>;
+  };
+
+  for (const record of page.records ?? []) {
+    if (record.source_account !== prepared.source) continue;
+    if (record.successful === false) continue;
+    try {
+      const tx = TransactionBuilder.fromXDR(
+        record.envelope_xdr,
+        prepared.networkPassphrase,
+      );
+      // A fee-bump envelope wraps the transaction we prepared; its inner
+      // transaction carries the sequence we are looking for.
+      const sequence =
+        'sequence' in tx ? tx.sequence : tx.innerTransaction.sequence;
+      if (BigInt(sequence) === expectedSequence) return record.hash;
+    } catch {
+      // A malformed or non-transaction envelope is not ours; keep looking.
+    }
+  }
+  return null;
 }
 
 async function waitForTransaction(
