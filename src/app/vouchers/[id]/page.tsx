@@ -19,6 +19,15 @@ import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /**
+ * Voucher ids are positive integers. Anything else (empty, non-numeric,
+ * negative, zero, decimals) is not a voucher and must not reach the API.
+ */
+function isValidVoucherId(id: string): boolean {
+  if (!/^[1-9]\d*$/.test(id)) return false;
+  return Number.isSafeInteger(Number(id));
+}
+
+/**
  * One voucher, end to end: what it pays for, where it is in its lifecycle,
  * and the receipt once it settles. Shareable by link; everything shown is
  * already public on the ledger.
@@ -33,6 +42,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const names = useNameIndex();
   const [copied, setCopied] = useState(false);
 
+  // Validate before any hook fires a request: an invalid id is a missing page.
+  const validId = isValidVoucherId(id);
+
   async function copyLink() {
     try {
       const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -44,13 +56,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(id);
+  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   // Per-step transaction hashes (#18). An indexer without the events
   // endpoint (backend #13) yields an empty list and the history renders
   // exactly as before, only without the "view transaction" links.
-  const { events } = useVoucherEvents(id);
-  useLiveUpdates({ voucherId: id });
+  const { events } = useVoucherEvents(validId ? id : undefined);
+  useLiveUpdates({ voucherId: validId ? id : undefined });
 
+  if (!validId) notFound();
   // An unknown voucher number is a missing page, not an API failure.
   if (rawError instanceof ApiError && rawError.status === 404) notFound();
   if (error) return <Alert>{error}</Alert>;
