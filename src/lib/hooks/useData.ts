@@ -2,6 +2,8 @@
 
 import useSWR, { mutate as globalMutate, type SWRConfiguration } from 'swr';
 
+import type { StatsWithFees } from '@/lib/api';
+
 import {
   api,
   type Attester,
@@ -203,8 +205,8 @@ export function useProviders(
 /**
  * Hook for fetching and caching global protocol statistics (#63).
  */
-export function useStats(config?: SWRConfiguration<Stats>) {
-  const { data, error, isLoading, isValidating, mutate } = useSWR<Stats>(
+export function useStats(config?: SWRConfiguration<StatsWithFees>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<StatsWithFees>(
     'stats',
     () => api.stats(),
     config,

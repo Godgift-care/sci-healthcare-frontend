@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { FUNDER } from './fixtures';
 import { mockBackend, useMockWallet } from './helpers';
@@ -9,6 +9,20 @@ import { mockBackend, useMockWallet } from './helpers';
  * The read API is mocked; the wallet is a mock. Each test runs at desktop
  * width and 390px via the Playwright projects.
  */
+
+/**
+ * Serves `/stats` with a fixed payload so the fees card can be checked
+ * without widening the shared backend mock's state type.
+ */
+async function mockStats(page: Page, body: Record<string, unknown>) {
+  await page.route('**/stats', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    }),
+  );
+}
 
 test.beforeEach(async ({ page }) => {
   await useMockWallet(page, FUNDER);
@@ -68,7 +82,18 @@ test('renders empty state when there is no voucher activity', async ({ page }) =
   await page.goto('/stats');
 
   await expect(page.getByRole('heading', { name: 'Voucher activity by country' })).toBeVisible();
-  await expect(
-    page.getByText('No voucher activity recorded yet.'),
-  ).toBeVisible();
+  await expect(page.getByText('No voucher activity recorded yet.')).toBeVisible();
+});
+
+test('renders fees collected from the stats API', async ({ page }) => {
+  await useMockWallet(page, FUNDER);
+  await mockBackend(page, { vouchers: [] });
+  await mockStats(page, { feesCollected: '1234567' });
+  await page.goto('/stats');
+
+  const card = page.getByTestId('stats-fees-collected');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('Fees collected');
+  // 1234567 micro-USDC formats to $1.234567.
+  await expect(card).toContainText('$1.23');
 });

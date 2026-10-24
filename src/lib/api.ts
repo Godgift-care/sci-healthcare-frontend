@@ -119,6 +119,20 @@ export type ProviderStats = {
 };
 
 /**
+ * Protocol fees reported by the indexer (`/stats` `feesCollected`).
+ *
+ * The generated client's `Stats` shape does not expose the fees field yet,
+ * so the stats page reads it through this narrow extension. The value is a
+ * string on the wire (token amounts are never numbers); callers format it.
+ */
+export type StatsWithFees = Stats & {
+  /** Total protocol fees collected, as reported by the API. */
+  feesCollected?: string | null;
+  /** Human-readable form of `feesCollected`, when the API supplies one. */
+  feesCollectedDisplay?: string | null;
+};
+
+/**
  * Normalises the payload of `GET /vouchers/:id/events` into a plain list.
  *
  * The endpoint is new (backend #13) and its envelope is not settled yet,
@@ -173,7 +187,13 @@ type AttestersResponse = {
 };
 
 export const api = {
-  stats: (): Promise<Stats> => client.stats(),
+  /**
+   * Aggregate protocol stats, carrying the fees-collected field the stats
+   * page renders. The generated client's `Stats` type lacks it, so the
+   * result is typed as `StatsWithFees`; the value comes straight from the
+   * API response.
+   */
+  stats: (): Promise<StatsWithFees> => client.stats() as Promise<StatsWithFees>,
 
   dailyStats: (days = 30): Promise<DailyStats> => client.dailyStats(days),
 
@@ -237,7 +257,7 @@ export const api = {
     ),
 
   receipts: (beneficiaryRef: string, params?: { limit?: number; offset?: number }) =>
-    client.receipts({ beneficiaryRef, ...params }),
+    client.receipts({ beneficiaryRef: beneficiaryRef, ...params }),
 
   /**
    * Attester directory. Not part of the generated client yet, so it goes

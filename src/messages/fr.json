@@ -12,8 +12,8 @@
     "docs": "Documentation"
   },
   "footer": {
-    "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de bénéficiaire opaque.",
-    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de bénéficiaire opaque."
+    "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
+    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque."
   },
   "common": {
     "loading": "Chargement…",
@@ -32,13 +32,24 @@
     "verifiedClinics": "Cliniques vérifiées",
     "noClinics": "Aucune clinique enregistrée pour le moment."
   },
+  "stats": {
+    "title": "Statistiques du protocole",
+    "feesCollected": "Frais collectés",
+    "feesCollectedNote": "Les frais du protocole sont prélevés sur les soins réglés et financent l'indexeur open source, les audits et la maintenance courante. Aucun frais n'est prélevé sur les bons financés qui ne sont pas réglés.",
+    "countryActivity": "Activité des bons par pays",
+    "countryActivityEmpty": "Aucune activité de bons enregistrée pour le moment.",
+    "country": "Pays",
+    "funded": "{count} financés",
+    "settled": "{count} réglés",
+    "volume": "Volume"
+  },
   "voucher": {
     "voucherNumber": "Bon #{id}",
     "at": "chez",
     "history": "Historique",
     "fundedBy": "Financé par",
     "expires": "Expire le",
-    "clinicReceived": "Clinique a reçu",
+    "clinicReceived": "Clinique a reoçu",
     "fee": "frais",
     "disputeOutcome": "Résultat du litige",
     "careReceipt": "Reçu de soins",
@@ -63,7 +74,7 @@
     "scanWithClinicScanner": "Scanner avec le scanner de la clinique",
     "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
     "reportProblem": "Signaler un problème",
-    "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
+    "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son status, le service et la clinique uniquement — jamais la référence patient.",
     "reportProblemAction": "Signaler un problème"
   },
   "clinic": {

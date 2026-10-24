@@ -273,6 +273,20 @@ export default function StatsPage() {
             {stats ? `${stats.settledVouchers} vouchers paid` : '…'}
           </div>
         </Card>
+        <Card className="p-4">
+          <div
+            data-testid="stats-fees-collected"
+            className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]"
+          >
+            Fees collected
+            <div className="mt-1 text-2xl font-bold normal-case tracking-normal text-[var(--color-ink)]">
+              {stats?.feesCollected != null ? `$${formatUsdc(stats.feesCollected)}` : '—'}
+            </div>
+            <div className="mt-0.5 text-xs normal-case tracking-normal">
+              deducted from settled care only
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* View Mode Toggle for Accessibility */}

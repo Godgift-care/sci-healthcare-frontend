@@ -1,9 +1,9 @@
 {
   "nav": {
-    "clinics": "Kliniki",
+    "clinics": "Kiliniki",
     "howItWorks": "Jinsi inavyofanya kazi",
     "myVouchers": "Vocha zangu",
-    "clinicDesk": "Dawati la kliniki",
+    "clinicDesk": "Dawati la cliniki",
     "attest": "Thibitisha",
     "faq": "Maswali ya mara kwa mara",
     "stats": "Takwimu",
@@ -12,8 +12,8 @@
     "docs": "Nyaraka"
   },
   "footer": {
-    "testnetDisclaimer": "Usambazaji wa Testnet. Hakuna pesa halisi, na hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo dhahiri la mnufaika pekee.",
-    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo dhahiri la mnufaika pekee."
+    "testnetDisclaimer": "Usambazaji wa Testnet. Hakuna pesa halisi, na hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo dahiri la mnufaika pekee.",
+    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo dahiri la mnufaika pekee."
   },
   "common": {
     "loading": "Inapakia…",
@@ -31,6 +31,17 @@
   "home": {
     "verifiedClinics": "Kliniki zilizothibitishwa",
     "noClinics": "Bado hakuna kliniki zilizosajiliwa."
+  },
+  "stats": {
+    "title": "Takwimu za itifaki",
+    "feesCollected": "Ada zilizokusanywa",
+    "feesCollectedNote": "Ada za itifaki hutolewa kwenye huduma zilizolipiwa na zinafadhili kielezo cha chanzo wazi, ukaguzi na utendaji wa mikataba. Hakuna ada inayodaiwa kwenye vocha zilizofadhiliwa ambazo hazitakiwi kulipwa.",
+    "countryActivity": "Shughuli ya vocha kwa nchi",
+    "countryActivityEmpty": "Bado hakuna shughuli ya vocha iliyorekodiwa.",
+    "country": "Nchi",
+    "funded": "{count} imefadhiliwa",
+    "settled": "{count} imelipwa",
+    "volume": "Kiasi"
   },
   "voucher": {
     "voucherNumber": "Vocha #{id}",
@@ -61,7 +72,7 @@
     "clinic": "Kliniki",
     "voucherContract": "Mkataba wa Vocha",
     "scanWithClinicScanner": "Changanua na kichanganuzi cha kliniki",
-    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
+    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za binafsi za matibabu au utambulisho.",
     "reportProblem": "Ripoti tatizo",
     "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa, au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
     "reportProblemAction": "Ripoti tatizo"
@@ -80,7 +91,7 @@
     "edit": "Hariri",
     "delist": "Ondoa kwenye orodha",
     "confirmDelist": "Thibitisha kuondoa",
-    "delistNote": "Kuondoa kwenye orodha kunazuia vocha mpya kwa huduma hii. Vocha zilizofadhiliwa tayari huweka kiasi kilichokubaliwa na kulipwa kawaida.",
+    "delistNote": "Kuondoa kwenye orodha kunazuia vocha mpya kwa huduma hii. Vocha zilizofadhiliwa tayari huwezesha kiasi kilichokubaliwa na kulipwa kawaida.",
     "updateService": "Sasisha huduma {code}",
     "listService": "Orodhesha huduma",
     "codePlaceholder": "Msimbo (101)",
@@ -128,7 +139,7 @@
       },
       "hints": {
         "register": "Jaza fomu hapa chini kwa jina la kliniki na msimbo wa nchi.",
-        "waitingVerification": "Msimamizi anapaswa kuthibitisha kliniki. Ukurasa huu unanasishwa yenyewe.",
+        "waitingVerification": "Msimamizi anapaswa kuthibitisha kliniki. Ukurasa huu unasasishwa yenyewe.",
         "suspended": "Kliniki hii imesimamishwa. Wasiliana na msimamizi ili irejeshwe.",
         "listService": "Ongeza huduma yako ya kwanza na bei hapa chini ili wafadhili waweze kuinunua.",
         "claimVoucher": "Vocha inakusubiri hapa chini. Weka alama ya mgonjwa kuonekana ili kuidai.",
