@@ -1,0 +1,21 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/issue-122-feat-web-share-a-receipt",
+    "feat/issue-132-feat-web-show-amounts-in-local-currency",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat/issue-122-feat-web-share-a-receipt": "main",
+    "feat/issue-132-feat-web-show-amounts-in-local-currency": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat/issue-122-feat-web-share-a-receipt",
+    "feat/issue-132-feat-web-show-amounts-in-local-currency",
+    "origin"
+  ]
+}
