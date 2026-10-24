@@ -1,0 +1,21 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/issue-121-feat-web-browser-push-notifications-for-clinics",
+    "feat/issue-124-feat-web-conversion-funnel-on-the-stats-page",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat/issue-121-feat-web-browser-push-notifications-for-clinics": "main",
+    "feat/issue-124-feat-web-conversion-funnel-on-the-stats-page": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat/issue-121-feat-web-browser-push-notifications-for-clinics",
+    "feat/issue-124-feat-web-conversion-funnel-on-the-stats-page",
+    "origin"
+  ]
+}
