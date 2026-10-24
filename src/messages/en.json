@@ -161,5 +161,8 @@
     "estimate": "≈",
     "estimateNote": "Estimate only. USDC is the amount charged.",
     "rateUnavailable": "Estimated local amount unavailable right now."
+  },
+  "amounts": {
+    "localCurrency": "Show amounts in local currency"
   }
 }

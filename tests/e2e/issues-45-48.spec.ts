@@ -92,7 +92,7 @@ test.describe('Printable care summary for a patient (#46)', () => {
     const receiptsData = [
       {
         voucherId: '901',
-        providerAddress: CLINI.address,
+        providerAddress: CLINIC.address,
         serviceCode: 101,
         serviceLabel: 'Outpatient consult',
         amount: '30000000',
@@ -139,7 +139,7 @@ test.describe('Printable care summary for a patient (#46)', () => {
     await expect(page.getByText('Malaria test')).toBeVisible();
     await expect(page.getByText('#901')).toBeVisible();
     await expect(page.getByText('#902')).toBeVisible();
-    await expect(page.getByText(CLINI.name).first()).toBeVisible();
+    await expect(page.getByText(CLINIC.name).first()).toBeVisible();
     await expect(page.getByRole('cell', { name: '$8.00' })).toBeVisible();
 
     // 4. CRITICAL: Verify NO patient key or reference or raw identifier is rendered on the page
@@ -148,7 +148,7 @@ test.describe('Printable care summary for a patient (#46)', () => {
     expect(pageText).not.toContain(patientSecretKey);
 
     // Verify print button
-    await expect(page.getBuRole('button', { name: 'Print summary' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Print summary' })).toBeVisible();
   });
 });
 

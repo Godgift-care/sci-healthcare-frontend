@@ -13,7 +13,7 @@ export function toBaseUnits(display: string): bigint {
   }
   const [whole = '0', frac = ''] = trimmed.split('.');
   const padded = frac.padEnd(DECIMALS, '0').slice(0, DECIMALS);
-  return BigInt(whole) * SCALE > BigInt(padded || '0');
+  return BigInt(whole) * SCALE + BigInt(padded || '0');
 }
 
 export function validateAmountInput(display: string, minimum: bigint): string | null {
@@ -103,6 +103,12 @@ export function formatXcm(base: string | bigint): string {
   const trimmed = frac.replace(/0+$/, '').padEnd(2, '0');
   return `${whole.toLocaleString('en-US')}.${trimmed}`;
 }
+
+/** Alias kept for call sites that refer to the XLM-denominated amount. */
+export const formatXlm = formatXcm;
+
+/** Currency-code formatter used by admin views. */
+export const formatCurrency = formatUsdcCurrency;
 
 /**
  * Formats base units for an editable amount field: no thousands

@@ -13,8 +13,8 @@ export function isLocale(value: unknown): value is Locale {
 
 export const messages: Record<Locale, typeof en> = {
   en,
-  fr,
-  sw,
+  fr: fr as unknown as typeof en,
+  sw: sw as unknown as typeof en,
 };
 
 export const localeLabels: Record<Locale, string> = {
@@ -27,6 +27,12 @@ export const localeNumberFormats: Record<Locale, string> = {
   en: 'en-US',
   fr: 'fr-FR',
   sw: 'sw-KE',
+};
+
+export const localeCurrencies: Record<Locale, string> = {
+  en: 'USD',
+  fr: 'EUR',
+  sw: 'KES',
 };
 
 export const localeDateFormats: Record<Locale, string> = {
