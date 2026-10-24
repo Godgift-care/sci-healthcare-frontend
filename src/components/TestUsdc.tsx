@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { formatUsdc } from '@/lib/amounts';
 import { config } from '@/lib/config';
 import { FAUCET_ERRORS, humaniseError, isWalletRejection } from '@/lib/errors';
-import { useTransactionStage } from '@/lib/hooks';
+import { useTransactionStage } from '@/lib/hooks/useTransactionStage';
 import { faucet, usdc } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
@@ -93,7 +93,7 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
         </div>
         <Button
           variant="ghost"
-          disabled={tx.busy || coolingDown }
+          disabled={tx.busy || coolingDown}
           onClick={() => void getUsdc()}
         >
           {buttonLabel}
@@ -102,8 +102,8 @@ export function TestUsdc({ compact = false }: { compact?: boolean }) {
 
       {coolingDown && (
         <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-          One top-up per wallet per day. Next one from&#39;{' '}
-          {new Date(nextAt * 1000).toLocaleString('up-GB', {
+          One top-up per wallet per day. Next one from{' '}
+          {new Date(nextAt * 1000).toLocaleString('en-GB', {
             day: 'numeric',
             month: 'short',
             hour: '2-digit',

@@ -10,14 +10,8 @@ import type { VoucherStatus } from '@/lib/api';
 import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
-import {
-  useTxStage,
-  useLiveUpdates,
-  useProvider,
-  useProviderStats,
-  useProviderVouchers,
-  useVouchers,
-} from '@/lib/hooks';
+import { useLiveUpdates, useProvider, useProviderStats, useProviderVouchers, useVouchers } from '@/lib/hooks';
+import { useTxStage } from '@/lib/tx-stage';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import type { TxStage } from '@/lib/stellar';
 import {

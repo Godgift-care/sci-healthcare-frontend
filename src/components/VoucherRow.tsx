@@ -9,10 +9,10 @@ import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
-import { invalidateVouchers, useNow } from '@/lib/hooks';
+import { invalidateVouchers, useNow, useTransactionStage } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
-import { type TxStage } from '@/lib/tx-stage';
+import { type TxStage } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
@@ -293,154 +293,11 @@ export function VoucherRow({
               </p>
             </div>
             <Button variant="ghost" onClick={() => setVerifying((open) => !open)}>
-              {verifying ? 'Hide check' : patientVerified ? 'Verify again' : 'Verify patient'}
+              {verifying ? 'Close' : 'Verify'}
             </Button>
           </div>
-
-          {!verifying && requirePatientMatch && !patientVerified && (
-            <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-              This desk requires a patient check before claiming. The reference and key
-              enable “Mark patient seen”.
-            </p>
-          )}
-
-          {verifying && (
-            <div className="mt-3">
-              <VerifyPatient
-                expectedRef={v.beneficiaryRef}
-                onVerifiedChange={(verified) =>
-                  setVerifiedFor(verified ? verificationKey : null)
-                }
-              />
-            </div>
-          )}
         </div>
       )}
-
-      {reconciling && (
-        <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Confirmed on chain, updating…
-        </p>
-      )}
-      {staleTx && !reconciling && (
-        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          The transaction succeeded on chain but the list has not caught up yet.{' '}
-          <ExplorerLink href={explorerTx(staleTx)}>View transaction</ExplorerLink>
-        </p>
-      )}
-
-      <Modal
-        open={disputing}
-        onClose={() => {
-          if (busy === null) setDisputing(false);
-        }}
-        title="Open dispute"
-        actions={
-          <>
-            <Button
-              variant="danger"
-              disabled={busy !== null}
-              onClick={() => void run('dispute')}
-            >
-              {busy === 'dispute' ? stageLabel(stage) : 'Open dispute'}
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={busy !== null}
-              onClick={() => setDisputing(false)}
-            >
-              Cancel
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              What went wrong?
-            </span>
-            <select
-              value={reason}
-              onChange={(e) => setReason(Number(e.target.value) as DisputeReasonCode)}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-            >
-              {DISPUTE_REASONS.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-            The clinic will not be paid while this is open. An administrator
-            reviews it and returns the money to you or releases it to the clinic.
-            <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
-          </p>
-        </div>
-      </Modal>
-
-      <Modal
-        open={attesting}
-        onClose={() => {
-          if (busy === null) setAttesting(false);
-        }}
-        title="Confirm care delivered"
-        actions={
-          <>
-            <Button
-              disabled={busy !== null}
-              onClick={() => void run('attest')}
-            >
-              {busy === 'attest' ? stageLabel(stage) : 'Confirm'}
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={busy !== null}
-              onClick={() => setAttesting(false)}
-            >
-              Cancel
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-            Confirm only care you have actually verified. Confirming opens a
-            dispute window, after which the clinic is paid.
-            <InfoTip content="Your attestation is written on chain. The funder can still dispute before the window closes." />
-          </p>
-        </div>
-      </Modal>
     </Card>
   );
-}
-
-const LABELS: Record<Action, string> = {
-  claim: 'Mark patient seen',
-  attest: 'Confirm care delivered',
-  settle: 'Release payment',
-  refund: 'Refund me',
-  dispute: 'Dispute',
-};
-
-/** Human label for each transaction stage. */
-export function stageLabel(stage: TxStage | null): string {
-  switch (stage) {
-    case 'simulating':
-      return 'Preparing…';
-    case 'signing':
-      return 'Approve in your wallet…';
-    case 'submitting':
-      return 'Submitting…';
-    case 'confirming':
-      return 'Confirming…';
-    default:
-      return 'Confirming…';
-  }
-}
-
-/** True when the wallet rejected the signature (user cancelled). */
-export function isWalletRejection(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  return /reject|cancel|denied|declin/i.test(msg);
 }
