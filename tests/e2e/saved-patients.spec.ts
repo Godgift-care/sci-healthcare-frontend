@@ -75,6 +75,9 @@ test('exports and clears all local data', async ({ page }) => {
   await page.getByLabel('Patient nickname').fill('Dad');
   await page.getByRole('button', { name: 'Save patient' }).click();
 
+  await page.getByRole('button', { name: 'Save patient' }).click();
+
+  await expect(page.getByRole('button', { name: 'Export data' })).toBeVisible();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export data' }).click();
   const download = await downloadPromise;

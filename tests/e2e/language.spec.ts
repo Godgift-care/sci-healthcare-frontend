@@ -71,10 +71,11 @@ test.describe('Language switching persists (#153)', () => {
     // The page is translated as soon as the choice is made.
     await expect(page.getByText(`Bon #${VOUCHER_ID}`)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
-    // The switcher's own label follows the language it is in.
+    // The switcher's own label follows the language it is in. The switcher
+    // is a <select>, so its accessible name is carried by the label text.
     await expect(languageSwitcher(page)).toHaveAttribute(
       'aria-label',
-      'Choisir la langue',
+      'Choisir langue',
     );
 
     // A client-side navigation keeps the provider mounted.
