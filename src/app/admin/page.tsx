@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, Empty, ExplorerLink, Modal } from '@/components/ui';
 import { api, type Attester, type Provider, type Voucher } from '@/lib/api';
-import { formatCurrency } from '@/lib/amounts';
+import { formatUsdcCurrency as formatCurrency } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
 import { disputeReasonLabel } from '@/lib/disputes';
 import { humaniseError, REGISTRY_ERRORS, VOUCHER_ERRORS } from '@/lib/errors';
@@ -16,6 +16,33 @@ import { registry, voucher as voucherContract, type ProviderStanding } from '@/l
 import { useWallet } from '@/lib/wallet';
 
 const PAGE_SIZE = 50;
+
+function Pagination({
+  offset,
+  total,
+  onChange,
+}: {
+  offset: number;
+  total: number;
+  onChange: (offset: number) => void;
+}) {
+  if (total <= PAGE_SIZE) return null;
+  const hasPrevious = offset > 0;
+  const hasNext = offset + PAGE_SIZE < total;
+  return (
+    <nav aria-label="Pagination" className="flex items-center justify-end gap-2 text-sm">
+      <Button variant="ghost" disabled={!hasPrevious} onClick={() => onChange(Math.max(0, offset - PAGE_SIZE))}>
+        Previous
+      </Button>
+      <span className="text-[var(--color-ink-soft)]">
+        {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
+      </span>
+      <Button variant="ghost" disabled={!hasNext} onClick={() => onChange(offset + PAGE_SIZE)}>
+        Next
+      </Button>
+    </nav>
+  );
+}
 
 type AdminAction =
   | { kind: 'provider'; provider: Provider; status: ProviderStanding }
@@ -263,40 +290,29 @@ export default function AdminPage() {
       <section aria-labelledby="attesters-heading" className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="attesters-heading" className="text-lg font-semibold">Attesters</h2>
-          <span className="text-sm text-[var(--color-ink-soft)]">{attesterPage?.total ?? 0} records</span>
+          <span className="text-sm text-[var(--color-ink-soft)]">{attesterPage?.total ?? 0} registered</span>
         </div>
-        <Card className="p-4">
-          <form onSubmit={(event) => void addAttester(event)} className="flex flex-col gap-2 sm:flex-row">
-            <label className="sr-only" htmlFor="new-attester-address">Stellar address</label>
-            <input
-              id="new-attester-address"
-              value={attesterAddress}
-              onChange={(event) => setAttesterAddress(event.target.value)}
-              placeholder="G... Stellar address"
-              autoComplete="off"
-              className="min-w-0 flex-1 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-            />
-            <Button type="submit" disabled={busy || !attesterAddress.trim()}>Add attester</Button>
-          </form>
-        </Card>
         {!attesterPage?.attesters.length ? (
           <Empty>{attesterError ? 'Attesters could not be loaded.' : 'No attesters are registered.'}</Empty>
         ) : (
           <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
             {attesterPage.attesters.map((attester) => (
-              <div key={attester.address} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="font-medium">{attester.name || attester.organisation || 'Attester'}</p>
-                  <code className="block break-all text-xs text-[var(--color-ink-soft)]">{attester.address}</code>
-                  <p className="text-xs text-[var(--color-ink-soft)]">{attester.active ? 'Active' : 'Inactive'} · {attester.attestations} attestations</p>
-                </div>
-                {attester.active && (
-                  <Button variant="danger" disabled={busy} onClick={() => setAction({ kind: 'remove-attester', attester })}>Remove</Button>
-                )}
+              <div key={attester.address} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <code className="break-all text-xs">{attester.address}</code>
+                <Button variant="danger" disabled={busy} onClick={() => setAction({ kind: 'remove-attester', attester })}>Remove</Button>
               </div>
             ))}
           </div>
         )}
+        <form onSubmit={addAttester} className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={attesterAddress}
+            onChange={(event) => setAttesterAddress(event.target.value)}
+            placeholder="Attester address"
+            className="flex-1 rounded border border-[var(--color-line)] px-3 py-2 text-sm"
+          />
+          <Button type="submit" disabled={busy || !attesterAddress.trim()}>Add attester</Button>
+        </form>
         <Pagination
           offset={offsets.attesters}
           total={attesterPage?.total ?? 0}
@@ -304,76 +320,21 @@ export default function AdminPage() {
         />
       </section>
 
-      <Modal
-        open={!!action}
-        onClose={() => { if (!busy) setAction(null); }}
-        title={
-          isProviderAction
-            ? `${currentAction.status === 'Active' ? 'Approve' : 'Suspend'} clinic`
-            : isResolution
-              ? `Resolve voucher #${currentAction.voucher.id}`
-              : 'Remove attester'
-        }
-        actions={(
-          <>
-            <Button
-              variant={isProviderAction && currentAction.status === 'Suspended' || isResolution && currentAction.refundFunder || currentAction?.kind === 'remove-attester' ? 'danger' : 'primary'}
-              disabled={confirmDisabled}
-              onClick={() => void submitAction()}
-            >
-              {busy ? 'Submitting…' : 'Confirm transaction'}
-            </Button>
-            <Button variant="ghost" disabled={busy} onClick={() => setAction(null)}>Cancel</Button>
-          </>
-        )}
-      >
-        <div className="space-y-3">
-          {isProviderAction && (
-            <p>Set <strong>{currentAction.provider.name}</strong> ({shortAddress(currentAction.provider.address)}) to <strong>{currentAction.status}</strong>.</p>
-          )}
-          {isResolution && currentAction.refundFunder && (
-            <p>
-              The funder <code className="break-all">{currentAction.voucher.funder}</code> receives the full escrow of{' '}
-              <strong>{formatCurrency(currentAction.voucher.amount)}</strong>. The clinic receives nothing.
-            </p>
-          )}
-          {isResolution && !currentAction.refundFunder && (
-            <div>
-              {quoteLoading && <p role="status">Calculating the clinic payout…</p>}
-              {currentQuoteError && <Alert>{`Could not calculate the contract payout: ${currentQuoteError}`}</Alert>}
-              {currentQuote && (
-                <p>
-                  <strong>{currentAction.voucher.provider.name}</strong> (<code className="break-all">{currentAction.voucher.provider.address}</code>) receives{' '}
-                  <strong>{formatCurrency(currentQuote.amounts[1])}</strong>; the protocol fee is {formatCurrency(currentQuote.amounts[0])}. The funder receives nothing.
-                </p>
-              )}
+      {currentAction && (
+        <Modal open title="Confirm action" onClose={() => setAction(null)}>
+          <div className="space-y-4">
+            {isProviderAction && <p>Confirm the provider status change for {currentAction.provider.name}.</p>}
+            {isResolution && currentQuoteError && <Alert>{currentQuoteError}</Alert>}
+            {isResolution && currentQuote && (
+              <p className="text-sm">Split quoted: {formatCurrency(currentQuote.amounts[0].toString())} to clinic, {formatCurrency(currentQuote.amounts[1].toString())} fee.</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setAction(null)} disabled={busy}>Cancel</Button>
+              <Button onClick={() => void submitAction()} disabled={confirmDisabled}>Confirm</Button>
             </div>
-          )}
-          {currentAction?.kind === 'remove-attester' && (
-            <p>Revoke attester access for <code className="break-all">{currentAction.attester.address}</code>.</p>
-          )}
-          <p className="text-xs text-[var(--color-ink-soft)]">Review the recipient and outcome carefully. This transaction is recorded on chain.</p>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-function Pagination({
-  offset,
-  total,
-  onChange,
-}: {
-  offset: number;
-  total: number;
-  onChange: (offset: number) => void;
-}) {
-  if (total <= PAGE_SIZE) return null;
-  return (
-    <div className="flex items-center justify-end gap-2 text-sm">
-      <Button variant="ghost" disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - PAGE_SIZE))}>Previous</Button>
-      <span>{offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}</span>
-      <Button variant="ghost" disabled={offset + PAGE_SIZE >= total} onClick={() => onChange(offset + PAGE_SIZE)}>Next</Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

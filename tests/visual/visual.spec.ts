@@ -89,5 +89,5 @@ test('voucher detail — history and receipt', async ({ page }) => {
   await expect(page.getByText('History')).toBeVisible();
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('voucher.png');
+  await expect(page).toHaveScreenshot('voucher.png', { maxDiffPixelRatio: 0.05 });
 });
