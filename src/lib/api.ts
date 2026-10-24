@@ -1,13 +1,19 @@
 import {
+  ApiError,
   createClient,
   type Attester,
   type DailyStats,
   type ListProvidersParams,
   type ListVouchersParams,
   type Provider,
+  type ReadyStatus,
   type Receipt,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
+  type VersionInfo,
   type Voucher as ClientVoucher,
+  type VoucherStatus,
 } from '@sci-healthcare/client';
 
 import { config } from './config';
@@ -30,10 +36,14 @@ export {
   type ListVouchersParams,
   type Provider,
   type ProviderLocation,
+  type ReadyStatus,
   type Receipt,
   type ReceiptsResponse,
   type Service,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
+  type VersionInfo,
   type VoucherStatus,
   type VouchersResponse,
 } from '@sci-healthcare/client';
@@ -91,6 +101,29 @@ export type VoucherEvent = {
 };
 
 /**
+ * A clinic's own throughput (`GET /providers/:address/stats`, backend #10).
+ *
+ * Counts are returned for every voucher status, zero included, so the desk
+ * can render the full breakdown without filling gaps itself. The settled
+ * value is the gross escrow released on settled care; the net the clinic
+ * received and the fee it paid live on each voucher (`settledNet`,
+ * `settledFee`).
+ *
+ * The endpoint is not in the vendored generated client yet, so the shape is
+ * declared locally and fetched through `rawGet`, like the attester routes.
+ */
+export type ProviderStats = {
+  address: string;
+  name: string;
+  status: string;
+  vouchers: number;
+  byStatus: Record<VoucherStatus, number>;
+  settledVouchers: number;
+  settledValue: string;
+  settledValueDisplay?: string;
+};
+
+/**
  * Normalises the payload of `GET /vouchers/:id/events` into a plain list.
  *
  * The endpoint is new (backend #13) and its envelope is not settled yet,
@@ -114,6 +147,22 @@ export function parseVoucherEvents(body: unknown): VoucherEvent[] {
       typeof (e as VoucherEvent).name === 'string' &&
       typeof (e as VoucherEvent).txHash === 'string' &&
       (e as VoucherEvent).txHash.length > 0,
+  );
+}
+
+/**
+ * True for a `GET /ready` body, whichever HTTP status it came with.
+ *
+ * A readiness probe conventionally answers 503 when degraded, with the same
+ * body — and that body is the useful part: it says which check failed.
+ */
+export function isReadyStatus(body: unknown): body is ReadyStatus {
+  if (!body || typeof body !== 'object') return false;
+  const { status, checks } = body as { status?: unknown; checks?: unknown };
+  return (
+    (status === 'ready' || status === 'degraded') &&
+    !!checks &&
+    typeof checks === 'object'
   );
 }
 
@@ -145,6 +194,30 @@ type AttestersResponse = {
 };
 
 export const api = {
+  /**
+   * Indexer readiness: database, indexed ledger and lag (#168).
+   *
+   * Fetched directly rather than through the shared client, whose error
+   * handling would discard the body of a degraded (503) answer. Anything
+   * that is not a readiness body — an unreachable host, a proxy error page —
+   * still throws, and the status page reports the API as unreachable.
+   */
+  ready: async (): Promise<ReadyStatus> => {
+    const base = config.apiUrl.replace(/\/+$/, '');
+    let res: Response;
+    try {
+      res = await fetch(`${base}/ready`, { headers: { accept: 'application/json' } });
+    } catch (cause) {
+      throw new ApiError(0, 'network_error', `Cannot reach the API at ${base}`, cause);
+    }
+    const body: unknown = await res.json().catch(() => null);
+    if (isReadyStatus(body)) return body;
+    throw new ApiError(res.status, `http_${res.status}`, res.statusText || 'Readiness check failed');
+  },
+
+  /** Build version, commit and network the indexer is running (#168). */
+  version: (): Promise<VersionInfo> => client.version(),
+
   stats: (): Promise<Stats> => client.stats(),
 
   dailyStats: (days = 30): Promise<DailyStats> => client.dailyStats(days),
@@ -154,7 +227,40 @@ export const api = {
   provider: (address: string, init?: RequestInit): Promise<Provider> =>
     timedClient(init?.signal).provider(address),
 
+  /** Aggregate voucher counts and settled value for one clinic (backend #10). */
+  providerStats: (address: string): Promise<ProviderStats> =>
+    client.rawGet<ProviderStats>(`/providers/${encodeURIComponent(address)}/stats`),
+
   vouchers: (params: ListVouchersParams) => client.vouchers(params),
+
+  /**
+   * Every voucher received by a clinic, across list-route pages.
+   *
+   * The monthly earnings table needs the whole history, not the first page,
+   * and `/vouchers` caps a page at 100 rows. The walk stops on a short page
+   * or when the reported total is reached. `total` is read per page because
+   * a write can land mid-walk; either boundary still yields a complete list
+   * of what existed when the walk began, and SWR refetches on focus/live
+   * updates anyway.
+   */
+  providerVouchers: async (address: string): Promise<Voucher[]> => {
+    const pageSize = 100;
+    const all: Voucher[] = [];
+    for (;;) {
+      const page = await client.vouchers({
+        provider: address,
+        limit: pageSize,
+        offset: all.length,
+      });
+      all.push(...page.vouchers);
+      if (
+        page.vouchers.length < pageSize ||
+        (typeof page.total === 'number' && all.length >= page.total)
+      ) {
+        return all;
+      }
+    }
+  },
 
   voucher: async (id: string, init?: RequestInit): Promise<VoucherDetail> => {
     const voucher = await timedClient(init?.signal).voucher(id);
@@ -191,4 +297,8 @@ export const api = {
 
   attester: (address: string): Promise<Attester> =>
     client.rawGet<Attester>(`/attesters/${encodeURIComponent(address)}`),
+
+  services: (): Promise<ServicesResponse> => client.services(),
+
+  service: (code: number): Promise<ServiceCatalogueItem> => client.service(code),
 };
