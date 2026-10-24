@@ -153,5 +153,31 @@
     "fr": "Français",
     "sw": "Kiswahili",
     "select": "Select language"
+  },
+  "stats": {
+    "funnelTitle": "Conversion funnel",
+    "funnelNote": "How vouchers move from funded to claimed, attested and settled, and how long each step takes.",
+    "funnelStageFunded": "Funded",
+    "funnelStageClaimed": "Claimed",
+    "funnelStageAttested": "Attested",
+    "funnelStageSettled": "Settled",
+    "funnelCount": "Count",
+    "funnelConversion": "Conversion",
+    "funnelMedianTime": "Median time",
+    "funnelMedianTimeSincePreviousStage": "Median time since previous stage",
+    "funnelDropOff": "Drop-off",
+    "funnelDropOffDetail": "{count} not yet reached this stage",
+    "funnelTableCaption": "Conversion funnel details",
+    "funnelTableToggle": "Show table",
+    "funnelChartToggle": "Show funnel",
+    "funnelEmpty": "No vouchers have been funded yet.",
+    "funnelUnavailable": "Funnel data is temporarily unavailable.",
+    "funnelDurations": {
+      "seconds": "{count}s",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} d",
+      "unknown": "—"
+    }
   }
 }
