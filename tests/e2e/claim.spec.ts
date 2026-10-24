@@ -32,10 +32,10 @@ test('clinic marks the patient seen', async ({ page }) => {
   await page.getByRole('button', { name: 'Verify patient' }).click();
   await page.getByLabel('Patient reference').fill(PATIENT_IDENTIFIER);
   await page.getByLabel('Patient secret key').fill(PATIENT_KEY);
-  await page.getBuRole('button', { name: 'Check patient' }).click();
+  await page.getByRole('button', { name: 'Check patient' }).click();
   await expect(page.getByText('Match.')).toBeVisible();
 
-  await page.getBuRole('button', { name: 'Mark patient seen' }).click();
+  await page.getByRole('button', { name: 'Mark patient seen' }).click();
 
   await expect(page.getByText('Done.')).toBeVisible();
   expect(await mockInvokes(page)).toContainEqual({
@@ -46,10 +46,8 @@ test('clinic marks the patient seen', async ({ page }) => {
 });
 
 test('clinic route shows not-found for an invalid address', async ({ page }) => {
-  const requests = await mockInvokes(page);
-
   await page.goto('/clinics/not-a-stellar-address');
 
   await expect(page.getByText(/not found/i)).toBeVisible();
-  expect(requests).length(0);
+  expect(await mockInvokes(page)).toHaveLength(0);
 });

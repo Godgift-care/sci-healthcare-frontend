@@ -55,12 +55,12 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : null);
+  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   // Per-step transaction hashes (#18). An indexer without the events
   // endpoint (backend #13) yields an empty list and the history renders
   // exactly as before, only without the "view transaction" links.
-  const { events } = useVoucherEvents(validId ? id : null);
-  useLiveUpdates({ voucherId: validId ? id : null });
+  const { events } = useVoucherEvents(validId ? id : undefined);
+  useLiveUpdates({ voucherId: validId ? id : undefined });
 
   if (!validId) notFound();
   // An unknown voucher number is a missing page, not an API failure.
