@@ -1,5 +1,6 @@
 'use client';
 
+import { StrKey } from '@stellar/stellar-sdk';
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
@@ -28,6 +29,7 @@ import {
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
+import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
@@ -60,6 +62,10 @@ const UNKNOWN_STATUS = {
   className: 'bg-slate-100 text-slate-600 ring-slate-200',
 };
 
+function isValidAddress(value: string): boolean {
+  return StrKey.isValidEd25519PublicKey(value);
+}
+
 export default function ClinicPage({
   params,
 }: {
@@ -67,6 +73,9 @@ export default function ClinicPage({
 }) {
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
+
+  // Validate the route parameter before it reaches any API or contract call.
+  if (!isValidAddress(address)) notFound();
 
   const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
   // Until the funder changes the basket, the clinic's first active service
@@ -115,6 +124,7 @@ export default function ClinicPage({
   const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [sponsored, setSponsored] = useState(false);
   const [busy, setBusy] = useState(false);
   const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
     ReturnType<typeof quoteXlmForUsdc>
@@ -240,6 +250,16 @@ export default function ClinicPage({
     wallet !== null && baseAmount !== null && walletBalance !== null && insufficientUsdcBalance;
   const usdcShortfall =
     missingUsdcForFunding ? baseAmount - walletBalance : null;
+  let sponsorAmount = 0n;
+  try {
+    sponsorAmount = toBaseUnits(amount);
+  } catch {
+    // Incomplete/invalid amounts cannot opt into sponsorship.
+  }
+  const canSponsor = sponsorshipAvailable() && selectedServices.length === 1 &&
+    sponsorAmount > 0n && sponsorAmount <= SPONSOR_MAX_AMOUNT &&
+    walletBalance !== null && walletBalance >= sponsorAmount;
+  const useSponsor = sponsored;
   const maskedSecret = secret
     ? secret.length <= 8
       ? '••••'
@@ -263,6 +283,10 @@ export default function ClinicPage({
   async function fund() {
     if (!wallet) return void connect();
     if (selectedServices.length === 0) return;
+    if (useSponsor && !canSponsor) {
+      toast.error('Sponsored funding requires one voucher up to 100 USDC and enough USDC in your wallet.');
+      return;
+    }
 
     // A preset window is counted from now; a custom date is the last second
     // of the day the funder picked. Checked once, before anything is signed,
@@ -323,6 +347,9 @@ export default function ClinicPage({
             const held = await usdc.balance(wallet).catch(() => 0n);
             if (held < request.amount) missingUsdc = request.amount - held;
           }
+          if (useSponsor && missingUsdc > 0n) {
+            throw new Error('Sponsored funding requires enough USDC; XLM swaps are not sponsored.');
+          }
           const res =
             missingUsdc > 0n
               ? await voucher.createWithXlmSwap(
@@ -330,7 +357,7 @@ export default function ClinicPage({
                   signTransaction,
                   100,
                 )
-              : await voucher.create(request, signTransaction);
+              : await voucher.create(request, signTransaction, useSponsor);
           const balance = await usdc.balance(wallet).catch(() => null);
           if (balance !== null) setWalletBalance(balance);
 
@@ -707,6 +734,21 @@ export default function ClinicPage({
               </div>
             )}
 
+            {sponsorshipAvailable() && (
+              <div className="space-y-2 text-sm">
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={useSponsor} disabled={(!canSponsor && !sponsored) || busy}
+                    onChange={(event) => setSponsored(event.target.checked)} />
+                  <span>Request sponsored fees (first voucher)</span>
+                </label>
+                <p className="text-xs text-[var(--color-ink-soft)]">
+                  Testnet only: one voucher up to 100 USDC, with fees up to 1 XLM.
+                  You still need an active account and enough USDC. The sponsor checks
+                  eligibility. If declined, you can turn this off to pay fees with XLM.
+                </p>
+              </div>
+            )}
+
             <TestUsdc compact />
 
             <Button
@@ -729,7 +771,7 @@ export default function ClinicPage({
                   : 'Connect wallet'}
             </Button>
 
-            {selected && baseAmount !== null && (
+            {selected && baseAmount !== null && !useSponsor && (
               <Sep7FundPanel
                 amount={baseAmount}
                 expiresAt={fundingExpiresAt}
@@ -821,6 +863,14 @@ export default function ClinicPage({
                 <dd className="text-end font-medium">{expirySummary}</dd>
               </div>
             </dl>
+
+            {useSponsor && (
+              <Alert kind="info">
+                Requesting sponsored transaction fees. Your signed funding transaction
+                is sent to the sponsor; your patient identifier and secret key stay here.
+                A declined request will not fall back to charging your XLM.
+              </Alert>
+            )}
 
             <div className="flex gap-2">
               <Button variant="ghost" className="flex-1" onClick={() => setReviewing(false)}>
