@@ -61,3 +61,61 @@ test('migrates the previous single-patient browser storage', async ({ page }) =>
   await expect(page.getByLabel('Saved patients')).toHaveValue('Saved patient');
   await expect(page.getByLabel('Patient reference')).toHaveValue('legacy-patient');
 });
+
+test('exports and clears all local data', async ({ page }) => {
+  await page.goto('/my');
+
+  await page.getByLabel('Patient reference').fill('patient-one');
+  await page.getByLabel('Secret key').fill('a'.repeat(32));
+  await page.getByLabel('Patient nickname').fill('Mum');
+  await page.getByRole('button', { name: 'Save patient' }).click();
+
+  await page.getByLabel('Patient reference').fill('patient-two');
+  await page.getByLabel('Secret key').fill('b'.repeat(32));
+  await page.getByLabel('Patient nickname').fill('Dad');
+  await page.getByRole('button', { name: 'Save patient' }).click();
+
+  await page.getByRole('button', { name: 'Save patient' }).click();
+
+  await expect(page.getByRole('button', { name: 'Export data' })).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export data' }).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk as Buffer);
+  }
+  const exported = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+  expect(exported.storage).toBeTruthy();
+  expect(Object.keys(exported.storage).length).toBeGreaterThan(0);
+
+  await page.getByLabel('Import data').setInputFiles({
+    name: 'export.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(exported)),
+  });
+  await expect(page.getByRole('status')).toContainText('Imported');
+
+  await page.getByLabel('Saved patients').selectOption('Mum');
+  await expect(page.getByLabel('Patient reference')).toHaveValue('patient-one');
+
+  await page.getByRole('button', { name: 'Clear all data on this device' }).click();
+  await page.getByRole('button', { name: 'Confirm clear' }).click();
+
+  await expect(page.getByRole('status')).toContainText('Cleared');
+  await expect(page.getByLabel('Saved patients').locator('option')).toHaveCount(0);
+
+  const remaining = await page.evaluate(() => {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sci:')) keys.push(key);
+    }
+    return keys;
+  });
+  expect(remaining).toEqual([]);
+
+  await page.reload();
+  await expect(page.getByLabel('Saved patients').locator('option')).toHaveCount(0);
+});
