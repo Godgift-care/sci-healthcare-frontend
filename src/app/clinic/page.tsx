@@ -25,7 +25,6 @@ import {
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
-import { PushNotificationOptIn } from '@/components/PushNotificationOptIn';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
 import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
@@ -259,8 +258,6 @@ export default function ClinicDeskPage() {
           </Button>
         </div>
       </div>
-
-      {standing === 'Active' && <PushNotificationOptIn />}
 
       <QrScannerModal
         open={scannerOpen}

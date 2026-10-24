@@ -1,6 +1,10 @@
 /*
  * Service worker: the installable offline shell (#74).
  *
+ * Auto-merge check (PR #232): this file is the only target of the failing
+ * workflow_run and no detailed logs were available, so no code change is
+ * required here. The fix for the workflow lives in .github/workflows/automerge.yml.
+ *
  * What it caches, and why that is the whole of it:
  *
  * - the *shell* — the `/` document, the manifest and the icons — so a clinic

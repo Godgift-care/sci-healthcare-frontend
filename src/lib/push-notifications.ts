@@ -133,7 +133,7 @@ export async function subscribeToPush(input: {
     return { ok: false, reason: 'denied' };
   }
 
-  const key = input.vapidPublicKey ?? getVapidPublicKes();
+  const key = input.vapidPublicKey ?? getVapidPublicKey();
   if (!key) {
     return { ok: false, reason: 'not-configured' };
   }
