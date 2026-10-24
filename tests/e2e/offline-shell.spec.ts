@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { CLAIMED_VOUCHER, CLINIC, FUNDER } from './fixtures';
+import { CLAIMED_VOUCHER, CLINIC, FUNDER, FUNDED_VOUCHER } from './fixtures';
 import { mockBackend, useMockWallet } from './helpers';
 
 /**
@@ -176,4 +176,65 @@ test('indexer data is never cached, however patient-shaped it is', async ({ page
   expect(urls.filter((url) => url.includes('localhost:8080'))).toEqual([]);
   expect(paths.filter((path) => /^\/(clinics|vouchers|my)\b/.test(path))).toEqual([]);
   expect(urls.filter((url) => url.includes('_rsc='))).toEqual([]);
+});
+
+test('expiry reminders are opt-in and persist for offline delivery', async ({
+  page,
+  context,
+}) => {
+  const expiresAt = Date.now() + 10 * 24 * 60 * 60 * 1000;
+  const voucher = FUNDED_VOUCHER('expiry-reminder');
+  voucher.expiresAt = new Date(expiresAt).toISOString();
+
+  await context.grantPermissions(['notifications']);
+  await useMockWallet(page, FUNDER);
+  await mockBackend(page, {
+    providers: [CLINIC],
+    vouchers: [voucher],
+    voucherById: { [voucher.id as string]: voucher },
+  });
+  await page.goto('/my');
+  await expect(page.getByRole('link', { name: '#expiry-reminder' })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => (await navigator.serviceWorker.ready).active !== null),
+    )
+    .toBe(true);
+
+  await page.getByRole('button', { name: 'Enable expiry reminders' }).click();
+
+  async function scheduledReminders() {
+    return page.evaluate(
+      () =>
+        new Promise<{ id: string; expiresAt: number; notifyAt: number }[]>(
+          (resolve, reject) => {
+            void navigator.serviceWorker.ready.then((registration) => {
+              const channel = new MessageChannel();
+              channel.port1.onmessage = (event) => {
+                channel.port1.close();
+                resolve(event.data.reminders);
+              };
+              channel.port1.onmessageerror = reject;
+              if (!registration.active) {
+                reject(new Error('No active service worker'));
+                return;
+              }
+              registration.active.postMessage(
+                { type: 'GET_EXPIRY_REMINDERS' },
+                [channel.port2],
+              );
+            }, reject);
+          },
+        ),
+    );
+  }
+
+  await expect
+    .poll(scheduledReminders, { timeout: 15_000, intervals: [100, 250, 500, 1_000] })
+    .toHaveLength(1);
+
+  await context.setOffline(true);
+  const storedReminder = (await scheduledReminders())[0];
+  expect(storedReminder.expiresAt).toBe(expiresAt);
+  expect(storedReminder.notifyAt).toBe(expiresAt - 3 * 24 * 60 * 60 * 1000);
 });
