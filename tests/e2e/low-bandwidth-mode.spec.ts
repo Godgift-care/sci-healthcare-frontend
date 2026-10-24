@@ -51,6 +51,7 @@ test.describe('the setting', () => {
 
     await page.goto('/');
     const toggle = page.getByRole('button', { name: 'Low data mode' });
+    await expect(toggle).toBeVisible();
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 
     await toggle.click();

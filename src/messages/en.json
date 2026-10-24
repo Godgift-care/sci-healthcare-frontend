@@ -9,7 +9,8 @@
     "stats": "Stats",
     "attesters": "Attesters",
     "privacy": "Privacy",
-    "docs": "Docs"
+    "docs": "Docs",
+    "settings": "Settings"
   },
   "footer": {
     "testnetDisclaimer": "Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",

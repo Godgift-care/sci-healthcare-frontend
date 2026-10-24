@@ -11,10 +11,19 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (locales as readonly string[]).includes(value);
 }
 
-export const messages: Record<Locale, typeof en> = {
+/** Canonical message shape. Every locale file must satisfy this. */
+export type Messages = typeof en;
+
+type PartialMessages = DeepPartial<Messages>;
+
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+
+export const messages: Record<Locale, Messages> = {
   en,
-  fr,
-  sw,
+  fr: fr as PartialMessages as Messages,
+  sw: sw as PartialMessages as Messages,
 };
 
 export const localeLabels: Record<Locale, string> = {
