@@ -17,7 +17,12 @@ import type { MockRpcCall } from '@/lib/e2e-seam';
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; args: string[][]; delayMs?: number };
+    __SCI_MOCK_RPC__?: {
+      calls: MockRpcCall[];
+      args: string[][];
+      delayMs?: number;
+      reads?: Record<string, unknown>;
+    };
   }
 }
 
@@ -29,10 +34,11 @@ export async function useMockWallet(
   page: Page,
   address: string,
   delayMs = 0,
+  reads?: Record<string, unknown>,
 ): Promise<void> {
   await page.addInitScript(
     `window.__SCI_MOCK_WALLET__ = { address: '${address}' };
-     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs} };`,
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [], delayMs: ${delayMs}, reads: ${JSON.stringify(reads ?? {})} };`,
   );
   // The analytics script tag is present in the test build; keep the request
   // itself inside the sandbox. (The analytics spec stubs window.plausible,
@@ -69,6 +75,17 @@ export type BackendState = {
   providerStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
   receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
+  /**
+   * `GET /services` service catalogue. Each item is a `ServiceCatalogueItem`
+   * with `code`, `labels`, `clinicCount`, `minPrice`/`maxPrice` and an
+   * optional `providers` array used by the service comparison page.
+   */
+  services?: Record<string, unknown>[];
+  /**
+   * `GET /services/:code` lookup, keyed by service code. Used by the service
+   * comparison page. An omitted code answers 404.
+   */
+  serviceByCode?: Record<string, Record<string, unknown>>;
 };
 
 export async function mockBackend(page: Page, state: BackendState): Promise<void> {
@@ -181,6 +198,23 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
         return json({ message: 'Not found' }, 404);
       }
       return json({ total: providers.length, providers });
+    }
+
+    if (parts[0] === 'services') {
+      const services = state.services ?? [];
+      if (parts.length === 1) {
+        return json({ total: services.length, services });
+      }
+      if (parts.length === 2) {
+        const found = state.serviceByCode?.[parts[1]];
+        if (found) return json(found);
+        const byCode = services.find(
+          (s) => String((s as { code?: unknown }).code) === parts[1],
+        );
+        if (byCode) return json(byCode);
+        return json({ message: 'Not found' }, 404);
+      }
+      return json({ message: 'Not found' }, 404);
     }
 
     if (parts[0] === 'vouchers') {
