@@ -11,6 +11,7 @@ import { useWallet } from '@/lib/wallet';
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
 import { NetworkBadge } from './NetworkBadge';
+import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
@@ -54,7 +55,7 @@ export function SiteHeader() {
   return (
     <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)] print:hidden">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span
               aria-hidden
@@ -74,6 +75,7 @@ export function SiteHeader() {
         </div>
 
         <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          <NotificationBell />
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />
@@ -87,7 +89,7 @@ export function SiteHeader() {
             className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] sm:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
-              {open ? '×' : '☰'}
+              {open ? '×' : 'ⰸ'}
             </span>
           </button>
         </div>

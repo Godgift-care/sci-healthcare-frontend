@@ -148,6 +148,29 @@
     "manualPlaceholder": "k.m. 42 au bandika URL",
     "open": "Fungua"
   },
+  "notifications": {
+    "title": "Arebusha",
+    "open": "Fungua arebusha",
+    "close": "Funga arebusha",
+    "unread": "{count} zisizosomwa",
+    "unreadLabel": "Zisizosomwa {count}",
+    "markAllRead": "Weka zote zimesomwa",
+    "empty": "Hakuna arebusha bado.",
+    "connectWallet": "Unganisha pochi yako kuona arebusha za vocha zako.",
+    "viewVoucher": "Tazama vocha #{id}",
+    "events": {
+      "voucherMinted": "Vocha #{id} iliundwa",
+      "voucherFunded": "Vocha #{id} imefadhiliwa",
+      "voucherClaimed": "Vocha #{id} iliingwa kwa kliniki",
+      "voucherSettled": "Kliniki ilipokea malipo ya vocha #{id}",
+      "disputeOpened": "Mgogoro umefunguliwa kwa vocha #{id}",
+      "disputeWindowClosing": "Dirisha la mgogoro kwa vocha #{id} linakaribia kufungwa",
+      "disputeResolved": "Mgogoro kwa vocha #{id} umetatuliwa",
+      "refundAvailable": "Marupurupu ya vocha #{id} yanapatikana",
+      "voucherExpired": "Vocha #{id} imeisha muda",
+      "generic": "Shughuli mpya kwenye vocha #{id}"
+    }
+  },
   "language": {
     "en": "English",
     "fr": "Français",

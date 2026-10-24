@@ -67,4 +67,80 @@ test.describe('Live updates and SWR cache invalidation (#63, #64)', () => {
     // Wait for the live updates polling fallback to revalidate SWR cache
     await expect(page.getByText('Claimed', { exact: true })).toBeVisible({ timeout: 4000 });
   });
+
+  test('shows a notification in the header when a stream event arrives without a reload', async ({ page }) => {
+    const voucher = FUNDED_VOUCHER('42');
+
+    await useMockWallet(page, FUNDER);
+
+    // Stream endpoint that emits a voucher event on demand.
+    await page.route('http://localhost:8080/stream**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${JSON.stringify({
+          type: 'voucher.claimed',
+          voucherId: voucher.id,
+          message: 'Voucher claimed',
+        })}\n\n`,
+      });
+    });
+
+    await page.route('http://localhost:8080/**', (route) => {
+      const url = new URL(route.request().url());
+      const parts = url.pathname.split('/').filter(Boolean);
+
+      if (parts[0] === 'vouchers' && parts[1] === voucher.id) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ...voucher, receipt: null }),
+        });
+      }
+
+      if (parts[0] === 'vouchers') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ total: 1, vouchers: [voucher] }),
+        });
+      }
+
+      if (parts[0] === 'providers') {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ total: 1, providers: [CLINIC] }),
+        });
+      }
+
+      return route.continue();
+    });
+
+    await page.goto('/');
+
+    // The bell starts with no unread count.
+    const bell = page.getByTestId('notification-bell');
+    await expect(bell).toBeVisible();
+    await expect(bell.getByTestId('notification-unread-count')).toHaveText('0');
+
+    // The mocked stream emits a claimed event; the bell updates live.
+    await expect(bell.getByTestId('notification-unread-count')).toHaveText('1', { timeout: 4000 });
+
+    await bell.click();
+    const panel = page.getByTestId('notification-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText('Voucher claimed')).toBeVisible();
+    await expect(panel.getByRole('link', { name: /Voucher claimed/ })).toHaveAttribute(
+      'href',
+      `/vouchers/${voucher.id}`,
+    );
+
+    // Mark as read and reload; read state persists via localStorage.
+    await panel.getByTestId('notification-mark-read').click();
+    await expect(bell.getByTestId('notification-unread-count')).toHaveText('0');
+
+    await page.reload();
+    await expect(page.getByTestId('notification-bell').getByTestId('notification-unread-count')).toHaveText('0');
+  });
 });

@@ -1,0 +1,18 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/issue-120-feat-web-in-app-notification-centre",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat/issue-120-feat-web-in-app-notification-centre": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat/issue-120-feat-web-in-app-notification-centre",
+    "origin"
+  ]
+}
