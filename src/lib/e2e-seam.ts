@@ -23,6 +23,12 @@ export type MockRpcCall = {
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
+    /**
+     * Simulates the wallet submitting a SEP-7 transaction (#162). Until it is
+     * set the poller keeps waiting; once present the funding panel reports
+     * the hash and moves to its success state.
+     */
+    __SCI_MOCK_SEP7__?: { hash: string };
     __SCI_MOCK_RPC__?: {
       calls: MockRpcCall[];
       /**
@@ -67,4 +73,14 @@ export function mockRpcDelayMs(): number {
 
 export function mockRpcRead(contractId: string, method: string): unknown {
   return window.__SCI_MOCK_RPC__?.reads?.[`${contractId}:${method}`];
+}
+
+/**
+ * The mock SEP-7 submission, or null while the "wallet" has not submitted.
+ * Set by a Playwright test with `page.evaluate`.
+ */
+export function mockSep7Submission(): { hash: string } | null {
+  if (typeof window === 'undefined') return null;
+  const value = window.__SCI_MOCK_SEP7__;
+  return value?.hash ? { hash: value.hash } : null;
 }

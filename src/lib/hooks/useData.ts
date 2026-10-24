@@ -9,6 +9,8 @@ import {
   type Provider,
   type ProviderStats,
   type ReceiptsResponse,
+  type ServiceCatalogueItem,
+  type ServicesResponse,
   type Stats,
   type Voucher,
   type VoucherDetail,
@@ -254,6 +256,50 @@ export function useAttesters(
   return {
     attesters: data?.attesters ?? [],
     total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching the service catalogue (GET /services).
+ */
+export function useServices(config?: SWRConfiguration<ServicesResponse>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ServicesResponse>(
+    'services',
+    () => api.services(),
+    config,
+  );
+
+  return {
+    services: data?.services ?? [],
+    total: data?.total ?? 0,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/**
+ * Hook for fetching and caching a single service's clinic price comparison (GET /services/:code).
+ */
+export function useService(
+  code: number | null | undefined,
+  config?: SWRConfiguration<ServiceCatalogueItem>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<ServiceCatalogueItem>(
+    code ? ['service', code] : null,
+    () => api.service(code!),
+    config,
+  );
+
+  return {
+    service: data ?? null,
     error: error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
