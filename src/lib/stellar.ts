@@ -55,6 +55,16 @@ async function getHorizonServer(): Promise<HorizonServer> {
 
 export type SignFn = (xdrString: string) => Promise<string>;
 
+/**
+ * Where an invocation has got to, reported as it goes so a button can say
+ * what the app is waiting for. Re-exported from the hook that renders it.
+ */
+export type { TransactionStage as TxStage } from './hooks/useTransactionStage';
+import type { TransactionStage } from './hooks/useTransactionStage';
+
+/** Called as an invocation moves from one stage to the next. */
+export type OnStage = (stage: TransactionStage) => void;
+
 export const MIN_FEE_BUFFER_XLM = 1.0;
 export const PATH_PAYMENT_SLIPPAGE_BPS = 100;
 
@@ -513,13 +523,14 @@ export async function invokeContract(
   walletAddress: string,
   sign: SignFn,
   sponsored = false,
+  onStage?: OnStage,
 ): Promise<{ hash: string; returnValue: unknown }> {
   // The whole round trip counts as pending: while it runs, the app warns
   // before the tab is closed or reloaded (see pending-tx.ts and
   // PendingTransactionGuard).
   const finish = beginPendingTransaction();
   try {
-    return await invoke(contractId, method, args, walletAddress, sign, sponsored);
+    return await invoke(contractId, method, args, walletAddress, sign, sponsored, onStage);
   } finally {
     finish();
   }
@@ -558,7 +569,9 @@ async function invoke(
   walletAddress: string,
   sign: SignFn,
   sponsored = false,
+  onStage?: OnStage,
 ): Promise<{ hash: string; returnValue: unknown }> {
+  onStage?.('simulating');
   const { TransactionBuilder, scValToNative } = await loadSdk();
   let sponsor: typeof import('./sponsorship') | undefined;
   if (sponsored) {
@@ -590,6 +603,7 @@ async function invoke(
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
 
+  onStage?.('signing');
   const unsigned = TransactionBuilder.fromXDR(prepared.xdr, config.networkPassphrase);
   if (!('sequence' in unsigned)) throw new Error('Expected an unsigned inner transaction.');
   const signed = sponsor
@@ -597,7 +611,9 @@ async function invoke(
     : TransactionBuilder.fromXDR(await sign(prepared.xdr), config.networkPassphrase);
 
   const server = await getServer();
+  onStage?.('submitting');
   const sent = await server.sendTransaction(signed);
+  onStage?.('confirming');
   if (sent.status === 'ERROR') {
     throw new Error(
       `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,

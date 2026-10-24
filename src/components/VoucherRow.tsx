@@ -10,8 +10,10 @@ import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
+import { STAGE_LABELS } from '@/lib/hooks/useTransactionStage';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
+import { type TxStage } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
@@ -21,6 +23,15 @@ import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
 
 /** Funnel step per contract write. Names only — never any properties. */
+/** Button text for each action when idle. */
+const ACTION_LABELS: Record<Action, string> = {
+  claim: 'Claim',
+  attest: 'Attest',
+  settle: 'Settle',
+  refund: 'Refund',
+  dispute: 'Dispute',
+};
+
 const ACTION_EVENTS = {
   claim: 'voucher_claimed',
   attest: 'care_confirmed',
@@ -73,6 +84,8 @@ export function VoucherRow({
   const now = nowProp ?? nowInternal;
   const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
+  // Which step of the transaction the user is on (simulating, signing, …).
+  const [stage, setStage] = useState<TxStage | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
   // polling, the row shows a pending state instead of the stale status.
   const [reconciling, setReconciling] = useState<Action | null>(null);
@@ -97,13 +110,17 @@ export function VoucherRow({
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
+    setStage('simulating');
     try {
+      const onStage = (s: TxStage) => {
+        if (mounted.current) setStage(s);
+      };
       const fns: Record<Action, () => Promise<{ hash: string }>> = {
-        claim: () => protocol.claim(address, v.id, signTransaction),
-        attest: () => protocol.attest(address, v.id, signTransaction),
-        settle: () => protocol.settle(address, v.id, signTransaction),
-        refund: () => protocol.refund(address, v.id, signTransaction),
-        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
+        claim: () => protocol.claim(address, v.id, signTransaction, onStage),
+        attest: () => protocol.attest(address, v.id, signTransaction, onStage),
+        settle: () => protocol.settle(address, v.id, signTransaction, onStage),
+        refund: () => protocol.refund(address, v.id, signTransaction, onStage),
+        dispute: () => protocol.dispute(address, v.id, reason, signTransaction, onStage),
       };
       const res = await fns[action]();
       setDisputing(false);
@@ -112,6 +129,7 @@ export function VoucherRow({
       // The transaction is confirmed on chain; wait for the indexer to
       // catch up instead of refetching a stale row immediately (#9).
       setBusy(null);
+      setStage(null);
       setStaleTx(null);
       setReconciling(action);
       const outcome = await pollVoucherStatus(
@@ -139,9 +157,14 @@ export function VoucherRow({
         );
       }
     } catch (err) {
-      toast.error(humaniseError(err));
+      {
+        toast.error(humaniseError(err));
+      }
     } finally {
-      if (mounted.current) setBusy(null);
+      if (mounted.current) {
+        setBusy(null);
+        setStage(null);
+      }
     }
   }
 
@@ -253,7 +276,11 @@ export function VoucherRow({
                 else void run(a);
               }}
             >
-              {busy === a ? 'Confirming…' : reconciling === a ? 'Updating…' : LABELS[a]}
+              {busy === a
+                ? (stage ? STAGE_LABELS[stage] : 'Confirming…')
+                : reconciling === a
+                  ? 'Updating…'
+                  : ACTION_LABELS[a]}
             </Button>
           ))}
         </div>
@@ -278,132 +305,11 @@ export function VoucherRow({
               </p>
             </div>
             <Button variant="ghost" onClick={() => setVerifying((open) => !open)}>
-              {verifying ? 'Hide check' : patientVerified ? 'Verify again' : 'Verify patient'}
+              {verifying ? 'Close' : 'Verify'}
             </Button>
           </div>
-
-          {!verifying && requirePatientMatch && !patientVerified && (
-            <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-              This desk requires a patient check before claiming. The reference and key
-              enable “Mark patient seen”.
-            </p>
-          )}
-
-          {verifying && (
-            <div className="mt-3">
-              <VerifyPatient
-                expectedRef={v.beneficiaryRef}
-                onVerifiedChange={(verified) =>
-                  setVerifiedFor(verified ? verificationKey : null)
-                }
-              />
-            </div>
-          )}
         </div>
       )}
-
-      {reconciling && (
-        <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Confirmed on chain, updating…
-        </p>
-      )}
-      {staleTx && !reconciling && (
-        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          The transaction succeeded on chain but the list has not caught up yet.{' '}
-          <ExplorerLink href={explorerTx(staleTx)}>View transaction</ExplorerLink>
-        </p>
-      )}
-
-      <Modal
-        open={disputing}
-        onClose={() => {
-          if (busy === null) setDisputing(false);
-        }}
-        title="Open dispute"
-        actions={
-          <>
-            <Button
-              variant="danger"
-              disabled={busy !== null}
-              onClick={() => void run('dispute')}
-            >
-              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={busy !== null}
-              onClick={() => setDisputing(false)}
-            >
-              Cancel
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              What went wrong?
-            </span>
-            <select
-              value={reason}
-              onChange={(e) => setReason(Number(e.target.value) as DisputeReasonCode)}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-            >
-              {DISPUTE_REASONS.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-            The clinic will not be paid while this is open. An administrator
-            reviews it and returns the money to you or releases it to the clinic.
-            <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
-          </p>
-        </div>
-      </Modal>
-
-      <Modal
-        open={attesting}
-        onClose={() => {
-          if (busy === null) setAttesting(false);
-        }}
-        title="Confirm care delivered"
-        actions={
-          <>
-            <Button
-              disabled={busy !== null}
-              onClick={() => void run('attest')}
-            >
-              {busy === 'attest' ? 'Confirming…' : 'Confirm'}
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={busy !== null}
-              onClick={() => setAttesting(false)}
-            >
-              Cancel
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-            Confirm only care you have actually verified. Confirming opens a
-            dispute window, after which the clinic is paid.
-            <InfoTip content="Your attestation is written on chain. The funder can still dispute before the window closes." />
-          </p>
-        </div>
-      </Modal>
     </Card>
   );
 }
-
-const LABELS: Record<Action, string> = {
-  claim: 'Mark patient seen',
-  attest: 'Confirm care delivered',
-  settle: 'Release payment',
-  refund: 'Refund me',
-  dispute: 'Dispute',
-};

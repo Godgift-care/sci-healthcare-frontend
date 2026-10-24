@@ -13,6 +13,7 @@ import {
   invokeContractBatch,
   invokePathPaymentThenContract,
   prepareContractInvocation,
+  type OnStage,
   readContract,
   type ContractCall,
   type PreparedInvocation,
@@ -94,7 +95,7 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false) {
+  async create(params: CreateVoucherParams, sign: SignFn, onStage?: OnStage, sponsored = false) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
@@ -102,6 +103,7 @@ export const voucher = {
       params.funder,
       sign,
       sponsored,
+      onStage,
     );
   },
 
@@ -130,6 +132,7 @@ export const voucher = {
     params: CreateVoucherParams & { swapAmount: bigint },
     sign: SignFn,
     slippageBps = 100,
+    onStage?: OnStage,
   ) {
     const args = createVoucherArgs(params);
     return invokePathPaymentThenContract(
@@ -209,7 +212,7 @@ export const voucher = {
   },
 
   /** claim(provider, voucher_id) */
-  async claim(provider: string, voucherId: string, sign: SignFn) {
+  async claim(provider: string, voucherId: string, sign: SignFn, onStage?: OnStage) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('claim', {
       provider,
@@ -219,7 +222,7 @@ export const voucher = {
   },
 
   /** attest(attester, voucher_id) */
-  async attest(attester: string, voucherId: string, sign: SignFn) {
+  async attest(attester: string, voucherId: string, sign: SignFn, onStage?: OnStage) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('attest', {
       attester,
@@ -229,7 +232,7 @@ export const voucher = {
   },
 
   /** dispute(funder, voucher_id, reason_code) */
-  async dispute(funder: string, voucherId: string, reasonCode: number, sign: SignFn) {
+  async dispute(funder: string, voucherId: string, reasonCode: number, sign: SignFn, onStage?: OnStage) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('dispute', {
       funder,
@@ -240,7 +243,7 @@ export const voucher = {
   },
 
   /** settle(voucher_id) — permissionless, so any address may submit it. */
-  async settle(caller: string, voucherId: string, sign: SignFn) {
+  async settle(caller: string, voucherId: string, sign: SignFn, onStage?: OnStage) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('settle', {
       voucher_id: BigInt(voucherId),
@@ -249,7 +252,7 @@ export const voucher = {
   },
 
   /** refund(voucher_id) — permissionless. */
-  async refund(caller: string, voucherId: string, sign: SignFn) {
+  async refund(caller: string, voucherId: string, sign: SignFn, onStage?: OnStage) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('refund', {
       voucher_id: BigInt(voucherId),
@@ -356,6 +359,7 @@ export const registry = {
     name: string,
     country: string,
     sign: SignFn,
+    onStage?: OnStage,
   ) {
     const client = getRegistryClient();
     const args = client.spec.funcArgsToScVals('register_provider', {
@@ -369,6 +373,8 @@ export const registry = {
       args,
       owner,
       sign,
+      false,
+      onStage,
     );
   },
 
@@ -379,6 +385,7 @@ export const registry = {
     label: string,
     price: bigint,
     sign: SignFn,
+    onStage?: OnStage,
   ) {
     const client = getRegistryClient();
     const args = client.spec.funcArgsToScVals('upsert_service', {
@@ -393,11 +400,13 @@ export const registry = {
       args,
       provider,
       sign,
+      false,
+      onStage,
     );
   },
 
   /** remove_service(provider_addr, code). Funded vouchers are unaffected. */
-  async removeService(provider: string, code: number, sign: SignFn) {
+  async removeService(provider: string, code: number, sign: SignFn, onStage?: OnStage) {
     const client = getRegistryClient();
     const args = client.spec.funcArgsToScVals('remove_service', {
       provider_addr: provider,
@@ -409,6 +418,8 @@ export const registry = {
       args,
       provider,
       sign,
+      false,
+      onStage,
     );
   },
 
@@ -461,7 +472,7 @@ export const faucet = {
   enabled: (): boolean => isTestnet && Boolean(config.contracts.faucet),
 
   /** drip(to) -> i128. Mints the daily amount of test USDC to `to`. */
-  async drip(to: string, sign: SignFn) {
+  async drip(to: string, sign: SignFn, opts: { onStage?: OnStage } = {}) {
     const client = getFaucetClient();
     const args = client.spec.funcArgsToScVals('drip', { to });
     return invokeContract(config.contracts.faucet, 'drip', args, to, sign);
