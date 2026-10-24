@@ -38,7 +38,9 @@ service worker's rules are all written down there.
 
 Two sentences it makes concrete, and that the rest of this file depends on:
 **reads go to the indexer over HTTP, and writes go from the browser straight
-to Soroban RPC.** The backend is never in the write path.
+to Soroban RPC.** Optional testnet fee sponsorship adds a sign-only backend
+round trip before browser submission; see [the sponsor contract](docs/sponsored-fees.md).
+The sponsor never receives a wallet key and must not submit transactions.
 
 ## Non-negotiables
 
