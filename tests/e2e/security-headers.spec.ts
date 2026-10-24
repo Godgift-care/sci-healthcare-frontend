@@ -129,7 +129,10 @@ test('normal use on every route reports no violations', async ({ page }) => {
 
   for (const route of routes) {
     await page.goto(route);
-    await page.waitForLoadState('networkidle');
+    // networkidle never settles while the live-update stream is open, so
+    // wait for the DOM and then for the page to finish its first render.
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(500);
     expect(await violations(page), `violations on ${route}`).toEqual([]);
   }
 });

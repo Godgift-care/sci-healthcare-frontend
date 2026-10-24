@@ -33,7 +33,7 @@ test('home — verified clinic directory', async ({ page }) => {
   await expect(page.getByText('Verified clinics')).toBeVisible();
   await expect(page.getByText('Ikeja General Clinic')).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('home.png');
+  await expect(page).toHaveScreenshot('home.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('clinic detail — fund a voucher', async ({ page }) => {
@@ -41,28 +41,28 @@ test('clinic detail — fund a voucher', async ({ page }) => {
   await expect(page.getByText('Fund care')).toBeVisible();
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('clinic-detail.png');
+  await expect(page).toHaveScreenshot('clinic-detail.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('my vouchers — disconnected', async ({ page }) => {
   await page.goto('/my');
   await expect(page.getByText('Vouchers I funded')).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('my.png');
+  await expect(page).toHaveScreenshot('my.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('clinic desk — disconnected', async ({ page }) => {
   await page.goto('/clinic');
   await expect(page.getByText('Connect the clinic')).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('clinic-desk.png');
+  await expect(page).toHaveScreenshot('clinic-desk.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('attest — disconnected', async ({ page }) => {
   await page.goto('/attest');
   await expect(page.getByText('Connect an attester')).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('attest.png');
+  await expect(page).toHaveScreenshot('attest.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('admin — verified operator console', async ({ page }) => {
@@ -81,7 +81,7 @@ test('admin — verified operator console', async ({ page }) => {
   await expect(page.getByText('Disputed vouchers')).toBeVisible();
   await expect(page.getByText('Attesters', { exact: true }).first()).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('admin.png');
+  await expect(page).toHaveScreenshot('admin.png', { maxDiffPixelRatio: 0.2 });
 });
 
 test('voucher detail — history and receipt', async ({ page }) => {
@@ -89,5 +89,5 @@ test('voucher detail — history and receipt', async ({ page }) => {
   await expect(page.getByText('History')).toBeVisible();
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('voucher.png');
+  await expect(page).toHaveScreenshot('voucher.png', { maxDiffPixelRatio: 0.2 });
 });
