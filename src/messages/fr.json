@@ -30,7 +30,10 @@
   },
   "home": {
     "verifiedClinics": "Cliniques vérifiées",
-    "noClinics": "Aucune clinique enregistrée pour le moment."
+    "noClinics": "Aucune clinique enregistrée pour le moment.",
+    "noClinicsHint": "Les cliniques apparaîtront ici dès qu'elles s'enregistreront et seront vérifiées. Si vous gérez une clinique, commencez par l'enregistrer.",
+    "noClinicsAction": "Enregistrer une clinique",
+    "noClinicsActionLink": "/clinic"
   },
   "voucher": {
     "voucherNumber": "Bon #{id}",
@@ -75,6 +78,8 @@
     "register": "S'enregistrer",
     "services": "Services",
     "noServices": "Aucun service répertorié pour le moment. Les bailleurs ne peuvent financer que les services répertoriés.",
+    "noServicesHint": "Ajoutez un service avec un code et un prix pour que les bailleurs puissent le financer. Utilisez une catégorie générique, jamais un diagnostic.",
+    "noServicesAction": "Lister un service",
     "code": "Code {code}",
     "edit": "Modifier",
     "delist": "Deréférencer",
@@ -88,6 +93,8 @@
     "serviceNote": "Utilisez une catégorie de service générale, jamais un diagnostic. Les codes sont publics. Un nouveau prix s'applique aux bons financés à partir de maintenant.",
     "incomingVouchers": "Bons entrants",
     "noIncoming": "Aucun bon pour cette clinique pour le moment.",
+    "noIncomingHint": "Les bons apparaîtront ici dès que des bailleurs financent un service. Partagez votre lien de clinique avec les patients pour qu'ils présentent leur bon à l'accueil.",
+    "noIncomingAction": "Lister un service",
     "earnings": "Revenus",
     "earningsNote": "Trésorerie de cette clinique : soins réglés, paiements en attente et frais de protocole payés.",
     "earningsSettled": "Réglé",
@@ -101,6 +108,8 @@
     "earningsMonth": "Mois",
     "earningsTotal": "Total",
     "earningsEmpty": "Aucun revenu réglé ou en attente pour le moment.",
+    "earningsEmptyHint": "Les revenus apparaîtront ici dès que des bons sont remboursés. Listez un service pour commencer à recevoir des bons.",
+    "earningsEmptyAction": "Lister un service",
     "earningsUnavailable": "Les revenus sont temporairement indisponibles. Le reste du bureau fonctionne toujours.",
     "filterByStatus": "Filtrer par statut",
     "allStatuses": "Tous",
