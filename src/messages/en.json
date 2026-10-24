@@ -52,6 +52,7 @@
     "shareReceiptText": "Proof of care delivered on {clinic} for this voucher.",
     "shareReceiptCopied": "Share text copied!",
     "shareReceiptUnavailable": "Sharing is not available on this device.",
+    "shareReceiptFailed": "Could not share the receipt. Please try again.",
     "presentAtDesk": "Present at Clinic Desk",
     "presentNote": "Show this QR code upon arrival at the clinic. The desk can scan it instantly to look up and claim your voucher.",
     "scanToView": "Scan to view #{id}",

@@ -129,6 +129,8 @@ jobs:
         with:
           name: lighthouse-results
           path: .lighthouseci/
+          if-no-files-found: warn
+          retention-days: 14
 
   visual:
     name: visual
