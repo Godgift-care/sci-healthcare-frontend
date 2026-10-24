@@ -309,13 +309,14 @@ export async function invokeContract(
   args: xdr.ScVal[],
   walletAddress: string,
   sign: SignFn,
+  sponsored = false,
 ): Promise<{ hash: string; returnValue: unknown }> {
   // The whole round trip counts as pending: while it runs, the app warns
   // before the tab is closed or reloaded (see pending-tx.ts and
   // PendingTransactionGuard).
   const finish = beginPendingTransaction();
   try {
-    return await invoke(contractId, method, args, walletAddress, sign);
+    return await invoke(contractId, method, args, walletAddress, sign, sponsored);
   } finally {
     finish();
   }
@@ -353,28 +354,44 @@ async function invoke(
   args: xdr.ScVal[],
   walletAddress: string,
   sign: SignFn,
+  sponsored = false,
 ): Promise<{ hash: string; returnValue: unknown }> {
   const { TransactionBuilder, scValToNative } = await loadSdk();
+  let sponsor: typeof import('./sponsorship') | undefined;
+  if (sponsored) {
+    // Keep fee-bump validation off the ordinary wallet/read-page bundle.
+    sponsor = await import('./sponsorship');
+    if (contractId !== config.contracts.voucher || method !== 'create_voucher' || args.length !== 6) {
+      throw new Error('Only voucher funding can use sponsored fees.');
+    }
+    const amount: unknown = scValToNative(args[4]);
+    if (typeof amount !== 'bigint') throw new Error('Invalid sponsored voucher amount.');
+    sponsor.requireSponsorship(amount);
+  }
 
   // Playwright end-to-end tests (see e2e-seam.ts): record the invocation and
   // return a canned submission instead of building, simulating and sending
   // a real transaction. Crafting Soroban simulation payloads over HTTP
   // would couple the tests to SDK internals; this keeps the same
   // `{ hash, returnValue }` shape the UI consumes.
-  const prepared = await prepareContractInvocation(
+  const prepared = await prepareInvocation(
     contractId,
     method,
     args,
     walletAddress,
+    !sponsored,
   );
-  if (isMockRpc()) {
+  if (isMockRpc() && !sponsored) {
     const delay = mockRpcDelayMs();
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
 
-  const signedXdr = await sign(prepared.xdr);
-  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  const unsigned = TransactionBuilder.fromXDR(prepared.xdr, config.networkPassphrase);
+  if (!('sequence' in unsigned)) throw new Error('Expected an unsigned inner transaction.');
+  const signed = sponsor
+    ? await sponsor.sponsorTransaction(unsigned, sign)
+    : TransactionBuilder.fromXDR(await sign(prepared.xdr), config.networkPassphrase);
 
   const server = await getServer();
   const sent = await server.sendTransaction(signed);
@@ -425,7 +442,18 @@ export async function prepareContractInvocation(
   args: xdr.ScVal[],
   source: string,
 ): Promise<PreparedInvocation> {
-  if (isMockRpc()) {
+  return prepareInvocation(contractId, method, args, source, true);
+}
+
+/** Sponsored calls must exercise real preparation even in the browser test seam. */
+async function prepareInvocation(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  source: string,
+  allowMock: boolean,
+): Promise<PreparedInvocation> {
+  if (allowMock && isMockRpc()) {
     recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
     return {
       // Not a real envelope: Playwright only checks that the SEP-7 URI is

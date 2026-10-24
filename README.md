@@ -58,7 +58,7 @@ Contract ids are already in `vercel.json`. Vercel will prompt for one variable,
 
 ## Two properties worth stating up front
 
-**Non-custodial.** The app never holds, requests, or transmits a secret key. Transactions are built and simulated in the browser, signed in the user's wallet, and submitted straight to Soroban RPC. The backend is not in the write path.
+**Non-custodial.** The app never holds, requests, or transmits a wallet secret key. Transactions are built and simulated in the browser, signed in the user's wallet, and submitted straight to Soroban RPC. Optional testnet fee sponsorship sends the signed transaction to a sponsor for a fee-bump signature before browser submission; see [sponsored fees](docs/sponsored-fees.md).
 
 **Nothing identifying leaves the browser.** The patient reference and its secret key are used locally, via Web Crypto HMAC-SHA256, to derive an opaque 32-byte value. The identifier and key are never sent to the API, never logged, and never written to the ledger.
 
@@ -97,6 +97,7 @@ Every one of these is inlined into the client bundle at **build** time.
 | Variable | Example |
 | --- | --- |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8080` |
+| `NEXT_PUBLIC_SPONSORED_FEES` | `(optional) true enables opt-in testnet fee sponsorship; unset disables it. Requires the separate sponsor backend described in docs/sponsored-fees.md.` |
 | `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet` |
 | `NEXT_PUBLIC_SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` |
 | `NEXT_PUBLIC_NETWORK_PASSPHRASE` | `Test SDF Network ; September 2015` |
