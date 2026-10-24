@@ -18,6 +18,7 @@ function required(name: string, value: string | undefined): string {
 }
 
 export const config = {
+  sponsoredFees: process.env.NEXT_PUBLIC_SPONSORED_FEES === 'true',
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
   network: process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet',
   rpcUrl:
