@@ -1,5 +1,6 @@
 'use client';
 
+import { StrKey } from '@stellar/stellar-sdk';
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
 
@@ -16,7 +17,12 @@ import {
 } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { beneficiaryRef, generateKey, localIdentity } from '@/lib/beneficiary';
-import { invalidateVouchers, useProvider, useVouchers } from '@/lib/hooks';
+import {
+  invalidateVouchers,
+  useProvider,
+  useUsdcTrustline,
+  useVouchers,
+} from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -30,7 +36,7 @@ import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
-import { useTxStage } from '@/lib/useTxStage';
+import { useTransactionStage } from '@/lib/hooks';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
@@ -81,6 +87,10 @@ const UNKNOWN_STATUS = {
   className: 'bg-slate-100 text-slate-600 ring-slate-200',
 };
 
+function isValidAddress(value: string): boolean {
+  return StrKey.isValidEd25519PublicKey(value);
+}
+
 export default function ClinicPage({
   params,
 }: {
@@ -88,6 +98,9 @@ export default function ClinicPage({
 }) {
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
+
+  // Validate the route parameter before it reaches any API or contract call.
+  if (!isValidAddress(address)) notFound();
 
   const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
   // Until the funder changes the basket, the clinic's first active service
@@ -138,7 +151,7 @@ export default function ClinicPage({
   const [reviewing, setReviewing] = useState(false);
   const [sponsored, setSponsored] = useState(false);
   const [busy, setBusy] = useState(false);
-  const txStage = useTxStage();
+  const txStage = useTransactionStage();
   const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
     ReturnType<typeof quoteXlmForUsdc>
   > | null>(null);
@@ -152,6 +165,11 @@ export default function ClinicPage({
     failed: { label: string; error: string }[];
   } | null>(null);
   const toast = useToast();
+
+  // The wallet's USDC trustline (#1): checked on connect, before the fund
+  // button is offered, so funding never dies at signing with a raw token
+  // error. `missing` swaps the fund button for a one-click fix.
+  const trustline = useUsdcTrustline();
 
   useEffect(() => {
     if (!wallet) return;
@@ -180,15 +198,18 @@ export default function ClinicPage({
   } = useVouchers({ provider: address, status: 'Settled', limit: 1 });
 
   // The amount as base units, or null while the field is not a number.
+  // Taken from `amount` — the typed override for a single service, the
+  // basket total otherwise (the field is read-only there) — because that is
+  // exactly what `fund()` signs: the quote, the review screen, the balance
+  // warning and the disabled state must all describe the same number.
   const baseAmount = useMemo(() => {
-    if (selectedServices.length > 0) return selectionTotal;
     try {
       const v = toBaseUnits(amount);
       return v > 0n ? v : null;
     } catch {
       return null;
     }
-  }, [amount, selectedServices.length, selectionTotal]);
+  }, [amount]);
 
   function toggleService(service: Service) {
     setSelectedCodes((current) => {
@@ -300,6 +321,11 @@ export default function ClinicPage({
       toast.error('Sponsored funding requires one voucher up to 100 USDC and enough USDC in your wallet.');
       return;
     }
+
+    // Belt and braces: the review screen and the fund button are both hidden
+    // without a trustline, but funding a wallet that cannot hold USDC would
+    // only fail at signing.
+    if (trustline.status === 'missing') return;
 
     // A preset window is counted from now; a custom date is the last second
     // of the day the funder picked. Checked once, before anything is signed,
@@ -752,6 +778,26 @@ export default function ClinicPage({
               </div>
             )}
 
+            {/* The faucet card's own trustline instructions would talk over
+                the one-click prompt below, so it stays out of the way here. */}
+            <TestUsdc compact trustlineHint={false} />
+
+            {trustline.status === 'missing' && (
+              <Alert kind="info">
+                <p>
+                  A trustline is your wallet agreeing to hold USDC — press{' '}
+                  <strong>Add USDC</strong> and approve the one-time request in
+                  your wallet.
+                </p>
+                <Button
+                  className="mt-3"
+                  disabled={trustline.adding}
+                  onClick={() => void trustline.add()}
+                >
+                  {trustline.adding ? 'Check your wallet…' : 'Add USDC'}
+                </Button>
+              </Alert>
+            )}
             {sponsorshipAvailable() && (
               <div className="space-y-2 text-sm">
                 <label className="flex items-start gap-2">
@@ -769,25 +815,48 @@ export default function ClinicPage({
 
             <TestUsdc compact />
 
-            <Button
-              onClick={() => {
-                if (!wallet) {
-                  connect();
-                  return;
+            {trustline.status === 'ready' && trustline.balance !== null && (
+              <p className="text-sm">
+                USDC balance:{' '}
+                <span className="mono font-medium">
+                  ${formatUsdc(trustline.balance)}
+                </span>
+              </p>
+            )}
+
+            {trustline.balance !== null &&
+              baseAmount !== null &&
+              trustline.balance < baseAmount && (
+                <Alert>
+                  Your USDC balance is ${formatUsdc(trustline.balance)}, below
+                  the ${formatUsdc(baseAmount)} voucher amount. Top up before
+                  funding.
+                </Alert>
+              )}
+
+            {trustline.status !== 'missing' && (
+              <Button
+                onClick={() => {
+                  if (!wallet) {
+                    connect();
+                    return;
+                  }
+                  setReviewing(true);
+                }}
+                disabled={
+                  busy || trustline.status === 'checking' || (insufficientUsdcBalance && !xlmSwapQuote)
                 }
-                setReviewing(true);
-              }}
-              disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
-              className="w-full"
-            >
-              {busy
-                ? txStage.label ?? 'Confirming…'
-                : wallet
-                  ? xlmSwapQuote && selectedServices.length === 1
-                    ? 'Swap XLM & fund voucher'
-                    : `Fund ${selectedServices.length === 1 ? 'voucher' : `${selectedServices.length} vouchers`}`
-                  : 'Connect wallet'}
-            </Button>
+                className="w-full"
+              >
+                {busy
+                  ? (txStage.label ?? 'Confirming…')
+                  : wallet
+                    ? xlmSwapQuote && selectedServices.length === 1
+                      ? 'Swap XLM & fund voucher'
+                      : `Fund ${selectedServices.length === 1 ? 'voucher' : `${selectedServices.length} vouchers`}`
+                    : 'Connect wallet'}
+              </Button>
+            )}
 
             {selected && baseAmount !== null && !useSponsor && (
               <Sep7FundPanel

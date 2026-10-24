@@ -249,9 +249,14 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
   });
 }
 
+/** Every call recorded by the RPC mock, in call order. */
+export async function mockCalls(page: Page): Promise<MockRpcCall[]> {
+  return page.evaluate(() => window.__SCI_MOCK_RPC__?.calls ?? []);
+}
+
 /** Contract writes recorded by the RPC mock, in call order. */
 export async function mockInvokes(page: Page): Promise<MockRpcCall[]> {
-  const calls = await page.evaluate(() => window.__SCI_MOCK_RPC__?.calls ?? []);
+  const calls = await mockCalls(page);
   return calls.filter((c) => c.kind === 'invoke');
 }
 

@@ -9,9 +9,9 @@ import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
 import type { VoucherStatus } from '@/lib/api';
 import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
-import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
+import { humaniseError, isWalletRejection, REGISTRY_ERRORS } from '@/lib/errors';
 import { useLiveUpdates, useProvider, useProviderStats, useProviderVouchers, useVouchers } from '@/lib/hooks';
-import { useTxStage } from '@/lib/tx-stage';
+import { useTransactionStage } from '@/lib/hooks';
 import { registry, type ProviderStanding } from '@/lib/protocol';
 import type { TxStage } from '@/lib/stellar';
 import {
@@ -105,7 +105,7 @@ export default function ClinicDeskPage() {
   const [busy, setBusy] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const toast = useToast();
-  const { label: stageLabel, onStage, reset: resetStage } = useTxStage();
+  const { label: stageLabel, onStage, reset: resetStage } = useTransactionStage();
 
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
@@ -167,12 +167,6 @@ export default function ClinicDeskPage() {
     void mutateStats();
     void mutateEarningsVouchers();
   };
-
-  function isWalletRejection(err: unknown): boolean {
-    if (!err || typeof err !== 'object') return false;
-    const message = 'message' in err ? String((err as { message?: unknown }).message ?? '') : '';
-    return /reject|denied|cancel|user declin/i.test(message);
-  }
 
   const services = (provider?.services ?? []).filter((s) => s.active !== false);
 

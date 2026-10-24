@@ -48,6 +48,7 @@
     "viewContract": "Voir le contrat de bon",
     "copyLink": "Copier le lien",
     "linkCopied": "Lien copié !",
+    "addToCalendar": "Ajouter au calendrier",
     "presentAtDesk": "À présenter à l'accueil de la clinique",
     "presentNote": "Présentez ce code QR à votre arrivée à la clinique. L'accueil peut le scanner instantanément pour trouver et réclamer votre bon.",
     "scanToView": "Scanner pour voir #{id}",

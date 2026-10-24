@@ -9,7 +9,8 @@ import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
-import { invalidateVouchers, useNow, useTransactionStage } from '@/lib/hooks';
+import { invalidateVouchers, useNow } from '@/lib/hooks';
+import { STAGE_LABELS } from '@/lib/hooks/useTransactionStage';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
 import { type TxStage } from '@/lib/stellar';
@@ -22,6 +23,15 @@ import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
 
 /** Funnel step per contract write. Names only — never any properties. */
+/** Button text for each action when idle. */
+const ACTION_LABELS: Record<Action, string> = {
+  claim: 'Claim',
+  attest: 'Attest',
+  settle: 'Settle',
+  refund: 'Refund',
+  dispute: 'Dispute',
+};
+
 const ACTION_EVENTS = {
   claim: 'voucher_claimed',
   attest: 'care_confirmed',
@@ -147,9 +157,7 @@ export function VoucherRow({
         );
       }
     } catch (err) {
-      if (isWalletRejection(err)) {
-        toast.info('Cancelled in wallet');
-      } else {
+      {
         toast.error(humaniseError(err));
       }
     } finally {
@@ -268,7 +276,11 @@ export function VoucherRow({
                 else void run(a);
               }}
             >
-              {busy === a ? stageLabel(stage) : reconciling === a ? 'Updating…' : LABELS[a]}
+              {busy === a
+                ? (stage ? STAGE_LABELS[stage] : 'Confirming…')
+                : reconciling === a
+                  ? 'Updating…'
+                  : ACTION_LABELS[a]}
             </Button>
           ))}
         </div>
