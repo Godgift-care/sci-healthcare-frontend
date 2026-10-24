@@ -6,12 +6,12 @@ import { useEffect, useId, useState } from 'react';
 
 import { NavLink } from '@/components/ui';
 import { useAdminAccess } from '@/lib/hooks';
-import { NotificationBell } from './NotificationBell';
 import { useWallet } from '@/lib/wallet';
 
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
 import { NetworkBadge } from './NetworkBadge';
+import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [

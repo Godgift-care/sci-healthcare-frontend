@@ -118,7 +118,7 @@ function describeKind(kind: string | undefined, voucherId: string | undefined): 
   const suffix = voucherId ? ` #${voucherId}` : '';
   switch (kind?.toLowerCase()) {
     case 'claimed':
-      return `Voucher${suffix} claime`;
+      return `Voucher${suffix} claimed`;
     case 'dispute':
     case 'disputed_window_closing':
       return `Dispute window closing for voucher${suffix}`;
@@ -173,7 +173,7 @@ function toTimestamp(value: unknown): number | undefined {
  */
 export function useNotifications(): NotificationStore {
   const [events, setEvents] = useState<NotificationEvent[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>=(new Set());
+  const [readIds, setReadIds] = useState<Set<string>>(new Set<string>());
 
   // Handle read state from storage on mount (not during render, to avoid hydration mismatch).
   useEffect(() => {
@@ -211,7 +211,7 @@ export function useNotifications(): NotificationStore {
     setEvents([]);
   }, []);
 
-  const unreadCount = events.reduce((acc, e) => (acc + (readIds.has(e.id) ? 0 : 1)), 0);
+  const unreadCount = events.reduce((acc, e) => acc + (readIds.has(e.id) ? 0 : 1), 0);
 
   return { events, unreadCount, markAllRead, markRead, addEvent, clear };
 }
