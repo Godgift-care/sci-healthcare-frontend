@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useServices } from '@/lib/hooks';
 import { formatUsdc } from '@/lib/amounts';
 import { Alert, Button, Card, Empty } from '@/components/ui';
+import { SkeletonCard } from '@/components/Skeleton';
 
 export default function ServicesPage() {
   const [query, setQuery] = useState('');
@@ -121,7 +122,11 @@ export default function ServicesPage() {
 
         {error && <Alert>{error}</Alert>}
         {loading && !error && (
-          <p className="text-sm text-[var(--color-ink-soft)]">Loading services …</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         )}
 
         {!loading && !error && services.length === 0 && (
@@ -141,7 +146,7 @@ export default function ServicesPage() {
 
         {!loading && !error && services.length > 0 && visible.length === 0 && (
           <Empty
-            title="No services match your search"
+            title="No services match your search."
             description="Try a broader term, or clear the search to see the full catalogue."
             action={
               <Button variant="ghost" onClick={clearFilters}>
