@@ -12,6 +12,7 @@ import { problemReportUrl } from '@/lib/report-problem';
 import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
+import { SkeletonDetail } from '@/components/Skeleton';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
@@ -67,7 +68,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   // An unknown voucher number is a missing page, not an API failure.
   if (rawError instanceof ApiError && rawError.status === 404) notFound();
   if (error) return <Alert>{error}</Alert>;
-  if (!v) return <p className="text-sm text-[var(--color-ink-soft)]">{t('common.loading')}</p>;
+  if (!v) return <SkeletonDetail />;
 
   // Offer the actions this wallet can take. settle and refund are
   // permissionless, so anyone may trigger them once they are due.
