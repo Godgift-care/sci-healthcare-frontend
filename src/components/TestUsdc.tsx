@@ -85,6 +85,9 @@ export function TestUsdc({
   const coolingDown = nextAt > 0;
   const idleLabel = drip ? `Get ${formatUsdc(drip)} test USDC` : 'Get test USDC';
   const buttonLabel = tx.label ?? (coolingDown ? 'Come back tomorrow' : idleLabel);
+  const stageText = tx.stages?.length
+    ? tx.stages.map((s) => `${s.done ? '✓' : '…'} ${s.label}`).join(' · ')
+    : null;
 
   const body = (
     <>
@@ -109,6 +112,17 @@ export function TestUsdc({
           {buttonLabel}
         </Button>
       </div>
+
+      {tx.busy && stageText && (
+        <ol className="mt-2 space-y-1 text-xs text-[var(--color-ink-soft)]" aria-live="polite">
+          {tx.stages.map((s) => (
+            <li key={s.label} className="flex items-center gap-2">
+              <span aria-hidden="true">{s.done ? '✓' : '…'}</span>
+              <span>{s.label}</span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       {coolingDown && (
         <p className="mt-2 text-xs text-[var(--color-ink-soft)]">

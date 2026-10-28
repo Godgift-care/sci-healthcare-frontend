@@ -105,17 +105,17 @@ test('pageviews use normalized routes, never identifiers', async ({ page }) => {
   // before moving on.
   await page.goto('/');
   await expectPageviews(page, ['http://127.0.0.1:3100/']);
-  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER]);
+  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER, PATIENT_KEY]);
 
   await page.goto(`/clinics/${PROVIDER}`);
   await expect(page.getByText('Fund care')).toBeVisible();
   await expectPageviews(page, ['http://127.0.0.1:3100/clinics/[address]']);
-  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER]);
+  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER, PATIENT_KEY]);
 
   await page.goto('/vouchers/7');
   await expect(page.getByText('History')).toBeVisible();
   await expectPageviews(page, ['http://127.0.0.1:3100/vouchers/[id]']);
-  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER]);
+  expectNoIdentifiers(await analyticsEvents(page), [FUNDER, PROVIDER, PATIENT_KEY]);
 });
 
 test('funding records a prop-less event', async ({ page }) => {
@@ -156,8 +156,11 @@ test('claiming records a prop-less event', async ({ page }) => {
   });
 
   await page.goto('/clinic');
+  await expect(page.getByRole('heading', { name: /clinic/i }).first()).toBeVisible({ timeout: 15000 });
   // Claiming needs a matching patient check at the desk (#33).
-  await page.getByRole('button', { name: 'Verify patient' }).click();
+  const verify = page.getByRole('button', { name: 'Verify patient' });
+  await expect(verify).toBeVisible({ timeout: 30000 });
+  await verify.click();
   await page.getByLabel('Patient reference').fill(PATIENT_IDENTIFIER);
   await page.getByLabel('Patient secret key').fill(PATIENT_KEY);
   await page.getByRole('button', { name: 'Check patient' }).click();
@@ -172,7 +175,7 @@ test('claiming records a prop-less event', async ({ page }) => {
     .toContain('voucher_claimed');
 
   const events = await analyticsEvents(page);
-  expectNoIdentifiers(events, [FUNDER, PROVIDER]);
+  expectNoIdentifiers(events, [FUNDER, PROVIDER, PATIENT_IDENTIFIER, PATIENT_KEY]);
   for (const e of funnelEvents(events)) {
     expect(e).toHaveLength(1);
   }
@@ -199,7 +202,7 @@ test('core web vitals are reported once per page view', async ({ page }) => {
   const events = await analyticsEvents(page);
   const vitals = coreVitalsEvents(events);
   // No identifiers in any vitals payload.
-  expectNoIdentifiers(vitals, [FUNDER, PROVIDER]);
+  expectNoIdentifiers(vitals, [FUNDER, PROVIDER, PATIENT_KEY]);
 
   // Navigating away and back must not double-report for the same page view.
   await page.goto(`/clinics/${PROVIDER}`);

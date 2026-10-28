@@ -19,6 +19,7 @@ test('attester confirms care delivered', async ({ page }) => {
   await page.goto('/attest');
 
   await expect(page.getByText('Awaiting confirmation')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirm care delivered' })).toBeEnabled();
   await page.getByRole('button', { name: 'Confirm care delivered' }).click();
 
   // Attesting pays the clinic after the dispute window, so it confirms in a modal.
@@ -45,6 +46,7 @@ test.describe('keyboard workflow', () => {
   test('j/k move between claims and `a` opens the confirmation', async ({ page }) => {
     await page.goto('/attest');
     await expect(page.getByText('#23')).toBeVisible();
+    await expect(page.locator('[aria-current="true"]')).toBeVisible();
     const selected = page.locator('[aria-current="true"]');
 
     await page.keyboard.press('j');

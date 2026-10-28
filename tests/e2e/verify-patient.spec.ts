@@ -90,6 +90,8 @@ test('checks the patient locally before the clinic claims', async ({ page, conte
   expect(sent).not.toContain(PATIENT_IDENTIFIER);
 
   await claim.click();
+  // Claiming goes through a review step before submission.
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
   await expect(page.getByText('Done.')).toBeVisible();
   expect(await mockInvokes(page)).toContainEqual({
     kind: 'invoke',
