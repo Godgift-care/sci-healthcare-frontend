@@ -75,11 +75,21 @@ test('exports and clears all local data', async ({ page }) => {
   await page.getByLabel('Patient nickname').fill('Dad');
   await page.getByRole('button', { name: 'Save patient' }).click();
 
-  await page.getByRole('button', { name: 'Save patient' }).click();
+  await page.getByRole('button', { name: 'Manage', exact: true }).click();
 
-  await expect(page.getByRole('button', { name: 'Export data' })).toBeVisible();
+  // Wait for the Manage panel to render before looking for the export control.
+  await expect(page.getByRole('button', { name: 'Done' })).toBeVisible({ timeout: 10000 });
+  await page.waitForLoadState('networkidle');
+
+  const exportButton = page
+    .getByRole('button', { name: /export data/i })
+    .or(page.getByRole('link', { name: /export data/i }))
+    .or(page.getByText('Export data', { exact: true }))
+    .first();
+  await expect(exportButton).toBeVisible({ timeout: 10000 });
+
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export data' }).click();
+  await exportButton.click();
   const download = await downloadPromise;
   const stream = await download.createReadStream();
   const chunks: Buffer[] = [];

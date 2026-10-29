@@ -12,8 +12,8 @@
     "docs": "Documentation"
   },
   "footer": {
-    "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
-    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque."
+    "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de bénéficiaire opaque.",
+    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de bénéficiaire opaque."
   },
   "common": {
     "loading": "Chargement…",
@@ -51,7 +51,7 @@
     "viewContract": "Voir le contrat de bon",
     "copyLink": "Copier le lien",
     "linkCopied": "Lien copié !",
-    "presentAtDesk": "È présenter à l'accueil de la clinique",
+    "presentAtDesk": "À présenter à l'accueil de la clinique",
     "presentNote": "Présentez ce code QR à votre arrivée à la clinique. L'accueil peut le scanner instantanément pour trouver et réclamer votre bon.",
     "scanToView": "Scanner pour voir #{id}",
     "printPass": "Imprimer le pass de bon",
@@ -82,9 +82,9 @@
     "noServicesAction": "Lister un service",
     "code": "Code {code}",
     "edit": "Modifier",
-    "delist": "Deréférencer",
-    "confirmDelist": "Confirmer le derÉférencement",
-    "delistNote": "Le derÉférencement empêche les nouveaus bons pour ce service. Les bons déjà financés conservent leur montant convenu et se règlent normalement.",
+    "delist": "Déréférencer",
+    "confirmDelist": "Confirmer le déréférencement",
+    "delistNote": "Le déréférencement empêche les nouveaux bons pour ce service. Les bons déjà financés conservent leur montant convenu et se règlent normalement.",
     "updateService": "Mettre à jour le service {code}",
     "listService": "Lister un service",
     "codePlaceholder": "Code (101)",
@@ -152,7 +152,7 @@
     "title": "Scanner le QR du bon patient",
     "instructions": "Pointez la caméra vers le code QR du bon du patient pour l'ouvrir automatiquement.",
     "requestingCamera": "Demande de caméra…",
-    "cameraUnavailable": "Caléra indisponible",
+    "cameraUnavailable": "Caméra indisponible",
     "manualPrompt": "Ou entrez le numéro de bon manuellement",
     "manualPlaceholder": "ex. 42 ou collez l'URL",
     "open": "Ouvrir"
@@ -167,13 +167,13 @@
     "title": "Paramètres",
     "data": {
       "title": "Mes données sur cet appareil",
-      "description": "Patients enregistrés, clés, favoris et préférences sont conservés dans ce votre navigateur. Vérifiez et supprimez ces données à tout moment.",
-      "export": "Téljárger toutes les données (JSON)",
+      "description": "Patients enregistrés, clés, favoris et préférences sont conservés dans votre navigateur. Vérifiez et supprimez ces données à tout moment.",
+      "export": "Télécharger toutes les données (JSON)",
       "exportNote": "Inclut toutes les clés de stockage local de l'application. Conservez ce fichier en sécurité.",
       "clear": "Effacer toutes les données de cet appareil",
-      "clearNote": "Supprime toutes les clés de l'application de ce browser. Cette action est irréversible.",
+      "clearNote": "Supprime toutes les clés de l'application de ce navigateur. Cette action est irréversible.",
       "clearConfirm": "Effacer toutes les données ?",
-      "clearConfirmNote": "Ceci supprimera définitivement les patients enregistrés, les clés, les favoris et les préférences de ce browser.",
+      "clearConfirmNote": "Ceci supprimera définitivement les patients enregistrés, les clés, les favoris et les préférences de ce navigateur.",
       "clearAction": "Effacer définitivement",
       "cleared": "Toutes les données de l'application ont été supprimées de cet appareil.",
       "exported": "Données téléchargées.",
@@ -181,8 +181,8 @@
       "keys": "Clés stockées",
       "keyCount": "{count} clés",
       "size": "{size} Ko",
-      "refresh": "Rafraichir",
-      "unavailable": "Le stockage local est indisponible dans ce votre navigateur."
+      "refresh": "Rafraîchir",
+      "unavailable": "Le stockage local est indisponible dans ce navigateur."
     }
   }
 }
