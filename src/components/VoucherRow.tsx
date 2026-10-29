@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
-import { formatDate, formatUsdc, timeUntil, timeSince } from '@/lib/amounts';
+import { formatDate, formatUsdc, timeUntil, timeSince, toAmountInput } from '@/lib/amounts';
 import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
@@ -61,6 +61,7 @@ export function VoucherRow({
   onDone,
   summary = true,
   now: nowProp,
+  disabled = false,
   ref,
   requirePatientMatch = false,
 }: {
@@ -71,6 +72,11 @@ export function VoucherRow({
   summary?: boolean;
   /** Optional current time in ms (e.g., from parent using useNow). Falls back to internal useNow. */
   now?: number;
+  /**
+   * True while the page is settling several vouchers: the batch is already
+   * writing, so a second write on the same row would only fail.
+   */
+  disabled?: boolean;
   ref?: Ref<VoucherRowHandle>;
   /**
    * Hold the claim button until the patient's reference and key match this
@@ -184,6 +190,12 @@ export function VoucherRow({
     },
   }));
 
+  const fundAgainParams = new URLSearchParams({
+    service: String(v.serviceCode),
+    amount: toAmountInput(v.amount),
+  });
+  const fundAgainHref = `/clinics/${encodeURIComponent(v.provider.address)}?${fundAgainParams}`;
+
   return (
     // Without the summary, the first hint or button row sits at the top.
     <Card className={summary ? 'p-5' : 'p-5 [&>:first-child]:mt-0'}>
@@ -216,6 +228,13 @@ export function VoucherRow({
           </div>
         </div>
       )}
+
+      <Link
+        href={fundAgainHref}
+        className="mt-3 inline-flex items-center rounded-md border border-[var(--color-line)] px-3 py-1.5 text-sm font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-canvas)]"
+      >
+        Fund again
+      </Link>
 
       {v.status === 'Attested' && v.disputeDeadline && !v.isSettleable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
@@ -266,6 +285,7 @@ export function VoucherRow({
               key={a}
               variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
               disabled={
+                disabled ||
                 busy !== null ||
                 reconciling !== null ||
                 (a === 'claim' && requirePatientMatch && !patientVerified)
@@ -310,6 +330,101 @@ export function VoucherRow({
           </div>
         </div>
       )}
+
+      {reconciling && (
+        <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
+          Confirmed on chain, updating…
+        </p>
+      )}
+      {staleTx && !reconciling && (
+        <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
+          The transaction succeeded on chain but the list has not caught up yet.{' '}
+          <ExplorerLink href={explorerTx(staleTx)}>View transaction</ExplorerLink>
+        </p>
+      )}
+
+      <Modal
+        open={disputing}
+        onClose={() => {
+          if (busy === null) setDisputing(false);
+        }}
+        title="Open dispute"
+        actions={
+          <>
+            <Button
+              variant="danger"
+              disabled={disabled || busy !== null}
+              onClick={() => void run('dispute')}
+            >
+              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy !== null}
+              onClick={() => setDisputing(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <label className="block">
+            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              What went wrong?
+            </span>
+            <select
+              value={reason}
+              onChange={(e) => setReason(Number(e.target.value) as DisputeReasonCode)}
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+            >
+              {DISPUTE_REASONS.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+            The clinic will not be paid while this is open. An administrator
+            reviews it and returns the money to you or releases it to the clinic.
+            <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
+          </p>
+        </div>
+      </Modal>
+
+      <Modal
+        open={attesting}
+        onClose={() => {
+          if (busy === null) setAttesting(false);
+        }}
+        title="Confirm care delivered"
+        actions={
+          <>
+            <Button
+              disabled={disabled || busy !== null}
+              onClick={() => void run('attest')}
+            >
+              {busy === 'attest' ? 'Confirming…' : 'Confirm'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy !== null}
+              onClick={() => setAttesting(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+            Confirm only care you have actually verified. Confirming opens a
+            dispute window, after which the clinic is paid.
+            <InfoTip content="Your attestation is written on chain. The funder can still dispute before the window closes." />
+          </p>
+        </div>
+      </Modal>
     </Card>
   );
 }
