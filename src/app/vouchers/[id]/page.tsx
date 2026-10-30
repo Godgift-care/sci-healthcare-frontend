@@ -12,9 +12,11 @@ import { problemReportUrl } from '@/lib/report-problem';
 import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
+import { SkeletonDetail } from '@/components/Skeleton';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { Alert, Button, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /**
@@ -41,6 +43,10 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const names = useNameIndex();
   const [copied, setCopied] = useState(false);
 
+  function voucherShareMessage() {
+    const url = new URL(`/vouchers/${id}`, window.location.origin).toString();
+    return `A healthcare voucher is ready for you: ${url}`;
+  }
   // Validate before any hook fires a request: an invalid id is a missing page.
   const validId = isValidVoucherId(id);
 
@@ -55,6 +61,21 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
+  async function shareVoucher() {
+    const message = voucherShareMessage();
+    if (typeof navigator.share !== 'function') {
+      await copyLink();
+      return;
+    }
+    try {
+      await navigator.share({ title: 'Healthcare voucher', text: message });
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        await copyLink();
+      }
+    }
+  }
+
   const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   // Per-step transaction hashes (#18). An indexer without the events
   // endpoint (backend #13) yields an empty list and the history renders
@@ -66,7 +87,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   // An unknown voucher number is a missing page, not an API failure.
   if (rawError instanceof ApiError && rawError.status === 404) notFound();
   if (error) return <Alert>{error}</Alert>;
-  if (!v) return <p className="text-sm text-[var(--color-ink-soft)]">{t('common.loading')}</p>;
+  if (!v) return <SkeletonDetail />;
 
   // Offer the actions this wallet can take. settle and refund are
   // permissionless, so anyone may trigger them once they are due.
@@ -78,6 +99,29 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         : (['settle', 'refund'] as const);
 
   const steps = voucherTimeline(v, v.receipt, now, stepTxHashes(events));
+
+  function addToCalendar() {
+    if (!v || typeof window === 'undefined') return;
+    const expiresAtMs =
+      typeof v.expiresAt === 'string' ? Date.parse(v.expiresAt) : v.expiresAt.getTime();
+    const expiresAt = Math.floor(expiresAtMs / 1000);
+    const ics = buildVoucherExpiryIcs({
+      id: v.id,
+      expiresAt,
+      serviceLabel: v.serviceLabel ?? `Service ${v.serviceCode}`,
+      voucherUrl: window.location.href,
+    });
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `voucher-${v.id}-expiry.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // Public facts only: the builder takes a narrow shape and deliberately
   // drops the beneficiary reference, funder address and every patient value
   // (#138).
@@ -87,6 +131,8 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     service: v.serviceLabel ?? `Service ${v.serviceCode}`,
     clinic: v.provider.name,
   });
+  const shareMessage = voucherShareMessage();
+  const encodedShareMessage = encodeURIComponent(shareMessage);
 
   return (
     <div className="voucher-print-page space-y-6 print:space-y-3">
@@ -124,6 +170,28 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
                 </>
               )}
             </button>
+            <button
+              type="button"
+              onClick={() => void shareVoucher()}
+              className="inline-flex items-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+              aria-label="Share voucher"
+            >
+              Share
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodedShareMessage}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+            >
+              WhatsApp
+            </a>
+            <a
+              href={`sms:?body=${encodedShareMessage}`}
+              className="inline-flex items-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+            >
+              SMS
+            </a>
           </div>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">
             {v.serviceLabel ?? `Service ${v.serviceCode}`}
@@ -190,7 +258,19 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
             </Field>
           </div>
-          <Field label={t('voucher.expires')}>{formatDate(v.expiresAt, locale)}</Field>
+          <Field label={t('voucher.expires')}>
+            <div className="flex items-center gap-2">
+              {formatDate(v.expiresAt, locale)}
+              <button
+                type="button"
+                onClick={addToCalendar}
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-ink)]"
+                aria-label={t('voucher.addToCalendar')}
+              >
+                {t('voucher.addToCalendar')}
+              </button>
+            </div>
+          </Field>
           {v.status === 'Settled' && v.settledNet && (
             <Field label={t('voucher.clinicReceived')}>
               <span className="mono">${formatUsdc(v.settledNet, locale)}</span>
