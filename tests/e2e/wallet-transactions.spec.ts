@@ -175,7 +175,9 @@ test.describe('Wallet transaction history (#165)', () => {
 
   test('says so when the indexer has no event log to read', async ({ page }) => {
     // No event log in the mock: the endpoint answers 404, exactly like an
-    // indexer that predates backend #13.
+    // indexer that predates backend #13. Drop the earlier mock first so its
+    // event-log route does not keep answering.
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await mockBackend(page, {
       provider: CLINIC,
       vouchers: [FUNDED_VOUCHER, CLINIC_VOUCHER],
