@@ -214,7 +214,7 @@ export default function MyPage() {
     setError(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
+      await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
       setActiveRef(ref);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load history');
@@ -282,10 +282,10 @@ export default function MyPage() {
       const patient = await parsePatientBackup(input);
       // Saved into the same store as every other saved patient, and
       // selected, so it appears in the patient picker straight away.
-      if (!localIdentity.save(patient.nickname, patient.identifier, patient.key)) {
+      if (!(await localIdentity.save(patient.nickname, patient.identifier, patient.key))) {
         throw new Error('This device could not save the patient. Is storage blocked?');
       }
-      localIdentity.select(patient.nickname);
+      await localIdentity.select(patient.nickname);
       setIdentifier(patient.identifier);
       setSecret(patient.key);
       setError(null);
