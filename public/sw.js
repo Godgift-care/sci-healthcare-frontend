@@ -28,6 +28,9 @@
  */
 
 const CACHE = 'sci-healthcare-shell-v1';
+const REMINDER_DB = 'sci-healthcare-reminders-v1';
+const REMINDER_STORE = 'reminders';
+const REMINDER_SYNC_TAG = 'expiry-reminders';
 
 /** Everything needed to paint the frame with no network at all. */
 const SHELL = [
@@ -66,6 +69,101 @@ self.addEventListener('activate', (event) => {
     })(),
   );
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SET_EXPIRY_REMINDERS') {
+    event.waitUntil(replaceReminders(event.data.reminders));
+    return;
+  }
+  if (event.data?.type === 'GET_EXPIRY_REMINDERS') {
+    event.waitUntil(
+      (async () => {
+        const reminders = await readReminders();
+        event.ports[0]?.postMessage({ reminders });
+      })(),
+    );
+  }
+});
+
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === REMINDER_SYNC_TAG) event.waitUntil(showDueReminders());
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow('/my'));
+});
+
+function openReminderDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(REMINDER_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(REMINDER_STORE, { keyPath: 'id' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function replaceReminders(reminders) {
+  if (!Array.isArray(reminders)) return;
+  const db = await openReminderDb();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(REMINDER_STORE, 'readwrite');
+    const store = transaction.objectStore(REMINDER_STORE);
+    store.clear();
+    for (const reminder of reminders) {
+      if (
+        typeof reminder?.id === 'string' &&
+        Number.isFinite(reminder.notifyAt) &&
+        Number.isFinite(reminder.expiresAt)
+      ) {
+        store.put(reminder);
+      }
+    }
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+  db.close();
+  await showDueReminders();
+}
+
+async function readReminders() {
+  const db = await openReminderDb();
+  const reminders = await new Promise((resolve, reject) => {
+    const request = db.transaction(REMINDER_STORE).objectStore(REMINDER_STORE).getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return reminders;
+}
+
+async function showDueReminders() {
+  const reminders = await readReminders();
+  const now = Date.now();
+  const due = reminders.filter((reminder) => reminder.notifyAt <= now);
+  for (const reminder of due) {
+    await self.registration.showNotification('Voucher expiry reminder', {
+      body: 'You have an upcoming voucher deadline. Open SCI Healthcare for details.',
+      tag: `expiry-${reminder.id}`,
+      data: { url: '/my' },
+    });
+  }
+  if (due.length) {
+    const db = await openReminderDb();
+    const transaction = db.transaction(REMINDER_STORE, 'readwrite');
+    const store = transaction.objectStore(REMINDER_STORE);
+    for (const reminder of due) store.delete(reminder.id);
+    await new Promise((resolve, reject) => {
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+    db.close();
+  }
+}
 
 /** Immutable build output and the shell's own files. */
 function isShellAsset(url) {
