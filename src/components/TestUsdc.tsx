@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
 import { config } from '@/lib/config';
-import { FAUCET_ERRORS, humaniseError } from '@/lib/errors';
+import { FAUCET_ERRORS, humaniseError, isWalletRejection } from '@/lib/errors';
+import { useTransactionStage } from '@/lib/hooks/useTransactionStage';
 import { faucet, usdc } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
 
@@ -32,8 +33,8 @@ export function TestUsdc({
   // Ledger time of the next allowed drip; 0 when one is allowed now.
   const [nextAt, setNextAt] = useState<number>(0);
   const [drip, setDrip] = useState<bigint | null>(null);
-  const [busy, setBusy] = useState(false);
   const [needsTrustline, setNeedsTrustline] = useState(false);
+  const tx = useTransactionStage();
   const toast = useToast();
 
   const [reloads, setReloads] = useState(0);
@@ -63,22 +64,30 @@ export function TestUsdc({
 
   async function getUsdc() {
     if (!address) return void connect();
-    setBusy(true);
+    tx.reset();
     setNeedsTrustline(false);
     try {
-      await faucet.drip(address, signTransaction);
+      await faucet.drip(address, signTransaction, { onStage: tx.onStage });
       refresh();
     } catch (err) {
+      if (isWalletRejection(err)) {
+        tx.onCancelled();
+        return;
+      }
       const msg = humaniseError(err, FAUCET_ERRORS);
       if (/trustline/i.test(msg)) setNeedsTrustline(true);
       else toast.error(msg);
     } finally {
-      setBusy(false);
+      tx.reset();
     }
   }
 
   const coolingDown = nextAt > 0;
-  const label = drip ? `Get ${formatUsdc(drip)} test USDC` : 'Get test USDC';
+  const idleLabel = drip ? `Get ${formatUsdc(drip)} test USDC` : 'Get test USDC';
+  const buttonLabel = tx.label ?? (coolingDown ? 'Come back tomorrow' : idleLabel);
+  const stageText = tx.stages?.length
+    ? tx.stages.map((s) => `${s.done ? '✓' : '…'} ${s.label}`).join(' · ')
+    : null;
 
   const body = (
     <>
@@ -97,12 +106,23 @@ export function TestUsdc({
         </div>
         <Button
           variant="ghost"
-          disabled={busy || coolingDown}
+          disabled={tx.busy || coolingDown}
           onClick={() => void getUsdc()}
         >
-          {busy ? 'Confirming…' : coolingDown ? 'Come back tomorrow' : label}
+          {buttonLabel}
         </Button>
       </div>
+
+      {tx.busy && stageText && (
+        <ol className="mt-2 space-y-1 text-xs text-[var(--color-ink-soft)]" aria-live="polite">
+          {tx.stages.map((s) => (
+            <li key={s.label} className="flex items-center gap-2">
+              <span aria-hidden="true">{s.done ? '✓' : '…'}</span>
+              <span>{s.label}</span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       {coolingDown && (
         <p className="mt-2 text-xs text-[var(--color-ink-soft)]">

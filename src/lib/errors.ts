@@ -236,3 +236,16 @@ export function humaniseHorizonResult(
   }
   return `The Stellar network could not accept this request (HTTP ${status}). Try again.`;
 }
+
+/**
+ * Whether the wallet reported that the user declined the transaction.
+ *
+ * Wallets have no shared error code for this, so the message is matched.
+ * A rejection is the user's own choice, so callers show a calm notice
+ * rather than an error.
+ */
+export function isWalletRejection(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const message = 'message' in err ? String((err as { message?: unknown }).message ?? '') : '';
+  return /reject|denied|cancel|user declin/i.test(message);
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useCallback } from 'react';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
@@ -10,7 +11,7 @@ import { settleableVouchers } from '@/lib/batch-settle';
 import type { VoucherStatus } from '@/lib/api';
 import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
-import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
+import { humaniseError, isWalletRejection, REGISTRY_ERRORS } from '@/lib/errors';
 import {
   useLiveUpdates,
   useProvider,
@@ -18,7 +19,9 @@ import {
   useProviderVouchers,
   useVouchers,
 } from '@/lib/hooks';
+import { useTransactionStage } from '@/lib/hooks';
 import { registry, voucher as protocol, type ProviderStanding } from '@/lib/protocol';
+import type { TxStage } from '@/lib/stellar';
 import {
   VOUCHER_STATUSES,
   filterVouchers,
@@ -112,6 +115,7 @@ export default function ClinicDeskPage() {
   const [busy, setBusy] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const toast = useToast();
+  const { label: stageLabel, onStage, reset: resetStage } = useTransactionStage();
 
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
@@ -226,11 +230,15 @@ export default function ClinicDeskPage() {
     }
   }
 
-  async function submit(fn: () => Promise<{ hash: string }>, table = REGISTRY_ERRORS) {
+  async function submit(
+    fn: (onStage: (stage: TxStage) => void) => Promise<{ hash: string }>,
+    table = REGISTRY_ERRORS,
+  ) {
     if (!address) return void connect();
     setBusy(true);
+    resetStage();
     try {
-      const res = await fn();
+      const res = await fn(onStage);
       setConfirmRemove(null);
       refreshAll();
       toast.success(
@@ -241,9 +249,14 @@ export default function ClinicDeskPage() {
         </>,
       );
     } catch (err) {
-      toast.error(humaniseError(err, table, locale));
+      if (isWalletRejection(err)) {
+        toast.info(t('common.cancelledInWallet'));
+      } else {
+        toast.error(humaniseError(err, table, locale));
+      }
     } finally {
       setBusy(false);
+      resetStage();
     }
   }
 
@@ -536,12 +549,12 @@ export default function ClinicDeskPage() {
           <Button
             disabled={busy || !name || country.length !== 2}
             onClick={() =>
-              void submit(() =>
-                registry.registerProvider(address, name, country, signTransaction),
+              void submit((onStage) =>
+                registry.registerProvider(address, name, country, signTransaction, onStage),
               )
             }
           >
-            {busy ? t('common.confirming') : t('clinic.register')}
+            {busy ? stageLabel : t('clinic.register')}
           </Button>
         </Card>
       )}
@@ -576,12 +589,12 @@ export default function ClinicDeskPage() {
                           variant="danger"
                           disabled={busy}
                           onClick={() =>
-                            void submit(() =>
-                              registry.removeService(address, s.code, signTransaction),
+                            void submit((onStage) =>
+                              registry.removeService(address, s.code, signTransaction, onStage),
                             )
                           }
                         >
-                          {busy ? t('common.confirming') : t('clinic.confirmDelist')}
+                          {busy ? stageLabel : t('clinic.confirmDelist')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -644,18 +657,19 @@ export default function ClinicDeskPage() {
           <Button
             disabled={busy || !code || !label || !price}
             onClick={() =>
-              void submit(() =>
+              void submit((onStage) =>
                 registry.upsertService(
                   address,
                   Number(code),
                   label,
                   toBaseUnits(price),
                   signTransaction,
+                  onStage,
                 ),
               )
             }
           >
-            {busy ? t('common.confirming') : editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
+            {busy ? stageLabel : editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
           </Button>
         </Card>
       )}
