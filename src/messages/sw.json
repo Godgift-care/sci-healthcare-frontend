@@ -38,6 +38,7 @@
   },
   "voucher": {
     "voucherNumber": "Vocha #{id}",
+    "recentlyViewed": "Zilizotazamwa hivi karibuni",
     "at": "katika",
     "history": "Historia",
     "fundedBy": "Imefadhiliwa na",
