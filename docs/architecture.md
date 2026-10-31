@@ -184,6 +184,15 @@ Two helpers keep the cache honest after a write:
 - `invalidateProvider(providerAddress?)` — the provider and every `providers` /
   `provider` key.
 
+`DetailLink` disables automatic viewport route prefetch. Clinic and voucher
+links warm their route and SWR data only on hover or keyboard focus through
+`src/lib/detail-prefetch.ts`, which reads `isLowBandwidth()` at event time and
+skips both operations when enabled. Clinic preloads use `['provider', address]`
+and `['vouchers', { provider: address, status: 'Settled', limit: 1 }]`; vouchers
+use `['voucher', id]` and `['voucher-events', id]`, matching the destination hooks.
+SWR deduplicates repeated events and consumes the preloaded promises on navigation.
+The map popup anchors apply the same helper.
+
 Global SWR defaults live in `src/components/SwrProvider.tsx`:
 
 | | normal | low-bandwidth |

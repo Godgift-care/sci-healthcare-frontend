@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
@@ -328,15 +329,15 @@ export default function HomePage() {
                 <ul className="divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]">
                   {unlocated.map((p) => (
                     <li key={p.address}>
-                      <Link
-                        href={`/clinics/${p.address}`}
+                      <DetailLink
+                        detail={{ kind: 'clinic', id: p.address }}
                         className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-[var(--color-canvas)]"
                       >
                         <span>{p.name}</span>
                         <span className="text-xs text-[var(--color-ink-soft)]">
                           {p.country}
                         </span>
-                      </Link>
+                      </DetailLink>
                     </li>
                   ))}
                 </ul>
@@ -382,7 +383,7 @@ function ViewToggle({
 
 function ClinicCard({ provider: p }: { provider: Provider }) {
   return (
-    <Link href={`/clinics/${p.address}`}>
+    <DetailLink detail={{ kind: 'clinic', id: p.address }}>
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -410,7 +411,7 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
           )}
         </ul>
       </Card>
-    </Link>
+    </DetailLink>
   );
 }
 
