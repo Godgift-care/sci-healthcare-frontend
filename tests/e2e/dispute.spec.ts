@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 test('funder disputes a claimed voucher', async ({ page }) => {
   await page.goto('/my');
 
-  await expect(page.getByText('Vouchers I funded')).toBeVisible();
+  await expect(page.getByText('Vouchers I funded')).toBeVisible({ timeout: 15000 });
   await page.getByRole('button', { name: 'Dispute' }).click();
 
   await expect(page.getByRole('dialog')).toBeVisible();

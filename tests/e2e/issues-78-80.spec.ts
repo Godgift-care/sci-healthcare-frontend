@@ -123,6 +123,7 @@ test.describe('Toast notifications for transaction results (#80)', () => {
     });
 
     await page.goto('/my');
+    await expect(page.getByRole('button', { name: 'Dispute' })).toBeVisible();
     await page.getByRole('button', { name: 'Dispute' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Open dispute' }).click();
 
