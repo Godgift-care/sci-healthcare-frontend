@@ -283,38 +283,37 @@ export const localIdentity = {
   },
   select(nickname: string): boolean {
     const { patients } = this.load();
-    if (nickname && !patients.some((patient) => patient.nickname === nickname)) return false;
+    if (!patients.some((patient) => patient.nickname === nickname)) return false;
     return persist({ patients, selectedNickname: nickname });
   },
-  rename(currentNickname: string, newNickname: string): boolean {
-    const cleanNickname = newNickname.trim();
-    if (!cleanNickname) return false;
+  rename(from: string, to: string): boolean {
+    const cleanTo = to.trim();
+    if (!cleanTo) return false;
     const { patients, selectedNickname } = this.load();
+    const index = patients.findIndex((patient) => patient.nickname === from);
+    if (index < 0) return false;
     if (
       patients.some(
-        (patient) =>
-          patient.nickname !== currentNickname &&
-          patient.nickname.toLowerCase() === cleanNickname.toLowerCase(),
+        (patient, i) => i !== index && patient.nickname.toLowerCase() === cleanTo.toLowerCase(),
       )
     ) {
       return false;
     }
-    const next = patients.map((patient) =>
-      patient.nickname === currentNickname
-        ? { ...patient, nickname: cleanNickname }
-        : patient,
+    const next = patients.map((patient, i) =>
+      i === index ? { ...patient, nickname: cleanTo } : patient,
     );
-    if (!next.some((patient) => patient.nickname === cleanNickname)) return false;
     return persist({
       patients: next,
-      selectedNickname: selectedNickname === currentNickname ? cleanNickname : selectedNickname,
+      selectedNickname: selectedNickname === from ? cleanTo : selectedNickname,
     });
   },
   remove(nickname: string): boolean {
     const { patients, selectedNickname } = this.load();
     const next = patients.filter((patient) => patient.nickname !== nickname);
     if (next.length === patients.length) return false;
-    const nextSelected = selectedNickname === nickname ? next.at(-1)?.nickname ?? '' : selectedNickname;
-    return persist({ patients: next, selectedNickname: nextSelected });
+    return persist({
+      patients: next,
+      selectedNickname: selectedNickname === nickname ? next.at(-1)?.nickname ?? '' : selectedNickname,
+    });
   },
 };

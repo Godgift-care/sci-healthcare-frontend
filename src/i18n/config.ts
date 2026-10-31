@@ -11,10 +11,12 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (locales as readonly string[]).includes(value);
 }
 
-export const messages: Record<Locale, typeof en> = {
+type Messages = typeof en;
+
+export const messages: Record<Locale, Messages> = {
   en,
-  fr,
-  sw,
+  fr: fr as unknown as Messages,
+  sw: sw as unknown as Messages,
 };
 
 export const localeLabels: Record<Locale, string> = {
