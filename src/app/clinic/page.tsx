@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
@@ -26,7 +27,6 @@ import {
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
-import { QrScannerModal } from '@/components/QrScannerModal';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, Empty, ExplorerLink } from '@/components/ui';
@@ -75,6 +75,11 @@ function StatusTab({
     </button>
   );
 }
+
+const QrScannerModal = dynamic(
+  () => import('@/components/QrScannerModal').then((module) => module.QrScannerModal),
+  { ssr: false },
+);
 
 const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Unregistered: 'This wallet is not registered as a clinic yet. Register below.',
@@ -313,14 +318,16 @@ export default function ClinicDeskPage() {
         </div>
       </div>
 
-      <QrScannerModal
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={(voucherId) => {
-          setScannerOpen(false);
-          router.push(`/vouchers/${voucherId}`);
-        }}
-      />
+      {scannerOpen && (
+        <QrScannerModal
+          open={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onScan={(voucherId) => {
+            setScannerOpen(false);
+            router.push(`/vouchers/${voucherId}`);
+          }}
+        />
+      )}
 
       {standing !== null && (standing === 'Unregistered' || provider !== null) && (
         <ClinicChecklist
