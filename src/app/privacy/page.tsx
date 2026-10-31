@@ -53,7 +53,7 @@ export default function PrivacyPage() {
         </p>
 
         <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>
                 <th className="px-4 py-3">Field</th>

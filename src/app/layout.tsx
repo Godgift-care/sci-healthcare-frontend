@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
+import { CommandPalette } from '@/components/CommandPalette';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -10,7 +11,6 @@ import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
 import { ToastProvider } from '@/components/Toast';
 import { SiteHeader } from '@/components/SiteHeader';
-import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
 
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   applicationName: 'SCI Healthcare',
   icons: {
     icon: [
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
   },
@@ -50,10 +50,23 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // suppressHydrationWarning: the theme init script sets data-theme before
   // paint, which the server render cannot know (#10).
+  //
+  // dir starts as `ltr` because the server renders English; LocaleProvider
+  // rewrites it from the stored locale (#131), the same way it rewrites
+  // `lang`. Every layout rule below is a logical utility, so the whole tree
+  // follows that one attribute.
   return (
-    <html lang="en" suppressHydrationWarning>
-      {/* Theme before paint (#10): stored override, else the OS setting. */}
-      <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <head>
+        {/* Theme before paint (#10): stored override, else the OS setting.
+            A same-origin script in the server HTML rather than an inline
+            `dangerouslySetInnerHTML` script: React renders inline script
+            content through `innerHTML`, a Trusted Types script sink (#147).
+            Parser-inserted and synchronous, so it still runs before paint. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- runs before
+            paint on purpose; deferring it would flash the wrong theme */}
+        <script src="/theme-init.js" />
+      </head>
       <body>
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
@@ -67,16 +80,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Language for translated text (#5); defaults to English and
                 remembers the visitor's choice. */}
             <LocaleProvider>
-            <TestnetNotice />
+            <div className="print:hidden">
+              <TestnetNotice />
+            </div>
             <SiteHeader />
+            <CommandPalette />
 
-            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0">
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
               <ToastProvider>{children}</ToastProvider>
             </main>
 
-            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6">
+            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="max-w-xl">
                   {isTestnet
@@ -103,6 +119,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </Link>
                   <Link href="/faq" className="hover:text-[var(--color-brand)]">
                     FAQ
+                  </Link>
+                  <Link href="/status" className="hover:text-[var(--color-brand)]">
+                    Status
                   </Link>
                   <a
                     href="https://godgift-care.github.io/sci-healthcare-contracts/"
