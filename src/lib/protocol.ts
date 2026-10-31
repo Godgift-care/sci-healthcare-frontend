@@ -1,3 +1,6 @@
+import { batchSettleMethod } from './batch-settle';
+import type { xdr } from '@stellar/stellar-sdk';
+
 import { config, isTestnet } from './config';
 import {
   FaucetClient,
@@ -10,8 +13,11 @@ import {
   invokeContract,
   invokeContractBatch,
   invokePathPaymentThenContract,
+  prepareContractInvocation,
   readContract,
+  simulateContractFee,
   type ContractCall,
+  type PreparedInvocation,
   type SignFn,
 } from './stellar';
 
@@ -51,6 +57,34 @@ function getFaucetClient() {
   });
 }
 
+export type CreateVoucherParams = {
+  funder: string;
+  beneficiaryRef: string;
+  provider: string;
+  serviceCode: number;
+  amount: bigint;
+  expiresAt: number;
+};
+
+/**
+ * `create_voucher` arguments, shared by the signing flow and the SEP-7
+ * preparation flow so both put exactly the same values on chain.
+ */
+function createVoucherArgs(params: CreateVoucherParams): xdr.ScVal[] {
+  const client = getVoucherClient();
+  const clean = params.beneficiaryRef.startsWith('0x')
+    ? params.beneficiaryRef.slice(2)
+    : params.beneficiaryRef;
+  return client.spec.funcArgsToScVals('create_voucher', {
+    funder: params.funder,
+    beneficiary_ref: Buffer.from(clean, 'hex'),
+    provider: params.provider,
+    service_code: params.serviceCode,
+    amount: params.amount,
+    expires_at: BigInt(params.expiresAt),
+  });
+}
+
 export const voucher = {
   /** get_config() -> Config */
   async admin(): Promise<string> {
@@ -62,35 +96,41 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(
-    params: {
-      funder: string;
-      beneficiaryRef: string;
-      provider: string;
-      serviceCode: number;
-      amount: bigint;
-      expiresAt: number;
-    },
-    sign: SignFn,
-  ) {
-    const client = getVoucherClient();
-    const clean = params.beneficiaryRef.startsWith('0x')
-      ? params.beneficiaryRef.slice(2)
-      : params.beneficiaryRef;
-    const args = client.spec.funcArgsToScVals('create_voucher', {
-      funder: params.funder,
-      beneficiary_ref: Buffer.from(clean, 'hex'),
-      provider: params.provider,
-      service_code: params.serviceCode,
-      amount: params.amount,
-      expires_at: BigInt(params.expiresAt),
-    });
+  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
-      args,
+      createVoucherArgs(params),
       params.funder,
       sign,
+      sponsored,
+    );
+  },
+
+  /** Simulates create_voucher without signing or submitting it. */
+  async estimateCreateFee(params: CreateVoucherParams): Promise<bigint> {
+    return simulateContractFee(
+      config.contracts.voucher,
+      'create_voucher',
+      createVoucherArgs(params),
+      params.funder,
+    );
+  },
+
+  /**
+   * Builds and simulates the same call without signing it, for a SEP-7
+   * payment link (#162): the user's wallet signs and submits the envelope.
+   * `source` is the account that pays, which is the funder.
+   */
+  async prepareCreate(
+    params: CreateVoucherParams,
+    source: string,
+  ): Promise<PreparedInvocation> {
+    return prepareContractInvocation(
+      config.contracts.voucher,
+      'create_voucher',
+      createVoucherArgs(params),
+      source,
     );
   },
 
@@ -99,30 +139,11 @@ export const voucher = {
    * then creates the voucher, in one transaction (#27).
    */
   async createWithXlmSwap(
-    params: {
-      funder: string;
-      beneficiaryRef: string;
-      provider: string;
-      serviceCode: number;
-      amount: bigint;
-      expiresAt: number;
-      swapAmount: bigint;
-    },
+    params: CreateVoucherParams & { swapAmount: bigint },
     sign: SignFn,
     slippageBps = 100,
   ) {
-    const client = getVoucherClient();
-    const clean = params.beneficiaryRef.startsWith('0x')
-      ? params.beneficiaryRef.slice(2)
-      : params.beneficiaryRef;
-    const args = client.spec.funcArgsToScVals('create_voucher', {
-      funder: params.funder,
-      beneficiary_ref: Buffer.from(clean, 'hex'),
-      provider: params.provider,
-      service_code: params.serviceCode,
-      amount: params.amount,
-      expires_at: BigInt(params.expiresAt),
-    });
+    const args = createVoucherArgs(params);
     return invokePathPaymentThenContract(
       config.contracts.voucher,
       'create_voucher',
@@ -239,6 +260,71 @@ export const voucher = {
     return invokeContract(config.contracts.voucher, 'settle', args, caller, sign);
   },
 
+  /**
+   * Settles several vouchers, using the contract's own batch method when its
+   * spec exposes one (contracts #4) and otherwise writing them one by one.
+   *
+   * Only the ids the caller passes are touched; the caller is responsible for
+   * filtering to `isSettleable` (see `@/lib/batch-settle`). Progress is
+   * reported per voucher so the desk can show how far it has got, and a
+   * failure is collected instead of aborting the run: one voucher the
+   * contract rejects must not strand the others. `invoke` simulates first, so
+   * each write is rejected before a signature is requested.
+   *
+   * If the batch write itself fails the fallback settles each remaining
+   * voucher individually. A failed batch cannot have settled any of them —
+   * one transaction is atomic — and a voucher that did land in a batch whose
+   * confirmation timed out answers `InvalidStatus` on the retry, which is
+   * reported as a failure rather than silently counted twice.
+   */
+  async settleMany(
+    caller: string,
+    voucherIds: string[],
+    sign: SignFn,
+    onProgress?: (settled: number, total: number, id: string) => void,
+  ): Promise<{ settled: string[]; failed: Array<{ id: string; error: unknown }> }> {
+    const settled: string[] = [];
+    const failed: Array<{ id: string; error: unknown }> = [];
+    const total = voucherIds.length;
+    if (total === 0) return { settled, failed };
+
+    const batch = total > 1 ? contractBatchSettle() : null;
+    if (batch) {
+      try {
+        const client = getVoucherClient();
+        const args = client.spec.funcArgsToScVals(batch.method, {
+          [batch.argName]: voucherIds.map((id) => BigInt(id)),
+        });
+        await invokeContract(
+          config.contracts.voucher,
+          batch.method,
+          args,
+          caller,
+          sign,
+        );
+        for (const id of voucherIds) {
+          settled.push(id);
+          onProgress?.(settled.length, total, id);
+        }
+        return { settled, failed };
+      } catch {
+        // The spec advertises a batch method the deployed contract rejects.
+        // Nothing was settled, so settle each voucher the ordinary way.
+      }
+    }
+
+    for (const id of voucherIds) {
+      try {
+        await this.settle(caller, id, sign);
+        settled.push(id);
+        onProgress?.(settled.length, total, id);
+      } catch (err) {
+        failed.push({ id, error: err });
+      }
+    }
+    return { settled, failed };
+  },
+
   /** refund(voucher_id) — permissionless. */
   async refund(caller: string, voucherId: string, sign: SignFn) {
     const client = getVoucherClient();
@@ -277,6 +363,20 @@ export const voucher = {
     );
   },
 };
+
+/**
+ * The batch-settle method of the deployed voucher contract, with the name of
+ * its voucher-id argument read off the spec, or null when it only offers the
+ * single `settle`. Contracts #4 is an optional upgrade, so this is asked of
+ * the spec every time rather than assumed.
+ */
+function contractBatchSettle(): { method: string; argName: string } | null {
+  const spec = getVoucherClient().spec;
+  const method = batchSettleMethod(spec.funcs().map((f) => String(f.name)));
+  if (!method) return null;
+  const [input] = spec.getFunc(method).inputs;
+  return input ? { method, argName: String(input.name) } : null;
+}
 
 /** ProviderStatus discriminants in the registry contract, in order. */
 const PROVIDER_STATUSES = ['Pending', 'Active', 'Suspended'] as const;

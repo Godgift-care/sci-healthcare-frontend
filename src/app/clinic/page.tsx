@@ -5,6 +5,9 @@ import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import { trackEvent } from '@/lib/analytics';
+import { settleableVouchers } from '@/lib/batch-settle';
+import type { VoucherStatus } from '@/lib/api';
 import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
@@ -15,17 +18,63 @@ import {
   useProviderVouchers,
   useVouchers,
 } from '@/lib/hooks';
-import { registry, type ProviderStanding } from '@/lib/protocol';
+import { registry, voucher as protocol, type ProviderStanding } from '@/lib/protocol';
+import {
+  VOUCHER_STATUSES,
+  filterVouchers,
+  statusCounts,
+} from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
-import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
+import { Alert, Button, Card, Empty, ExplorerLink } from '@/components/ui';
+import { Sep24Cashout } from '@/components/Sep24Cashout';
+import { Skeleton, SkeletonRow } from '@/components/Skeleton';
 
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
 type Standing = ProviderStanding | 'Unregistered' | null;
+
+/**
+ * One status tab. `aria-pressed` rather than a tablist: the list below is not
+ * a separate panel, and a pressed filter button is announced as one.
+ */
+function StatusTab({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        active
+          ? 'border-transparent bg-[var(--color-brand)] text-white'
+          : 'border-[var(--color-line)] bg-white text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
+      }`}
+    >
+      <span>{children}</span>
+      <span
+        className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+          active ? 'bg-white/20' : 'bg-[var(--color-canvas)]'
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
 
 const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Unregistered: 'This wallet is not registered as a clinic yet. Register below.',
@@ -71,6 +120,22 @@ export default function ClinicDeskPage() {
   const [price, setPrice] = useState('');
   // Delisting takes a second click, like disputing.
   const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
+  // Incoming-voucher filters. A clerk reads one number off a patient's pass,
+  // so the list narrows by status and by that number, together.
+  const [statusFilter, setStatusFilter] = useState<VoucherStatus | null>(null);
+  const [search, setSearch] = useState('');
+
+  // Settling every due voucher in one go, with progress and a summary.
+  const [settleAllBusy, setSettleAllBusy] = useState(false);
+  const [settleProgress, setSettleProgress] = useState<{
+    done: number;
+    total: number;
+    currentId: string;
+  } | null>(null);
+  const [settleSummary, setSettleSummary] = useState<{
+    settled: string[];
+    failed: { id: string; error: string }[];
+  } | null>(null);
 
   // SWR cached reads (#63)
   const { provider, mutate: mutateProvider } = useProvider(address);
@@ -123,6 +188,44 @@ export default function ClinicDeskPage() {
 
   const services = (provider?.services ?? []).filter((s) => s.active !== false);
 
+  // Vouchers past their dispute window, in list order. Everything else is
+  // left alone: a voucher still inside its window cannot be settled, and a
+  // batch must not try.
+  const settleable = settleableVouchers(vouchers);
+
+  async function settleAll() {
+    if (!address) return void connect();
+    const due = settleableVouchers(vouchers);
+    if (due.length === 0) return;
+
+    setSettleAllBusy(true);
+    setSettleSummary(null);
+    setSettleProgress({ done: 0, total: due.length, currentId: due[0].id });
+    try {
+      const { settled, failed } = await protocol.settleMany(
+        address,
+        due.map((v) => v.id),
+        signTransaction,
+        (done, total, currentId) => setSettleProgress({ done, total, currentId }),
+      );
+      // One funnel event per voucher actually released, names only.
+      settled.forEach(() => trackEvent('voucher_settled'));
+      setSettleSummary({
+        settled,
+        failed: failed.map((f) => ({
+          id: f.id,
+          error: humaniseError(f.error, undefined, locale),
+        })),
+      });
+    } catch (err) {
+      toast.error(humaniseError(err, undefined, locale));
+    } finally {
+      setSettleProgress(null);
+      setSettleAllBusy(false);
+      refreshAll();
+    }
+  }
+
   async function submit(fn: () => Promise<{ hash: string }>, table = REGISTRY_ERRORS) {
     if (!address) return void connect();
     setBusy(true);
@@ -155,6 +258,24 @@ export default function ClinicDeskPage() {
   }
 
   const editing = services.some((s) => String(s.code) === code);
+
+  // Counts cover the whole inbox, not the current search, so the tabs stay a
+  // map of what is waiting rather than shrinking as a number is typed.
+  const counts = statusCounts(vouchers);
+  const statusTabs = VOUCHER_STATUSES.filter(
+    (s) => counts[s] > 0 || s === statusFilter,
+  );
+  const visibleVouchers = filterVouchers(vouchers, {
+    status: statusFilter,
+    clinic: null,
+    search,
+  });
+  const filtering = statusFilter !== null || search.trim() !== '';
+
+  function clearFilters() {
+    setStatusFilter(null);
+    setSearch('');
+  }
 
   return (
     <div className="space-y-8">
@@ -201,6 +322,14 @@ export default function ClinicDeskPage() {
         }}
       />
 
+      {standing !== null && (standing === 'Unregistered' || provider !== null) && (
+        <ClinicChecklist
+          status={standing}
+          services={provider?.services ?? []}
+          vouchers={earningsVouchers}
+        />
+      )}
+
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">
           <div>
@@ -232,14 +361,16 @@ export default function ClinicDeskPage() {
                       : '—'}
                 </div>
                 <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-                  {earningsLoading
-                    ? t('common.loading')
-                    : t('clinic.earningsSettledDetail', {
-                        count: clinicStats?.settledVouchers ?? earnings.settledCount,
-                        net: earningsReady
-                          ? `$${formatUsdc(earnings.netReceived, locale)}`
-                          : '—',
-                      })}
+                  {earningsLoading ? (
+                    <Skeleton className="mt-1 h-3 w-28" />
+                  ) : (
+                    t('clinic.earningsSettledDetail', {
+                      count: clinicStats?.settledVouchers ?? earnings.settledCount,
+                      net: earningsReady
+                        ? `$${formatUsdc(earnings.netReceived, locale)}`
+                        : '—',
+                    })
+                  )}
                 </div>
               </Card>
             </div>
@@ -253,13 +384,15 @@ export default function ClinicDeskPage() {
                   {earningsReady ? `$${formatUsdc(earnings.pending, locale)}` : '—'}
                 </div>
                 <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-                  {earningsLoading
-                    ? t('common.loading')
-                    : earningsReady
-                      ? t('clinic.earningsPendingDetail', {
-                          count: earnings.pendingCount,
-                        })
-                      : t('clinic.earningsUnavailable')}
+                  {earningsLoading ? (
+                    <Skeleton className="mt-1 h-3 w-28" />
+                  ) : earningsReady ? (
+                    t('clinic.earningsPendingDetail', {
+                      count: earnings.pendingCount,
+                    })
+                  ) : (
+                    t('clinic.earningsUnavailable')
+                  )}
                 </div>
               </Card>
             </div>
@@ -289,9 +422,10 @@ export default function ClinicDeskPage() {
 
             <Card className="p-4">
               {earningsLoading ? (
-                <p className="text-sm text-[var(--color-ink-soft)]">
-                  {t('common.loading')}
-                </p>
+                <div className="space-y-4 py-2">
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </div>
               ) : earningsError ? (
                 <p className="text-sm text-[var(--color-ink-soft)]">
                   {t('clinic.earningsUnavailable')}
@@ -526,16 +660,159 @@ export default function ClinicDeskPage() {
         </Card>
       )}
 
+      {standing === 'Active' && provider?.country && (
+        <Sep24Cashout
+          account={address}
+          country={provider.country}
+          signTransaction={signTransaction}
+        />
+      )}
+
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t('clinic.incomingVouchers')}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">{t('clinic.incomingVouchers')}</h2>
+          {settleable.length > 0 && (
+            <Button
+              disabled={settleAllBusy}
+              onClick={() => void settleAll()}
+            >
+              {settleAllBusy
+                ? t('clinic.settlingCount', {
+                    done: settleProgress?.done ?? 0,
+                    total: settleProgress?.total ?? settleable.length,
+                  })
+                : t('clinic.settleAll', { count: settleable.length })}
+            </Button>
+          )}
+        </div>
+        {settleProgress && (
+          <div
+            role="status"
+            className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span>{t('clinic.settlingVoucher', { id: settleProgress.currentId })}</span>
+              <span className="mono font-medium">
+                {t('clinic.settledOf', {
+                  done: settleProgress.done,
+                  total: settleProgress.total,
+                })}
+              </span>
+            </div>
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={settleProgress.total}
+              aria-valuenow={settleProgress.done}
+              aria-label={t('clinic.settleAllProgress')}
+              className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line)]"
+            >
+              <div
+                className="h-full bg-[var(--color-brand)] transition-all duration-300"
+                style={{
+                  width: `${(settleProgress.done / settleProgress.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+        {settleSummary && (
+          <div className="space-y-2">
+            {settleSummary.settled.length > 0 && (
+              <Alert kind="success">
+                {t('clinic.settledSummary')}{' '}
+                {settleSummary.settled.map((id) => `#${id}`).join(', ')}.
+              </Alert>
+            )}
+            {settleSummary.failed.length > 0 && (
+              <Alert>
+                {t('clinic.settleFailedSummary')}{' '}
+                {settleSummary.failed
+                  .map((f) => `#${f.id} (${f.error})`)
+                  .join(', ')}
+                .
+              </Alert>
+            )}
+          </div>
+        )}
         {vouchers.length === 0 && <Empty>{t('clinic.noIncoming')}</Empty>}
+        {vouchers.length > 0 && (
+          <Card className="space-y-3 p-4">
+            <div
+              role="group"
+              aria-label={t('clinic.filterByStatus')}
+              className="flex flex-wrap gap-2"
+            >
+              <StatusTab
+                active={statusFilter === null}
+                count={vouchers.length}
+                onClick={() => setStatusFilter(null)}
+              >
+                {t('clinic.allStatuses')}
+              </StatusTab>
+              {statusTabs.map((s) => (
+                <StatusTab
+                  key={s}
+                  active={statusFilter === s}
+                  count={counts[s]}
+                  onClick={() => setStatusFilter(s)}
+                >
+                  {s}
+                </StatusTab>
+              ))}
+            </div>
+            <label className="block">
+              <span className="block text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                {t('clinic.searchVoucherNumber')}
+              </span>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('clinic.searchVoucherPlaceholder')}
+                className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm sm:max-w-xs"
+              />
+            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
+              <span aria-live="polite">
+                {t('clinic.showingVouchers', {
+                  shown: visibleVouchers.length,
+                  total: vouchers.length,
+                })}
+              </span>
+              {filtering && (
+                <Button
+                  variant="ghost"
+                  className="px-3 py-1.5 text-xs"
+                  onClick={clearFilters}
+                >
+                  {t('clinic.clearFilters')}
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+        {vouchers.length > 0 && visibleVouchers.length === 0 && (
+          <Empty>
+            {t('clinic.noMatchingVouchers')}{' '}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="font-medium underline underline-offset-2 hover:no-underline"
+            >
+              {t('clinic.clearFilters')}
+            </button>
+          </Empty>
+        )}
         <div className="space-y-3">
-          {vouchers.map((v) => (
+          {visibleVouchers.map((v) => (
             <VoucherRow
               key={v.id}
               v={v}
               actions={['claim', 'settle']}
               onDone={refreshAll}
+              disabled={settleAllBusy}
+              requirePatientMatch
             />
           ))}
         </div>
