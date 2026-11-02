@@ -27,11 +27,35 @@ export const STAGE_LABELS: Record<TransactionStage, string> = {
  * Label shown when the user rejects the transaction in their wallet.
  * Calm, not an error — the user meant to do this.
  */
+/**
+ * The stages in the order they occur, so progress can be derived from the
+ * one that is current.
+ */
+export const TRANSACTION_STAGES: readonly TransactionStage[] = [
+  'simulating',
+  'signing',
+  'submitting',
+  'confirming',
+];
+
+/** One step of the invocation, for showing progress rather than one label. */
+export interface TransactionStageStep {
+  stage: TransactionStage;
+  label: string;
+  /** True once the invocation has moved past this step. */
+  done: boolean;
+}
+
 export const CANCELLED_LABEL = 'Cancelled in wallet';
 
 export interface UseTransactionStageResult {
   /** The current stage, or null when not busy. */
   stage: TransactionStage | null;
+  /**
+   * Every step in order with its progress, so the caller can show each one
+   * instead of a single label. Empty while idle.
+   */
+  stages: TransactionStageStep[];
   /** True while a transaction is in flight. */
   busy: boolean;
   /** True after the user rejected in the wallet. */
@@ -80,5 +104,18 @@ export function useTransactionStage(): UseTransactionStageResult {
       ? STAGE_LABELS[stage]
       : null;
 
-  return { stage, busy, cancelled, label, onStage, onCancelled, reset };
+  // Derived rather than stored: the current stage already implies which
+  // earlier steps finished, so there is no second piece of state to keep in
+  // step with `stage`.
+  const current = stage === null ? -1 : TRANSACTION_STAGES.indexOf(stage);
+  const stages: TransactionStageStep[] =
+    current < 0
+      ? []
+      : TRANSACTION_STAGES.map((s, i) => ({
+          stage: s,
+          label: STAGE_LABELS[s],
+          done: i < current,
+        }));
+
+  return { stage, stages, busy, cancelled, label, onStage, onCancelled, reset };
 }
