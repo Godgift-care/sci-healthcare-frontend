@@ -96,7 +96,7 @@ export function KeyboardShortcuts() {
         type="button"
         aria-keyshortcuts="?"
         onClick={() => setHelpOpen(true)}
-        className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--color-line)] px-3 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+        className="inline-flex max-sm:min-h-11 items-center justify-center rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
       >
         Shortcuts
       </button>
