@@ -10,6 +10,8 @@ export type SavedIdentity = {
   selectedPatient: SavedPatient | null;
   identifier: string;
   key: string;
+  encrypted: boolean;
+  locked: boolean;
 };
 
 const EMPTY: SavedIdentity = {
@@ -18,6 +20,8 @@ const EMPTY: SavedIdentity = {
   selectedPatient: null,
   identifier: '',
   key: '',
+  encrypted: false,
+  locked: false,
 };
 let cached: SavedIdentity = EMPTY;
 
@@ -47,7 +51,9 @@ function snapshot(): SavedIdentity {
     patientsChanged ||
     next.selectedNickname !== cached.selectedNickname ||
     next.identifier !== cached.identifier ||
-    next.key !== cached.key
+    next.key !== cached.key ||
+    next.encrypted !== cached.encrypted ||
+    next.locked !== cached.locked
   ) {
     cached = next;
   }
