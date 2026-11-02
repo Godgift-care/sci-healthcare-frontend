@@ -32,6 +32,17 @@
     "verifiedClinics": "Verified clinics",
     "noClinics": "No clinics registered yet."
   },
+  "stats": {
+    "title": "Protocol statistics",
+    "feesCollected": "Fees collected",
+    "feesCollectedNote": "Protocol fees are deducted from settled care and fund the open-source indexer, audits and ongoing maintenance. No fee is taken on funded vouchers that never settle.",
+    "countryActivity": "Voucher activity by country",
+    "countryActivityEmpty": "No voucher activity recorded yet.",
+    "country": "Country",
+    "funded": "{count} funded",
+    "settled": "{count} settled",
+    "volume": "Volume"
+  },
   "voucher": {
     "voucherNumber": "Voucher #{id}",
     "at": "at",

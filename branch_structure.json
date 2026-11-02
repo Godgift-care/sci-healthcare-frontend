@@ -1,0 +1,18 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feat/issue-166-feat-web-protocol-fees-on-the-stats-page",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feat/issue-166-feat-web-protocol-fees-on-the-stats-page": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feat/issue-166-feat-web-protocol-fees-on-the-stats-page",
+    "origin"
+  ]
+}

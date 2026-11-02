@@ -36,6 +36,17 @@
     "findClinic": "Pata kliniki",
     "listService": "Orodesha huduma"
   },
+  "stats": {
+    "title": "Takwimu za itifaki",
+    "feesCollected": "Ada zilizokusanywa",
+    "feesCollectedNote": "Ada za itifaki hutolewa kwenye huduma zilizolipiwa na zinafadhili kielezo cha chanzo wazi, ukaguzi na utendaji wa mikataba. Hakuna ada inayodaiwa kwenye vocha zilizofadhiliwa ambazo hazitakiwi kulipwa.",
+    "countryActivity": "Shughuli ya vocha kwa nchi",
+    "countryActivityEmpty": "Bado hakuna shughuli ya vocha iliyorekodiwa.",
+    "country": "Nchi",
+    "funded": "{count} imefadhiliwa",
+    "settled": "{count} imelipwa",
+    "volume": "Kiasi"
+  },
   "voucher": {
     "voucherNumber": "Vocha #{id}",
     "at": "katika",
@@ -65,7 +76,7 @@
     "clinic": "Kliniki",
     "voucherContract": "Mkataba wa Vocha",
     "scanWithClinicScanner": "Changanua na kichanganuzi cha kliniki",
-    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
+    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za binafsi za matibabu au utambulisho.",
     "reportProblem": "Ripoti tatizo",
     "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
     "reportProblemAction": "Ripoti tatizo"
