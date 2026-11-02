@@ -29,7 +29,9 @@ test('clinic marks the patient seen', async ({ page }) => {
 
   // The claim is held until the patient check matches this voucher (#33).
   await expect(page.getByRole('button', { name: 'Mark patient seen' })).toBeDisabled();
-  await page.getByRole('button', { name: 'Verify patient' }).click();
+  const verifyPatient = page.getByRole('button', { name: 'Verify patient' });
+  await expect(verifyPatient).toBeVisible({ timeout: 15000 });
+  await verifyPatient.click();
   await page.getByLabel('Patient reference').fill(PATIENT_IDENTIFIER);
   await page.getByLabel('Patient secret key').fill(PATIENT_KEY);
   await page.getByRole('button', { name: 'Check patient' }).click();

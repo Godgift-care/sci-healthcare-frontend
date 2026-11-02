@@ -10,8 +10,10 @@ import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
+import { STAGE_LABELS } from '@/lib/hooks/useTransactionStage';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
+import { type TxStage } from '@/lib/stellar';
 import { useWallet } from '@/lib/wallet';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
@@ -21,6 +23,15 @@ import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
 
 /** Funnel step per contract write. Names only — never any properties. */
+/** Button text for each action when idle. */
+const ACTION_LABELS: Record<Action, string> = {
+  claim: 'Claim',
+  attest: 'Attest',
+  settle: 'Settle',
+  refund: 'Refund',
+  dispute: 'Dispute',
+};
+
 const ACTION_EVENTS = {
   claim: 'voucher_claimed',
   attest: 'care_confirmed',
@@ -79,6 +90,8 @@ export function VoucherRow({
   const now = nowProp ?? nowInternal;
   const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
+  // Which step of the transaction the user is on (simulating, signing, …).
+  const [stage, setStage] = useState<TxStage | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
   // polling, the row shows a pending state instead of the stale status.
   const [reconciling, setReconciling] = useState<Action | null>(null);
@@ -103,13 +116,17 @@ export function VoucherRow({
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
+    setStage('simulating');
     try {
+      const onStage = (s: TxStage) => {
+        if (mounted.current) setStage(s);
+      };
       const fns: Record<Action, () => Promise<{ hash: string }>> = {
-        claim: () => protocol.claim(address, v.id, signTransaction),
-        attest: () => protocol.attest(address, v.id, signTransaction),
-        settle: () => protocol.settle(address, v.id, signTransaction),
-        refund: () => protocol.refund(address, v.id, signTransaction),
-        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
+        claim: () => protocol.claim(address, v.id, signTransaction, onStage),
+        attest: () => protocol.attest(address, v.id, signTransaction, onStage),
+        settle: () => protocol.settle(address, v.id, signTransaction, onStage),
+        refund: () => protocol.refund(address, v.id, signTransaction, onStage),
+        dispute: () => protocol.dispute(address, v.id, reason, signTransaction, onStage),
       };
       const res = await fns[action]();
       setDisputing(false);
@@ -118,6 +135,7 @@ export function VoucherRow({
       // The transaction is confirmed on chain; wait for the indexer to
       // catch up instead of refetching a stale row immediately (#9).
       setBusy(null);
+      setStage(null);
       setStaleTx(null);
       setReconciling(action);
       const outcome = await pollVoucherStatus(
@@ -145,9 +163,14 @@ export function VoucherRow({
         );
       }
     } catch (err) {
-      toast.error(humaniseError(err));
+      {
+        toast.error(humaniseError(err));
+      }
     } finally {
-      if (mounted.current) setBusy(null);
+      if (mounted.current) {
+        setBusy(null);
+        setStage(null);
+      }
     }
   }
 
@@ -273,7 +296,11 @@ export function VoucherRow({
                 else void run(a);
               }}
             >
-              {busy === a ? 'Confirming…' : reconciling === a ? 'Updating…' : LABELS[a]}
+              {busy === a
+                ? (stage ? STAGE_LABELS[stage] : 'Confirming…')
+                : reconciling === a
+                  ? 'Updating…'
+                  : ACTION_LABELS[a]}
             </Button>
           ))}
         </div>
@@ -298,27 +325,9 @@ export function VoucherRow({
               </p>
             </div>
             <Button variant="ghost" onClick={() => setVerifying((open) => !open)}>
-              {verifying ? 'Hide check' : patientVerified ? 'Verify again' : 'Verify patient'}
+              {verifying ? 'Close' : 'Verify'}
             </Button>
           </div>
-
-          {!verifying && requirePatientMatch && !patientVerified && (
-            <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-              This desk requires a patient check before claiming. The reference and key
-              enable “Mark patient seen”.
-            </p>
-          )}
-
-          {verifying && (
-            <div className="mt-3">
-              <VerifyPatient
-                expectedRef={v.beneficiaryRef}
-                onVerifiedChange={(verified) =>
-                  setVerifiedFor(verified ? verificationKey : null)
-                }
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -419,11 +428,3 @@ export function VoucherRow({
     </Card>
   );
 }
-
-const LABELS: Record<Action, string> = {
-  claim: 'Mark patient seen',
-  attest: 'Confirm care delivered',
-  settle: 'Release payment',
-  refund: 'Refund me',
-  dispute: 'Dispute',
-};
