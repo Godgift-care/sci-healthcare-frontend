@@ -30,7 +30,7 @@
     "@stellar/stellar-sdk": "17.4.0",
     "@zxing/browser": "^0.2.1",
     "leaflet": "1.9.4",
-    "next": "16.4.3",
+    "next": "16.4.6",
     "qrcode": "^1.5.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",
