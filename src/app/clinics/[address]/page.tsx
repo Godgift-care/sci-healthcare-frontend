@@ -3,6 +3,7 @@
 import { StrKey } from '@stellar/stellar-sdk';
 import Link from 'next/link';
 import { use, useEffect, useMemo, useState } from 'react';
+import useSWR from 'swr';
 
 import { notFound, useSearchParams } from 'next/navigation';
 
@@ -32,7 +33,12 @@ import {
   minExpiryDate,
   type ExpiryChoice,
 } from '@/lib/expiry';
-import { usdc, voucher } from '@/lib/protocol';
+import { registry, usdc, voucher } from '@/lib/protocol';
+import {
+  generatePresenceSecret,
+  presenceCommitment,
+  savePresenceSecret,
+} from '@/lib/presence-proof';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
@@ -44,6 +50,7 @@ import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { FavouriteButton } from '@/components/FavouriteButton';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -80,6 +87,7 @@ export default function ClinicPage({
 }) {
   const { address } = use(params);
   const { address: wallet, signTransaction, connect } = useWallet();
+  const { t, locale } = useLocaleContext();
   const searchParams = useSearchParams();
 
   // Validate the route parameter before it reaches any API or contract call.
@@ -150,6 +158,8 @@ export default function ClinicPage({
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
   const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
+  // #285: an optional code the patient must bring to the clinic.
+  const [requirePresence, setRequirePresence] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [sponsored, setSponsored] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -197,6 +207,42 @@ export default function ClinicPage({
     isLoading: loadingSettled,
     error: settledError,
   } = useVouchers({ provider: address, status: 'Settled', limit: 1 });
+
+  // Capacity (#284): read from the registry and the voucher contract, not
+  // the indexer, so a funder's money is never sent to a clinic the contract
+  // will refuse.
+  const { data: capacity } = useSWR(['registry:capacity', address], () =>
+    registry.capacity(address),
+  );
+  const { data: exposure } = useSWR(['voucher:exposure', address], () =>
+    voucher.exposure(address),
+  );
+  const openVouchers = exposure?.vouchers ?? null;
+  const clinicFull =
+    capacity !== undefined &&
+    capacity > 0 &&
+    openVouchers !== null &&
+    openVouchers >= capacity;
+
+  // Upcoming price changes (#282): the contract keeps the scheduled price,
+  // so funders can be warned before it lands.
+  const serviceCodeKey = (provider?.services ?? [])
+    .map((service) => service.code)
+    .join(',');
+  const { data: upcomingPrices } = useSWR(
+    provider && serviceCodeKey
+      ? ['registry:upcoming', address, serviceCodeKey]
+      : null,
+    async () => {
+      const entries = await Promise.all(
+        (provider?.services ?? []).map(
+          async (service) =>
+            [service.code, await registry.upcomingPrice(address, service.code)] as const,
+        ),
+      );
+      return Object.fromEntries(entries.filter(([, change]) => change.price > 0n));
+    },
+  );
 
   // The amount as base units, or null while the field is not a number.
   // Taken from `amount` — the typed override for a single service, the
@@ -380,6 +426,12 @@ export default function ClinicPage({
   async function fund() {
     if (!wallet) return void connect();
     if (selectedServices.length === 0) return;
+    // The contract would reject this with ProviderAtCapacity (#25); say so
+    // before the wallet is asked to sign.
+    if (clinicFull) {
+      toast.error(t('clinic.capacityFullFunders'));
+      return;
+    }
     if (useSponsor && !canSponsor) {
       toast.error('Sponsored funding requires one voucher up to 100 USDC and enough USDC in your wallet.');
       return;
@@ -452,20 +504,45 @@ export default function ClinicPage({
           if (useSponsor && missingUsdc > 0n) {
             throw new Error('Sponsored funding requires enough USDC; XLM swaps are not sponsored.');
           }
+          if (requirePresence && useSponsor) {
+            throw new Error('Turn off sponsored fees to require a presence code.');
+          }
+          if (requirePresence && missingUsdc > 0n) {
+            throw new Error('A presence code needs enough USDC; an XLM swap cannot carry one.');
+          }
+
+          // A presence secret is generated here and only its hash is signed.
+          // The secret is stored locally for the patient's pass.
+          const secretForVoucher = requirePresence
+            ? generatePresenceSecret()
+            : null;
+          const presence = secretForVoucher
+            ? {
+                secret: secretForVoucher,
+                commitment: await presenceCommitment(secretForVoucher),
+              }
+            : null;
           const res =
-            missingUsdc > 0n
-              ? await voucher.createWithXlmSwap(
-                  { ...request, swapAmount: missingUsdc },
+            presence && requirePresence
+              ? await voucher.createWithOptions(
+                  { ...request },
+                  { presenceCommitment: presence.commitment },
                   signTransaction,
-                  100,
                 )
-              : await voucher.create(request, signTransaction, useSponsor);
+              : missingUsdc > 0n
+                ? await voucher.createWithXlmSwap(
+                    { ...request, swapAmount: missingUsdc },
+                    signTransaction,
+                    100,
+                  )
+                : await voucher.create(request, signTransaction, useSponsor);
           const balance = await usdc.balance(wallet).catch(() => null);
           if (balance !== null) setWalletBalance(balance);
 
           let newId: string | null = null;
           if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
             newId = String(res.returnValue);
+            if (presence) savePresenceSecret(newId, presence.secret);
             succeeded.push(newId);
             successfulTxs.push({ hash: res.hash, id: newId });
             void invalidateVouchers(newId);
@@ -553,7 +630,7 @@ export default function ClinicPage({
             </div>
           </div>
 
-          {(registeredAt || showSettled) && (
+          {(registeredAt || showSettled || capacity !== undefined) && (
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--color-line)] pt-4 sm:grid-cols-3">
               {registeredAt && (
                 <div>
@@ -569,6 +646,29 @@ export default function ClinicPage({
                     Vouchers settled
                   </dt>
                   <dd className="mt-0.5 text-sm tabular-nums">{settledCount}</dd>
+                </div>
+              )}
+              {capacity !== undefined && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    {t('clinic.capacity')}
+                  </dt>
+                  <dd
+                    className={`mt-0.5 text-sm font-medium ${
+                      clinicFull ? 'text-[var(--color-danger)]' : 'text-emerald-700'
+                    }`}
+                  >
+                    {clinicFull
+                      ? t('clinic.capacityFull')
+                      : capacity === 0
+                        ? t('clinic.capacityUnlimitedShort', {
+                            open: openVouchers ?? 0,
+                          })
+                        : t('clinic.capacityOutstanding', {
+                            open: openVouchers ?? 0,
+                            max: capacity,
+                          })}
+                  </dd>
                 </div>
               )}
             </dl>
@@ -605,7 +705,20 @@ export default function ClinicPage({
                       </div>
                     </div>
                   </div>
-                  <div className="mono text-sm">${formatUsdc(s.price)}</div>
+                  <div className="text-end">
+                    <div className="mono text-sm">${formatUsdc(s.price)}</div>
+                    {upcomingPrices?.[s.code] && (
+                      <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                        {t('clinic.priceScheduled', {
+                          price: `$${formatUsdc(upcomingPrices[s.code].price, locale)}`,
+                          date: formatDate(
+                            new Date(upcomingPrices[s.code].effectiveAt * 1000),
+                            locale,
+                          ),
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -619,6 +732,10 @@ export default function ClinicPage({
 
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
+
+        {clinicFull && (
+          <Alert kind="info">{t('clinic.capacityFullFunders')}</Alert>
+        )}
 
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
@@ -691,6 +808,23 @@ export default function ClinicPage({
                 setSecret(patient?.key ?? '');
               }}
             />
+
+            {/* #285: a secret generated here, committed on chain, carried by
+                the patient. Nothing about it goes to the API. */}
+            <label className="flex items-start gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] p-3">
+              <input
+                type="checkbox"
+                checked={requirePresence}
+                onChange={(e) => setRequirePresence(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                {t('clinic.requirePresence')}
+                <span className="mt-0.5 block text-xs text-[var(--color-ink-soft)]">
+                  {t('clinic.requirePresenceNote')}
+                </span>
+              </span>
+            </label>
 
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
@@ -908,7 +1042,10 @@ export default function ClinicPage({
                   setReviewing(true);
                 }}
                 disabled={
-                  busy || trustline.status === 'checking' || (insufficientUsdcBalance && !xlmSwapQuote)
+                  busy ||
+                  clinicFull ||
+                  trustline.status === 'checking' ||
+                  (insufficientUsdcBalance && !xlmSwapQuote)
                 }
                 className="w-full"
               >
@@ -922,7 +1059,7 @@ export default function ClinicPage({
               </Button>
             )}
 
-            {selected && baseAmount !== null && !useSponsor && (
+            {selected && baseAmount !== null && !useSponsor && !requirePresence && (
               <Sep7FundPanel
                 amount={baseAmount}
                 expiresAt={fundingExpiresAt}
@@ -988,6 +1125,16 @@ export default function ClinicPage({
                 <dt className="text-[var(--color-ink-soft)]">Patient key</dt>
                 <dd className="mono text-end font-medium">{maskedSecret}</dd>
               </div>
+              {requirePresence && (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-[var(--color-ink-soft)]">
+                    {t('clinic.requirePresence')}
+                  </dt>
+                  <dd className="text-end font-medium text-emerald-700">
+                    {t('clinic.requirePresenceReview')}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Amount</dt>
                 <dd className="mono text-end font-medium">${reviewAmount}</dd>
@@ -1034,7 +1181,7 @@ export default function ClinicPage({
               <Button
                 className="flex-1"
                 onClick={() => void fund()}
-                disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
+                disabled={busy || clinicFull || (insufficientUsdcBalance && !xlmSwapQuote)}
               >
                 {busy ? 'Confirming…' : 'Confirm'}
               </Button>

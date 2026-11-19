@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 
 import { NavLink } from '@/components/ui';
+import { sponsorEnabled } from '@/lib/config';
 import { useAdminAccess } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
@@ -34,8 +36,14 @@ const LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const { address } = useWallet();
+  const { t } = useLocaleContext();
   const { isAdmin } = useAdminAccess(address);
-  const links = isAdmin ? [...LINKS, { href: '/admin', label: 'Admin' }] : LINKS;
+  const sponsorLink = sponsorEnabled
+    ? [{ href: '/sponsor', label: t('nav.sponsor') }]
+    : [];
+  const links = isAdmin
+    ? [...LINKS, ...sponsorLink, { href: '/admin', label: 'Admin' }]
+    : [...LINKS, ...sponsorLink];
   // Keyed by the route that opened it, so a navigation (including Back) closes
   // the panel without an effect that would set state during render.
   const [openPath, setOpenPath] = useState<string | null>(null);

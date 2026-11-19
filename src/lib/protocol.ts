@@ -1,12 +1,14 @@
 import { batchSettleMethod } from './batch-settle';
 import type { xdr } from '@stellar/stellar-sdk';
 
-import { config, isTestnet } from './config';
+import { config, isTestnet, sponsorEnabled } from './config';
 import {
   FaucetClient,
   RegistryClient,
+  SponsorClient,
   VoucherClient,
 } from './contracts';
+import type { SponsorRules } from './sponsor-rules';
 import { ProviderStatus } from './contracts/generated/registry';
 import {
   arg,
@@ -57,6 +59,10 @@ function getFaucetClient() {
   });
 }
 
+function getSponsorClient() {
+  return new SponsorClient(config.contracts.sponsor);
+}
+
 export type CreateVoucherParams = {
   funder: string;
   beneficiaryRef: string;
@@ -85,6 +91,39 @@ function createVoucherArgs(params: CreateVoucherParams): xdr.ScVal[] {
   });
 }
 
+/**
+ * `create_voucher_with_options` arguments, encoded against the contract's
+ * published ABI. Built here rather than through the checked-in voucher
+ * bindings because those predate the options method.
+ */
+async function createVoucherOptionsArgs(
+  params: CreateVoucherParams,
+  options: { presenceCommitment?: string; disputeWindow?: number },
+): Promise<xdr.ScVal[]> {
+  const clean = params.beneficiaryRef.startsWith('0x')
+    ? params.beneficiaryRef.slice(2)
+    : params.beneficiaryRef;
+  const commitment = options.presenceCommitment
+    ? await arg.bytes32(options.presenceCommitment)
+    : null;
+  return [
+    await arg.address(params.funder),
+    await arg.bytes32(clean),
+    await arg.address(params.provider),
+    await arg.u32(params.serviceCode),
+    await arg.i128(params.amount),
+    await arg.u64(params.expiresAt),
+    await arg.struct({
+      presence_commitment: await arg.option(commitment),
+      dispute_window: await arg.option(
+        options.disputeWindow === undefined
+          ? null
+          : await arg.u64(options.disputeWindow),
+      ),
+    }),
+  ];
+}
+
 export const voucher = {
   /** get_config() -> Config */
   async admin(): Promise<string> {
@@ -104,6 +143,25 @@ export const voucher = {
       params.funder,
       sign,
       sponsored,
+    );
+  },
+
+  /**
+   * `create_voucher_with_options`: the same call with optional terms (#285).
+   * `presenceCommitment` is `SHA-256(secret)` as hex; `disputeWindow` is in
+   * seconds. Both unset behaves exactly like `create`.
+   */
+  async createWithOptions(
+    params: CreateVoucherParams,
+    options: { presenceCommitment?: string; disputeWindow?: number },
+    sign: SignFn,
+  ) {
+    return invokeContract(
+      config.contracts.voucher,
+      'create_voucher_with_options',
+      await createVoucherOptionsArgs(params, options),
+      params.funder,
+      sign,
     );
   },
 
@@ -228,6 +286,60 @@ export const voucher = {
       voucher_id: BigInt(voucherId),
     });
     return invokeContract(config.contracts.voucher, 'claim', args, provider, sign);
+  },
+
+  /**
+   * claim_with_proof(provider, voucher_id, secret): claims a voucher funded
+   * with a presence commitment by revealing the patient's code (#285).
+   */
+  async claimWithProof(
+    provider: string,
+    voucherId: string,
+    secret: string,
+    sign: SignFn,
+  ) {
+    return invokeContract(
+      config.contracts.voucher,
+      'claim_with_proof',
+      [
+        await arg.address(provider),
+        await arg.u64(BigInt(voucherId)),
+        await arg.bytes(secret),
+      ],
+      provider,
+      sign,
+    );
+  },
+
+  /** The voucher's optional terms (#285); absent fields read as null. */
+  async options(voucherId: string): Promise<{
+    presenceCommitment: string | null;
+    disputeWindow: number | null;
+  }> {
+    const raw = await readContract<{
+      presence_commitment: Uint8Array | Buffer | null;
+      dispute_window: bigint | null;
+    }>(config.contracts.voucher, 'get_voucher_options', [
+      await arg.u64(BigInt(voucherId)),
+    ]);
+    const commitment = raw.presence_commitment;
+    return {
+      presenceCommitment: commitment
+        ? Buffer.from(commitment).toString('hex')
+        : null,
+      disputeWindow:
+        raw.dispute_window === null ? null : Number(raw.dispute_window),
+    };
+  },
+
+  /** A clinic's open vouchers and value, straight from the voucher contract. */
+  async exposure(provider: string): Promise<{ vouchers: number; value: bigint }> {
+    const raw = await readContract<{ vouchers: number; value: bigint }>(
+      config.contracts.voucher,
+      'get_exposure',
+      [await arg.address(provider)],
+    );
+    return { vouchers: Number(raw.vouchers), value: BigInt(raw.value) };
   },
 
   /** attest(attester, voucher_id) */
@@ -504,6 +616,62 @@ export const registry = {
   },
 
   /**
+   * schedule_service_price(provider_addr, code, price, effective_at):
+   * schedules a price at least the contract's notice period away (#282).
+   */
+  async scheduleServicePrice(
+    provider: string,
+    code: number,
+    price: bigint,
+    effectiveAt: number,
+    sign: SignFn,
+  ) {
+    return invokeContract(
+      config.contracts.registry,
+      'schedule_service_price',
+      [
+        await arg.address(provider),
+        await arg.u32(code),
+        await arg.i128(price),
+        await arg.u64(effectiveAt),
+      ],
+      provider,
+      sign,
+    );
+  },
+
+  /** get_upcoming_price(provider_addr, code) -> (price, effective_at). */
+  async upcomingPrice(
+    provider: string,
+    code: number,
+  ): Promise<{ price: bigint; effectiveAt: number }> {
+    const raw = await readContract<[bigint, bigint] | bigint[]>(
+      config.contracts.registry,
+      'get_upcoming_price',
+      [await arg.address(provider), await arg.u32(code)],
+    );
+    return { price: BigInt(raw[0]), effectiveAt: Number(raw[1]) };
+  },
+
+  /** set_capacity(provider_addr, max_outstanding); 0 means no limit (#284). */
+  async setCapacity(provider: string, maxOutstanding: number, sign: SignFn) {
+    return invokeContract(
+      config.contracts.registry,
+      'set_capacity',
+      [await arg.address(provider), await arg.u32(maxOutstanding)],
+      provider,
+      sign,
+    );
+  },
+
+  /** get_capacity(provider_addr) -> u32; 0 means no limit. */
+  async capacity(provider: string): Promise<number> {
+    return readContract<number>(config.contracts.registry, 'get_capacity', [
+      await arg.address(provider),
+    ]);
+  },
+
+  /**
    * The provider's lifecycle state straight from the registry, or null if
    * it never registered. Read on chain rather than from the indexer so a
    * clinic sees its own registration the moment it lands.
@@ -582,4 +750,43 @@ export const usdc = {
       await arg.address(address),
     ]);
   },
+};
+
+/**
+ * Matching-sponsor desk (#293). Every method is a no-op guard when
+ * `NEXT_PUBLIC_SPONSOR_CONTRACT_ID` is unset: the page and the voucher-page
+ * match lookup are not offered at all.
+ */
+export const sponsor = {
+  enabled: (): boolean => sponsorEnabled,
+
+  config: () => getSponsorClient().getConfig(),
+
+  account: (address: string) => getSponsorClient().getAccount(address),
+
+  rules: (address: string) => getSponsorClient().getRules(address),
+
+  availableBudget: (address: string) =>
+    getSponsorClient().availableBudget(address),
+
+  budgetSummary: () => getSponsorClient().budgetSummary(),
+
+  match: (voucherId: string) => getSponsorClient().getMatch(voucherId),
+
+  matchOf: (voucherId: string) => getSponsorClient().getMatchOf(voucherId),
+
+  deposit: (address: string, amount: bigint, sign: SignFn) =>
+    getSponsorClient().deposit(address, amount, sign),
+
+  setRules: (address: string, rules: SponsorRules, sign: SignFn) =>
+    getSponsorClient().setRules(address, rules, sign),
+
+  matchVoucher: (address: string, voucherId: string, sign: SignFn) =>
+    getSponsorClient().matchVoucher(address, voucherId, sign),
+
+  withdraw: (address: string, amount: bigint, sign: SignFn) =>
+    getSponsorClient().withdraw(address, amount, sign),
+
+  reconcile: (address: string, sign: SignFn) =>
+    getSponsorClient().reconcile(address, sign),
 };

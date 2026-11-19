@@ -34,6 +34,11 @@ export const config = {
     usdc: process.env.NEXT_PUBLIC_USDC_CONTRACT_ID ?? '',
     /** Testnet only: mints demo USDC to anyone, once a day each. */
     faucet: process.env.NEXT_PUBLIC_FAUCET_CONTRACT_ID ?? '',
+    /**
+     * Matching-sponsor desk (#293). Optional: unset means no sponsor page,
+     * no match reads and no change to any existing flow.
+     */
+    sponsor: process.env.NEXT_PUBLIC_SPONSOR_CONTRACT_ID ?? '',
   },
   /** Issuer of the demo USDC, needed to add the asset in a wallet. */
   usdcIssuer: process.env.NEXT_PUBLIC_USDC_ISSUER ?? '',
@@ -65,6 +70,9 @@ export const config = {
  * (`NEXT_PUBLIC_STELLAR_NETWORK=public`) therefore hides all of it.
  */
 export const isTestnet = config.network !== 'public';
+
+/** True when the matching-sponsor contract is configured for this build. */
+export const sponsorEnabled = Boolean(config.contracts.sponsor);
 
 export function requireContracts(): void {
   required('NEXT_PUBLIC_VOUCHER_CONTRACT_ID', config.contracts.voucher);

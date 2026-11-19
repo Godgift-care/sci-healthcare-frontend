@@ -3,12 +3,13 @@
 import { BrowserQRCodeReader } from '@zxing/browser';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Modal } from '@/components/ui';
+import { parsePresenceQrPayload } from '@/lib/presence-proof';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 interface QrScannerModalProps {
   open: boolean;
   onClose: () => void;
-  onScan: (voucherId: string) => void;
+  onScan: (voucherId: string, presenceSecret?: string) => void;
 }
 
 /**
@@ -21,6 +22,10 @@ interface QrScannerModalProps {
 export function extractVoucherId(scanned: string): string | null {
   const trimmed = scanned.trim();
   if (!trimmed) return null;
+
+  // Case 0: a patient pass carrying a presence code (#285).
+  const presence = parsePresenceQrPayload(trimmed);
+  if (presence) return presence.voucherId;
 
   // Case 1: JSON payload
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
@@ -47,6 +52,11 @@ export function extractVoucherId(scanned: string): string | null {
   }
 
   return null;
+}
+
+/** The presence code in a scanned patient pass, if it carried one (#285). */
+export function extractPresenceSecret(scanned: string): string | null {
+  return parsePresenceQrPayload(scanned)?.secret ?? null;
 }
 
 /**
@@ -97,7 +107,7 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = null;
         }
-        onScan(id);
+        onScan(id, extractPresenceSecret(rawValue) ?? undefined);
       }
     }
 

@@ -25,6 +25,20 @@ export const VOUCHER_ERRORS: Record<number, string> = {
   15: 'That fee is not allowed.',
   16: 'The calculation overflowed.',
   17: 'No admin handover is pending.',
+  18: 'The clinic has paused this service.',
+  19: 'This attester has reached today’s attestation limit.',
+  20: 'The attestation cap must be at least one.',
+  21: 'The attester share cannot exceed the protocol fee.',
+  22: 'The new amount is not lower than the escrowed amount.',
+  23: 'The contract holds less USDC than this voucher escrows.',
+  24: 'The token refused the payment. Nothing moved; try again later.',
+  25: 'This clinic is at capacity and is not accepting new vouchers. Try again once some of its open vouchers settle or refund.',
+  26: 'This clinic has reached its escrow limit for now.',
+  27: 'The escrow limit cannot be negative.',
+  28: 'This voucher needs the code the patient brought. Ask for it at the desk and enter it before claiming.',
+  29: 'That code does not match this voucher.',
+  30: 'This voucher was not funded with a presence code.',
+  31: 'That dispute window is outside the allowed range.',
 };
 
 export const REGISTRY_ERRORS: Record<number, string> = {
@@ -39,6 +53,38 @@ export const REGISTRY_ERRORS: Record<number, string> = {
   9: 'The country code must be two letters.',
   10: 'A name is required.',
   11: 'No admin handover is pending.',
+  12: 'A price change must give at least 24 hours’ notice.',
+  13: 'A price increase needs notice. Schedule it instead of setting it immediately.',
+  14: 'That status change is not allowed.',
+};
+
+export const SPONSOR_ERRORS: Record<number, string> = {
+  1: 'This sponsor desk has already been set up.',
+  2: 'This sponsor desk has not been set up yet.',
+  3: 'You are not authorised to do that.',
+  4: 'The amount must be greater than zero.',
+  5: 'These rules are outside what the desk accepts.',
+  6: 'Set your matching rules before matching a voucher.',
+  7: 'That voucher does not exist.',
+  8: 'That voucher is not funded, so it cannot be matched.',
+  9: 'That voucher has expired.',
+  10: 'That voucher has already been matched.',
+  11: 'A sponsor cannot match its own voucher.',
+  12: 'The clinic is not in one of your eligible countries.',
+  13: 'The service is not one you match.',
+  14: 'The voucher is too new to qualify.',
+  15: 'The voucher is below your minimum amount.',
+  16: 'The match is below the price of the care.',
+  17: 'Your budget cannot cover this match.',
+  18: 'You cannot withdraw more than your unused budget.',
+  19: 'You already have the maximum number of open matches.',
+  20: 'The sponsor desk is paused.',
+  21: 'The voucher contract refused the matching voucher.',
+  22: 'The clinic is not active, so it cannot be paid.',
+  23: 'The clinic has paused this service.',
+  24: 'The match works out to nothing.',
+  25: 'The calculation overflowed.',
+  26: 'No admin handover is pending.',
 };
 
 export const FAUCET_ERRORS: Record<number, string> = {
@@ -68,6 +114,11 @@ export const VOUCHER_ERRORS_I18N: Record<string, Record<number, string>> = {
     15: 'Ces frais ne sont pas autorisés.',
     16: 'Le calcul a dépassé la capacité.',
     17: "Aucun transfert d'administration n'est en attente.",
+    18: 'La clinique a suspendu ce service.',
+    25: "Cette clinique est à capacité et n'accepte pas de nouveaux bons. Réessayez lorsque certains bons en cours seront réglés ou remboursés.",
+    28: "Ce bon nécessite le code apporté par le patient. Demandez-le à l'accueil et saisissez-le avant de réclamer.",
+    29: 'Ce code ne correspond pas à ce bon.',
+    30: 'Ce bon n’a pas été financé avec un code de présence.',
   },
   sw: {
     1: 'Mkataba huu tayari umewekwa.',
@@ -87,6 +138,11 @@ export const VOUCHER_ERRORS_I18N: Record<string, Record<number, string>> = {
     15: 'Ada hiyo hairuhusiwi.',
     16: 'Hesabu imezidi uwezo.',
     17: 'Hakuna makabidhiano ya usimamizi yanayosubiriwa.',
+    18: 'Kliniki imesimamisha huduma hii.',
+    25: 'Kliniki hii imefikia uwezo wake na haipokei vocha mpya kwa sasa. Jaribu tena baadhi ya vocha zake zikitolewa au kurejeshwa.',
+    28: 'Vocha hii inahitaji msimbo alioletea mgonjwa. Mwombe apokeee na uuweke kabla ya kudai.',
+    29: 'Msimbo huo haulingani na vocha hii.',
+    30: 'Vocha hii haikufadhiliwa kwa msimbo wa uwepo.',
   },
 };
 
@@ -104,6 +160,9 @@ export const REGISTRY_ERRORS_I18N: Record<string, Record<number, string>> = {
     9: 'Le code pays doit comporter deux lettres.',
     10: 'Un nom est requis.',
     11: "Aucun transfert d'administration n'est en attente.",
+    12: 'Un changement de prix doit être annoncé au moins 24 heures à l’avance.',
+    13: 'Une hausse de prix doit être planifiée, pas appliquée immédiatement.',
+    14: 'Ce changement de statut n’est pas autorisé.',
   },
   sw: {
     1: 'Rejesta hii tayari imewekwa.',
@@ -117,6 +176,41 @@ export const REGISTRY_ERRORS_I18N: Record<string, Record<number, string>> = {
     9: 'Msimbo wa nchi lazima uwe na herufi mbili.',
     10: 'Jina linahitajika.',
     11: 'Hakuna makabidhiano ya usimamizi yanayosubiriwa.',
+    12: 'Mabadiliko ya bei lazima yatangazwe angalau saa 24 kabla.',
+    13: 'Ongezeko la bei linapaswa kupangwa, si kuwekwa papo hapo.',
+    14: 'Mabadiliko hayo ya hali hayaruhusiwi.',
+  },
+};
+
+export const SPONSOR_ERRORS_I18N: Record<string, Record<number, string>> = {
+  en: SPONSOR_ERRORS,
+  fr: {
+    3: "Vous n'êtes pas autorisé à faire cela.",
+    4: 'Le montant doit être supérieur à zéro.',
+    5: 'Ces règles sont hors de ce que le guichet accepte.',
+    6: 'Définissez vos règles de contrepartie avant de jumeler un bon.',
+    9: 'Ce bon a expiré.',
+    10: 'Ce bon a déjà été jumelé.',
+    12: "La clinique n'est pas dans l'un de vos pays éligibles.",
+    13: 'Ce service ne fait pas partie de ceux que vous jumelez.',
+    15: 'Le bon est inférieur à votre montant minimum.',
+    17: 'Votre budget ne couvre pas cette contrepartie.',
+    18: 'Vous ne pouvez pas retirer plus que votre budget inutilisé.',
+    20: 'Le guichet des sponsors est en pause.',
+  },
+  sw: {
+    3: 'Huna mamlaka ya kufanya hivyo.',
+    4: 'Kiasi lazima kiwe zaidi ya sifuri.',
+    5: 'Sheria hizi ziko nje ya kile dawati linakubali.',
+    6: 'Weka sheria zako za ulinganishaji kabla ya kulinganisha vocha.',
+    9: 'Vocha hii imeisha muda wake.',
+    10: 'Vocha hii tayari imelinganishwa.',
+    12: 'Kliniki haiko katika moja ya nchi zako zinazostahiki.',
+    13: 'Huduma hii si moja unayolinganisha.',
+    15: 'Vocha iko chini ya kiasi chako cha chini.',
+    17: 'Bajeti yako haiwezi kufidia ulinganishaji huu.',
+    18: 'Huwezi kutoa zaidi ya bajeti yako isiyotumika.',
+    20: 'Dawati la wadhamini limesimamishwa.',
   },
 };
 
@@ -171,6 +265,8 @@ export function humaniseError(
       resolvedTable = REGISTRY_ERRORS_I18N[locale];
     } else if (table === FAUCET_ERRORS && FAUCET_ERRORS_I18N[locale]) {
       resolvedTable = FAUCET_ERRORS_I18N[locale];
+    } else if (table === SPONSOR_ERRORS && SPONSOR_ERRORS_I18N[locale]) {
+      resolvedTable = SPONSOR_ERRORS_I18N[locale];
     }
     const mapped = resolvedTable[code] ?? table[code];
     if (mapped) return mapped;

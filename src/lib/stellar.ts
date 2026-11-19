@@ -907,7 +907,9 @@ function recordArgs(args: xdr.ScVal[]): string[] {
 }
 
 function mockReturnValue(method: string): unknown {
-  if (method === 'create_voucher') return 7n;
+  if (method === 'create_voucher' || method === 'create_voucher_with_options') {
+    return 7n;
+  }
   return null;
 }
 
@@ -949,6 +951,42 @@ async function mockReadResult<T>(
       return { amount: 500000000n } as unknown as T;
     case 'balance':
       return 100000000n as unknown as T;
+    case 'get_capacity':
+      return 0 as unknown as T;
+    case 'get_exposure':
+      return { vouchers: 0, value: 0n } as unknown as T;
+    case 'get_upcoming_price':
+      return [0n, 0n] as unknown as T;
+    case 'get_voucher_options':
+      return {
+        presence_commitment: null,
+        dispute_window: null,
+      } as unknown as T;
+    case 'get_sponsor':
+      return {
+        sponsor: '',
+        deposited: 0n,
+        committed: 0n,
+        refunded: 0n,
+        withdrawn: 0n,
+        rules: {
+          match_bps: 0,
+          cap_per_voucher: 0n,
+          min_voucher_amount: 0n,
+          min_voucher_age_secs: 0n,
+          eligible_countries: [],
+          eligible_service_codes: [],
+        },
+        open_matches: [],
+      } as unknown as T;
+    case 'get_rules':
+    case 'get_match':
+    case 'get_match_of':
+      return null as unknown as T;
+    case 'available_budget':
+      return 0n as unknown as T;
+    case 'budget_summary':
+      return [0n, 0n] as unknown as T;
     default:
       throw new Error(`E2E mock has no canned read for ${method}`);
   }
@@ -1000,5 +1038,37 @@ export const arg = {
   bool: async (v: boolean): Promise<xdr.ScVal> => {
     const { xdr } = await loadSdk();
     return xdr.ScVal.scvBool(v);
+  },
+  /** Variable-length bytes, e.g. a revealed presence secret. */
+  bytes: async (hex: string): Promise<xdr.ScVal> => {
+    const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+    if (!/^([0-9a-fA-F]{2})*$/.test(clean)) {
+      throw new Error('Bytes must be an even-length hex string');
+    }
+    const { xdr } = await loadSdk();
+    return xdr.ScVal.scvBytes(Buffer.from(clean, 'hex'));
+  },
+  vec: async (items: xdr.ScVal[]): Promise<xdr.ScVal> => {
+    const { xdr } = await loadSdk();
+    return xdr.ScVal.scvVec(items);
+  },
+  /**
+   * A contract struct as an ScVal map. Keys are sorted, which is how struct
+   * encoding orders its fields.
+   */
+  struct: async (fields: Record<string, xdr.ScVal>): Promise<xdr.ScVal> => {
+    const { xdr } = await loadSdk();
+    const entries = Object.entries(fields)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(
+        ([name, val]) =>
+          new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol(name), val }),
+      );
+    return xdr.ScVal.scvMap(entries);
+  },
+  /** Soroban `Option<T>`: the value, or void for `None`. */
+  option: async (value: xdr.ScVal | null): Promise<xdr.ScVal> => {
+    const { xdr } = await loadSdk();
+    return value ?? xdr.ScVal.scvVoid();
   },
 };

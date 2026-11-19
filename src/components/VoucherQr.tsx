@@ -3,6 +3,7 @@
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 import { Button, Card } from '@/components/ui';
+import { presenceQrPayload } from '@/lib/presence-proof';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 interface VoucherQrProps {
@@ -12,6 +13,8 @@ interface VoucherQrProps {
   providerName?: string;
   amount?: string;
   expiresAt?: string;
+  /** #285: the code the patient must bring, when the funder set one. */
+  presenceSecret?: string | null;
 }
 
 /**
@@ -31,6 +34,7 @@ export function VoucherQr({
   providerName,
   amount,
   expiresAt,
+  presenceSecret,
 }: VoucherQrProps) {
   const { t } = useLocaleContext();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
@@ -38,9 +42,13 @@ export function VoucherQr({
 
   // Encode voucher identification: full URL if in browser, otherwise relative path.
   // Both QR content and URL contain ONLY voucherId and contract address, NO patient data.
-  const qrPayload = typeof window !== 'undefined'
-    ? `${window.location.origin}/vouchers/${voucherId}?contract=${contractAddress}`
-    : `/vouchers/${voucherId}?contract=${contractAddress}`;
+  // A presence code (#285) is encoded as a non-URL payload so the secret never
+  // appears in an address.
+  const qrPayload = presenceSecret
+    ? presenceQrPayload(voucherId, presenceSecret)
+    : typeof window !== 'undefined'
+      ? `${window.location.origin}/vouchers/${voucherId}?contract=${contractAddress}`
+      : `/vouchers/${voucherId}?contract=${contractAddress}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +103,16 @@ export function VoucherQr({
               <div className="mono text-2xl font-bold tracking-tight text-[var(--color-brand)]">
                 #{voucherId}
               </div>
+              {presenceSecret && (
+                <div className="mt-2">
+                  <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                    {t('voucher.presenceCode')}
+                  </div>
+                  <div className="mono mt-0.5 text-sm break-all text-[var(--color-ink)]">
+                    {presenceSecret}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-2">
@@ -174,6 +192,11 @@ export function VoucherQr({
           <div className="text-xs text-slate-600">
             {t('voucher.presentNotice')}
           </div>
+          {presenceSecret && (
+            <div className="mono break-all text-xs font-semibold text-slate-900">
+              {t('voucher.presenceCode')}: {presenceSecret}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 items-center gap-3">
