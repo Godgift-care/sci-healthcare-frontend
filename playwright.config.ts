@@ -96,10 +96,9 @@ export default defineConfig({
       // Enables the analytics branch under test; tests/analytics-guard.ts
       // stops the script request itself from leaving the sandbox.
       NEXT_PUBLIC_PLAUSIBLE_DOMAIN: 'test.sci-healthcare.example',
-      // Points error reporting at an unroutable host that only the
-      // error-reporting spec intercepts.
+      // Uses a test-only DSN that only the error-reporting spec intercepts.
       NEXT_PUBLIC_SENTRY_DSN:
-        'https://abc123abc123abc123abc123abc123ab@sentry-test.local/42',
+        'https://localhost@sentry.example.com/42',
     },
   },
 });
