@@ -76,6 +76,8 @@
     "title": "Dawati la kliniki",
     "checking": "Inakagua usajili…",
     "scanVoucherQr": "Changanua QR ya vocha",
+    "openInMaps": "Fungua kwenye ramani",
+    "openInOpenStreetMap": "Fungua kwenye OpenStreetMap",
     "registerTitle": "Sajili kliniki hii",
     "clinicName": "Jina la kliniki",
     "countryCode": "Msimbo wa nchi (NG)",
@@ -165,6 +167,18 @@
     "manualPrompt": "Au weka nambari ya vocha mwenyewe",
     "manualPlaceholder": "k.m. 42 au bandika URL",
     "open": "Fungua"
+  },
+  "wallet": {
+    "connect": "Unganisha pochi",
+    "checking": "Inatafuta pochi…",
+    "noWalletTitle": "Hakuna pochi ya Stellar iliyopatikana",
+    "noWalletBody": "Kivinjari hiki hakina pochi ya Stellar iliyosakinishwa. Unahitaji moja ili kusaini miamala — hakuna kinachoweza kufadhiliwa bila hiyo.",
+    "recommendedDesktop": "Kwenye kompyuta, sakinisha Freighter, kiendelezi cha kivinjari.",
+    "recommendedMobile": "Kwenye simu, sakinisha LOBSTR, programu ya pochi ya Stellar.",
+    "installWallet": "Sakinisha {wallet}",
+    "passkey": "Unda pochi ya passkey",
+    "passkeyNote": "Hakuna ufungaji wala programu: kivinjari hiki husaini kwa passkey (Face ID, Touch ID au PIN ya kifaa chako).",
+    "allWallets": "Ona chaguo zote za pochi"
   },
   "language": {
     "en": "English",

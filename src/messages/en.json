@@ -72,6 +72,8 @@
     "title": "Clinic desk",
     "checking": "Checking registration…",
     "scanVoucherQr": "Scan voucher QR",
+    "openInMaps": "Open in maps",
+    "openInOpenStreetMap": "Open in OpenStreetMap",
     "registerTitle": "Register this clinic",
     "clinicName": "Clinic name",
     "countryCode": "Country code (NG)",
@@ -158,6 +160,18 @@
     "manualPrompt": "Or enter voucher number manually",
     "manualPlaceholder": "e.g. 42 or paste URL",
     "open": "Open"
+  },
+  "wallet": {
+    "connect": "Connect wallet",
+    "checking": "Checking for a wallet…",
+    "noWalletTitle": "No Stellar wallet found",
+    "noWalletBody": "This browser does not have a Stellar wallet installed. You need one to sign transactions — nothing can be funded without it.",
+    "recommendedDesktop": "On a computer, install Freighter, a browser extension.",
+    "recommendedMobile": "On a phone, install LOBSTR, a Stellar wallet app.",
+    "installWallet": "Install {wallet}",
+    "passkey": "Create a passkey wallet",
+    "passkeyNote": "No install and no app: this browser signs with a passkey (Face ID, Touch ID or your device PIN).",
+    "allWallets": "See all wallet options"
   },
   "language": {
     "en": "English",
