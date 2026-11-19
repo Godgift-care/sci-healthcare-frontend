@@ -10,8 +10,10 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  // .env.local from the example, so `npm run dev` starts without setup.
-  "postCreateCommand": "npm ci && ([ -f .env.local ] || cp .env.example .env.local)",
+  // .env.local from the example, so `npm run dev` starts without setup. The
+  // script also points NEXT_PUBLIC_API_URL at an API the browser outside the
+  // container can reach (#371); outside Codespaces it does nothing.
+  "postCreateCommand": "npm ci && node scripts/codespace-env.mjs",
 
   // 3000 is `next dev`; 6006 is Storybook.
   "forwardPorts": [3000, 6006],
