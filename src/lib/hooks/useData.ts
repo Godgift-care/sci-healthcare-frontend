@@ -6,6 +6,7 @@ import {
   api,
   type Attester,
   type DailyStats,
+  type GovernanceResponse,
   type Provider,
   type ProviderStats,
   type ReadyStatus,
@@ -421,6 +422,31 @@ export function useAdminAccess(address: string | null | undefined) {
       data?.voucherAdmin === address,
     isLoading,
     error: error instanceof Error ? error.message : error ? String(error) : null,
+  };
+}
+
+/**
+ * Hook for fetching and caching the contract governance snapshot (#governance).
+ *
+ * Returns each contract's current admins, pending nominations, and the full
+ * ordered audit trail. The endpoint is read-only and rarely changes, so a
+ * longer dedupe interval (30 s) avoids hammering the indexer.
+ */
+export function useGovernance(config?: SWRConfiguration<GovernanceResponse>) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<GovernanceResponse>(
+    'governance',
+    () => api.governance(),
+    { dedupingInterval: 30_000, ...config },
+  );
+
+  return {
+    contracts: data?.contracts ?? [],
+    updatedAt: data?.updatedAt ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
   };
 }
 
