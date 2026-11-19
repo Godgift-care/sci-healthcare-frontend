@@ -947,9 +947,9 @@ async function mockReadResult<T>(
       const id = args[0] ? scValToNative(args[0]) : 1n;
       return {
         id,
-        funder: 'GDUP4G7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K',
+        funder: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
         beneficiary_ref: '0'.repeat(64),
-        provider: 'GDOO4G7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K',
+        provider: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
         service_code: 101,
         amount: 30000000n,
         status: 0,
