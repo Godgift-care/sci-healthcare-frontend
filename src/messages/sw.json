@@ -156,6 +156,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Chagua zote kwenye ukurasa huu ({count})",
+    "selectVoucher": "Chagua vocha #{id}",
+    "selectedCount": "{count} zimechaguliwa",
+    "exportSelected": "Pakua CSV zilizochaguliwa",
+    "refundSelected": "Rejesha zilizochaguliwa ({count})",
+    "refundAll": "Rejesha zote ({count})",
+    "refundingCount": "Inarejesha {current}/{total}…",
+    "refundProgress": "{current} kati ya {total}",
+    "refundingVoucher": "Inarejesha vocha #{id}…",
+    "refundedSummary": "Vocha {count} zimerejeshwa kikamilifu:",
+    "refundFailedSummary": "Imeshindwa kurejesha vocha {count}:"
+  },
   "scanner": {
     "title": "Changanua QR ya vocha ya mgonjwa",
     "instructions": "Elekeza kamera kwenye msimbo wa QR wa vocha ya mgonjwa ili kuifungua kiotomatiki.",

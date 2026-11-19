@@ -158,6 +158,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Tout sélectionner sur cette page ({count})",
+    "selectVoucher": "Sélectionner le bon nº {id}",
+    "selectedCount": "{count} sélectionné(s)",
+    "exportSelected": "Télécharger le CSV sélectionné",
+    "refundSelected": "Rembourser la sélection ({count})",
+    "refundAll": "Tout rembourser ({count})",
+    "refundingCount": "Remboursement {current}/{total}…",
+    "refundProgress": "{current} sur {total}",
+    "refundingVoucher": "Remboursement du bon nº {id}…",
+    "refundedSummary": "{count} bon(s) remboursé(s) avec succès :",
+    "refundFailedSummary": "Échec du remboursement de {count} bon(s) :"
+  },
   "scanner": {
     "title": "Scanner le QR du bon patient",
     "instructions": "Pointez la caméra vers le code QR du bon du patient pour l'ouvrir automatiquement.",

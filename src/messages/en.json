@@ -149,6 +149,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Select all on this page ({count})",
+    "selectVoucher": "Select voucher #{id}",
+    "selectedCount": "{count} selected",
+    "exportSelected": "Download selected CSV",
+    "refundSelected": "Refund selected ({count})",
+    "refundAll": "Refund all ({count})",
+    "refundingCount": "Refunding {current}/{total}…",
+    "refundProgress": "{current} of {total}",
+    "refundingVoucher": "Refunding voucher #{id}…",
+    "refundedSummary": "Refunded {count} voucher(s) successfully:",
+    "refundFailedSummary": "Failed to refund {count} voucher(s):"
+  },
   "scanner": {
     "title": "Scan patient voucher QR",
     "instructions": "Point the camera at the patient's voucher QR code to open it automatically.",

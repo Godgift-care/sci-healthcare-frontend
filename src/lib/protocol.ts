@@ -334,6 +334,35 @@ export const voucher = {
     return invokeContract(config.contracts.voucher, 'refund', args, caller, sign);
   },
 
+  /**
+   * Refunds selected vouchers one per transaction. Keeping each write to one
+   * contract invocation stays within Soroban transaction resource limits,
+   * while collecting failures lets later vouchers continue.
+   */
+  async refundMany(
+    caller: string,
+    voucherIds: string[],
+    sign: SignFn,
+    onProgress?: (current: number, total: number, id: string) => void,
+  ): Promise<{ refunded: string[]; failed: Array<{ id: string; error: unknown }> }> {
+    const refunded: string[] = [];
+    const failed: Array<{ id: string; error: unknown }> = [];
+    const total = voucherIds.length;
+
+    for (let i = 0; i < total; i++) {
+      const id = voucherIds[i];
+      onProgress?.(i + 1, total, id);
+      try {
+        await this.refund(caller, id, sign);
+        refunded.push(id);
+      } catch (error) {
+        failed.push({ id, error });
+      }
+    }
+
+    return { refunded, failed };
+  },
+
   /** quote(amount) -> (fee, net) */
   async quote(amount: bigint): Promise<[bigint, bigint]> {
     const client = getVoucherClient();
