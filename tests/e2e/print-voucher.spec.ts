@@ -42,7 +42,13 @@ const SETTLED_VOUCHER = {
 
 test('voucher print preview shows the QR, summary and history on one A4 page', async ({
   page,
+  browserName,
 }, testInfo) => {
+  // page.pdf only exists in headless Chromium (#345).
+  test.skip(
+    browserName !== 'chromium',
+    'PDF generation is only supported in headless Chromium',
+  );
   await blockAnalytics(page);
   await mockBackend(page, {
     provider: CLINIC,

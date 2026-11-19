@@ -18,7 +18,17 @@ const notifications = (page: import('@playwright/test').Page) =>
   page.locator('[aria-label="Notifications"]');
 
 test.describe('Copy buttons for addresses and hashes (#78)', () => {
-  test('copies the full funder address, not the shortened form', async ({ page, context }) => {
+  test('copies the full funder address, not the shortened form', async ({
+    page,
+    context,
+    browserName,
+  }) => {
+    // clipboard-read is not a grantable permission outside Chromium
+    // (#345), so the copy assertions run there only.
+    test.skip(
+      browserName !== 'chromium',
+      'clipboard-read is not a grantable permission outside Chromium',
+    );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const voucher = FUNDED_VOUCHER('781');
     await mockBackend(page, {
@@ -40,7 +50,13 @@ test.describe('Copy buttons for addresses and hashes (#78)', () => {
     await expect(page.getByText('funder address copied')).toBeAttached();
   });
 
-  test('copies the full patient reference hash', async ({ page, context }) => {
+  test('copies the full patient reference hash', async ({ page, context, browserName }) => {
+    // clipboard-read is not a grantable permission outside Chromium
+    // (#345), so the copy assertions run there only.
+    test.skip(
+      browserName !== 'chromium',
+      'clipboard-read is not a grantable permission outside Chromium',
+    );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const voucher = FUNDED_VOUCHER('782');
     await mockBackend(page, {
@@ -57,7 +73,13 @@ test.describe('Copy buttons for addresses and hashes (#78)', () => {
     );
   });
 
-  test('copies the clinic address from the clinic page', async ({ page, context }) => {
+  test('copies the clinic address from the clinic page', async ({ page, context, browserName }) => {
+    // clipboard-read is not a grantable permission outside Chromium
+    // (#345), so the copy assertions run there only.
+    test.skip(
+      browserName !== 'chromium',
+      'clipboard-read is not a grantable permission outside Chromium',
+    );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await mockBackend(page, { provider: CLINIC });
 
