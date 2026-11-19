@@ -172,6 +172,38 @@ jobs:
             test-results/
             playwright-report/
 
+  bundle:
+    name: bundle budget
+    runs-on: ubuntu-24.04
+    # Same build-time env as the build job: the budget is measured on an
+    # identical production build.
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_STELLAR_NETWORK: testnet
+      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
+      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
+      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
+      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Per-route first-load JavaScript against bundle-baseline.json (#344).
+      # Lighthouse catches large regressions on three pages; this catches a
+      # chunk growing on any route. The comparison also lands in the job
+      # summary, which is where the pull request shows it.
+      - name: Compare with the committed budget
+        run: |
+          set -o pipefail
+          { echo '### Bundle budget'; echo '```'; npm run bundle:budget; echo '```'; } \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
   e2e:
     name: e2e
     runs-on: ubuntu-24.04
