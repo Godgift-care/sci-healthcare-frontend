@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 
 import { NavLink } from '@/components/ui';
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import { useAdminAccess } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
 
@@ -78,6 +79,7 @@ export function SiteHeader() {
           <ThemeToggle />
           <NetworkBadge />
           <ConnectButton />
+          <KeyboardShortcuts />
           <button
             type="button"
             aria-expanded={open}
