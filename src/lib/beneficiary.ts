@@ -199,12 +199,19 @@ export function serialisePatientBackup(patient: {
   );
 }
 
+import {
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+} from './storage';
+
 type SavedPatientStore = { patients: SavedPatient[]; selectedNickname: string };
 
-const PATIENTS_STORAGE = 'sci:saved-patients';
-const SELECTED_STORAGE = 'sci:selected-patient';
-const LEGACY_KEY_STORAGE = 'sci:beneficiary-key';
-const LEGACY_ID_STORAGE = 'sci:beneficiary-id';
+const PATIENTS_STORAGE = STORAGE_KEYS.SAVED_PATIENTS;
+const SELECTED_STORAGE = STORAGE_KEYS.SELECTED_PATIENT;
+const LEGACY_KEY_STORAGE = STORAGE_KEYS.LEGACY_KEY;
+const LEGACY_ID_STORAGE = STORAGE_KEYS.LEGACY_ID;
 const PATIENTS_CHANGED = 'sci:saved-patients-changed';
 
 function readPatients(value: string | null): SavedPatient[] {
@@ -229,11 +236,11 @@ function announcePatientsChanged(): void {
 
 function persist(store: SavedPatientStore): boolean {
   try {
-    localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(store.patients));
+    setStorageItem(PATIENTS_STORAGE, JSON.stringify(store.patients));
     if (store.selectedNickname) {
-      localStorage.setItem(SELECTED_STORAGE, store.selectedNickname);
+      setStorageItem(SELECTED_STORAGE, store.selectedNickname);
     } else {
-      localStorage.removeItem(SELECTED_STORAGE);
+      removeStorageItem(SELECTED_STORAGE);
     }
     announcePatientsChanged();
     return true;
@@ -247,19 +254,19 @@ export const localIdentity = {
   load(): SavedPatientStore {
     if (typeof window === 'undefined') return { patients: [], selectedNickname: '' };
     try {
-      const stored = localStorage.getItem(PATIENTS_STORAGE);
+      const stored = getStorageItem(PATIENTS_STORAGE);
       let patients = readPatients(stored);
       if (stored === null) {
-        const identifier = localStorage.getItem(LEGACY_ID_STORAGE) ?? '';
-        const key = localStorage.getItem(LEGACY_KEY_STORAGE) ?? '';
+        const identifier = getStorageItem(LEGACY_ID_STORAGE) ?? '';
+        const key = getStorageItem(LEGACY_KEY_STORAGE) ?? '';
         if (identifier && key) {
           patients = [{ nickname: 'Saved patient', identifier, key }];
-          localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(patients));
-          localStorage.removeItem(LEGACY_ID_STORAGE);
-          localStorage.removeItem(LEGACY_KEY_STORAGE);
+          setStorageItem(PATIENTS_STORAGE, JSON.stringify(patients));
+          removeStorageItem(LEGACY_ID_STORAGE);
+          removeStorageItem(LEGACY_KEY_STORAGE);
         }
       }
-      const requested = localStorage.getItem(SELECTED_STORAGE) ?? '';
+      const requested = getStorageItem(SELECTED_STORAGE) ?? '';
       const selectedNickname = patients.some((patient) => patient.nickname === requested)
         ? requested
         : patients.at(-1)?.nickname ?? '';

@@ -939,7 +939,27 @@ async function mockReadResult<T>(
       return [0n, amount] as unknown as T;
     }
     case 'get_provider':
-      return { status: 'Active' } as unknown as T;
+      return { status: 'Active', name: 'Verified Care Centre', country: 'NG' } as unknown as T;
+    case 'get_service':
+      return { label: 'General Consultation', code: 101, price: 30000000n } as unknown as T;
+    case 'get_voucher': {
+      const { scValToNative } = await loadSdk();
+      const id = args[0] ? scValToNative(args[0]) : 1n;
+      return {
+        id,
+        funder: 'GDUP4G7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K',
+        beneficiary_ref: '0'.repeat(64),
+        provider: 'GDOO4G7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K4E4K4H7K',
+        service_code: 101,
+        amount: 30000000n,
+        status: 0,
+        created_at: 1700000000n,
+        expires_at: 1800000000n,
+        claimed_at: 0n,
+        attested_at: 0n,
+        dispute_deadline: 0n,
+      } as unknown as T;
+    }
     case 'is_attester':
     case 'is_active_provider':
       return true as unknown as T;

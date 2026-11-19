@@ -170,6 +170,35 @@ export default function StatusPage() {
         </Card>
       </section>
 
+      <section aria-labelledby="status-flags" className="space-y-2">
+        <h2 id="status-flags" className="text-base font-semibold">Feature flags</h2>
+        <Card className="px-5 py-2">
+          <dl className="divide-y divide-[var(--color-line)]">
+            <Row label="Sponsored fees">
+              <Check ok={config.flags.sponsoredFees} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="WalletConnect (Reown)">
+              <Check ok={config.flags.walletConnect} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="Usage analytics (Plausible)">
+              <Check ok={config.flags.analytics} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="Error reporting (Sentry)">
+              <Check ok={config.flags.errorReporting} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="Testnet faucet">
+              <Check ok={config.flags.faucet} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="SEP-24 cash-out">
+              <Check ok={config.flags.sep24} okText="Enabled" failText="Disabled" />
+            </Row>
+            <Row label="Testnet mode">
+              <Check ok={config.flags.testnet} okText="Enabled (testnet)" failText="Disabled (public mainnet)" />
+            </Row>
+          </dl>
+        </Card>
+      </section>
+
       <section aria-labelledby="status-versions" className="space-y-2">
         <h2 id="status-versions" className="text-base font-semibold">Versions</h2>
         <Card className="px-5 py-2">

@@ -38,6 +38,9 @@
     "listService": "Orodesha huduma"
   },
   "voucher": {
+    "chainDataBannerTitle": "Inaonyesha data moja kwa moja kutoka kwenye leja",
+    "chainDataBadge": "Leja ya Stellar",
+    "chainDataBannerText": "API ya kiashiria haipatikani kwa sasa. Hali ya vocha, maelezo ya kliniki na vitendo vimepakiwa moja kwa moja kutoka kwa mfumo wa Stellar.",
     "voucherNumber": "Vocha #{id}",
     "recentlyViewed": "Zilizotazamwa hivi karibuni",
     "at": "katika",

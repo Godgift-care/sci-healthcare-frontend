@@ -69,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="/theme-init.js" />
       </head>
       <body>
-        {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
+        {config.flags.analytics ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
         <ServiceWorkerRegistration />

@@ -1,4 +1,6 @@
-export const RECENT_VOUCHERS_STORAGE_KEY = 'sci-recent-voucher-ids';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
+
+export const RECENT_VOUCHERS_STORAGE_KEY = STORAGE_KEYS.RECENT_VOUCHERS;
 export const MAX_RECENT_VOUCHERS = 10;
 export const RECENT_VOUCHERS_CHANGE_EVENT = 'sci-recent-vouchers-change';
 
@@ -10,11 +12,7 @@ export function addRecentVoucherId(ids: readonly string[], id: string): string[]
 
 export function getRecentVoucherIdsSnapshot(): string {
   if (typeof window === 'undefined') return '';
-  try {
-    return window.localStorage.getItem(RECENT_VOUCHERS_STORAGE_KEY) ?? '';
-  } catch {
-    return '';
-  }
+  return getStorageItem(RECENT_VOUCHERS_STORAGE_KEY) ?? '';
 }
 
 export function parseRecentVoucherIds(snapshot: string): string[] {
@@ -40,16 +38,12 @@ export function subscribeRecentVoucherIds(onChange: () => void): () => void {
 
 export function rememberRecentVoucherId(id: string): void {
   if (typeof window === 'undefined' || !/^\d+$/.test(id)) return;
-  try {
-    window.localStorage.setItem(
-      RECENT_VOUCHERS_STORAGE_KEY,
-      JSON.stringify(addRecentVoucherId(
-        parseRecentVoucherIds(getRecentVoucherIdsSnapshot()),
-        id,
-      )),
-    );
-    window.dispatchEvent(new Event(RECENT_VOUCHERS_CHANGE_EVENT));
-  } catch {
-    // Storage may be unavailable in private browsing or by user policy.
-  }
+  setStorageItem(
+    RECENT_VOUCHERS_STORAGE_KEY,
+    JSON.stringify(addRecentVoucherId(
+      parseRecentVoucherIds(getRecentVoucherIdsSnapshot()),
+      id,
+    )),
+  );
+  window.dispatchEvent(new Event(RECENT_VOUCHERS_CHANGE_EVENT));
 }

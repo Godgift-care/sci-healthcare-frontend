@@ -16,7 +16,7 @@ import { CopyValue } from '@/components/CopyValue';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Button, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { Alert, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
 import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
@@ -77,7 +77,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
+  const { voucher: v, isChainFallback, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   const loadedVoucherId = v?.id;
   useEffect(() => {
     if (loadedVoucherId) rememberRecentVoucherId(loadedVoucherId);
@@ -142,6 +142,21 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="voucher-print-page space-y-6 print:space-y-3">
+      {isChainFallback && (
+        <div className="print:hidden">
+          <Alert kind="info">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">{t('voucher.chainDataBannerTitle')}</span>
+              <span className="rounded bg-sky-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-sky-800">
+                {t('voucher.chainDataBadge')}
+              </span>
+            </div>
+            <p className="mt-1 text-xs">
+              {t('voucher.chainDataBannerText')}
+            </p>
+          </Alert>
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <div className="flex flex-wrap items-center gap-2">

@@ -19,6 +19,12 @@ import {
   getStoredPasskeyAddress,
   signWithPasskey,
 } from './passkey';
+import {
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+} from './storage';
 import { checkAccountFunded, getAccountSpendableBalance } from './stellar';
 import {
   WALLET_CONNECT_WALLET_ID,
@@ -59,8 +65,8 @@ export type WalletState = {
 
 const WalletContext = createContext<WalletState | null>(null);
 
-const CONNECTED_FLAG = 'sci-wallet-connected';
-const SELECTED_WALLET_ID_KEY = 'sci-wallet-id';
+const CONNECTED_FLAG = STORAGE_KEYS.WALLET_CONNECTED;
+const SELECTED_WALLET_ID_KEY = STORAGE_KEYS.WALLET_ID;
 
 let initialised = false;
 let initPromise: Promise<void> | null = null;
@@ -182,24 +188,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
-      try {
-        if (
-          typeof window !== 'undefined' &&
-          window.localStorage.getItem(CONNECTED_FLAG) !== '1'
-        ) {
-          return;
-        }
-      } catch {
+      if (
+        typeof window !== 'undefined' &&
+        getStorageItem(CONNECTED_FLAG) !== '1'
+      ) {
         return;
       }
 
-      const savedWalletId = (() => {
-        try {
-          return window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
-        } catch {
-          return null;
-        }
-      })();
+      const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
 
       if (savedWalletId === PASSKEY_WALLET_ID) {
         const passkeyAddr = getStoredPasskeyAddress();
@@ -251,7 +247,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const savedWalletId = window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
+        const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
         if (savedWalletId === PASSKEY_WALLET_ID) {
           clearNetwork();
           return;
@@ -346,13 +342,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setAddress(addr);
       setWalletName(getWalletDisplayName(selectedId));
 
-      try {
-        window.localStorage.setItem(CONNECTED_FLAG, '1');
-        if (selectedId) {
-          window.localStorage.setItem(SELECTED_WALLET_ID_KEY, selectedId);
-        }
-      } catch {
-        // Storage may be unavailable
+      setStorageItem(CONNECTED_FLAG, '1');
+      if (selectedId) {
+        setStorageItem(SELECTED_WALLET_ID_KEY, selectedId);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -373,12 +365,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } catch {
         // The kit may never have loaded
       }
-      try {
-        window.localStorage.removeItem(CONNECTED_FLAG);
-        window.localStorage.removeItem(SELECTED_WALLET_ID_KEY);
-      } catch {
-        // Ignore storage failures
-      }
+      removeStorageItem(CONNECTED_FLAG);
+      removeStorageItem(SELECTED_WALLET_ID_KEY);
     } finally {
       setAddress(null);
       setWalletName(null);
@@ -402,13 +390,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (networkMismatch) throw new Error('Switch your wallet to the app network before signing');
       if (mockWalletAddress()) return xdr;
 
-      const savedWalletId = (() => {
-        try {
-          return window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
-        } catch {
-          return null;
-        }
-      })();
+      const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
 
       if (savedWalletId === PASSKEY_WALLET_ID || address.startsWith('C')) {
         return signWithPasskey(xdr);

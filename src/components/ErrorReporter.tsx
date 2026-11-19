@@ -20,7 +20,7 @@ let initialised = false;
 
 export function ErrorReporter() {
   useEffect(() => {
-    if (initialised || !config.sentryDsn) return;
+    if (initialised || !config.flags.errorReporting) return;
     initialised = true;
     Sentry.init({
       dsn: config.sentryDsn,

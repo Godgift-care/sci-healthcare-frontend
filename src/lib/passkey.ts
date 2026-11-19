@@ -1,9 +1,10 @@
 import { StrKey } from '@stellar/stellar-sdk';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
 
 export const PASSKEY_WALLET_ID = 'passkey-smart-wallet';
-const PASSKEY_STORAGE_ID = 'sci:passkey:id';
-const PASSKEY_STORAGE_ADDR = 'sci:passkey:address';
-const PASSKEY_STORAGE_NAME = 'sci:passkey:name';
+const PASSKEY_STORAGE_ID = STORAGE_KEYS.PASSKEY_ID;
+const PASSKEY_STORAGE_ADDR = STORAGE_KEYS.PASSKEY_ADDR;
+const PASSKEY_STORAGE_NAME = STORAGE_KEYS.PASSKEY_NAME;
 
 /** Check if WebAuthn / Passkeys are supported in this browser. */
 export function isPasskeySupported(): boolean {
@@ -16,11 +17,7 @@ export function isPasskeySupported(): boolean {
 
 export function getStoredPasskeyAddress(): string | null {
   if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(PASSKEY_STORAGE_ADDR);
-  } catch {
-    return null;
-  }
+  return getStorageItem(PASSKEY_STORAGE_ADDR);
 }
 
 /**
@@ -73,13 +70,9 @@ export async function createPasskeyWallet(
   const digest = await crypto.subtle.digest('SHA-256', rawId);
   const contractAddress = StrKey.encodeContract(Buffer.from(digest));
 
-  try {
-    localStorage.setItem(PASSKEY_STORAGE_ID, keyId);
-    localStorage.setItem(PASSKEY_STORAGE_ADDR, contractAddress);
-    localStorage.setItem(PASSKEY_STORAGE_NAME, username);
-  } catch {
-    // Storage might be restricted
-  }
+  setStorageItem(PASSKEY_STORAGE_ID, keyId);
+  setStorageItem(PASSKEY_STORAGE_ADDR, contractAddress);
+  setStorageItem(PASSKEY_STORAGE_NAME, username);
 
   return { address: contractAddress, keyId };
 }
@@ -96,7 +89,7 @@ export async function connectPasskeyWallet(): Promise<{
   }
 
   const storedAddr = getStoredPasskeyAddress();
-  const storedId = typeof window !== 'undefined' ? localStorage.getItem(PASSKEY_STORAGE_ID) : null;
+  const storedId = typeof window !== 'undefined' ? getStorageItem(PASSKEY_STORAGE_ID) : null;
 
   if (storedAddr && storedId) {
     try {
