@@ -24,6 +24,7 @@
     "usdc": "USDC",
     "cancel": "Cancel",
     "close": "Close",
+    "skipToContent": "Skip to content",
     "submitted": "Submitted.",
     "viewTransaction": "View transaction",
     "indexerCatchUp": "Lists update once the indexer catches up."

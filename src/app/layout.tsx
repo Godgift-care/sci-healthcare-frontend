@@ -11,6 +11,7 @@ import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
 import { ToastProvider } from '@/components/Toast';
 import { SiteHeader } from '@/components/SiteHeader';
+import { SkipToContent } from '@/components/SkipToContent';
 import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
 
@@ -80,13 +81,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Language for translated text (#5); defaults to English and
                 remembers the visitor's choice. */}
             <LocaleProvider>
+            <SkipToContent />
             <div className="print:hidden">
               <TestnetNotice />
             </div>
             <SiteHeader />
             <CommandPalette />
 
-            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0">
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0"
+            >
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
               <ToastProvider>{children}</ToastProvider>
