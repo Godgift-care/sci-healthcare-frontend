@@ -3,10 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   contractErrorCode,
   FAUCET_ERRORS,
+  FAUCET_ERRORS_I18N,
   humaniseError,
   humaniseHorizonResult,
   REGISTRY_ERRORS,
+  REGISTRY_ERRORS_I18N,
   VOUCHER_ERRORS,
+  VOUCHER_ERRORS_I18N,
 } from './errors';
 
 /**
@@ -159,5 +162,64 @@ describe('error tables', () => {
         expect(message, `code ${code}`).toBeTruthy();
       }
     }
+  });
+});
+
+/**
+ * Every code in every table, in every locale (#353).
+ *
+ * The tables mirror the Rust `#[contracterror]` enums, which live in the
+ * contracts repository rather than in the bindings this frontend compiles
+ * against, so a code added there reaches the UI as "error #N" until someone
+ * adds it here. These tests keep the mirror honest in the direction this
+ * repository can check: a code with a message but no translation, or a
+ * translation the lookup never reaches, fails here instead of in front of a
+ * user.
+ */
+describe('error tables cover every locale (#353)', () => {
+  const TABLES = [
+    { name: 'voucher', table: VOUCHER_ERRORS, i18n: VOUCHER_ERRORS_I18N },
+    { name: 'registry', table: REGISTRY_ERRORS, i18n: REGISTRY_ERRORS_I18N },
+    { name: 'faucet', table: FAUCET_ERRORS, i18n: FAUCET_ERRORS_I18N },
+  ];
+  const LOCALES = ['en', 'fr', 'sw'];
+
+  for (const { name, table, i18n } of TABLES) {
+    it(`${name}: every locale has the same codes`, () => {
+      const codes = Object.keys(table)
+        .map(Number)
+        .sort((a, b) => a - b);
+      expect(codes.length).toBeGreaterThan(0);
+      for (const locale of LOCALES) {
+        const translated = Object.keys(i18n[locale] ?? {})
+          .map(Number)
+          .sort((a, b) => a - b);
+        expect(translated, `${locale} is missing codes`).toEqual(codes);
+      }
+    });
+
+    it(`${name}: every code renders its own message`, () => {
+      for (const locale of LOCALES) {
+        for (const [code, message] of Object.entries(table)) {
+          const expected = i18n[locale]?.[Number(code)] ?? message;
+          expect(
+            humaniseError(new Error(`Error(Contract, #${code})`), table, locale),
+            `${locale} code ${code}`,
+          ).toBe(expected);
+        }
+      }
+    });
+
+    it(`${name}: codes are positive integers`, () => {
+      for (const code of Object.keys(table).map(Number)) {
+        expect(Number.isInteger(code) && code > 0, `code ${code}`).toBe(true);
+      }
+    });
+  }
+
+  it('reports an unmapped code as a number rather than a wrong sentence', () => {
+    expect(
+      humaniseError(new Error('Error(Contract, #99)'), VOUCHER_ERRORS, 'en'),
+    ).toContain('#99');
   });
 });
