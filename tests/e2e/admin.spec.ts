@@ -51,7 +51,9 @@ test('admin can approve clinics, resolve disputes, and manage attesters', async 
 
   await page.goto('/admin');
   await expect(page.getByRole('heading', { name: 'Admin console' })).toBeVisible();
-  if (page.viewportSize()?.width === 390) {
+  // Below the small breakpoint the navigation collapses behind the menu, on
+  // any narrow device profile (#346).
+  if ((page.viewportSize()?.width ?? 1280) < 640) {
     await page.getByRole('button', { name: 'Open menu' }).click();
   }
   await expect(page.getByRole('link', { name: 'Admin', exact: true })).toBeVisible();
