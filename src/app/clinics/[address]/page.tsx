@@ -35,6 +35,8 @@ import {
 import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+import { clinicDirectionsLinks } from '@/lib/maps';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
@@ -79,6 +81,7 @@ export default function ClinicPage({
   params: Promise<{ address: string }>;
 }) {
   const { address } = use(params);
+  const { t } = useLocaleContext();
   const { address: wallet, signTransaction, connect } = useWallet();
   const searchParams = useSearchParams();
 
@@ -526,6 +529,9 @@ export default function ClinicPage({
   }
 
   const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
+  // Shown only for a clinic that published a location (#303). Both links are
+  // inert until tapped, so opening this page contacts no maps provider.
+  const directions = clinicDirectionsLinks(provider);
   const registeredAt = Number.isFinite(new Date(provider.registeredAt).getTime())
     ? provider.registeredAt
     : null;
@@ -542,6 +548,24 @@ export default function ClinicPage({
                 {provider.country} ·{' '}
                 <CopyValue value={provider.address} chars={8} label="clinic address" />
               </p>
+              {directions && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                  <a
+                    href={directions.geo}
+                    className="font-medium text-[var(--color-brand)] hover:underline"
+                  >
+                    {t('clinic.openInMaps')}
+                  </a>
+                  <a
+                    href={directions.web}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[var(--color-ink-soft)] hover:underline"
+                  >
+                    {t('clinic.openInOpenStreetMap')}
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <FavouriteButton address={provider.address} clinicName={provider.name} />

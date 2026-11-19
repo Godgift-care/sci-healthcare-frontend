@@ -75,6 +75,8 @@
     "title": "Bureau clinique",
     "checking": "Vérification de l'enregistrement…",
     "scanVoucherQr": "Scanner le QR du bon",
+    "openInMaps": "Ouvrir dans une carte",
+    "openInOpenStreetMap": "Ouvrir dans OpenStreetMap",
     "registerTitle": "Enregistrer cette clinique",
     "clinicName": "Nom de la clinique",
     "countryCode": "Code pays (NG)",
@@ -167,6 +169,18 @@
     "manualPrompt": "Ou entrez le numéro de bon manuellement",
     "manualPlaceholder": "ex. 42 ou collez l'URL",
     "open": "Ouvrir"
+  },
+  "wallet": {
+    "connect": "Connecter un portefeuille",
+    "checking": "Recherche d'un portefeuille…",
+    "noWalletTitle": "Aucun portefeuille Stellar trouvé",
+    "noWalletBody": "Ce navigateur n'a pas de portefeuille Stellar installé. Il en faut un pour signer les transactions — aucun financement n'est possible sans lui.",
+    "recommendedDesktop": "Sur ordinateur, installez Freighter, une extension de navigateur.",
+    "recommendedMobile": "Sur téléphone, installez LOBSTR, une application de portefeuille Stellar.",
+    "installWallet": "Installer {wallet}",
+    "passkey": "Créer un portefeuille à clé d'accès",
+    "passkeyNote": "Sans installation ni application : ce navigateur signe avec une clé d'accès (Face ID, Touch ID ou le code de votre appareil).",
+    "allWallets": "Voir toutes les options de portefeuille"
   },
   "language": {
     "en": "English",

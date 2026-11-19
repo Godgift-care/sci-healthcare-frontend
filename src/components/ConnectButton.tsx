@@ -2,11 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { shortAddress } from '@/lib/amounts';
 import { config, explorerAccount, friendbotUrl } from '@/lib/config';
-import { useWallet } from '@/lib/wallet';
+import { PASSKEY_WALLET_ID } from '@/lib/passkey';
+import { availableWalletIds, useWallet } from '@/lib/wallet';
+import {
+  hasInstalledWallet,
+  walletPlatform,
+  type WalletPlatform,
+} from '@/lib/wallet-guidance';
 
 import { Button } from './ui';
+import { WalletGuidance } from './WalletGuidance';
 
 export function ConnectButton() {
   const {
@@ -19,8 +27,15 @@ export function ConnectButton() {
     connect,
     disconnect,
   } = useWallet();
+  const { t } = useLocaleContext();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Null until the wallet kit says nothing is installed; then the guidance
+  // dialog shows the recommendation for the device (#317).
+  const [guidancePlatform, setGuidancePlatform] = useState<WalletPlatform | null>(
+    null,
+  );
+  const [checkingWallets, setCheckingWallets] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -54,6 +69,28 @@ export function ConnectButton() {
     };
   }, [open]);
 
+  /**
+   * Opening the kit's modal first is only useful when something was
+   * installed: otherwise it lists wallets the visitor does not have. If
+   * detection fails (the kit is blocked or offline), fall through to the kit
+   * rather than showing misleading guidance.
+   */
+  const handleConnect = async () => {
+    setCheckingWallets(true);
+    try {
+      const ids = await availableWalletIds();
+      if (!hasInstalledWallet(ids)) {
+        setGuidancePlatform(walletPlatform(navigator.userAgent));
+        return;
+      }
+    } catch {
+      // Fall through to the kit's own modal.
+    } finally {
+      setCheckingWallets(false);
+    }
+    await connect();
+  };
+
   const handleCopy = async () => {
     if (!address) return;
     try {
@@ -66,10 +103,34 @@ export function ConnectButton() {
   };
 
   if (!address) {
+    // The guidance dialog portals to <body>, so the trigger keeps the exact
+    // DOM it had before: adding a wrapper here would shift the header.
     return (
-      <Button onClick={() => void connect()} disabled={connecting}>
-        {connecting ? 'Connecting…' : 'Connect wallet'}
-      </Button>
+      <>
+        <Button
+          onClick={() => void handleConnect()}
+          disabled={connecting || checkingWallets}
+        >
+          {connecting
+            ? 'Connecting…'
+            : checkingWallets
+              ? t('wallet.checking')
+              : t('wallet.connect')}
+        </Button>
+        <WalletGuidance
+          open={guidancePlatform !== null}
+          platform={guidancePlatform ?? 'desktop'}
+          onClose={() => setGuidancePlatform(null)}
+          onUsePasskey={() => {
+            setGuidancePlatform(null);
+            void connect(PASSKEY_WALLET_ID);
+          }}
+          onShowAllWallets={() => {
+            setGuidancePlatform(null);
+            void connect();
+          }}
+        />
+      </>
     );
   }
 
