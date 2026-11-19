@@ -94,3 +94,20 @@ test('pinned actions keep a version comment for Dependabot (#337)', () => {
   }
   assert.deepEqual(violations, []);
 });
+
+test('CodeQL skips generated bindings (#336)', () => {
+  const config = fs.readFileSync(
+    path.join(__dirname, '..', 'codeql', 'codeql-config.yml'),
+    'utf8',
+  );
+  assert.match(config, /src\/lib\/contracts\/generated/);
+  assert.match(config, /vendor\//);
+  // The workflow must actually use the config, or the exclusions do nothing.
+  const workflow = fs.readFileSync(path.join(WORKFLOWS, 'codeql.yml'), 'utf8');
+  assert.match(
+    workflow,
+    /config-file:\s*\.\/\.github\/codeql\/codeql-config\.yml/,
+  );
+  assert.match(workflow, /languages:\s*javascript-typescript/);
+  assert.match(workflow, /schedule:/);
+});
