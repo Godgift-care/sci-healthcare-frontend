@@ -27,7 +27,9 @@
     "skipToContent": "Nenda kwenye maudhui",
     "submitted": "Imewasilishwa.",
     "viewTransaction": "Tazama muamala",
-    "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia."
+    "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia.",
+    "updateAvailable": "Toleo jipya liko tayari.",
+    "reloadToUpdate": "Pakia upya ili kusasisha"
   },
   "home": {
     "verifiedClinics": "Kliniki zilizothibitishwa",

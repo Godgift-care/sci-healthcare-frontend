@@ -72,7 +72,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
-        <ServiceWorkerRegistration />
         <WalletProvider>
           {/* Application-wide SWR defaults, relaxed in low-bandwidth mode
               (#75). The setting is read once here so every page below sees
@@ -95,7 +94,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
-              <ToastProvider>{children}</ToastProvider>
+              <ToastProvider>
+                <ServiceWorkerRegistration />
+                {children}
+              </ToastProvider>
             </main>
 
             <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">

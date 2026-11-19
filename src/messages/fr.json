@@ -27,7 +27,9 @@
     "skipToContent": "Aller au contenu",
     "submitted": "Soumis.",
     "viewTransaction": "Voir la transaction",
-    "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard."
+    "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard.",
+    "updateAvailable": "Une nouvelle version est prête.",
+    "reloadToUpdate": "Recharger pour mettre à jour"
   },
   "home": {
     "verifiedClinics": "Cliniques vérifiées",
