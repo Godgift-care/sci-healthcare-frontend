@@ -45,8 +45,12 @@ jobs:
           cache: npm
       - run: npm ci
       # Vitest unit tests for the pure helpers in src/lib (#77): money,
-      # lifecycle, dispute codes and error mapping, with i128 boundaries.
-      - run: npm run test:unit
+      # lifecycle, dispute codes and error mapping, with i128 boundaries —
+      # plus the shared components (#348) and every Storybook story rendered
+      # with axe (#350). Coverage of src/lib is enforced here too (#351): the
+      # thresholds in vitest.config.mts fail the job and the summary says by
+      # how much.
+      - run: npm run test:unit:coverage
 
   build:
     name: build
