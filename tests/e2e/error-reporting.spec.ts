@@ -14,7 +14,7 @@ import { mockBackend, useMockWallet } from './helpers';
  * form data in events) — what travels is proven clean here.
  */
 
-const SENTRY_INGEST = 'https://sentry-test.local/**';
+const SENTRY_INGEST = 'https://sentry.example.com/**';
 
 test.beforeEach(async ({ page }) => {
   await useMockWallet(page, FUNDER);
