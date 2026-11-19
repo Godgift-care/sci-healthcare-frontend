@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { FaucetError } from './contracts/generated/faucet';
+import { RegistryError } from './contracts/generated/registry';
+import { VoucherError } from './contracts/generated/voucher';
 import {
   contractErrorCode,
   FAUCET_ERRORS,
@@ -216,6 +219,44 @@ describe('error tables cover every locale (#353)', () => {
       }
     });
   }
+
+  /**
+   * The bindings are generated from the contracts, so their error enums are the
+   * one place a newly added code appears first. Comparing against them is what
+   * turns "a code with no message" from a user seeing `error #N` into a failing
+   * test.
+   */
+  it('covers every code the generated bindings declare (#353)', () => {
+    const BINDINGS = [
+      { name: 'voucher', errors: VoucherError, table: VOUCHER_ERRORS },
+      { name: 'registry', errors: RegistryError, table: REGISTRY_ERRORS },
+      { name: 'faucet', errors: FaucetError, table: FAUCET_ERRORS },
+    ];
+
+    for (const { name, errors, table } of BINDINGS) {
+      for (const [code, { message }] of Object.entries(errors)) {
+        expect(
+          table[Number(code)],
+          `${name} error #${code} (${message}) has no message in src/lib/errors.ts`,
+        ).toBeTruthy();
+      }
+    }
+  });
+
+  it('has no message for a code the bindings do not declare', () => {
+    // The other direction, so a table cannot grow a code no contract emits.
+    const pairs = [
+      { name: 'voucher', errors: VoucherError, table: VOUCHER_ERRORS },
+      { name: 'registry', errors: RegistryError, table: REGISTRY_ERRORS },
+      { name: 'faucet', errors: FaucetError, table: FAUCET_ERRORS },
+    ];
+    for (const { name, errors, table } of pairs) {
+      const declared = errors as Record<number, { message: string }>;
+      for (const code of Object.keys(table).map(Number)) {
+        expect(declared[code], `${name} error #${code}`).toBeTruthy();
+      }
+    }
+  });
 
   it('reports an unmapped code as a number rather than a wrong sentence', () => {
     expect(
