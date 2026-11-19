@@ -27,6 +27,7 @@ import {
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
+import { RecentVouchers } from '@/components/RecentVouchers';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, Empty, ExplorerLink } from '@/components/ui';
@@ -329,6 +330,7 @@ export default function ClinicDeskPage() {
           vouchers={earningsVouchers}
         />
       )}
+      <RecentVouchers />
 
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">

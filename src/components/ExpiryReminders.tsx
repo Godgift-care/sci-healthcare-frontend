@@ -47,7 +47,7 @@ export function ExpiryReminders({ vouchers }: { vouchers: Voucher[] }) {
     const reminders = expiryRemindersFor(vouchers);
 
     void navigator.serviceWorker.ready.then(async (registration) => {
-      if (cancelled || Notification.permission !== 'granted') return;
+      if (cancelled) return;
       registration.active?.postMessage({ type: 'SET_EXPIRY_REMINDERS', reminders });
 
       const periodicSync = (registration as ServiceWorkerRegistration & {

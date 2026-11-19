@@ -37,6 +37,7 @@
   },
   "voucher": {
     "voucherNumber": "Bon #{id}",
+    "recentlyViewed": "Consultés récemment",
     "at": "chez",
     "history": "Historique",
     "fundedBy": "Financé par",

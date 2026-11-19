@@ -32,6 +32,7 @@ import {
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { ExpiryReminders } from '@/components/ExpiryReminders';
+import { RecentVouchers } from '@/components/RecentVouchers';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -438,6 +439,7 @@ export default function MyPage() {
   return (
     <div className="space-y-8">
       <TestUsdc />
+      <RecentVouchers />
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
