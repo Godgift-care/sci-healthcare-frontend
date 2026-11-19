@@ -17,7 +17,9 @@ npm run dev
 ```
 
 You also need the backend running on `http://localhost:8080` and contract ids
-from a deployment. See `sci-healthcare-contracts/README.md`.
+from a deployment. See `sci-healthcare-contracts/README.md`. For the whole
+stack — backend, contract ids and `.env.local` — follow
+[`docs/running-locally.md`](docs/running-locally.md).
 
 ```bash
 npm run typecheck
