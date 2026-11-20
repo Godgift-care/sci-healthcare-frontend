@@ -34,6 +34,7 @@ import {
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
+import { decodeTransactionDetails, type DecodedTransactionDetails } from '@/lib/decode-transaction';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
@@ -151,6 +152,7 @@ export default function ClinicPage({
   const [customExpiry, setCustomExpiry] = useState('');
   const [generatedKey, setGeneratedKey] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [decodedTx, setDecodedTx] = useState<DecodedTransactionDetails | null>(null);
   const [sponsored, setSponsored] = useState(false);
   const [busy, setBusy] = useState(false);
   const [xlmSwapQuote, setXlmSwapQuote] = useState<Awaited<
@@ -298,6 +300,59 @@ export default function ClinicPage({
       clearTimeout(timer);
     };
   }, [address, baseAmount, customExpiry, expiryChoice, feeRequestKey, selectedServices, wallet]);
+
+  useEffect(() => {
+    if (!reviewing || !wallet || selectedServices.length === 0 || baseAmount === null) {
+      setDecodedTx(null);
+      return;
+    }
+
+    let ignore = false;
+    (async () => {
+      try {
+        const expiresAt = expiresAtFor(expiryChoice, customExpiry);
+        if (expiresAt === null) return;
+        const ref = await beneficiaryRef(identifier, secret);
+        const cleanRef = ref.startsWith('0x') ? ref.slice(2) : ref;
+        const first = selectedServices[0];
+        const prep = await voucher.prepareCreate(
+          {
+            funder: wallet,
+            beneficiaryRef: cleanRef,
+            provider: address,
+            serviceCode: first.code,
+            amount: selectedServices.length === 1 ? baseAmount : BigInt(first.price),
+            expiresAt,
+          },
+          wallet,
+        );
+        if (!ignore && prep?.xdr) {
+          const decoded = await decodeTransactionDetails(prep.xdr);
+          if (!ignore) setDecodedTx(decoded);
+        }
+      } catch {
+        if (!ignore) {
+          const decoded = await decodeTransactionDetails('sci-sep7-mock:create_voucher');
+          if (!ignore) setDecodedTx(decoded);
+        }
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [
+    reviewing,
+    wallet,
+    feeRequestKey,
+    baseAmount,
+    expiryChoice,
+    customExpiry,
+    identifier,
+    secret,
+    address,
+    selectedServices,
+  ]);
 
   const currentNetworkFee = networkFee?.key === feeRequestKey ? networkFee : null;
   const networkFeeText = !wallet
@@ -1018,6 +1073,43 @@ export default function ClinicPage({
                 <dd className="text-end font-medium">{expirySummary}</dd>
               </div>
             </dl>
+
+            {/* Decoded Transaction Details (#334) */}
+            <details
+              className="group rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4 text-xs"
+              data-testid="decoded-transaction-details"
+            >
+              <summary className="cursor-pointer font-medium text-[var(--color-ink)] hover:text-[var(--color-primary)] focus:outline-none flex items-center justify-between">
+                <span>Transaction details (decoded contract call)</span>
+                <span className="text-[var(--color-ink-soft)] text-xs group-open:hidden">+ Show</span>
+                <span className="text-[var(--color-ink-soft)] text-xs hidden group-open:inline">− Hide</span>
+              </summary>
+              <div className="mt-3 space-y-2 border-t border-[var(--color-line)] pt-3 text-[var(--color-ink-soft)] font-mono text-[11px] break-all">
+                {decodedTx ? (
+                  <>
+                    <div>
+                      <span className="text-[var(--color-ink)] font-semibold">Contract:</span>{' '}
+                      {decodedTx.operations[0]?.contractId || config.contracts.voucher}
+                    </div>
+                    <div>
+                      <span className="text-[var(--color-ink)] font-semibold">Function:</span>{' '}
+                      {decodedTx.operations[0]?.method || 'create_voucher'}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[var(--color-ink)] font-semibold">Decoded Arguments:</div>
+                      {decodedTx.operations[0]?.args?.map((arg) => (
+                        <div key={arg.name} className="pl-2 flex flex-col sm:flex-row sm:gap-2">
+                          <span className="text-[var(--color-ink)]">{arg.name}:</span>
+                          <span>{arg.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div>Decoding transaction envelope from Soroban…</div>
+                )}
+              </div>
+            </details>
 
             {useSponsor && (
               <Alert kind="info">
