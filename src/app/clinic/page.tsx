@@ -88,7 +88,9 @@ const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
 
 /** `YYYY-MM` as a localised short month and year, read in UTC. */
 function monthLabel(month: string, locale: string): string {
-  const [year, monthNumber] = month.split('-').map(Number);
+  const parts = month.split('-').map(Number);
+  const year = parts[0] ?? 0;
+  const monthNumber = parts[1] ?? 1;
   const tag = locale === 'fr' ? 'fr-FR' : locale === 'sw' ? 'sw-KE' : 'en-GB';
   return new Intl.DateTimeFormat(tag, {
     month: 'short',
@@ -201,7 +203,8 @@ export default function ClinicDeskPage() {
 
     setSettleAllBusy(true);
     setSettleSummary(null);
-    setSettleProgress({ done: 0, total: due.length, currentId: due[0].id });
+    const firstDue = due[0];
+    setSettleProgress({ done: 0, total: due.length, currentId: firstDue ? firstDue.id : '' });
     try {
       const { settled, failed } = await protocol.settleMany(
         address,

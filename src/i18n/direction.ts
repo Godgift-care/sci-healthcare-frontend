@@ -45,6 +45,6 @@ const RTL_LANGUAGES = new Set([
  */
 export function directionForLocale(locale: string): Direction {
   if (typeof locale !== 'string') return 'ltr';
-  const primary = locale.trim().toLowerCase().split(/[-_]/)[0];
+  const primary = locale.trim().toLowerCase().split(/[-_]/)[0] ?? '';
   return RTL_LANGUAGES.has(primary) ? 'rtl' : 'ltr';
 }

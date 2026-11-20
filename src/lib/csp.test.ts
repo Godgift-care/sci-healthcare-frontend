@@ -22,12 +22,16 @@ const BASE_ENV = {
 };
 
 function directives(policy: string): Map<string, string> {
-  return new Map(
-    policy.split(';').map((part) => {
-      const [name, ...values] = part.trim().split(/\s+/);
-      return [name, values.join(' ')];
-    }),
-  );
+  const map = new Map<string, string>();
+  for (const part of policy.split(';')) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const [name, ...values] = trimmed.split(/\s+/);
+    if (name) {
+      map.set(name, values.join(' '));
+    }
+  }
+  return map;
 }
 
 describe('contentSecurityPolicy', () => {

@@ -57,14 +57,14 @@ export function isAnalyticsConfigured(): boolean {
   return config.plausibleDomain.length > 0;
 }
 
-type PlausibleFn = (event: string, opts?: { u?: string; props?: Record<string, string | number> }) => void;
+type SendOptions = { u?: string | undefined; props?: Record<string, string | number> | undefined };
+
+type PlausibleFn = (event: string, opts?: SendOptions) => void;
 
 type AnalyticsWindow = {
-  plausible?: PlausibleFn;
-  __sciAnalyticsQueue?: Array<[string, { u?: string; props?: Record<string, string | number> }?]>;
+  plausible?: PlausibleFn | undefined;
+  __sciAnalyticsQueue?: Array<[string, SendOptions?]> | undefined;
 };
-
-type SendOptions = { u?: string; props?: Record<string, string | number> };
 
 function send(event: string, opts?: SendOptions): void {
   if (!isAnalyticsEnabled() || typeof window === 'undefined') return;
@@ -76,7 +76,13 @@ function send(event: string, opts?: SendOptions): void {
   // The script has not finished loading yet; hold events for onLoad.
   // Capped so an ad-blocked script cannot grow this without bound.
   const queue = (w.__sciAnalyticsQueue ??= []);
-  if (queue.length < 100) queue.push([event, opts]);
+  if (queue.length < 100) {
+    if (opts !== undefined) {
+      queue.push([event, opts]);
+    } else {
+      queue.push([event]);
+    }
+  }
 }
 
 /** Events queued before the Plausible script finished loading. */

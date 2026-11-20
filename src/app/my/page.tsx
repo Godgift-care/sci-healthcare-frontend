@@ -194,6 +194,7 @@ export default function MyPage() {
 
     for (let i = 0; i < toRefund.length; i++) {
       const v = toRefund[i];
+      if (!v) continue;
       setBatchProgress({ current: i + 1, total: toRefund.length, currentId: v.id });
       try {
         await protocol.refund(address, v.id, signTransaction);
@@ -371,7 +372,8 @@ export default function MyPage() {
         if (cancelled) return;
         const devices = await BrowserQRCodeReader.listVideoInputDevices();
         if (cancelled) return;
-        if (devices.length === 0) {
+        const firstDevice = devices[0];
+        if (!firstDevice) {
           throw new Error('No camera is available on this device.');
         }
 
@@ -393,7 +395,7 @@ export default function MyPage() {
         await cameraElement.play();
 
         controls = await reader.decodeFromVideoDevice(
-          devices[0].deviceId,
+          firstDevice.deviceId,
           cameraElement,
           async (result, error) => {
             if (cancelled) return;

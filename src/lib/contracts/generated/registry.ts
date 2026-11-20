@@ -231,7 +231,7 @@ export interface Client {
 
 }
 export class Client extends ContractClient {
-  static async deploy<T = Client>(
+  static override async deploy<T = Client>(
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
     options: MethodOptions &
       Omit<ContractClientOptions, "contractId"> & {
@@ -245,7 +245,7 @@ export class Client extends ContractClient {
   ): Promise<AssembledTransaction<T>> {
     return ContractClient.deploy(null, options)
   }
-  constructor(public readonly options: ContractClientOptions) {
+  constructor(public override readonly options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAAAAAAAAAAAJZ2V0X2FkbWluAAAAAAAAAAAAAAEAAAPpAAAAEwAAB9AAAAANUmVnaXN0cnlFcnJvcgAAAA==",
         "AAAAAAAAAC5TZXRzIHRoZSBhZG1pbmlzdHJhdG9yLiBDYWxsYWJsZSBleGFjdGx5IG9uY2UuAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAQAAA+kAAAACAAAH0AAAAA1SZWdpc3RyeUVycm9yAAAA",

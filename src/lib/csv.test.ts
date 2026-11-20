@@ -74,8 +74,10 @@ describe('buildVoucherCsvRows', () => {
       'settled or refunded date',
       'transaction link',
     ]);
-    expect(rows[1][3]).toBe('1.50');
-    expect(rows[1][7]).toBe('https://example.com/vouchers/42');
+    const row1 = rows[1];
+    if (!row1) throw new Error('Expected row 1');
+    expect(row1[3]).toBe('1.50');
+    expect(row1[7]).toBe('https://example.com/vouchers/42');
   });
 });
 
@@ -131,7 +133,9 @@ describe('buildCountryVoucherCsvRows', () => {
       'value settled (USDC)',
     ]);
     expect(toCsvString(rows)).toContain("'=NG");
-    expect(rows[1].slice(1)).toEqual([3, 2, '3.00']);
+    const summaryRow1 = rows[1];
+    if (!summaryRow1) throw new Error('Expected summary row 1');
+    expect(summaryRow1.slice(1)).toEqual([3, 2, '3.00']);
   });
 });
 

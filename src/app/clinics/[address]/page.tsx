@@ -434,11 +434,15 @@ export default function ClinicPage({
       localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
       for (let i = 0; i < requests.length; i++) {
-        const request = { ...requests[i], beneficiaryRef: ref };
+        const req = requests[i];
+        const service = selectedServices[i];
+        if (!req || !service) continue;
+
+        const request = { ...req, beneficiaryRef: ref };
         setBatchProgress({
           current: i + 1,
           total: requests.length,
-          label: selectedServices[i].label,
+          label: service.label,
         });
 
         try {
@@ -475,14 +479,15 @@ export default function ClinicPage({
           }
           trackEvent('voucher_funded');
         } catch (err) {
+          const errDetail = humaniseError(err, VOUCHER_ERRORS);
           failed.push({
-            label: selectedServices[i].label,
-            error: humaniseError(err, VOUCHER_ERRORS),
+            label: service.label,
+            error: errDetail,
           });
           setBatchProgress(null);
           setBatchSummary({ succeeded, failed });
           toast.error(
-            `Funded ${succeeded.length} of ${requests.length} service${requests.length === 1 ? '' : 's'} before ${selectedServices[i].label} failed: ${failed[failed.length - 1].error}`,
+            `Funded ${succeeded.length} of ${requests.length} service${requests.length === 1 ? '' : 's'} before ${service.label} failed: ${errDetail}`,
           );
           return;
         }

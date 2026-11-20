@@ -59,7 +59,7 @@ export function Sep24Cashout({
   );
   const [selectedDomain, setSelectedDomain] = useState('');
   const [amount, setAmount] = useState('');
-  const [info, setInfo] = useState<{ enabled: boolean; minAmount?: string | number; maxAmount?: string | number } | null>(null);
+  const [info, setInfo] = useState<{ enabled: boolean; minAmount?: string | number | undefined; maxAmount?: string | number | undefined } | null>(null);
   const [anchor, setAnchor] = useState<DiscoveredAnchor | null>(null);
   const [withdrawal, setWithdrawal] = useState<WithdrawalState | null>(null);
   const [busy, setBusy] = useState(false);

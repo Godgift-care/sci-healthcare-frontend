@@ -236,11 +236,12 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
       if (parts.length === 1) {
         return json({ total: services.length, services });
       }
-      if (parts.length === 2) {
-        const found = state.serviceByCode?.[parts[1]];
+      if (parts.length === 2 && parts[1] !== undefined) {
+        const code = parts[1];
+        const found = state.serviceByCode?.[code];
         if (found) return json(found);
         const byCode = services.find(
-          (s) => String((s as { code?: unknown }).code) === parts[1],
+          (s) => String((s as { code?: unknown }).code) === code,
         );
         if (byCode) return json(byCode);
         return json({ message: 'Not found' }, 404);
@@ -250,26 +251,27 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
 
     if (parts[0] === 'vouchers') {
       // /vouchers/<id>/events — per-step transaction hashes (#18).
-      if (parts.length === 3 && parts[2] === 'events') {
+      if (parts.length === 3 && parts[2] === 'events' && parts[1] !== undefined) {
         const events = state.voucherEventsById?.[parts[1]];
         if (events) return json({ total: events.length, events });
         return json({ message: 'Not found' }, 404);
       }
-      if (parts.length === 2) {
+      if (parts.length === 2 && parts[1] !== undefined) {
+        const voucherId = parts[1];
         const converge = state.voucherConverges;
         if (converge) {
-          const seen = (readsByVoucher.get(parts[1]) ?? 0) + 1;
-          readsByVoucher.set(parts[1], seen);
+          const seen = (readsByVoucher.get(voucherId) ?? 0) + 1;
+          readsByVoucher.set(voucherId, seen);
           if (seen > (converge.afterReads ?? 2)) {
             const raw =
-              state.voucherById?.[parts[1]] ??
-              state.vouchers?.find((cand) => String(cand.id) === parts[1]);
+              state.voucherById?.[voucherId] ??
+              state.vouchers?.find((cand) => String(cand.id) === voucherId);
             if (raw && typeof raw === 'object') {
               return json({ ...(raw as Record<string, unknown>), status: converge.status });
             }
           }
         }
-        const v = state.voucherById?.[parts[1]];
+        const v = state.voucherById?.[voucherId];
         if (v) return json(v);
         return json({ message: 'Not found' }, 404);
       }

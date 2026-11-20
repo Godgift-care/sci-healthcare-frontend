@@ -174,10 +174,10 @@ export async function parsePatientBackup(input: string | File | unknown): Promis
  * Whoever holds it can look up the patient's care history.
  */
 export function serialisePatientBackup(patient: {
-  nickname?: string;
+  nickname?: string | undefined;
   identifier: string;
   key: string;
-  createdAt?: string;
+  createdAt?: string | undefined;
 }): string {
   const identifier = patient.identifier.trim();
   const key = patient.key.trim();

@@ -46,7 +46,8 @@ export async function discoverAnchor(
   const currencies = toml.CURRENCIES?.filter(
     (currency) => currency.code?.toUpperCase() === config.assetCode,
   ) ?? [];
-  if (currencies.length !== 1 || currencies[0].issuer !== config.assetIssuer) {
+  const firstCurrency = currencies[0];
+  if (currencies.length !== 1 || !firstCurrency || firstCurrency.issuer !== config.assetIssuer) {
     throw new Error(
       'The anchor does not publish one unambiguous currency matching the configured asset code and issuer.',
     );
@@ -129,7 +130,7 @@ export type Sep24Info = {
 export async function getWithdrawalInfo(
   anchor: DiscoveredAnchor,
   fetcher: Fetcher = fetch,
-): Promise<{ enabled: boolean; minAmount?: string | number; maxAmount?: string | number }> {
+): Promise<{ enabled: boolean; minAmount?: string | number | undefined; maxAmount?: string | number | undefined }> {
   const response = await fetcher(endpoint(anchor.transferServer, 'info'));
   const body = await readJson<Sep24Info>(response);
   if (!response.ok) throw new Error('Could not load withdrawal options from the anchor.');

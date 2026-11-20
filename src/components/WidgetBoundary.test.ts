@@ -69,7 +69,9 @@ describe('WidgetBoundary', () => {
   it('reports the error with the widget it came from', () => {
     render(page());
     expect(captureException).toHaveBeenCalledTimes(1);
-    const [error, context] = captureException.mock.calls[0];
+    const call = captureException.mock.calls[0];
+    if (!call) throw new Error('Expected call');
+    const [error, context] = call;
     expect((error as Error).message).toBe('chart exploded');
     expect(context).toMatchObject({ tags: { widget: 'This chart' } });
   });

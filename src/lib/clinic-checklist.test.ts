@@ -29,8 +29,8 @@ describe('clinicChecklist', () => {
   it('marks registration done and waits for verification while pending', () => {
     const steps = clinicChecklist({ status: 'Pending', services: [], vouchers: [] });
 
-    expect(steps[0].state).toBe('done');
-    expect(steps[0].hint).toBeNull();
+    expect(steps[0]?.state).toBe('done');
+    expect(steps[0]?.hint).toBeNull();
     expect(steps[1]).toEqual({
       id: 'verification',
       state: 'current',
@@ -48,7 +48,7 @@ describe('clinicChecklist', () => {
 
     expect(steps.slice(0, 2).map((step) => step.state)).toEqual(['done', 'done']);
     expect(steps[2]).toEqual({ id: 'service', state: 'current', hint: 'listService' });
-    expect(steps[3].state).toBe('pending');
+    expect(steps[3]?.state).toBe('pending');
   });
 
   it('does not count a delisted service as listed', () => {
@@ -68,7 +68,7 @@ describe('clinicChecklist', () => {
       vouchers: [],
     });
 
-    expect(steps[2].state).toBe('done');
+    expect(steps[2]?.state).toBe('done');
     expect(steps[3]).toEqual({ id: 'claim', state: 'current', hint: 'shareClinic' });
   });
 
@@ -112,7 +112,7 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Claimed')],
     });
 
-    expect(steps[3].state).toBe('done');
+    expect(steps[3]?.state).toBe('done');
     expect(steps[4]).toEqual({ id: 'paid', state: 'current', hint: 'waitingAttester' });
   });
 
@@ -123,7 +123,7 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Attested')],
     });
 
-    expect(steps[4].hint).toBe('waitingDisputeWindow');
+    expect(steps[4]?.hint).toBe('waitingDisputeWindow');
   });
 
   it('offers to release the payment once a voucher is settleable', () => {
@@ -170,14 +170,14 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Settled', true)],
     });
 
-    expect(steps[0].state).toBe('done');
+    expect(steps[0]?.state).toBe('done');
     expect(steps[1]).toEqual({
       id: 'verification',
       state: 'current',
       hint: 'suspended',
     });
     // Historical achievements stay visible; only the blocked step is current.
-    expect(steps[2].state).toBe('done');
-    expect(steps[4].state).toBe('done');
+    expect(steps[2]?.state).toBe('done');
+    expect(steps[4]?.state).toBe('done');
   });
 });

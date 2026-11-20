@@ -56,16 +56,15 @@ function normalizeUrl(raw: string): string {
 }
 
 export function scrubSentryEvent(event: ErrorEvent): ErrorEvent | null {
-  const normalized: ErrorEvent = {
-    ...event,
-    request:
-      typeof event.request?.url === 'string'
+  const normalized: ErrorEvent = { ...event };
+  if (event.request) {
+    normalized.request =
+      typeof event.request.url === 'string'
         ? { ...event.request, url: normalizeUrl(event.request.url) }
-        : event.request,
-    transaction:
-      typeof event.transaction === 'string'
-        ? normalizePath(event.transaction)
-        : event.transaction,
-  };
+        : event.request;
+  }
+  if (typeof event.transaction === 'string') {
+    normalized.transaction = normalizePath(event.transaction);
+  }
   return scrubValue(normalized) as ErrorEvent;
 }

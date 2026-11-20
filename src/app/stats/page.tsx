@@ -115,7 +115,7 @@ function ActivityChart({
                 fill="currentColor"
                 className="text-[var(--color-ink-soft)]"
               >
-                {data[0].date}
+                {data[0]?.date}
               </text>
               <text
                 x={chartWidth - paddingX}
@@ -125,7 +125,7 @@ function ActivityChart({
                 fill="currentColor"
                 className="text-[var(--color-ink-soft)]"
               >
-                {data[data.length - 1].date}
+                {data[data.length - 1]?.date}
               </text>
             </>
           )}
