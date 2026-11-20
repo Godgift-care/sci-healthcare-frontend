@@ -274,5 +274,22 @@
     "expiredTitle": "Bon en attente supprimé",
     "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
     "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
+  },
+  "social": {
+    "footer": "SCI Healthcare — bons de soins sur Stellar",
+    "fallbackDetail": "Ouvrez le lien pour voir les détails.",
+    "clinic": {
+      "eyebrow": "Clinique",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Clinique sur SCI Healthcare",
+      "imageAlt": "Aperçu de la clinique : nom, pays et statut d'inscription"
+    },
+    "voucher": {
+      "eyebrow": "Bon de soins",
+      "detail": "Statut : {status}",
+      "serviceFallback": "Service {code}",
+      "fallbackTitle": "Bon de soins sur SCI Healthcare",
+      "imageAlt": "Aperçu du bon de soins : service et statut"
+    }
   }
 }

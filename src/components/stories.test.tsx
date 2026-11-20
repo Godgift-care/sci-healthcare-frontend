@@ -2,7 +2,7 @@
 import { render, cleanup } from '@testing-library/react';
 import { composeStories } from '@storybook/react';
 import axe from 'axe-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
 /**
@@ -22,6 +22,26 @@ const storyModules = import.meta.glob('./*.stories.tsx', { eager: true }) as Rec
   string,
   Record<string, unknown>
 >;
+
+/**
+ * Stories render outside a Next app router, so `useRouter` and `usePathname`
+ * would throw here even though they are fine in Storybook, whose Next.js
+ * framework stubs the router. This is that same stub, so a component that
+ * links to another page — `DetailLink`, used by `VoucherRow` — renders.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    prefetch: () => {},
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+    forward: () => {},
+    refresh: () => {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+}));
 
 type StoryComponent = React.ComponentType;
 
