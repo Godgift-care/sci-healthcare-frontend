@@ -65,18 +65,32 @@ export type CreateVoucherParams = {
   serviceCode: number;
   amount: bigint;
   expiresAt: number;
+  /**
+   * Per-voucher dispute window in seconds (contracts #123). Omitted means
+   * the protocol-wide default, funded through the original `create_voucher`.
+   */
+  disputeWindow?: number;
 };
 
 /**
  * `create_voucher` arguments, shared by the signing flow and the SEP-7
  * preparation flow so both put exactly the same values on chain.
+ *
+ * A chosen dispute window uses `create_voucher_with_options`, whose first
+ * six arguments are identical. The vendored bindings predate that method,
+ * so its `VoucherOptions` argument is encoded by `arg.voucherOptions`.
  */
-function createVoucherArgs(params: CreateVoucherParams): xdr.ScVal[] {
+async function createVoucherCall(
+  params: CreateVoucherParams,
+): Promise<{
+  method: 'create_voucher' | 'create_voucher_with_options';
+  args: xdr.ScVal[];
+}> {
   const client = getVoucherClient();
   const clean = params.beneficiaryRef.startsWith('0x')
     ? params.beneficiaryRef.slice(2)
     : params.beneficiaryRef;
-  return client.spec.funcArgsToScVals('create_voucher', {
+  const args = client.spec.funcArgsToScVals('create_voucher', {
     funder: params.funder,
     beneficiary_ref: Buffer.from(clean, 'hex'),
     provider: params.provider,
@@ -84,6 +98,13 @@ function createVoucherArgs(params: CreateVoucherParams): xdr.ScVal[] {
     amount: params.amount,
     expires_at: BigInt(params.expiresAt),
   });
+  if (params.disputeWindow === undefined || params.disputeWindow === null) {
+    return { method: 'create_voucher', args };
+  }
+  return {
+    method: 'create_voucher_with_options',
+    args: [...args, await arg.voucherOptions({ disputeWindow: params.disputeWindow })],
+  };
 }
 
 export const voucher = {
@@ -96,12 +117,17 @@ export const voucher = {
     return result.admin;
   },
 
-  /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
+  /**
+   * create_voucher(funder, beneficiary_ref, provider, service_code, amount,
+   * expires_at) -> u64, or create_voucher_with_options when a dispute
+   * window was chosen.
+   */
   async create(params: CreateVoucherParams, sign: SignFn, sponsored = false, fee?: bigint) {
+    const call = await createVoucherCall(params);
     return invokeContract(
       config.contracts.voucher,
-      'create_voucher',
-      createVoucherArgs(params),
+      call.method,
+      call.args,
       params.funder,
       sign,
       sponsored,
@@ -109,14 +135,55 @@ export const voucher = {
     );
   },
 
-  /** Simulates create_voucher without signing or submitting it. */
+  /** Simulates the funding call without signing or submitting it. */
   async estimateCreateFee(params: CreateVoucherParams): Promise<bigint> {
+    const call = await createVoucherCall(params);
     return simulateContractFee(
       config.contracts.voucher,
-      'create_voucher',
-      createVoucherArgs(params),
+      call.method,
+      call.args,
       params.funder,
     );
+  },
+
+  /**
+   * `(min, max)` seconds a funder's per-voucher dispute window may take
+   * (contracts #123). Reverts on a deployment that predates the method, so
+   * callers treat it as unavailable and keep the default.
+   */
+  async disputeWindowBounds(): Promise<[number, number]> {
+    const [min, max] = await readContract<[bigint, bigint]>(
+      config.contracts.voucher,
+      'get_dispute_window_bounds',
+    );
+    return [Number(min), Number(max)];
+  },
+
+  /** The protocol-wide dispute window used when no per-voucher one is set. */
+  async defaultDisputeWindow(): Promise<number> {
+    const configValue = await readContract<{ dispute_window: bigint | number }>(
+      config.contracts.voucher,
+      'get_config',
+    );
+    return Number(configValue.dispute_window);
+  },
+
+  /**
+   * A voucher's chosen options (contracts #123). `disputeWindow` is null
+   * when the voucher uses the protocol default.
+   */
+  async options(voucherId: string): Promise<{ disputeWindow: number | null }> {
+    const raw = await readContract<{
+      dispute_window?: bigint | number | null;
+    }>(config.contracts.voucher, 'get_voucher_options', [
+      await arg.u64(BigInt(voucherId)),
+    ]);
+    return {
+      disputeWindow:
+        raw.dispute_window === null || raw.dispute_window === undefined
+          ? null
+          : Number(raw.dispute_window),
+    };
   },
 
   /**
@@ -128,10 +195,11 @@ export const voucher = {
     params: CreateVoucherParams,
     source: string,
   ): Promise<PreparedInvocation> {
+    const call = await createVoucherCall(params);
     return prepareContractInvocation(
       config.contracts.voucher,
-      'create_voucher',
-      createVoucherArgs(params),
+      call.method,
+      call.args,
       source,
     );
   },
@@ -145,11 +213,11 @@ export const voucher = {
     sign: SignFn,
     slippageBps = 100,
   ) {
-    const args = createVoucherArgs(params);
+    const call = await createVoucherCall(params);
     return invokePathPaymentThenContract(
       config.contracts.voucher,
-      'create_voucher',
-      args,
+      call.method,
+      call.args,
       params.funder,
       sign,
       { usdcAmount: params.swapAmount, slippageBps },
@@ -162,44 +230,28 @@ export const voucher = {
    * later failure can be reported without losing already-created vouchers.
    */
   async createMany(
-    requests: Array<{
-      funder: string;
-      beneficiaryRef: string;
-      provider: string;
-      serviceCode: number;
-      amount: bigint;
-      expiresAt: number;
-    }>,
+    requests: CreateVoucherParams[],
     sign: SignFn,
-    onProgress?: (index: number, request: { funder: string; beneficiaryRef: string; provider: string; serviceCode: number; amount: bigint; expiresAt: number }, total: number) => void,
+    onProgress?: (index: number, request: CreateVoucherParams, total: number) => void,
   ) {
     if (requests.length === 0) return [] as Array<{ hash: string; returnValue: unknown }>;
 
     const batchCalls: ContractCall[] = [];
-    const callArgs = requests.map((params) => {
-      const client = getVoucherClient();
-      const clean = params.beneficiaryRef.startsWith('0x')
-        ? params.beneficiaryRef.slice(2)
-        : params.beneficiaryRef;
-      const args = client.spec.funcArgsToScVals('create_voucher', {
-        funder: params.funder,
-        beneficiary_ref: Buffer.from(clean, 'hex'),
-        provider: params.provider,
-        service_code: params.serviceCode,
-        amount: params.amount,
-        expires_at: BigInt(params.expiresAt),
-      });
-      batchCalls.push({
-        contractId: config.contracts.voucher,
-        method: 'create_voucher',
-        args,
-        walletAddress: params.funder,
-      });
-      return {
-        params,
-        args,
-      };
-    });
+    const callArgs = await Promise.all(
+      requests.map(async (params) => {
+        const call = await createVoucherCall(params);
+        batchCalls.push({
+          contractId: config.contracts.voucher,
+          method: call.method,
+          args: call.args,
+          walletAddress: params.funder,
+        });
+        return {
+          params,
+          args: call.args,
+        };
+      }),
+    );
 
     try {
       if (requests.length > 1) {

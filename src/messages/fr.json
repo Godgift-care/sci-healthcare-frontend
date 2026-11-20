@@ -45,6 +45,7 @@
     "history": "Historique",
     "fundedBy": "Financé par",
     "expires": "Expire le",
+    "disputeWindow": "Fenêtre de litige",
     "clinicReceived": "Clinique a reçu",
     "fee": "frais",
     "disputeOutcome": "Résultat du litige",
@@ -90,6 +91,10 @@
   "clinic": {
     "title": "Bureau clinique",
     "checking": "Vérification de l'enregistrement…",
+    "disputeWindow": "Fenêtre de litige",
+    "disputeWindowHint": "Durée pendant laquelle le financeur peut contester après la prise en charge confirmée.",
+    "disputeWindowDefault": "Par défaut : {duration}",
+    "disputeWindowDefaultUnknown": "Par défaut : non définie",
     "scanVoucherQr": "Scanner le QR du bon",
     "registerTitle": "Enregistrer cette clinique",
     "clinicName": "Nom de la clinique",

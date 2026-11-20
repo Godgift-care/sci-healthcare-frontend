@@ -42,6 +42,7 @@
     "history": "History",
     "fundedBy": "Funded by",
     "expires": "Expires",
+    "disputeWindow": "Dispute window",
     "clinicReceived": "Clinic received",
     "fee": "fee",
     "disputeOutcome": "Dispute outcome",
@@ -87,6 +88,10 @@
   "clinic": {
     "title": "Clinic desk",
     "checking": "Checking registration…",
+    "disputeWindow": "Dispute window",
+    "disputeWindowHint": "How long the funder can dispute after the care is confirmed.",
+    "disputeWindowDefault": "Default: {duration}",
+    "disputeWindowDefaultUnknown": "Default: not set",
     "scanVoucherQr": "Scan voucher QR",
     "registerTitle": "Register this clinic",
     "clinicName": "Clinic name",

@@ -46,6 +46,7 @@
     "history": "Historia",
     "fundedBy": "Imefadhiliwa na",
     "expires": "Inaisha muda",
+    "disputeWindow": "Muda wa mgogoro",
     "clinicReceived": "Kliniki ilipokea",
     "fee": "ada",
     "disputeOutcome": "Matokeo ya mgogoro",
@@ -91,6 +92,10 @@
   "clinic": {
     "title": "Dawati la kliniki",
     "checking": "Inakagua usajili…",
+    "disputeWindow": "Muda wa mgogoro",
+    "disputeWindowHint": "Muda ambafu mfadhili anaweza kuandika mgogoro baada ya utunzaji uthibitishwa.",
+    "disputeWindowDefault": "Kiotomatiki: {duration}",
+    "disputeWindowDefaultUnknown": "Kiotomatiki: haijajafunuliwa",
     "scanVoucherQr": "Changanua QR ya vocha",
     "registerTitle": "Sajili kliniki hii",
     "clinicName": "Jina la kliniki",

@@ -42,6 +42,7 @@
     "history": "Ìtàn",
     "fundedBy": "Ẹni tó dáwó lé",
     "expires": "Yóò parí ní",
+    "disputeWindow": "Ijakadi",
     "clinicReceived": "Kílíníkì gbà",
     "fee": "owó ìsan",
     "disputeOutcome": "Àbájáde àríyànjiyàn",
@@ -87,6 +88,10 @@
   "clinic": {
     "title": "Tábìlì kílíníkì",
     "checking": "Ń ṣàyẹ̀wò ìforúkọsílẹ̀…",
+    "disputeWindow": "Ijakadi",
+    "disputeWindowHint": "Omo fun awọn olùdáwó lati ṣe idajọ lẹ́yìn tí idunnu ti fọwọ́si.",
+    "disputeWindowDefault": "Èyí tí ó wà: {duration}",
+    "disputeWindowDefaultUnknown": "Èyí tí ó wà: kò tíì ṣe é",
     "scanVoucherQr": "Yẹ̀wò QR vóṣà",
     "registerTitle": "Forúkọ kílíníkì yìí sílẹ̀",
     "clinicName": "Orúkọ kílíníkì",

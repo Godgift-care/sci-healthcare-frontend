@@ -7,6 +7,7 @@ import { use, useEffect, useState } from 'react';
 import { ApiError } from '@/lib/api';
 import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
+import { formatDisputeWindow } from '@/lib/dispute-window';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
   useLiveUpdates,
@@ -101,6 +102,42 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     if (loadedVoucherId) rememberRecentVoucherId(loadedVoucherId);
   }, [loadedVoucherId]);
+
+  // The window the funder chose, or the protocol default (contracts #123).
+  // Older deployments may not expose options; fall back to the deadline the
+  // API already returns so the claimer still sees how long a dispute is open.
+  const [disputeWindowSeconds, setDisputeWindowSeconds] = useState<number | null>(
+    null,
+  );
+  const attestedAt = v?.attestedAt;
+  const disputeDeadline = v?.disputeDeadline;
+  useEffect(() => {
+    if (!loadedVoucherId) return;
+    let ignore = false;
+    (async () => {
+      const fallback = () => {
+        if (!attestedAt || !disputeDeadline) return null;
+        const seconds = Math.round(
+          (new Date(disputeDeadline).getTime() -
+            new Date(attestedAt).getTime()) /
+            1000,
+        );
+        return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+      };
+      try {
+        const options = await voucherContract.options(loadedVoucherId);
+        const seconds =
+          options.disputeWindow ??
+          (await voucherContract.defaultDisputeWindow().catch(() => null));
+        if (!ignore) setDisputeWindowSeconds(seconds ?? fallback());
+      } catch {
+        if (!ignore) setDisputeWindowSeconds(fallback());
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [attestedAt, disputeDeadline, loadedVoucherId]);
 
   // Per-step transaction hashes (#18). An indexer without the events
   // endpoint (backend #13) yields an empty list and the history renders
@@ -339,6 +376,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               </button>
             </div>
           </Field>
+          {disputeWindowSeconds !== null && (
+            <Field label={t('voucher.disputeWindow')}>
+              {formatDisputeWindow(disputeWindowSeconds, locale)}
+            </Field>
+          )}
           {v.status === 'Settled' && v.settledNet && (
             <Field label={t('voucher.clinicReceived')}>
               <span className="mono">${formatUsdc(v.settledNet, locale)}</span>

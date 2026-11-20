@@ -1189,4 +1189,34 @@ export const arg = {
     const { xdr } = await loadSdk();
     return xdr.ScVal.scvBool(v);
   },
+  /**
+   * `VoucherOptions` for `create_voucher_with_options` (contracts #123).
+   *
+   * The vendored bindings predate the options method, so the struct is
+   * encoded from the contract's own field names: `None` is Soroban's void,
+   * and a set value is the inner value with no wrapper.
+   */
+  voucherOptions: async (options: {
+    disputeWindow?: number | null;
+  }): Promise<xdr.ScVal> => {
+    const { nativeToScVal, xdr } = await loadSdk();
+    const fields: Array<[string, xdr.ScVal]> = [
+      ['presence_commitment', xdr.ScVal.scvVoid()],
+      [
+        'dispute_window',
+        options.disputeWindow === undefined || options.disputeWindow === null
+          ? xdr.ScVal.scvVoid()
+          : nativeToScVal(BigInt(options.disputeWindow), { type: 'u64' }),
+      ],
+    ];
+    return xdr.ScVal.scvMap(
+      fields.map(
+        ([name, value]) =>
+          new xdr.ScMapEntry({
+            key: nativeToScVal(name, { type: 'symbol' }),
+            val: value,
+          }),
+      ),
+    );
+  },
 };
