@@ -37,6 +37,7 @@ import { quoteXlmForUsdc } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
@@ -79,6 +80,7 @@ export default function ClinicPage({
   params: Promise<{ address: string }>;
 }) {
   const { address } = use(params);
+  const { t } = useLocaleContext();
   const { address: wallet, signTransaction, connect } = useWallet();
   const searchParams = useSearchParams();
 
@@ -540,7 +542,11 @@ export default function ClinicPage({
               <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
               <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
                 {provider.country} ·{' '}
-                <CopyValue value={provider.address} chars={8} label="clinic address" />
+                <CopyValue
+                  value={provider.address}
+                  chars={8}
+                  label={t('components.copyValue.labels.clinicAddress')}
+                />
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -949,7 +955,7 @@ export default function ClinicPage({
               <CopyValue
                 value={config.contracts.voucher}
                 chars={4}
-                label="contract id"
+                label={t('components.copyValue.labels.contractId')}
               />{' '}
               and released to the clinic only after an attester confirms delivery.
               Unclaimed vouchers are refundable after {expirySummary}.
