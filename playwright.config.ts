@@ -80,6 +80,11 @@ export default defineConfig({
       NEXT_PUBLIC_RECEIPT_CONTRACT_ID: E2E_CONTRACTS.receipt,
       NEXT_PUBLIC_USDC_CONTRACT_ID: E2E_CONTRACTS.usdc,
       NEXT_PUBLIC_FAUCET_CONTRACT_ID: E2E_CONTRACTS.faucet,
+      // The visual-only command keeps the sponsor page off, so its snapshots
+      // keep showing the default deployment with the variable unset.
+      NEXT_PUBLIC_SPONSOR_CONTRACT_ID: process.argv.includes('tests/visual')
+        ? ''
+        : E2E_CONTRACTS.sponsor,
       NEXT_PUBLIC_USDC_ISSUER: E2E_CONTRACTS.usdcIssuer,
       NEXT_PUBLIC_SEP24_ANCHORS: JSON.stringify([
         {

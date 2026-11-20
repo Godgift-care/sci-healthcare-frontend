@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 
 import { NavLink } from '@/components/ui';
+import { sponsorEnabled } from '@/lib/config';
 import { useAdminAccess } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
@@ -34,8 +36,19 @@ const LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const { address } = useWallet();
+  const { t } = useLocaleContext();
   const { isAdmin } = useAdminAccess(address);
-  const links = isAdmin ? [...LINKS, { href: '/admin', label: 'Admin' }] : LINKS;
+  const sponsorLink = sponsorEnabled
+    ? [{ href: '/sponsor', label: t('nav.sponsor') }]
+    : [];
+  const links = isAdmin
+    ? [...LINKS, ...sponsorLink, { href: '/admin', label: 'Admin' }]
+    : [...LINKS, ...sponsorLink];
+  // The seventh link would push the header controls onto a second row at the
+  // 1280px desktop width, so tighten spacing only when the optional sponsor
+  // link is shown. Deployments without the sponsor contract keep the original
+  // header (and visual snapshots) unchanged.
+  const dense = sponsorEnabled;
   // Keyed by the route that opened it, so a navigation (including Back) closes
   // the panel without an effect that would set state during render.
   const [openPath, setOpenPath] = useState<string | null>(null);
@@ -64,16 +77,19 @@ export function SiteHeader() {
             </span>
             SCI Healthcare
           </Link>
-          <nav aria-label="Primary" className="hidden items-center gap-1 sm:flex">
+          <nav
+            aria-label="Primary"
+            className={`hidden items-center sm:flex ${dense ? 'gap-0' : 'gap-1'}`}
+          >
             {links.map((link) => (
-              <NavLink key={link.href} href={link.href}>
+              <NavLink key={link.href} href={link.href} compact={dense}>
                 {link.label}
               </NavLink>
             ))}
           </nav>
         </div>
 
-        <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+        <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:shrink-0 sm:flex-nowrap sm:gap-2">
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />
