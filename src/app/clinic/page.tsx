@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
@@ -25,6 +25,7 @@ import {
   statusCounts,
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { useVirtualList } from '@/lib/useVirtualList';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
 import { OfflineClaimQueue } from '@/components/OfflineClaimQueue';
@@ -195,6 +196,33 @@ export default function ClinicDeskPage() {
   // batch must not try.
   const settleable = settleableVouchers(vouchers);
 
+  // Counts cover the whole inbox, not the current search, so the tabs stay a
+  // map of what is waiting rather than shrinking as a number is typed.
+  const counts = statusCounts(vouchers);
+  const statusTabs = VOUCHER_STATUSES.filter(
+    (s) => counts[s] > 0 || s === statusFilter,
+  );
+  const deferredSearch = useDeferredValue(search);
+  const visibleVouchers = useMemo(
+    () =>
+      filterVouchers(vouchers, {
+        status: statusFilter,
+        clinic: null,
+        search: deferredSearch,
+      }),
+    [vouchers, statusFilter, deferredSearch],
+  );
+  const filtering = statusFilter !== null || search.trim() !== '';
+
+  const {
+    containerRef: clinicListRef,
+    virtualItems: clinicVirtualItems,
+    totalCount: clinicTotalCount,
+    paddingTop: clinicPaddingTop,
+    paddingBottom: clinicPaddingBottom,
+    isVirtual: clinicIsVirtual,
+  } = useVirtualList(visibleVouchers);
+
   async function settleAll() {
     if (!address) return void connect();
     const due = settleableVouchers(vouchers);
@@ -260,19 +288,6 @@ export default function ClinicDeskPage() {
   }
 
   const editing = services.some((s) => String(s.code) === code);
-
-  // Counts cover the whole inbox, not the current search, so the tabs stay a
-  // map of what is waiting rather than shrinking as a number is typed.
-  const counts = statusCounts(vouchers);
-  const statusTabs = VOUCHER_STATUSES.filter(
-    (s) => counts[s] > 0 || s === statusFilter,
-  );
-  const visibleVouchers = filterVouchers(vouchers, {
-    status: statusFilter,
-    clinic: null,
-    search,
-  });
-  const filtering = statusFilter !== null || search.trim() !== '';
 
   function clearFilters() {
     setStatusFilter(null);
@@ -809,16 +824,32 @@ export default function ClinicDeskPage() {
             </button>
           </Empty>
         )}
-        <div className="space-y-3">
-          {visibleVouchers.map((v) => (
-            <VoucherRow
+        <div
+          ref={clinicListRef}
+          role="table"
+          aria-rowcount={clinicTotalCount}
+          aria-label={t('clinic.title')}
+          className="space-y-3"
+          style={
+            clinicIsVirtual
+              ? { paddingTop: `${clinicPaddingTop}px`, paddingBottom: `${clinicPaddingBottom}px` }
+              : undefined
+          }
+        >
+          {clinicVirtualItems.map(({ item: v, index }) => (
+            <div
               key={v.id}
-              v={v}
-              actions={['claim', 'settle']}
-              onDone={refreshAll}
-              disabled={settleAllBusy}
-              requirePatientMatch
-            />
+              role="row"
+              aria-rowindex={index + 1}
+            >
+              <VoucherRow
+                v={v}
+                actions={['claim', 'settle']}
+                onDone={refreshAll}
+                disabled={settleAllBusy}
+                requirePatientMatch
+              />
+            </div>
           ))}
         </div>
       </section>

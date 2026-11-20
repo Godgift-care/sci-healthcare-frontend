@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { DetailLink } from '@/components/DetailLink';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
@@ -132,10 +132,11 @@ export default function HomePage() {
   // a filter that matches nothing.
   const countries = useMemo(() => clinicCountries(providers), [providers]);
   const searchTerm = searchParams.get('q') ?? '';
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const countryFilter = parseCountry(searchParams.get('country'), countries);
   const filtered = useMemo(
-    () => filterClinics(providers, { q: searchTerm, country: countryFilter }),
-    [providers, searchTerm, countryFilter],
+    () => filterClinics(providers, { q: deferredSearchTerm, country: countryFilter }),
+    [providers, deferredSearchTerm, countryFilter],
   );
   const visible = useMemo(() => {
     if (favourites.length === 0) return filtered;

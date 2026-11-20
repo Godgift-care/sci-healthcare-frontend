@@ -30,6 +30,7 @@ import {
   type VoucherSort,
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { useVirtualList } from '@/lib/useVirtualList';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { RecentVouchers } from '@/components/RecentVouchers';
@@ -152,6 +153,14 @@ export default function MyPage() {
     filterVouchers(funded, { status: statusFilter, clinic: clinicFilter }),
     sort,
   );
+  const {
+    containerRef: myVouchersRef,
+    virtualItems: myVirtualItems,
+    totalCount: myTotalCount,
+    paddingTop: myPaddingTop,
+    paddingBottom: myPaddingBottom,
+    isVirtual: myIsVirtual,
+  } = useVirtualList(visible);
   const filtered = statusFilter !== null || Boolean(clinicFilter);
   const isDefaultView = !filtered && sort === DEFAULT_SORT;
 
@@ -693,29 +702,47 @@ export default function MyPage() {
               <span>{t('my.selectAllVisible', { count: visible.length })}</span>
             </label>
           )}
-          {visible.map((v) => (
-            <div key={v.id} className="flex items-start gap-3">
-              <label className="inline-flex min-h-11 shrink-0 items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(v.id)}
-                  disabled={batchRefunding}
-                  onChange={(event) =>
-                    toggleVoucherSelection(v.id, event.target.checked)
-                  }
-                  aria-label={t('my.selectVoucher', { id: v.id })}
-                  className="h-4 w-4 rounded border-[var(--color-line)]"
-                />
-              </label>
-              <div className="min-w-0 flex-1">
-                <VoucherRow
-                  v={v}
-                  actions={['dispute', 'refund', 'settle']}
-                  onDone={() => void mutateFunded()}
-                />
+          <div
+            ref={myVouchersRef}
+            role="table"
+            aria-rowcount={myTotalCount}
+            aria-label={t('my.title')}
+            className="space-y-3"
+            style={
+              myIsVirtual
+                ? { paddingTop: `${myPaddingTop}px`, paddingBottom: `${myPaddingBottom}px` }
+                : undefined
+            }
+          >
+            {myVirtualItems.map(({ item: v, index }) => (
+              <div
+                key={v.id}
+                role="row"
+                aria-rowindex={index + 1}
+                className="flex items-start gap-3"
+              >
+                <label className="inline-flex min-h-11 shrink-0 items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(v.id)}
+                    disabled={batchRefunding}
+                    onChange={(event) =>
+                      toggleVoucherSelection(v.id, event.target.checked)
+                    }
+                    aria-label={t('my.selectVoucher', { id: v.id })}
+                    className="h-4 w-4 rounded border-[var(--color-line)]"
+                  />
+                </label>
+                <div className="min-w-0 flex-1">
+                  <VoucherRow
+                    v={v}
+                    actions={['dispute', 'refund', 'settle']}
+                    onDone={() => void mutateFunded()}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
