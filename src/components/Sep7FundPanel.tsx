@@ -3,6 +3,7 @@
 import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { explorerTx } from '@/lib/config';
 import { beneficiaryRef } from '@/lib/beneficiary';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -60,6 +61,7 @@ export function Sep7FundPanel({
   walletAddress,
   onFunded,
 }: Sep7FundPanelProps) {
+  const { t } = useLocaleContext();
   const [payerDraft, setPayerDraft] = useState<string | null>(null);
   // Default to the connected wallet without overwriting an address the funder
   // typed (they may pay from a different account in a mobile wallet).
@@ -260,7 +262,11 @@ export function Sep7FundPanel({
                 >
                   Open in wallet
                 </a>
-                <CopyValue value={uri} label="SEP-7 payment link" buttonOnly />
+                <CopyValue
+                  value={uri}
+                  label={t('components.copyValue.labels.paymentLink')}
+                  buttonOnly
+                />
               </div>
               <p className="text-xs text-[var(--color-ink-soft)]">
                 Waiting for the wallet to submit… Keep this page open. This
