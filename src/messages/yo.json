@@ -68,7 +68,21 @@
     "ledgerNote": "Vóṣà yìí dúró fún ìlérí tí a fi pamọ́ lórí ẹ̀wọ̀n Stellar. Kò ní àwọn àkọsílẹ̀ ìlera tàbí ìdánimọ̀ ara ẹni.",
     "reportProblem": "Jábọ̀ ìṣòro",
     "reportProblemIntro": "Olùdáwó nìkan ló lè ṣí àríyànjiyàn. Tí ìwọ ni aláìsàn, ẹbí, tàbí ẹnikẹ́ni mìíràn tó ṣàkíyèsí ìṣòro pẹ̀lú vóṣà yìí, ṣí ìjábọ̀. A ti fi nọ́mbà vóṣà tí gbogbo ènìyàn rí, ipò, iṣẹ́ àti kílíníkì kún un nìkan — kì í ṣe ìtọ́kasí aláìsàn rárá.",
-    "reportProblemAction": "Jábọ̀ ìṣòro"
+    "reportProblemAction": "Jábọ̀ ìṣòro",
+    "redirect": {
+      "action": "Use at a different clinic",
+      "title": "Move voucher #{id}",
+      "intro": "Only active clinics that offer this service at or below {amount} are listed.",
+      "empty": "No other clinic currently offers this service at or below {amount}.",
+      "loading": "Finding clinics…",
+      "choose": "Choose a clinic",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} will receive {price} and the voucher keeps its escrow of {amount}. Check the clinic and price before signing.",
+      "confirm": "Move voucher",
+      "moving": "Moving…",
+      "error": "Could not move the voucher: {message}",
+      "success": "Voucher moved to {clinic}."
+    }
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",
@@ -104,9 +118,15 @@
     "earnings": "Èrè",
     "earningsNote": "Ìṣàn owó kílíníkì yìí: ìtọ́jú tí a ti san, owó tí ó ń dúró, àti àwọn owó ìsan àdéhùn tí a ti san.",
     "earningsSettled": "Ti san",
-    "earningsSettledDetail": "Vóṣà {count} · {net} lẹ́yìn owó ìsan",
+    "earningsSettledDetail": {
+      "one": "{count} voucher · {net} net after fees",
+      "other": "{count} vouchers · {net} net after fees"
+    },
     "earningsPending": "Owó tó ń dúró",
-    "earningsPendingDetail": "{count} tí a gbà, jẹ́rìí tàbí ní àríyànjiyàn, kí a tó yọ owó ìsan",
+    "earningsPendingDetail": {
+      "one": "{count} voucher claimed, attested or disputed, before fees",
+      "other": "{count} vouchers claimed, attested or disputed, before fees"
+    },
     "earningsFees": "Owó ìsan tí a san",
     "earningsFeesDetail": "Owó ìsan àdéhùn lórí ìtọ́jú tí a san",
     "earningsMonthly": "Èrè oṣooṣù",
@@ -119,7 +139,10 @@
     "allStatuses": "Gbogbo rẹ̀",
     "searchVoucherNumber": "Nọ́mbà vóṣà",
     "searchVoucherPlaceholder": "àpẹẹrẹ 21 tàbí #21",
-    "showingVouchers": "Ń fi {shown} nínú {total} vóṣà hàn",
+    "showingVouchers": {
+      "one": "Showing {shown} of {total} voucher",
+      "other": "Showing {shown} of {total} vouchers"
+    },
     "noMatchingVouchers": "Kò sí vóṣà tó bá ìwádìí yìí mu.",
     "clearFilters": "Pa àwọn àlẹ̀ mọ́",
     "checklist": {
@@ -170,6 +193,76 @@
   "stats": {
     "downloadDaily": "Gba CSV ojoojúmọ́",
     "downloadClinics": "Gba CSV àwọn kílíníkì",
-    "downloadVouchers": "Gba CSV àwọn vóṣà"
+    "downloadVouchers": "Gba CSV àwọn vóṣà",
+    "escrowTitle": "Escrow held on chain",
+    "escrowNote": "Read from the voucher contract's own accounting, without a wallet.",
+    "escrowOpen": "Open escrow",
+    "escrowBalance": "Contract holds {amount}",
+    "escrowIndexed": "The indexer reports {amount} open in escrow.",
+    "escrowUnavailable": "The on-chain escrow figure is unavailable right now.",
+    "escrowIndexedUnavailable": "The indexer's open escrow total is unavailable right now.",
+    "escrowSolvencyMismatch": "The contract's books do not match its balance: {escrow} is recorded as open escrow but the contract holds {balance}. Do not rely on the indexed totals until this is understood.",
+    "escrowIndexerMismatch": "The chain and the indexer disagree about open escrow: the contract says {chain}, the indexer says {indexed}."
+  },
+  "my": {
+    "selectAllVisible": "Select all on this page ({count})",
+    "selectVoucher": "Select voucher #{id}",
+    "selectedCount": "{count} selected",
+    "exportSelected": "Download selected CSV",
+    "refundSelected": "Refund selected ({count})",
+    "refundAll": "Refund all ({count})",
+    "refundingCount": "Refunding {current}/{total}…",
+    "refundProgress": "{current} of {total}",
+    "refundingVoucher": "Refunding voucher #{id}…",
+    "refundedSummary": "Refunded {count} voucher(s) successfully:",
+    "refundFailedSummary": "Failed to refund {count} voucher(s):"
+  },
+  "admin": {
+    "split": {
+      "button": "Split escrow",
+      "amountLabel": "Amount awarded to the clinic (USDC)",
+      "amountHint": "Gross amount before the protocol fee, between 0 and {amount}. The rest returns to the funder.",
+      "invalid": "Enter an amount between 0 and {amount}.",
+      "loading": "Calculating the fee…",
+      "error": "Could not calculate the fee: {message}",
+      "clinicReceives": "{clinic} receives {net} after the {fee} fee.",
+      "funderReceives": "The funder receives {amount}.",
+      "sum": "The clinic net, the fee and the funder refund add up to the escrow of {amount}."
+    }
+  },
+  "attest": {
+    "leftToday": "{count} attestations left today",
+    "capReached": "You have reached today's attestation limit. Confirm care again after {time} UTC.",
+    "leftUnavailable": "Remaining attestations could not be read right now."
+  },
+  "print": {
+    "verify": "Verify on chain",
+    "verifying": "Verifying…",
+    "verified": "Verified on chain",
+    "mismatch": "Does not match the chain",
+    "mismatchShort": "Mismatch",
+    "error": "Could not read the chain",
+    "fieldMismatch": "{field}: shown {displayed}, chain says {onChain}",
+    "field": {
+      "voucher": "Receipt number",
+      "provider": "Clinic",
+      "service": "Service",
+      "amount": "Amount",
+      "settledAt": "Date"
+    }
+  },
+  "offlineQueue": {
+    "title": "Waiting to submit",
+    "note": "These claims were signed on this device and will be submitted automatically when the connection returns.",
+    "voucher": "Voucher #{id}",
+    "queuedStatus": "Queued",
+    "submitting": "Submitting…",
+    "failed": "Not submitted: {error}",
+    "validUntil": "Valid until {time}",
+    "submitNow": "Submit now",
+    "discard": "Discard",
+    "expiredTitle": "Queued claim discarded",
+    "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
+    "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
   }
 }

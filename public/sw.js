@@ -1,7 +1,7 @@
 /**
- * Service worker: the installable offline shell (#74).
+ * Service worker: the installable offline shell (#74) and API cache (#343).
  *
- * What it caches, and why that is the whole of it:
+ * What it caches, and why:
  *
  * - the *shell* — the `/` document, the manifest and the icons — so a clinic
  *   on a bad connection can open the app and get a usable frame instead of
@@ -10,26 +10,22 @@
  * - `/_next/static/*` — content-hashed build output, immutable by
  *   construction, so cache-first is both safe and what makes the shell
  *   actually render offline.
+ * - public GET API routes (`/providers`, `/services`, `/stats`) — cached using
+ *   stale-while-revalidate with a short maximum age (#343) so repeat visits
+ *   on mobile data do not needlessly re-download static clinic and service data.
  *
- * What it never sees: the indexer API, Soroban RPC, Horizon, map tiles and
- * the analytics beacon are all cross-origin, and cross-origin requests are
- * passed straight through. Patient references, beneficiary hashes, voucher
- * ids and wallet addresses live in the API's answers, never in the shell, so
- * none of that can end up in a cache on a shared clinic phone. Same-origin
- * RSC payloads (Next's client-side navigation data, `?_rsc=`) are passed
- * through for the same reason: they carry whatever the page carries.
+ * What it NEVER caches:
  *
- * A cached copy of an API answer would also be *wrong*, not just leaky: a
- * voucher's state comes from the chain, and showing yesterday's answer
- * while offline invites a funder to act on it.
- *
- * A newly installed worker waits until a user chooses to reload, so a deploy
- * cannot replace a page in the middle of a contract write. Writes are
- * untouched — they were never cacheable — and no request is ever served from
- * cache while the network answers.
+ * - Any route or request carrying patient references, beneficiary references/hashes,
+ *   keys, or secrets.
+ * - Receipts (`/receipts`) and vouchers (`/vouchers`), whose state is on-chain.
+ * - Readiness checks (`/ready`), which must accurately reflect real-time network health.
+ * - Same-origin RSC payloads (`?_rsc=`), which carry client-side page state.
  */
 
 const CACHE = 'sci-healthcare-shell-v1';
+const API_CACHE = 'sci-healthcare-api-v1';
+const API_CACHE_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
 
 /** Everything needed to paint the frame with no network at all. */
 const SHELL = [
@@ -39,6 +35,28 @@ const SHELL = [
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png',
   '/icons/apple-touch-icon.png',
+];
+
+const FORBIDDEN_QUERY_PARAMS = [
+  'beneficiaryref',
+  'beneficiary_ref',
+  'secret',
+  'patientkey',
+  'reference',
+  'patientid',
+];
+
+const ALLOWED_PUBLIC_PATH_PATTERNS = [
+  /^\/providers(\/.*)?$/,
+  /^\/services(\/.*)?$/,
+  /^\/stats(\/.*)?$/,
+  /^\/version$/,
+];
+
+const FORBIDDEN_PATH_PATTERNS = [
+  /^\/receipts(\/.*)?$/,
+  /^\/vouchers(\/.*)?$/,
+  /^\/ready$/,
 ];
 
 self.addEventListener('install', (event) => {
@@ -67,7 +85,9 @@ self.addEventListener('activate', (event) => {
     (async () => {
       const names = await caches.keys();
       await Promise.all(
-        names.filter((name) => name !== CACHE).map((name) => caches.delete(name)),
+        names
+          .filter((name) => name !== CACHE && name !== API_CACHE)
+          .map((name) => caches.delete(name)),
       );
       await self.clients.claim();
     })(),
@@ -84,22 +104,45 @@ function isRscPayload(request, url) {
   return url.searchParams.has('_rsc') || request.headers.get('rsc') === '1';
 }
 
+/** Check if API request is safe for stale-while-revalidate caching (#343). */
+function isCacheableApi(request, url) {
+  if (request.method !== 'GET') return false;
+
+  for (const [key] of url.searchParams.entries()) {
+    if (FORBIDDEN_QUERY_PARAMS.includes(key.toLowerCase())) return false;
+  }
+
+  if (isRscPayload(request, url)) return false;
+
+  const path = url.pathname;
+  for (const pattern of FORBIDDEN_PATH_PATTERNS) {
+    if (pattern.test(path)) return false;
+  }
+
+  return ALLOWED_PUBLIC_PATH_PATTERNS.some((pattern) => pattern.test(path));
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  // Cross-origin: the indexer API, Soroban RPC, Horizon, map tiles,
-  // analytics. Not cached, not intercepted, not ours.
-  if (url.origin !== self.location.origin) return;
 
-  if (request.mode === 'navigate') {
+  // Shell navigation
+  if (url.origin === self.location.origin && request.mode === 'navigate') {
     event.respondWith(shellNavigation(request));
     return;
   }
 
-  if (isShellAsset(url) && !isRscPayload(request, url)) {
+  // Shell static assets
+  if (url.origin === self.location.origin && isShellAsset(url) && !isRscPayload(request, url)) {
     event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // Stale-while-revalidate for public GET API endpoints (#343)
+  if (isCacheableApi(request, url)) {
+    event.respondWith(staleWhileRevalidateApi(request));
   }
 });
 
@@ -132,4 +175,42 @@ async function cacheFirst(request) {
   const response = await fetch(request);
   if (response.ok) await cache.put(request, response.clone());
   return response;
+}
+
+/** Stale-while-revalidate for public API responses (#343). */
+async function staleWhileRevalidateApi(request) {
+  const cache = await caches.open(API_CACHE);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request)
+    .then(async (response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        const headers = new Headers(copy.headers);
+        headers.set('sw-cached-at', Date.now().toString());
+        const responseToCache = new Response(await copy.blob(), {
+          status: copy.status,
+          statusText: copy.statusText,
+          headers,
+        });
+        await cache.put(request, responseToCache);
+      }
+      return response;
+    })
+    .catch(() => cached || new Response(JSON.stringify({ error: 'Network unavailable' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+  if (cached) {
+    const cachedAt = Number(cached.headers.get('sw-cached-at') || 0);
+    const isFresh = Date.now() - cachedAt < API_CACHE_MAX_AGE_MS;
+    if (isFresh) {
+      // Revalidate in background
+      fetchPromise.catch(() => undefined);
+      return cached;
+    }
+  }
+
+  return fetchPromise;
 }
