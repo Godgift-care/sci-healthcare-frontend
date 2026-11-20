@@ -62,8 +62,8 @@ function StatusTab({
       onClick={onClick}
       className={`inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
         active
-          ? 'border-transparent bg-[var(--color-brand)] text-white'
-          : 'border-[var(--color-line)] bg-white text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
+          ? 'border-transparent bg-[var(--color-brand)] text-[var(--color-brand-text)]'
+          : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
       }`}
     >
       <span>{children}</span>

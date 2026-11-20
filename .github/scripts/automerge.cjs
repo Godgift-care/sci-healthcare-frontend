@@ -24,6 +24,61 @@ const PASSING = new Set(['success', 'neutral', 'skipped']);
 const BOT_JOB = 'auto-merge';
 const SECURITY_CONTEXT = 'security-scan';
 
+// If fewer than this many core API calls remain, skip the run entirely and
+// let the next scheduled run pick up. `rateLimit.get()` does not count
+// against the quota, so checking it is free.
+const RATE_LIMIT_RESERVE = 100;
+
+/** Thrown when a GitHub API call is rate limited (403/429 with 0 remaining). */
+class RateLimitError extends Error {
+  constructor(message, reset) {
+    super(message);
+    this.name = 'RateLimitError';
+    this.reset = reset;
+  }
+}
+
+/** Returns core rate limit remaining and reset epoch seconds (free call). */
+async function rateLimitRemaining({ github }) {
+  const { data } = await github.rest.rateLimit.get();
+  return {
+    remaining: data.resources.core.remaining,
+    reset: data.resources.core.reset,
+  };
+}
+
+/**
+ * Wraps a GitHub API call. Translates a rate-limit 403/429 into a
+ * RateLimitError so the caller can handle it gracefully instead of failing
+ * the whole job.
+ */
+async function withRateLimit({ fn, what }) {
+  try {
+    return await fn();
+  } catch (err) {
+    const status = err && err.status;
+    const headers = err && err.headers;
+    const remaining =
+      headers &&
+      (headers['x-ratelimit-remaining'] || headers['X-RateLimit-Remaining']);
+    if (
+      (status === 403 || status === 429) &&
+      (remaining === undefined || Number(remaining) === 0)
+    ) {
+      const reset =
+        headers &&
+        (headers['x-ratelimit-reset'] || headers['X-RateLimit-Reset']);
+      throw new RateLimitError(
+        `rate limited on ${what}, reset at ${new Date(
+          Number(reset) * 1000
+        ).toISOString()}`,
+        reset ? Number(reset) * 1000 : null
+      );
+    }
+    throw err;
+  }
+}
+
 /** Keeps the latest check run per name, so a re-run replaces the run it repeats. */
 function latestByName(checkRuns) {
   const latest = new Map();
@@ -195,21 +250,29 @@ async function approvePendingRuns({ github, context, core, pulls }) {
   const justPushed =
     context.eventName === 'pull_request_target' &&
     ['opened', 'reopened', 'synchronize'].includes(context.payload.action);
-  const attempts = justPushed ? 6 : 1;
+  const attempts = justPushed ? 3 : 1;
 
   let approved = 0;
   const seen = new Set();
   for (let i = 0; i < attempts; i++) {
-    const pending = await paginate(github, github.rest.actions.listWorkflowRunsForRepo, {
-      owner, repo, status: 'action_required',
+    const pending = await withRateLimit({
+      fn: () =>
+        paginate(github, github.rest.actions.listWorkflowRunsForRepo, {
+          owner, repo, status: 'action_required',
+        }),
+      what: 'list workflow runs for approval',
     });
     for (const run of pending) {
       if (seen.has(run.id) || !shas.has(run.head_sha)) continue;
       if (run.event !== 'pull_request' && run.event !== 'pull_request_target') continue;
       seen.add(run.id);
       try {
-        await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve', {
-          owner, repo, run_id: run.id,
+        await withRateLimit({
+          fn: () =>
+            github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve', {
+              owner, repo, run_id: run.id,
+            }),
+          what: 'approve CI run',
         });
         approved++;
         core.info(`approved ${run.name} run ${run.id} for ${run.head_sha.slice(0, 7)}`);
@@ -219,7 +282,11 @@ async function approvePendingRuns({ github, context, core, pulls }) {
     }
     if (justPushed && i < attempts - 1) {
       const sha = context.payload.pull_request.head.sha;
-      const runs = await github.rest.actions.listWorkflowRunsForRepo({ owner, repo, head_sha: sha, per_page: 20 });
+      const runs = await withRateLimit({
+        fn: () =>
+          github.rest.actions.listWorkflowRunsForRepo({ owner, repo, head_sha: sha, per_page: 20 }),
+        what: 'list workflow runs for head SHA',
+      });
       const ciExists = runs.data.workflow_runs.some((r) => r.path.endsWith('/ci.yml'));
       const ciPending = runs.data.workflow_runs.some((r) => r.path.endsWith('/ci.yml') && r.conclusion === 'action_required' && !seen.has(r.id));
       if (ciExists && !ciPending) break;
@@ -261,13 +328,29 @@ async function permissionOf({ github, owner, repo, username }) {
   }
 }
 
+/**
+ * Caches collaborator permission lookups within a single run so the same
+ * user (e.g. a reviewer approving several PRs, or the author of several PRs)
+ * is only queried once.
+ */
+function permissionCache({ github, owner, repo }) {
+  const cache = new Map();
+  return async (username) => {
+    if (cache.has(username)) return cache.get(username);
+    const perm = await permissionOf({ github, owner, repo, username });
+    cache.set(username, perm);
+    return perm;
+  };
+}
+
 async function handle({ github, context, core, pr, patterns }) {
   const { owner, repo } = context.repo;
+  const checkPermission = permissionCache({ github, owner, repo });
   // Re-read: list results do not include mergeability.
   let full = (await github.rest.pulls.get({ owner, repo, pull_number: pr.number })).data;
   // GitHub computes mergeability in the background, slowly after a busy
-  // stretch of merges; wait up to ~30s before leaving it to the next run.
-  for (let i = 0; i < 6 && full.mergeable === null; i++) {
+  // stretch of merges; wait up to ~15s before leaving it to the next run.
+  for (let i = 0; i < 3 && full.mergeable === null; i++) {
     await new Promise((r) => setTimeout(r, 5000));
     full = (await github.rest.pulls.get({ owner, repo, pull_number: pr.number })).data;
   }
@@ -283,7 +366,7 @@ async function handle({ github, context, core, pr, patterns }) {
     paginate(github, github.rest.pulls.listFiles, { owner, repo, pull_number: full.number }),
     paginate(github, github.rest.pulls.listReviews, { owner, repo, pull_number: full.number }),
     linkedIssuesOf({ github, owner, repo, number: full.number }),
-    permissionOf({ github, owner, repo, username: full.user.login }),
+    checkPermission(full.user.login),
     github.rest.repos
       .getCombinedStatusForRef({ owner, repo, ref: sha, per_page: 100 })
       .then((r) => r.data.statuses.find((s) => s.context === SECURITY_CONTEXT) || null),
@@ -296,9 +379,14 @@ async function handle({ github, context, core, pr, patterns }) {
   const files = filesRaw.flatMap((f) => [f.filename, f.previous_filename].filter(Boolean));
 
   const writers = new Set();
-  for (const login of new Set(reviews.filter((r) => r.state === 'APPROVED').map((r) => r.user.login))) {
-    const perm = await permissionOf({ github, owner, repo, username: login });
-    if (perm === 'admin' || perm === 'write') writers.add(login);
+  const touched = sensitiveFiles(files, patterns);
+  const reviewRequired = pr.labels.some((label) => label.name === 'review-required');
+  // Only check reviewer permissions when approval could matter.
+  if ((touched.length || reviewRequired) && reviews.some((r) => r.state === 'APPROVED')) {
+    for (const login of new Set(reviews.filter((r) => r.state === 'APPROVED').map((r) => r.user.login))) {
+      const perm = await checkPermission(login);
+      if (perm === 'admin' || perm === 'write') writers.add(login);
+    }
   }
 
   const decision = evaluate({ pr: full, ciRuns, checkRuns, files, reviews, writers, patterns, author, linkedIssues, security });
@@ -385,16 +473,52 @@ async function afterMerge({ github, context, core }) {
 
 async function run({ github, context, core }) {
   const patterns = parsePatterns(process.env.SENSITIVE_PATHS);
+
+  // Check the core rate limit before doing anything. `rateLimit.get()` is
+  // free and does not count against the quota.
+  let remaining;
+  try {
+    ({ remaining } = await rateLimitRemaining({ github }));
+  } catch (err) {
+    core.warning(`could not check rate limit: ${err.message}`);
+    remaining = Infinity;
+  }
+  if (remaining !== Infinity && remaining < RATE_LIMIT_RESERVE) {
+    const { reset } = await rateLimitRemaining({ github });
+    core.warning(
+      `rate limit remaining (${remaining}) below reserve (${RATE_LIMIT_RESERVE}); ` +
+        `skipping run, resets at ${new Date(reset * 1000).toISOString()}`,
+    );
+    return;
+  }
+
   const pulls = await openPulls({ github, context });
   core.info(`${pulls.length} pull request(s) to evaluate`);
-  const approved = await approvePendingRuns({ github, context, core, pulls });
+
+  // Early filter: skip drafts, do-not-merge, and closed PRs before any
+  // per-PR API calls. These can be decided from the list response alone.
+  const eligible = pulls.filter(
+    (pr) => pr.state === 'open' && !pr.draft && !pr.labels.some((l) => l.name === 'do-not-merge'),
+  );
+  core.info(`${eligible.length} eligible pull request(s) after early filter`);
+
+  const approved = await approvePendingRuns({ github, context, core, pulls: eligible });
   if (approved) core.info(`approved ${approved} pending CI run(s)`);
+
   let merged = 0;
-  for (const pr of pulls) {
+  for (const pr of eligible) {
     try {
-      const d = await handle({ github, context, core, pr, patterns });
+      const d = await withRateLimit({
+        fn: () => handle({ github, context, core, pr, patterns }),
+        what: `PR #${pr.number}`,
+      });
       if (d.action === 'merge') merged++;
     } catch (err) {
+      if (err instanceof RateLimitError) {
+        core.warning(err.message);
+        // Stop evaluating PRs; the next scheduled run will pick up after the reset.
+        break;
+      }
       core.warning(`#${pr.number}: ${err.message}`);
     }
   }
@@ -408,3 +532,5 @@ module.exports.globToRegExp = globToRegExp;
 module.exports.parsePatterns = parsePatterns;
 module.exports.approvedByWriter = approvedByWriter;
 module.exports.isWorkflowPermissionError = isWorkflowPermissionError;
+module.exports.RateLimitError = RateLimitError;
+module.exports.withRateLimit = withRateLimit;

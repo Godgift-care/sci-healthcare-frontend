@@ -40,9 +40,9 @@ export function Button({
 }) {
   const styles = {
     primary:
-      'bg-[var(--color-brand)] text-white hover:opacity-90 disabled:opacity-40',
+      'bg-[var(--color-brand)] text-[var(--color-brand-text)] hover:opacity-90 disabled:opacity-40',
     ghost:
-      'border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:bg-[var(--color-canvas)] disabled:opacity-40',
+      'border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] disabled:opacity-40',
     danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 disabled:opacity-40',
   }[variant];
 
