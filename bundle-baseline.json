@@ -1,0 +1,19 @@
+{
+  "/": 241093,
+  "/admin": 393755,
+  "/attest": 397477,
+  "/attesters": 236709,
+  "/clinic": 532251,
+  "/clinics/[address]": 413333,
+  "/faq": 238238,
+  "/how-it-works": 234096,
+  "/my": 410210,
+  "/my/print": 238430,
+  "/my/transactions": 236343,
+  "/privacy": 234096,
+  "/services": 236520,
+  "/services/[code]": 236080,
+  "/stats": 238383,
+  "/status": 236407,
+  "/vouchers/[id]": 411033
+}

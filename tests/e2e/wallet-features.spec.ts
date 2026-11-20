@@ -7,7 +7,14 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
   test('opens wallet menu with wallet details, copy address, and explorer link', async ({
     page,
     context,
+    browserName,
   }) => {
+    // clipboard-read is not a grantable permission outside Chromium
+    // (#345), so the copy assertions run there only.
+    test.skip(
+      browserName !== 'chromium',
+      'clipboard-read is not a grantable permission outside Chromium',
+    );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await useMockWallet(page, FUNDER);
     await mockBackend(page, { provider: CLINIC, vouchers: [] });

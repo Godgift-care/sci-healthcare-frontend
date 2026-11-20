@@ -21,7 +21,9 @@
     "lighthouse": "lhci autorun",
     "test:visual": "playwright test tests/visual",
     "test:visual:update": "playwright test tests/visual --update-snapshots",
-    "test:e2e": "playwright test tests/e2e"
+    "test:e2e": "playwright test tests/e2e",
+    "bundle:budget": "node scripts/bundle-budget.mjs",
+    "bundle:budget:update": "node scripts/bundle-budget.mjs --update"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "2.8.0",

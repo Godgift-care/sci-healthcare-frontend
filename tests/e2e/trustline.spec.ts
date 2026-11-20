@@ -70,9 +70,12 @@ test('a rejection in the wallet leaves everything as it was', async ({ page }) =
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add USDC' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Fund voucher' })).toHaveCount(0);
-  // Reads (the faucet's balance poll) are fine; nothing was built, signed
-  // or submitted.
-  const writes = (await mockCalls(page)).filter((c) => c.kind !== 'read');
+  // Reads and simulations (the faucet's balance poll, the fee preview) are
+  // fine; nothing was signed or submitted. `invoke` and `change_trust` are
+  // the kinds that reach the network, which is what this asserts.
+  const writes = (await mockCalls(page)).filter(
+    (c) => c.kind === 'invoke' || c.kind === 'change_trust',
+  );
   expect(writes).toEqual([]);
 });
 
