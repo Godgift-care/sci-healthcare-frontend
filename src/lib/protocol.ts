@@ -1,6 +1,7 @@
 import { batchSettleMethod } from './batch-settle';
 import type { xdr } from '@stellar/stellar-sdk';
 
+import { claimOrQueue } from './claim-queue';
 import { config, isTestnet } from './config';
 import {
   FaucetClient,
@@ -220,14 +221,35 @@ export const voucher = {
     return results;
   },
 
-  /** claim(provider, voucher_id) */
+  /**
+   * claim(provider, voucher_id)
+   *
+   * Goes through the offline queue (#301): the call is prepared and signed
+   * first, then submitted. If the browser is offline, or submission fails
+   * for want of a network, the signed envelope is kept locally and submitted
+   * when the connection returns. See src/lib/claim-queue.ts.
+   */
   async claim(provider: string, voucherId: string, sign: SignFn) {
-    const client = getVoucherClient();
-    const args = client.spec.funcArgsToScVals('claim', {
-      provider,
-      voucher_id: BigInt(voucherId),
-    });
-    return invokeContract(config.contracts.voucher, 'claim', args, provider, sign);
+    return claimOrQueue(provider, voucherId, sign);
+  },
+
+  /** attestations_left(attester) -> u32, remaining today (UTC). */
+  async attestationsLeft(attester: string): Promise<number> {
+    return Number(
+      await readContract<bigint>(config.contracts.voucher, 'attestations_left', [
+        await arg.address(attester),
+      ]),
+    );
+  },
+
+  /** escrow_summary() -> (open_escrow, token_balance), both in base units. */
+  async escrowSummary(): Promise<[bigint, bigint]> {
+    const [openEscrow, tokenBalance] = await readContract<[bigint, bigint]>(
+      config.contracts.voucher,
+      'escrow_summary',
+      [],
+    );
+    return [BigInt(openEscrow), BigInt(tokenBalance)];
   },
 
   /** attest(attester, voucher_id) */
@@ -572,6 +594,35 @@ export const faucet = {
     const args = client.spec.funcArgsToScVals('get_config', {});
     const c = await readContract<{ amount: bigint }>(config.contracts.faucet, 'get_config', args);
     return BigInt(c.amount);
+  },
+};
+
+/**
+ * The care-receipt contract (issue #294).
+ *
+ * Reads are simulations with a dummy source account, so verification works
+ * without a connected wallet. `get_receipt` returns the struct minted on
+ * settlement; the beneficiary reference it carries is never displayed or
+ * logged, only the fields already shown on the receipt.
+ */
+export type ChainReceipt = {
+  voucher_id: bigint | number | string;
+  beneficiary_ref?: unknown;
+  provider: string;
+  service_code: bigint | number | string;
+  amount: bigint | number | string;
+  settled_at: bigint | number | string;
+};
+
+export const receipt = {
+  /** get_receipt(voucher_id) -> Receipt */
+  async get(voucherId: string): Promise<ChainReceipt> {
+    if (!config.contracts.receipt) {
+      throw new Error('This deployment has no receipt contract configured.');
+    }
+    return readContract<ChainReceipt>(config.contracts.receipt, 'get_receipt', [
+      await arg.u64(BigInt(voucherId)),
+    ]);
   },
 };
 

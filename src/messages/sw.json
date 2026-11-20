@@ -177,6 +177,50 @@
   "stats": {
     "downloadDaily": "Pakua CSV ya kila siku",
     "downloadClinics": "Pakua CSV ya kliniki",
-    "downloadVouchers": "Pakua CSV ya vocha"
+    "downloadVouchers": "Pakua CSV ya vocha",
+    "escrowTitle": "Fedha zilizowekwa dhamana kwenye mnyororo",
+    "escrowNote": "Imechukuliwa kutoka hesabu ya mkataba wa vocha, bila pochi.",
+    "escrowOpen": "Dhamana iliyo wazi",
+    "escrowBalance": "Mkataba unashikilia {amount}",
+    "escrowIndexed": "Kiashiria kinaonyesha {amount} kama dhamana iliyo wazi.",
+    "escrowUnavailable": "Takwimu ya dhamana kwenye mnyororo haipatikani kwa sasa.",
+    "escrowIndexedUnavailable": "Jumla ya dhamana iliyo wazi ya kiashiria haipatikani kwa sasa.",
+    "escrowSolvencyMismatch": "Hesabu za mkataba haziendani na salio lake: {escrow} imeandikwa kama dhamana iliyo wazi lakini mkataba unashikilia {balance}. Usitegemee jumla za kiashiria hadi hili lielewike.",
+    "escrowIndexerMismatch": "Mnyororo na kiashiria havikubaliani kuhusu dhamana iliyo wazi: mkataba unasema {chain}, kiashiria kinasema {indexed}."
+  },
+  "attest": {
+    "leftToday": "{count} uthibitisho umebaki leo",
+    "capReached": "Umefikia kikomo cha uthibitisho wa leo. Thibitisha tena baada ya {time} UTC.",
+    "leftUnavailable": "Idadi ya uthibitisho iliyobaki haipatikani kwa sasa."
+  },
+  "print": {
+    "verify": "Thibitisha kwenye mnyororo",
+    "verifying": "Inathibitisha…",
+    "verified": "Imethibitishwa kwenye mnyororo",
+    "mismatch": "Haiendani na mnyororo",
+    "mismatchShort": "Tofauti",
+    "error": "Imeshindwa kusoma mnyororo",
+    "fieldMismatch": "{field}: imeonyeshwa {displayed}, mnyororo unasema {onChain}",
+    "field": {
+      "voucher": "Nambari ya risiti",
+      "provider": "Kliniki",
+      "service": "Huduma",
+      "amount": "Kiasi",
+      "settledAt": "Tarehe"
+    }
+  },
+  "offlineQueue": {
+    "title": "Inasubiri kutumwa",
+    "note": "Madai haya yalisainiwa kwenye kifaa hiki na yatatumwa kiotomatiki mtandao unaporejea.",
+    "voucher": "Vocha #{id}",
+    "queuedStatus": "Inasubiri",
+    "submitting": "Inatuma…",
+    "failed": "Haijatumwa: {error}",
+    "validUntil": "Inatumika hadi {time}",
+    "submitNow": "Tuma sasa",
+    "discard": "Ondoa",
+    "expiredTitle": "Dai lililosubiri limeondolewa",
+    "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
+    "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
   }
 }

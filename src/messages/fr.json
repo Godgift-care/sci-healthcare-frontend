@@ -179,6 +179,50 @@
   "stats": {
     "downloadDaily": "Télécharger le CSV quotidien",
     "downloadClinics": "Télécharger le CSV des cliniques",
-    "downloadVouchers": "Télécharger le CSV des bons"
+    "downloadVouchers": "Télécharger le CSV des bons",
+    "escrowTitle": "Montant sous séquestre sur la chaîne",
+    "escrowNote": "Lu dans la comptabilité du contrat de bons, sans portefeuille.",
+    "escrowOpen": "Séquestre ouvert",
+    "escrowBalance": "Le contrat détient {amount}",
+    "escrowIndexed": "L'indexeur signale {amount} en séquestre ouvert.",
+    "escrowUnavailable": "Le chiffre de séquestre on-chain est indisponible pour le moment.",
+    "escrowIndexedUnavailable": "Le total de séquestre ouvert de l'indexeur est indisponible pour le moment.",
+    "escrowSolvencyMismatch": "La comptabilité du contrat ne correspond pas à son solde : {escrow} est enregistré comme séquestre ouvert alors que le contrat détient {balance}. Ne vous fiez pas aux totaux indexés tant que ce point n'est pas compris.",
+    "escrowIndexerMismatch": "La chaîne et l'indexeur ne sont pas d'accord sur le séquestre ouvert : le contrat indique {chain}, l'indexeur indique {indexed}."
+  },
+  "attest": {
+    "leftToday": "{count} attestations restantes aujourd'hui",
+    "capReached": "Vous avez atteint la limite d'attestations du jour. Confirmez à nouveau après {time} UTC.",
+    "leftUnavailable": "Le nombre d'attestations restantes est indisponible pour le moment."
+  },
+  "print": {
+    "verify": "Vérifier sur la chaîne",
+    "verifying": "Vérification…",
+    "verified": "Vérifié sur la chaîne",
+    "mismatch": "Ne correspond pas à la chaîne",
+    "mismatchShort": "Écart",
+    "error": "Lecture de la chaîne impossible",
+    "fieldMismatch": "{field} : affiché {displayed}, la chaîne indique {onChain}",
+    "field": {
+      "voucher": "Numéro de reçu",
+      "provider": "Clinique",
+      "service": "Service",
+      "amount": "Montant",
+      "settledAt": "Date"
+    }
+  },
+  "offlineQueue": {
+    "title": "En attente d'envoi",
+    "note": "Ces réclamations ont été signées sur cet appareil et seront envoyées automatiquement dès le retour de la connexion.",
+    "voucher": "Bon #{id}",
+    "queuedStatus": "En attente",
+    "submitting": "Envoi…",
+    "failed": "Non envoyé : {error}",
+    "validUntil": "Valable jusqu'au {time}",
+    "submitNow": "Envoyer maintenant",
+    "discard": "Supprimer",
+    "expiredTitle": "Bon en attente supprimé",
+    "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
+    "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
   }
 }

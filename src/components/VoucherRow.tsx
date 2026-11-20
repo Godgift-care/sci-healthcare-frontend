@@ -13,6 +13,7 @@ import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
 import { AddressName } from './AddressName';
@@ -75,6 +76,7 @@ export function VoucherRow({
   requirePatientMatch?: boolean;
 }) {
   const { address, signTransaction, connect } = useWallet();
+  const { t } = useLocaleContext();
   const nowInternal = useNow();
   const now = nowProp ?? nowInternal;
   const toast = useToast();
@@ -104,7 +106,7 @@ export function VoucherRow({
     if (!address) return void connect();
     setBusy(action);
     try {
-      const fns: Record<Action, () => Promise<{ hash: string }>> = {
+      const fns: Record<Action, () => Promise<{ hash: string; queued?: boolean }>> = {
         claim: () => protocol.claim(address, v.id, signTransaction),
         attest: () => protocol.attest(address, v.id, signTransaction),
         settle: () => protocol.settle(address, v.id, signTransaction),
@@ -114,6 +116,15 @@ export function VoucherRow({
       const res = await fns[action]();
       setDisputing(false);
       setAttesting(false);
+      // A claim made without a connection is signed and queued (#301). It
+      // has not reached the chain yet, so there is nothing for the indexer
+      // to catch up to; the queue on the desk reports it instead.
+      if (res.queued) {
+        setBusy(null);
+        onDone?.();
+        toast.success(t('offlineQueue.queuedToast'));
+        return;
+      }
       trackEvent(ACTION_EVENTS[action]);
       // The transaction is confirmed on chain; wait for the indexer to
       // catch up instead of refetching a stale row immediately (#9).
@@ -161,7 +172,14 @@ export function VoucherRow({
 
   useImperativeHandle(ref, () => ({
     startAttest: () => {
-      if (!available.includes('attest') || busy !== null || reconciling !== null) return false;
+      if (
+        disabled ||
+        !available.includes('attest') ||
+        busy !== null ||
+        reconciling !== null
+      ) {
+        return false;
+      }
       setAttesting(true);
       return true;
     },
