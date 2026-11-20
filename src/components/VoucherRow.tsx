@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { api, type Voucher } from '@/lib/api';
@@ -13,6 +14,7 @@ import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
 import { AddressName } from './AddressName';
@@ -75,8 +77,10 @@ export function VoucherRow({
   requirePatientMatch?: boolean;
 }) {
   const { address, signTransaction, connect } = useWallet();
+  const { t } = useLocaleContext();
   const nowInternal = useNow();
   const now = nowProp ?? nowInternal;
+  const { locale } = useLocaleContext();
   const toast = useToast();
   const [busy, setBusy] = useState<Action | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
@@ -104,7 +108,7 @@ export function VoucherRow({
     if (!address) return void connect();
     setBusy(action);
     try {
-      const fns: Record<Action, () => Promise<{ hash: string }>> = {
+      const fns: Record<Action, () => Promise<{ hash: string; queued?: boolean }>> = {
         claim: () => protocol.claim(address, v.id, signTransaction),
         attest: () => protocol.attest(address, v.id, signTransaction),
         settle: () => protocol.settle(address, v.id, signTransaction),
@@ -114,6 +118,15 @@ export function VoucherRow({
       const res = await fns[action]();
       setDisputing(false);
       setAttesting(false);
+      // A claim made without a connection is signed and queued (#301). It
+      // has not reached the chain yet, so there is nothing for the indexer
+      // to catch up to; the queue on the desk reports it instead.
+      if (res.queued) {
+        setBusy(null);
+        onDone?.();
+        toast.success(t('offlineQueue.queuedToast'));
+        return;
+      }
       trackEvent(ACTION_EVENTS[action]);
       // The transaction is confirmed on chain; wait for the indexer to
       // catch up instead of refetching a stale row immediately (#9).
@@ -161,7 +174,14 @@ export function VoucherRow({
 
   useImperativeHandle(ref, () => ({
     startAttest: () => {
-      if (!available.includes('attest') || busy !== null || reconciling !== null) return false;
+      if (
+        disabled ||
+        !available.includes('attest') ||
+        busy !== null ||
+        reconciling !== null
+      ) {
+        return false;
+      }
       setAttesting(true);
       return true;
     },
@@ -180,12 +200,12 @@ export function VoucherRow({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <Link
-                href={`/vouchers/${v.id}`}
+              <DetailLink
+                detail={{ kind: 'voucher', id: v.id }}
                 className="mono text-xs text-[var(--color-ink-soft)] underline-offset-2 hover:underline"
               >
                 #{v.id}
-              </Link>
+              </DetailLink>
               <StatusBadge status={v.status} />
             </div>
             <h3 className="mt-1 font-medium">
@@ -215,8 +235,8 @@ export function VoucherRow({
 
       {v.status === 'Attested' && v.disputeDeadline && !v.isSettleable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Dispute window closes in {timeUntil(v.disputeDeadline, now)} — settles after
-          that.
+          Dispute window closes {timeUntil(v.disputeDeadline, now, locale)} — settles
+          after that.
           <InfoTip content="The funder can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
         </p>
       )}
@@ -230,12 +250,12 @@ export function VoucherRow({
         <>
           {v.claimedAt && (
             <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-              Claimed {timeSince(v.claimedAt, now)}.
+              Claimed {timeSince(v.claimedAt, now, locale)}.
             </p>
           )}
           <p className="mt-1 text-xs">
-            Refundable in <span className={isUrgent(v.refundableAt, now) ? 'font-semibold text-[var(--color-danger)]' : ''}>
-              {timeUntil(v.refundableAt, now)}
+            Refundable <span className={isUrgent(v.refundableAt, now) ? 'font-semibold text-[var(--color-danger)]' : ''}>
+              {timeUntil(v.refundableAt, now, locale)}
             </span>
             ({formatDate(v.refundableAt)}).
             <InfoTip content="An independent attester must confirm care was delivered. Without confirmation the funder can reclaim after this date." />

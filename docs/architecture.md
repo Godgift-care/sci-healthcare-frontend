@@ -184,6 +184,15 @@ Two helpers keep the cache honest after a write:
 - `invalidateProvider(providerAddress?)` — the provider and every `providers` /
   `provider` key.
 
+`DetailLink` disables automatic viewport route prefetch. Clinic and voucher
+links warm their route and SWR data only on hover or keyboard focus through
+`src/lib/detail-prefetch.ts`, which reads `isLowBandwidth()` at event time and
+skips both operations when enabled. Clinic preloads use `['provider', address]`
+and `['vouchers', { provider: address, status: 'Settled', limit: 1 }]`; vouchers
+use `['voucher', id]` and `['voucher-events', id]`, matching the destination hooks.
+SWR deduplicates repeated events and consumes the preloaded promises on navigation.
+The map popup anchors apply the same helper.
+
 Global SWR defaults live in `src/components/SwrProvider.tsx`:
 
 | | normal | low-bandwidth |
@@ -337,7 +346,7 @@ src/lib/            Domain logic: api, protocol, wallet, hooks, contracts
 src/lib/contracts/generated/   Soroban TS bindings (registry, voucher, faucet)
 src/lib/hooks/      The whole read surface
 src/i18n/           Locale context and the locale configuration
-src/messages/       en.json, fr.json, sw.json
+src/messages/       en.json, fr.json, sw.json, yo.json
 src/lib/*.test.ts   Vitest unit tests
 tests/e2e/          Playwright specs, fixtures and the mock backend
 tests/visual/       Playwright snapshots (6 routes × 2 viewports)

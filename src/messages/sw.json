@@ -24,9 +24,12 @@
     "usdc": "USDC",
     "cancel": "Ghairi",
     "close": "Funga",
+    "skipToContent": "Nenda kwenye maudhui",
     "submitted": "Imewasilishwa.",
     "viewTransaction": "Tazama muamala",
-    "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia."
+    "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia.",
+    "updateAvailable": "Toleo jipya liko tayari.",
+    "reloadToUpdate": "Pakia upya ili kusasisha"
   },
   "home": {
     "verifiedClinics": "Kliniki zilizothibitishwa",
@@ -69,7 +72,21 @@
     "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
     "reportProblem": "Ripoti tatizo",
     "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
-    "reportProblemAction": "Ripoti tatizo"
+    "reportProblemAction": "Ripoti tatizo",
+    "redirect": {
+      "action": "Tumia katika kliniki nyingine",
+      "title": "Hamisha vocha #{id}",
+      "intro": "Kliniki hai tu zinazotoa huduma hii kwa {amount} au chini yake zimeorodheshwa.",
+      "empty": "Hakuna kliniki nyingine inayotoa huduma hii kwa {amount} au chini yake kwa sasa.",
+      "loading": "Inatafuta kliniki…",
+      "choose": "Chagua kliniki",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} atapokea {price} na vocha itabaki na {amount} zilizowekwa. Hakiki kliniki na bei kabla ya kusaini.",
+      "confirm": "Hamisha vocha",
+      "moving": "Inahamisha…",
+      "error": "Imeshindwa kuhamisha vocha: {message}",
+      "success": "Vocha imehamishwa kwenda {clinic}."
+    }
   },
   "clinic": {
     "title": "Dawati la kliniki",
@@ -107,9 +124,15 @@
     "earnings": "Mapato",
     "earningsNote": "Mtiririko wa fedha wa kliniki hii: huduma zilizolipwa, malipo yanayosubiri, na ada za itifaki zilizolipwa.",
     "earningsSettled": "Imelipwa",
-    "earningsSettledDetail": "Vocha {count} · {net} halisi baada ya ada",
+    "earningsSettledDetail": {
+      "one": "Vocha {count} · {net} halisi baada ya ada",
+      "other": "Vocha {count} · {net} halisi baada ya ada"
+    },
     "earningsPending": "Malipo yanayosubiri",
-    "earningsPendingDetail": "{count} zilizodaiwa, kuthibitishwa au kupingwa, kabla ya ada",
+    "earningsPendingDetail": {
+      "one": "Vocha {count} iliyodaiwa, kuthibitishwa au kupingwa, kabla ya ada",
+      "other": "Vocha {count} zilizodaiwa, kuthibitishwa au kupingwa, kabla ya ada"
+    },
     "earningsFees": "Ada zilizolipwa",
     "earningsFeesDetail": "Ada ya itifaki kwa huduma zilizolipwa",
     "earningsMonthly": "Mapato ya kila mwezi",
@@ -123,7 +146,10 @@
     "allStatuses": "Zote",
     "searchVoucherNumber": "Nambari ya vocha",
     "searchVoucherPlaceholder": "k.m. 21 au #21",
-    "showingVouchers": "Inaonyesha vocha {shown} kati ya {total}",
+    "showingVouchers": {
+      "one": "Inaonyesha vocha {shown} kati ya {total}",
+      "other": "Inaonyesha vocha {shown} kati ya {total}"
+    },
     "noMatchingVouchers": "Hakuna vocha inayolingana na utafutaji huu.",
     "clearFilters": "Ondoa vichujio",
     "connectWallet": "Unganisha pochi ya kliniki ili kusimamia dawati hili.",
@@ -156,6 +182,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Chagua zote kwenye ukurasa huu ({count})",
+    "selectVoucher": "Chagua vocha #{id}",
+    "selectedCount": "{count} zimechaguliwa",
+    "exportSelected": "Pakua CSV zilizochaguliwa",
+    "refundSelected": "Rejesha zilizochaguliwa ({count})",
+    "refundAll": "Rejesha zote ({count})",
+    "refundingCount": "Inarejesha {current}/{total}…",
+    "refundProgress": "{current} kati ya {total}",
+    "refundingVoucher": "Inarejesha vocha #{id}…",
+    "refundedSummary": "Vocha {count} zimerejeshwa kikamilifu:",
+    "refundFailedSummary": "Imeshindwa kurejesha vocha {count}:"
+  },
   "scanner": {
     "title": "Changanua QR ya vocha ya mgonjwa",
     "instructions": "Elekeza kamera kwenye msimbo wa QR wa vocha ya mgonjwa ili kuifungua kiotomatiki.",
@@ -169,6 +208,69 @@
     "en": "English",
     "fr": "Français",
     "sw": "Kiswahili",
+    "yo": "Yorùbá",
     "select": "Chagua lugha"
+  },
+  "admin": {
+    "split": {
+      "button": "Gawanya fedha",
+      "amountLabel": "Kiasi kinachopewa kliniki (USDC)",
+      "amountHint": "Kiasi kikubwa kabla ya ada ya itifaki, kati ya 0 na {amount}. Kilichobaki kinarudi kwa mfadhili.",
+      "invalid": "Weka kiasi kati ya 0 na {amount}.",
+      "loading": "Inakokotoa ada…",
+      "error": "Imeshindwa kukokotoa ada: {message}",
+      "clinicReceives": "{clinic} atapokea {net} baada ya ada ya {fee}.",
+      "funderReceives": "Mfadhili atapokea {amount}.",
+      "sum": "Neti ya kliniki, ada na marejesho kwa mfadhili zinajumlisha {amount} ya fedha zilizowekwa."
+    }
+  },
+  "stats": {
+    "downloadDaily": "Pakua CSV ya kila siku",
+    "downloadClinics": "Pakua CSV ya kliniki",
+    "downloadVouchers": "Pakua CSV ya vocha",
+    "escrowTitle": "Fedha zilizowekwa dhamana kwenye mnyororo",
+    "escrowNote": "Imechukuliwa kutoka hesabu ya mkataba wa vocha, bila pochi.",
+    "escrowOpen": "Dhamana iliyo wazi",
+    "escrowBalance": "Mkataba unashikilia {amount}",
+    "escrowIndexed": "Kiashiria kinaonyesha {amount} kama dhamana iliyo wazi.",
+    "escrowUnavailable": "Takwimu ya dhamana kwenye mnyororo haipatikani kwa sasa.",
+    "escrowIndexedUnavailable": "Jumla ya dhamana iliyo wazi ya kiashiria haipatikani kwa sasa.",
+    "escrowSolvencyMismatch": "Hesabu za mkataba haziendani na salio lake: {escrow} imeandikwa kama dhamana iliyo wazi lakini mkataba unashikilia {balance}. Usitegemee jumla za kiashiria hadi hili lielewike.",
+    "escrowIndexerMismatch": "Mnyororo na kiashiria havikubaliani kuhusu dhamana iliyo wazi: mkataba unasema {chain}, kiashiria kinasema {indexed}."
+  },
+  "attest": {
+    "leftToday": "{count} uthibitisho umebaki leo",
+    "capReached": "Umefikia kikomo cha uthibitisho wa leo. Thibitisha tena baada ya {time} UTC.",
+    "leftUnavailable": "Idadi ya uthibitisho iliyobaki haipatikani kwa sasa."
+  },
+  "print": {
+    "verify": "Thibitisha kwenye mnyororo",
+    "verifying": "Inathibitisha…",
+    "verified": "Imethibitishwa kwenye mnyororo",
+    "mismatch": "Haiendani na mnyororo",
+    "mismatchShort": "Tofauti",
+    "error": "Imeshindwa kusoma mnyororo",
+    "fieldMismatch": "{field}: imeonyeshwa {displayed}, mnyororo unasema {onChain}",
+    "field": {
+      "voucher": "Nambari ya risiti",
+      "provider": "Kliniki",
+      "service": "Huduma",
+      "amount": "Kiasi",
+      "settledAt": "Tarehe"
+    }
+  },
+  "offlineQueue": {
+    "title": "Inasubiri kutumwa",
+    "note": "Madai haya yalisainiwa kwenye kifaa hiki na yatatumwa kiotomatiki mtandao unaporejea.",
+    "voucher": "Vocha #{id}",
+    "queuedStatus": "Inasubiri",
+    "submitting": "Inatuma…",
+    "failed": "Haijatumwa: {error}",
+    "validUntil": "Inatumika hadi {time}",
+    "submitNow": "Tuma sasa",
+    "discard": "Ondoa",
+    "expiredTitle": "Dai lililosubiri limeondolewa",
+    "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
+    "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
   }
 }

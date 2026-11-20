@@ -673,8 +673,79 @@ export async function prepareContractInvocation(
   method: string,
   args: xdr.ScVal[],
   source: string,
+  timeoutSeconds = 180,
 ): Promise<PreparedInvocation> {
-  return prepareInvocation(contractId, method, args, source, true);
+  return prepareInvocation(contractId, method, args, source, true, timeoutSeconds);
+}
+
+/**
+ * Builds, simulates and signs a contract invocation without submitting it.
+ *
+ * Used by the offline claim queue (#301): the signed envelope can be handed
+ * to the network later, as long as it reaches the ledger before `maxTime`.
+ * A signed transaction holds no secret key, so it can be kept in local
+ * storage. The time bound is read from the envelope itself rather than
+ * assumed, because that is the only thing the network will enforce.
+ */
+export async function prepareSignedContractInvocation(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  source: string,
+  sign: SignFn,
+  timeoutSeconds = 180,
+): Promise<{ xdr: string; maxTime: number }> {
+  const prepared = await prepareContractInvocation(
+    contractId,
+    method,
+    args,
+    source,
+    timeoutSeconds,
+  );
+  const signedXdr = await sign(prepared.xdr);
+
+  // The mock envelope is not a real transaction, so its bound is the value
+  // that was asked for. In production the envelope is authoritative.
+  let maxTime = Math.floor(Date.now() / 1000) + timeoutSeconds;
+  if (!isMockRpc()) {
+    const { TransactionBuilder } = await loadSdk();
+    const tx = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+    const bounds = 'timeBounds' in tx ? tx.timeBounds : tx.innerTransaction.timeBounds;
+    if (bounds?.maxTime) maxTime = Number(bounds.maxTime);
+  }
+  return { xdr: signedXdr, maxTime };
+}
+
+/**
+ * Submits an already signed contract invocation and waits for finality.
+ * The other half of the offline queue: nothing here builds or signs, so it
+ * is safe to call with an envelope signed minutes or hours earlier.
+ */
+export async function submitSignedContractInvocation(
+  signedXdr: string,
+  meta: { contractId: string; method: string },
+): Promise<{ hash: string; returnValue: unknown }> {
+  if (isMockRpc()) {
+    recordMockCall({ kind: 'invoke', contractId: meta.contractId, method: meta.method });
+    const delay = mockRpcDelayMs();
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+    return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(meta.method) };
+  }
+
+  const { TransactionBuilder } = await loadSdk();
+  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  const server = await getServer();
+  const sent = await server.sendTransaction(signed);
+  if (sent.status === 'ERROR') {
+    throw new Error(
+      `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,
+    );
+  }
+  const result = await waitForTransaction(sent.hash);
+  return {
+    hash: sent.hash,
+    returnValue: result.returnValue ? result.returnValue : null,
+  };
 }
 
 /** Sponsored calls must exercise real preparation even in the browser test seam. */
@@ -684,6 +755,7 @@ async function prepareInvocation(
   args: xdr.ScVal[],
   source: string,
   allowMock: boolean,
+  timeoutSeconds = 180,
 ): Promise<PreparedInvocation> {
   if (allowMock && isMockRpc()) {
     recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
@@ -710,7 +782,7 @@ async function prepareInvocation(
     networkPassphrase: config.networkPassphrase,
   })
     .addOperation(contract.call(method, ...args))
-    .setTimeout(180)
+    .setTimeout(timeoutSeconds)
     .build();
 
   const sim = await server.simulateTransaction(built);
@@ -949,6 +1021,10 @@ async function mockReadResult<T>(
       return { amount: 500000000n } as unknown as T;
     case 'balance':
       return 100000000n as unknown as T;
+    case 'attestations_left':
+      return 100 as unknown as T;
+    case 'escrow_summary':
+      return [0n, 0n] as unknown as T;
     default:
       throw new Error(`E2E mock has no canned read for ${method}`);
   }
