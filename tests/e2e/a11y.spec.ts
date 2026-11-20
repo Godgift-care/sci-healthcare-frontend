@@ -70,6 +70,14 @@ for (const route of ROUTES) {
       // before we scan, otherwise axe sees an empty page.
       await page.getByRole('main').waitFor({ state: 'visible' });
 
+      // Wait for the theme to be applied so axe scans the correct palette.
+      // The theme-init script sets data-theme from localStorage before paint;
+      // this wait guards against a hydration flash in slower CI runners.
+      await page.waitForFunction(
+        (t) => document.documentElement.dataset.theme === t,
+        theme.value,
+      );
+
       const results = await new AxeBuilder({ page })
         .options({
           runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'section508', 'best-practice'] },
