@@ -12,6 +12,20 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test('first Tab reaches the skip link and Enter moves focus to main', async ({ page }) => {
+  for (const path of ['/', '/faq']) {
+    await page.goto(path);
+    await page.keyboard.press('Tab');
+
+    const skipLink = page.getByRole('link', { name: 'Skip to content' });
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
+
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('main')).toBeFocused();
+  }
+});
+
 test.describe('Landing section on home page (#53)', () => {
   test('displays purpose, CTAs, three roles and trust points above the fold', async ({ page }, testInfo) => {
     await page.goto('/');

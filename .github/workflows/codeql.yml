@@ -1,0 +1,44 @@
+name: CodeQL
+
+# Static analysis for DOM XSS and unsafe URL handling (#336). The backend
+# runs CodeQL; this is the frontend half. Results appear under Security ->
+# Code scanning on every pull request and once a week on main.
+#
+# Generated contract bindings are excluded in .github/codeql/codeql-config.yml:
+# they are produced from the protocol definitions, so findings there are not
+# actionable in this repository.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: analyze (javascript-typescript)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v71 # v7
+      - uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          languages: javascript-typescript
+          # security-and-quality on top of the default set: it also flags
+          # patterns that are not exploitable yet but become so after a small
+          # edit, which is where most XSS regressions start.
+          queries: security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
+      - uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          category: '/language:javascript-typescript'

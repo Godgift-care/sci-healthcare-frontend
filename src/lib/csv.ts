@@ -1,10 +1,18 @@
-import type { Receipt, Voucher } from './api';
+import type { DailyRow, Receipt, Voucher } from './api';
 import { formatDate, formatUsdc } from './amounts';
+
+/**
+ * A cell beginning with one of these is treated as a formula by spreadsheet
+ * applications, so a clinic name or service label could execute on import.
+ * Numbers are exempt: a negative amount is a value, not an injection.
+ */
+const FORMULA_PREFIX = /^[=+\-@\t\r]/;
 
 export function csvEscape(value: string | number | null | undefined): string {
   const raw = value == null ? '' : String(value);
-  const escaped = raw.replaceAll('"', '""');
-  return /[",\n\r]/.test(raw) ? `"${escaped}"` : escaped;
+  const safe = typeof value !== 'number' && FORMULA_PREFIX.test(raw) ? `'${raw}` : raw;
+  const escaped = safe.replaceAll('"', '""');
+  return /[",\n\r]/.test(safe) ? `"${escaped}"` : escaped;
 }
 
 export function toCsvString(
@@ -52,6 +60,82 @@ export function buildReceiptCsvRows(
       clinic,
       receipt.serviceLabel ?? `Service ${receipt.serviceCode}`,
       receipt.amountDisplay.replaceAll(',', ''),
+    ]);
+  }
+
+  return rows;
+}
+
+export function buildDailyStatsCsvRows(
+  series: DailyRow[],
+): Array<Array<string | number>> {
+  const rows: Array<Array<string | number>> = [
+    [
+      'date (UTC)',
+      'vouchers funded',
+      'funded volume (USDC)',
+      'care settled',
+      'settled volume (USDC)',
+      'vouchers refunded',
+      'refunded volume (USDC)',
+    ],
+  ];
+
+  for (const day of series) {
+    rows.push([
+      day.date,
+      day.funded.count,
+      formatUsdc(day.funded.amount).replaceAll(',', ''),
+      day.settled.count,
+      formatUsdc(day.settled.amount).replaceAll(',', ''),
+      day.refunded.count,
+      formatUsdc(day.refunded.amount).replaceAll(',', ''),
+    ]);
+  }
+
+  return rows;
+}
+
+export interface ClinicCountryCount {
+  country: string;
+  registered: number;
+  active: number;
+}
+
+export interface CountryVoucherActivity {
+  country: string;
+  funded: number;
+  settled: number;
+  settledValue: bigint;
+}
+
+export function buildClinicCountryCsvRows(
+  counts: ClinicCountryCount[],
+): Array<Array<string | number>> {
+  const rows: Array<Array<string | number>> = [
+    ['country code', 'clinics registered', 'clinics active'],
+  ];
+
+  for (const entry of counts) {
+    rows.push([entry.country, entry.registered, entry.active]);
+  }
+
+  return rows;
+}
+
+export function buildCountryVoucherCsvRows(
+  activity: CountryVoucherActivity[],
+): Array<Array<string | number>> {
+  const rows: Array<Array<string | number>> = [
+    ['country code', 'vouchers funded', 'care settled', 'value settled (USDC)'],
+  ];
+
+  for (const entry of activity) {
+    rows.push([
+      entry.country,
+      entry.funded,
+      entry.settled,
+      formatUsdc(entry.settledValue).replaceAll(',', ''),
     ]);
   }
 

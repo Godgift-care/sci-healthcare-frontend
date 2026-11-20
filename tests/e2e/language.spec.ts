@@ -39,6 +39,12 @@ async function openNavMenu(page: Page): Promise<void> {
  * stored language afterwards — otherwise every page load of a translated
  * visitor starts with a broken hydration.
  */
+function overflow(page: Page): Promise<number> {
+  return page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+}
+
 function hydrationErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on('pageerror', (error) => {
@@ -107,6 +113,47 @@ test.describe('Language switching persists (#153)', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'sw');
   });
 
+  test('keeps Yoruba across a reload and formats its dates', async ({ page }) => {
+    const errors = hydrationErrors(page);
+
+    await page.goto(`/vouchers/${VOUCHER_ID}`);
+    await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
+
+    await languageSwitcher(page).selectOption('yo');
+
+    // Every translated string follows, including the switcher's own label.
+    await expect(page.getByText(`Vóṣà #${VOUCHER_ID}`)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ìtàn' })).toBeVisible();
+    await expect(languageSwitcher(page)).toHaveAttribute('aria-label', 'Yan èdè');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'yo');
+
+    // Dates are formatted with the Yoruba locale (yo-NG), not the default
+    // English one. The browser running this suite may not ship Yoruba ICU
+    // data (headless Chromium here falls back to its own default), so compare
+    // with what this browser formats for yo-NG; the Yoruba month names
+    // themselves are pinned by src/lib/amounts.test.ts under Node's ICU.
+    const expiry = await page.evaluate(() =>
+      new Intl.DateTimeFormat('yo-NG', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date('2026-06-19T10:00:00.000Z')),
+    );
+    await expect(page.getByText(expiry).filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText('$3.00').filter({ visible: true }).first()).toBeVisible();
+
+    // Longer Yoruba strings must not widen the page at either project width.
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+
+    // A reload rebuilds the provider: the choice comes back from storage.
+    await page.reload();
+    await expect(page.getByText(`Vóṣà #${VOUCHER_ID}`)).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'yo');
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+
+    expect(errors).toEqual([]);
+  });
+
   test('applies the stored language to a page opened directly', async ({ page }) => {
     const errors = hydrationErrors(page);
 
@@ -129,5 +176,34 @@ test.describe('Language switching persists (#153)', () => {
     await expect(languageSwitcher(page)).toHaveValue('en');
     await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+});
+
+/**
+ * Browser language on the first visit (#277). There is no stored choice yet,
+ * so a French browser must receive `lang="fr"` in the server HTML — not an
+ * English document that is relabelled after hydration.
+ */
+test.describe('browser language detection (#277)', () => {
+  test.use({ locale: 'fr-FR' });
+
+  test('server-renders French for a French browser', async ({ page }) => {
+    const response = await page.request.get(`/vouchers/${VOUCHER_ID}`, {
+      headers: { 'accept-language': 'fr-FR,fr;q=0.9,en;q=0.8' },
+    });
+    const html = await response.text();
+    expect(html).toContain('lang="fr"');
+    expect(html).toContain('dir="ltr"');
+  });
+
+  test('first load is French with no English flash', async ({ page }) => {
+    const errors = hydrationErrors(page);
+
+    await page.goto(`/vouchers/${VOUCHER_ID}`);
+    await expect(page.getByText(`Bon #${VOUCHER_ID}`)).toBeVisible();
+    await expect(languageSwitcher(page)).toHaveValue('fr');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+
+    expect(errors).toEqual([]);
   });
 });

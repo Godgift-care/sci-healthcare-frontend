@@ -1,5 +1,11 @@
 name: CI
 
+# ci.yml runs `npm ci` (install scripts included) and builds untrusted pull
+# request code, so it holds a read-only token whatever the repository default
+# is (#338). No job here writes to the repository or its issues.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -14,8 +20,8 @@ jobs:
     name: lint
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -26,8 +32,8 @@ jobs:
     name: typecheck
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -38,15 +44,19 @@ jobs:
     name: unit
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
       - run: npm ci
       # Vitest unit tests for the pure helpers in src/lib (#77): money,
-      # lifecycle, dispute codes and error mapping, with i128 boundaries.
-      - run: npm run test:unit
+      # lifecycle, dispute codes and error mapping, with i128 boundaries —
+      # plus the shared components (#348) and every Storybook story rendered
+      # with axe (#350). Coverage of src/lib is enforced here too (#351): the
+      # thresholds in vitest.config.mts fail the job and the summary says by
+      # how much.
+      - run: npm run test:unit:coverage
 
   build:
     name: build
@@ -65,8 +75,8 @@ jobs:
       NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
       NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -91,8 +101,8 @@ jobs:
     name: storybook
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -113,8 +123,8 @@ jobs:
       NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
       NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -124,7 +134,7 @@ jobs:
       # lighthouserc.json. Uploads a temporary-public-storage report whose
       # URL appears in the logs, linked from the PR.
       - run: npx lhci autorun
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: lighthouse-results
@@ -134,8 +144,8 @@ jobs:
     name: visual
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -147,7 +157,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -164,7 +174,7 @@ jobs:
       # frozen. After an intentional UI change, run
       # `npm run test:visual:update` locally and commit the new snapshots.
       - run: npm run test:visual
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
           name: visual-test-results
@@ -176,8 +186,8 @@ jobs:
     name: e2e
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
           cache: npm
@@ -189,7 +199,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -205,7 +215,7 @@ jobs:
       # Each flow runs against a mocked API with a mock wallet and mock RPC
       # (see src/lib/e2e-seam.ts): no testnet, indexer or wallet needed.
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
           name: e2e-test-results
@@ -217,18 +227,21 @@ jobs:
     name: auto-merge bot tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
-      - run: node --test .github/scripts/automerge.test.cjs .github/scripts/security-scan.test.cjs
+      # workflow-policy.test.cjs enforces the supply-chain rules from #336-#338:
+      # every action pinned to a commit SHA and every workflow declaring
+      # permissions. It needs no install, so it runs in this job too.
+      - run: node --test .github/scripts/automerge.test.cjs .github/scripts/security-scan.test.cjs .github/scripts/workflow-policy.test.cjs
 
   audit:
     name: audit
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22'
       # Reads package-lock.json only, so it audits what ships rather than what

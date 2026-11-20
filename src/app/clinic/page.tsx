@@ -27,6 +27,7 @@ import {
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
 import { QrScannerModal } from '@/components/QrScannerModal';
+import { OfflineClaimQueue } from '@/components/OfflineClaimQueue';
 import { RecentVouchers } from '@/components/RecentVouchers';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
@@ -331,6 +332,7 @@ export default function ClinicDeskPage() {
         />
       )}
       <RecentVouchers />
+      <OfflineClaimQueue />
 
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">
@@ -780,6 +782,7 @@ export default function ClinicDeskPage() {
                 {t('clinic.showingVouchers', {
                   shown: visibleVouchers.length,
                   total: vouchers.length,
+                  count: vouchers.length,
                 })}
               </span>
               {filtering && (

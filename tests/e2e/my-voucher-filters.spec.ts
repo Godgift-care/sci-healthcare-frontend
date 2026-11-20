@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { scValToNative, xdr } from '@stellar/stellar-sdk';
 
 import { blockAnalytics } from '../analytics-guard';
 import { CLINIC, FUNDER, UNLOCATED_CLINIC } from './fixtures';
-import { mockBackend, useMockWallet } from './helpers';
+import { mockBackend, mockInvokeArgs, mockInvokes, useMockWallet } from './helpers';
 
 /**
  * Funders with many vouchers need to find the ones that need action (#97).
@@ -53,6 +54,7 @@ const VOUCHERS = [
     createdAt: '2026-05-01T10:00:00.000Z',
     amount: '30000000',
     amountDisplay: '3.00',
+    isRefundable: true,
   }),
   voucher('402', {
     provider: clinicB,
@@ -62,12 +64,14 @@ const VOUCHERS = [
     amountDisplay: '5.00',
     claimedAt: '2026-05-04T10:00:00.000Z',
     refundableAt: '2026-07-01T00:00:00.000Z',
+    isRefundable: true,
   }),
   voucher('403', {
     provider: clinicB,
     createdAt: '2026-05-02T10:00:00.000Z',
     amount: '10000000',
     amountDisplay: '1.00',
+    isRefundable: true,
   }),
   voucher('404', {
     status: 'Attested',
@@ -165,4 +169,51 @@ test('combines filters, explains an empty result and clears them', async ({ page
   await expect.poll(() => voucherIds(page)).toEqual(['404', '402', '403', '401']);
   expect(new URL(page.url()).search).toBe('');
   await expect(page.getByRole('combobox', { name: 'Status' })).toHaveValue('');
+});
+
+test('selects accessible rows and refunds only selected refundable vouchers', async ({ page }) => {
+  const selectAll = page.getByRole('checkbox', {
+    name: 'Select all on this page (4)',
+  });
+  await selectAll.focus();
+  await page.keyboard.press('Space');
+  for (const id of ['402', '404']) {
+    const checkbox = page.getByRole('checkbox', { name: `Select voucher #${id}` });
+    await checkbox.focus();
+    await page.keyboard.press('Space');
+  }
+
+  await expect(page.getByText('2 selected')).toBeVisible();
+  await page.getByRole('button', { name: 'Refund selected (2)' }).click();
+
+  await expect(page.getByText('Refunded 2 voucher(s) successfully:')).toBeVisible();
+  expect((await mockInvokes(page)).map((call) => call.method)).toEqual([
+    'refund',
+    'refund',
+  ]);
+  const encodedArgs = await mockInvokeArgs(page);
+  expect(
+    encodedArgs.map((args) =>
+      Number(scValToNative(xdr.ScVal.fromXDR(args[0], 'base64'))),
+    ),
+  ).toEqual([401, 403]);
+});
+
+test('downloads a CSV for the selected vouchers', async ({ page }) => {
+  await page.getByRole('checkbox', { name: 'Select voucher #401' }).check();
+  await page.getByRole('checkbox', { name: 'Select voucher #403' }).check();
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download selected CSV' }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toBe('selected-vouchers.csv');
+  const { promises: fs } = await import('fs');
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  const content = await fs.readFile(path!, 'utf8');
+  expect(content).toContain('\n401,');
+  expect(content).toContain('\n403,');
+  expect(content).not.toContain('\n402,');
+  expect(content).not.toContain('ab'.repeat(32));
 });
