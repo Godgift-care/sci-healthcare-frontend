@@ -265,5 +265,42 @@
     "expiredTitle": "Queued claim discarded",
     "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
     "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  },
+  "status": {
+    "title": "Status",
+    "subtitle": "Lists, balances and receipts are read from the API. Transactions are signed in your wallet and sent straight to the Stellar network, so they do not depend on the API being healthy.",
+    "checkAgain": "Check again",
+    "checking": "Checking…",
+    "notReported": "Not reported",
+    "headline": {
+      "checking": "Checking the API…",
+      "operational": "All systems operational",
+      "degraded": "Degraded: the API is up but not fully healthy",
+      "unreachable": "The API cannot be reached"
+    },
+    "unreachableBodyStart": "The API at",
+    "unreachableBodyEnd": "did not answer. Pages that list clinics or vouchers will not load until it is back; it may also be waking up, which can take up to a minute.",
+    "mismatchTitle": "This app and the API disagree about the deployment",
+    "apiReadiness": "API readiness",
+    "readiness": "Readiness",
+    "ready": "Ready",
+    "degraded": "Degraded",
+    "unreachable": "Unreachable",
+    "database": "Database",
+    "connected": "Connected",
+    "indexerLag": "Indexer lag",
+    "latestIndexedLedger": "Latest indexed ledger",
+    "ledgerHistory": "Ledger history",
+    "complete": "Complete",
+    "gapDetected": "Gap detected",
+    "network": "Network",
+    "thisAppSignsFor": "This app signs for",
+    "apiIndexes": "The API indexes",
+    "versions": "Versions",
+    "webApp": "Web app",
+    "api": "API",
+    "notAvailable": "Not available",
+    "apiRunningSince": "API running since",
+    "unknown": "unknown"
   }
 }

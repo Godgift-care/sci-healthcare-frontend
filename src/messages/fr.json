@@ -154,7 +154,6 @@
     },
     "noMatchingVouchers": "Aucun bon ne correspond à cette recherche.",
     "clearFilters": "Effacer les filtres",
-    "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau.",
     "checklist": {
       "title": "Jusqu'à votre premier paiement",
       "note": "Cinq étapes de l'inscription au versement. Chaque étape passe au vert une fois complétée.",
@@ -274,5 +273,42 @@
     "expiredTitle": "Bon en attente supprimé",
     "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
     "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
+  },
+  "status": {
+    "title": "Statut",
+    "subtitle": "Les listes, les soldes et les reçus sont lus depuis l'API. Les transactions sont signées dans votre portefeuille et envoyées directement au réseau Stellar, donc elles ne dépendent pas de la santé de l'API.",
+    "checkAgain": "Vérifier à nouveau",
+    "checking": "Vérification…",
+    "notReported": "Non signalé",
+    "headline": {
+      "checking": "Vérification de l'API…",
+      "operational": "Tous les systèmes fonctionnent",
+      "degraded": "Dégradé : l'API est en ligne mais pas pleinement saine",
+      "unreachable": "L'API est inaccessible"
+    },
+    "unreachableBodyStart": "L'API à",
+    "unreachableBodyEnd": "n'a pas répondu. Les pages qui listent les cliniques ou les bons ne se chargeront pas tant qu'elle n'est pas revenue ; elle est peut-être aussi en cours de réveil, ce qui peut prendre jusqu'à une minute.",
+    "mismatchTitle": "Cette application et l'API ne sont pas d'accord sur le déploiement",
+    "apiReadiness": "Disponibilité de l'API",
+    "readiness": "Disponibilité",
+    "ready": "Prêt",
+    "degraded": "Dégradé",
+    "unreachable": "Inaccessible",
+    "database": "Base de données",
+    "connected": "Connectée",
+    "indexerLag": "Retard de l'indexeur",
+    "latestIndexedLedger": "Dernier registre indexé",
+    "ledgerHistory": "Historique des registres",
+    "complete": "Complet",
+    "gapDetected": "Lacune détectée",
+    "network": "Réseau",
+    "thisAppSignsFor": "Cette application signe pour",
+    "apiIndexes": "L'API indexe",
+    "versions": "Versions",
+    "webApp": "Application web",
+    "api": "API",
+    "notAvailable": "Non disponible",
+    "apiRunningSince": "API en service depuis",
+    "unknown": "inconnu"
   }
 }
