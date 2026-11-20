@@ -109,6 +109,7 @@ describe('formatUsdc', () => {
   it('groups thousands for display', () => {
     expect(formatUsdc(1_000_000_000n)).toBe('100.00');
     expect(formatUsdc(1_000_000_000_000n)).toBe('100,000.00');
+    expect(formatUsdc(1_000_000_000_000n, 'yo')).toBe('100,000.00');
   });
 
   it('accepts bigint and string alike', () => {
@@ -162,6 +163,8 @@ describe('formatDate', () => {
     const d = new Date('2026-05-20T10:00:00.000Z');
     expect(formatDate(d, 'fr')).toMatch(/20/);
     expect(formatDate(d, 'sw')).toMatch(/20/);
+    // Yoruba month names come from the locale, not the English fallback.
+    expect(formatDate(d, 'yo')).toBe('20 Oṣù Ẹ̀bibi 2026');
   });
 
   it('renders a dash for missing dates', () => {

@@ -337,7 +337,7 @@ src/lib/            Domain logic: api, protocol, wallet, hooks, contracts
 src/lib/contracts/generated/   Soroban TS bindings (registry, voucher, faucet)
 src/lib/hooks/      The whole read surface
 src/i18n/           Locale context and the locale configuration
-src/messages/       en.json, fr.json, sw.json
+src/messages/       en.json, fr.json, sw.json, yo.json
 src/lib/*.test.ts   Vitest unit tests
 tests/e2e/          Playwright specs, fixtures and the mock backend
 tests/visual/       Playwright snapshots (6 routes × 2 viewports)
