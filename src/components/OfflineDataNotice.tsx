@@ -24,7 +24,15 @@ export function OfflineDataNotice() {
   const now = useNow();
 
   useEffect(() => {
+    // Restoring saved answers while the network is up would replace a fresh
+    // read with an older one — and the saved copy has had patient references
+    // removed, so handing it to a live page can break fields that expect them.
+    // Hydrate only when there is no live answer to prefer (#302).
+    if (typeof navigator !== 'undefined' && navigator.onLine) return;
     void hydrateOfflineCache();
+    const onOffline = () => void hydrateOfflineCache();
+    window.addEventListener('offline', onOffline);
+    return () => window.removeEventListener('offline', onOffline);
   }, []);
 
   if (phase === 'reachable' || latestSavedAt === null) return null;
