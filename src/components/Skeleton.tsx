@@ -1,11 +1,11 @@
-import { Card } from "./ui";
+import { Card } from './ui';
 
 export function Skeleton({
-  className = "",
-  "aria-hidden": ariaHidden = true,
+  className = '',
+  'aria-hidden': ariaHidden = true,
 }: {
   className?: string;
-  "aria-hidden"?: boolean;
+  'aria-hidden'?: boolean;
 }) {
   return (
     <div
@@ -16,7 +16,7 @@ export function Skeleton({
 }
 
 export function SkeletonRow({
-  className = "",
+  className = '',
   lines = 2,
 }: {
   className?: string;
@@ -40,7 +40,7 @@ export function SkeletonRow({
 }
 
 export function SkeletonCard({
-  className = "",
+  className = '',
   lines = 3,
 }: {
   className?: string;
@@ -70,7 +70,7 @@ export function SkeletonCard({
   );
 }
 
-export function SkeletonDetail({ className = "" }: { className?: string }) {
+export function SkeletonDetail({ className = '' }: { className?: string }) {
   return (
     <div
       role="status"

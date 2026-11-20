@@ -191,14 +191,21 @@ export function humaniseError(
   // something else entirely), so recognise them by text before looking the
   // number up.
   if (/trustline/i.test(message)) {
-    if (locale === 'fr') return 'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.';
-    if (locale === 'sw') return 'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.';
-    if (locale === 'yo') return 'Àpò rẹ nílò trustline USDC kí ó tó lè gba tàbí fi USDC ránṣẹ́.';
+    if (locale === 'fr')
+      return 'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.';
+    if (locale === 'sw')
+      return 'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.';
+    if (locale === 'yo')
+      return 'Àpò rẹ nílò trustline USDC kí ó tó lè gba tàbí fi USDC ránṣẹ́.';
     return 'Your wallet needs a USDC trustline before it can hold or send USDC.';
   }
-  if (/insufficient balance|balance is not sufficient|underflow/i.test(message)) {
-    if (locale === 'fr') return 'Solde USDC insuffisant dans votre portefeuille.';
-    if (locale === 'sw') return 'Huna USDC ya kutosha kwenye pochi yako kwa hili.';
+  if (
+    /insufficient balance|balance is not sufficient|underflow/i.test(message)
+  ) {
+    if (locale === 'fr')
+      return 'Solde USDC insuffisant dans votre portefeuille.';
+    if (locale === 'sw')
+      return 'Huna USDC ya kutosha kwenye pochi yako kwa hili.';
     if (locale === 'yo') return 'Kò sí USDC tó tó nínú àpò rẹ fún èyí.';
     return 'Not enough USDC in your wallet for this.';
   }
@@ -214,21 +221,29 @@ export function humaniseError(
     }
     const mapped = resolvedTable[code] ?? table[code];
     if (mapped) return mapped;
-    if (locale === 'fr') return `Le contrat a rejeté cette opération (erreur #${code}).`;
-    if (locale === 'sw') return `Mkataba umekataa ombi hili (hitilafu #${code}).`;
+    if (locale === 'fr')
+      return `Le contrat a rejeté cette opération (erreur #${code}).`;
+    if (locale === 'sw')
+      return `Mkataba umekataa ombi hili (hitilafu #${code}).`;
     if (locale === 'yo') return `Àdéhùn kọ̀ ọ́ (àṣìṣe #${code}).`;
     return `Contract rejected this (error #${code}).`;
   }
   if (/account not found/i.test(message)) {
     if (config.network === 'testnet') {
-      if (locale === 'fr') return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord avec Friendbot.";
-      if (locale === 'sw') return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwa Friendbot kwanza.';
-      if (locale === 'yo') return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ fi Friendbot gbé owó lé e.';
+      if (locale === 'fr')
+        return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord avec Friendbot.";
+      if (locale === 'sw')
+        return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwa Friendbot kwanza.';
+      if (locale === 'yo')
+        return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ fi Friendbot gbé owó lé e.';
       return 'This account does not exist on the network yet. Fund it with Friendbot first.';
     }
-    if (locale === 'fr') return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord.";
-    if (locale === 'sw') return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwanza.';
-    if (locale === 'yo') return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ gbé owó lé e.';
+    if (locale === 'fr')
+      return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord.";
+    if (locale === 'sw')
+      return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwanza.';
+    if (locale === 'yo')
+      return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ gbé owó lé e.';
     return 'This account does not exist on the network yet. Fund it first.';
   }
   return message;
@@ -247,8 +262,7 @@ const HORIZON_TX_ERRORS: Record<string, string> = {
   op_underfunded:
     'Not enough XLM: holding USDC locks 0.5 XLM as a reserve. Top up your ' +
     'wallet, then press Add USDC again.',
-  op_line_full:
-    'Your wallet already holds all the USDC this issuer allows.',
+  op_line_full: 'Your wallet already holds all the USDC this issuer allows.',
   op_no_issuer: 'USDC does not exist on this network.',
   op_no_trust:
     'Your wallet is not ready to hold USDC yet. Press Add USDC and approve ' +
@@ -274,8 +288,10 @@ export function humaniseHorizonResult(
     return `The network rejected this request (${all.join(', ')}). Try again.`;
   }
   if (status === 504) {
-    return 'The network is taking longer than usual. The request may still ' +
-      'go through — check your wallet balance before trying again.';
+    return (
+      'The network is taking longer than usual. The request may still ' +
+      'go through — check your wallet balance before trying again.'
+    );
   }
   return `The Stellar network could not accept this request (HTTP ${status}). Try again.`;
 }

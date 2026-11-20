@@ -36,10 +36,14 @@ describe('pollVoucherStatus', () => {
   });
 
   it('resolves timeout when the status never arrives', async () => {
-    const outcome = await pollVoucherStatus(() => Promise.resolve('Funded'), 'Claimed', {
-      timeoutMs: 20,
-      baseDelayMs: 1,
-    });
+    const outcome = await pollVoucherStatus(
+      () => Promise.resolve('Funded'),
+      'Claimed',
+      {
+        timeoutMs: 20,
+        baseDelayMs: 1,
+      },
+    );
     expect(outcome).toBe('timeout');
   });
 
@@ -61,12 +65,14 @@ describe('pollVoucherStatus', () => {
   it('backs off between polls instead of hammering', async () => {
     const requested: number[] = [];
     const realSetTimeout = globalThis.setTimeout;
-    const spy = vi
-      .spyOn(globalThis, 'setTimeout')
-      .mockImplementation(((cb: (...args: unknown[]) => void, ms?: number, ...rest: unknown[]) => {
-        requested.push(ms ?? 0);
-        return realSetTimeout(cb, 0, ...rest);
-      }) as typeof setTimeout);
+    const spy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+      cb: (...args: unknown[]) => void,
+      ms?: number,
+      ...rest: unknown[]
+    ) => {
+      requested.push(ms ?? 0);
+      return realSetTimeout(cb, 0, ...rest);
+    }) as typeof setTimeout);
     try {
       // NB: the loop runs until the wall-clock deadline, so the timeout
       // must stay well under the 5s test timeout even with 0ms sleeps.

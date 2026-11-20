@@ -196,15 +196,17 @@ export function Sep7FundPanel({
       </summary>
       <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">
         Builds the funding transaction and shows a SEP-7 link. Open it in a
-        compatible wallet such as LOBSTR — no browser extension needed. Your
-        key stays in the wallet.
+        compatible wallet such as LOBSTR — no browser extension needed. Your key
+        stays in the wallet.
       </p>
 
       {phase === 'confirmed' && hash && (
         <div className="mt-3 space-y-2">
           <Alert kind="success">Payment confirmed.</Alert>
           <p className="text-xs">
-            <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>
+            <ExplorerLink href={explorerTx(hash)}>
+              View transaction
+            </ExplorerLink>
           </p>
           <Button variant="ghost" className="w-full" onClick={reset}>
             Fund another service
@@ -215,7 +217,7 @@ export function Sep7FundPanel({
       {phase !== 'confirmed' && (
         <div className="mt-3 space-y-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+            <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
               Paying Stellar address
             </span>
             <input
@@ -282,7 +284,9 @@ export function Sep7FundPanel({
               onClick={() => void createLink()}
               disabled={!canBuild}
             >
-              {phase === 'building' ? 'Building transaction…' : 'Create SEP-7 payment link'}
+              {phase === 'building'
+                ? 'Building transaction…'
+                : 'Create SEP-7 payment link'}
             </Button>
           )}
 

@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { mutate } from 'swr';
 
 import { config } from '../config';
-import { LOW_BANDWIDTH_POLL_INTERVAL_MS, useLowBandwidth } from '../low-bandwidth';
+import {
+  LOW_BANDWIDTH_POLL_INTERVAL_MS,
+  useLowBandwidth,
+} from '../low-bandwidth';
 
 export interface LiveUpdateOptions {
   voucherId?: string;
@@ -65,7 +68,11 @@ export function useLiveUpdates({
         // The event log gains a row with every step (#18): refetch it too
         // so a fresh claim or attestation arrives with its transaction.
         void mutate(['voucher-events', voucherId]);
-        void mutate((key) => Array.isArray(key) && (key[0] === 'vouchers' || key[0] === 'voucher-events'));
+        void mutate(
+          (key) =>
+            Array.isArray(key) &&
+            (key[0] === 'vouchers' || key[0] === 'voucher-events'),
+        );
       }
       if (providerAddress) {
         void mutate(['provider', providerAddress]);
@@ -110,7 +117,8 @@ export function useLiveUpdates({
       try {
         const streamUrl = new URL('/events', config.apiUrl);
         if (voucherId) streamUrl.searchParams.set('voucherId', voucherId);
-        if (providerAddress) streamUrl.searchParams.set('provider', providerAddress);
+        if (providerAddress)
+          streamUrl.searchParams.set('provider', providerAddress);
 
         eventSource = new EventSource(streamUrl.toString());
 

@@ -26,7 +26,15 @@ import { CopyValue } from '@/components/CopyValue';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Button, Card, ExplorerLink, Field, Modal, StatusBadge } from '@/components/ui';
+import {
+  Alert,
+  Button,
+  Card,
+  ExplorerLink,
+  Field,
+  Modal,
+  StatusBadge,
+} from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
@@ -47,7 +55,11 @@ function isValidVoucherId(id: string): boolean {
  *
  * Uses SWR caching (#63) and live updates via SSE with polling fallback (#64).
  */
-export default function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
+export default function VoucherPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const { address, signTransaction } = useWallet();
   const { t, locale } = useLocaleContext();
@@ -92,11 +104,15 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
+  const {
+    voucher: v,
+    error,
+    rawError,
+    mutate,
+  } = useVoucher(validId ? id : undefined);
   // Only fetched once the funder opens the move dialog (#287).
-  const { providers: redirectProviders, isLoading: redirectLoading } = useProviders(
-    redirectOpen ? { status: 'Active' } : null,
-  );
+  const { providers: redirectProviders, isLoading: redirectLoading } =
+    useProviders(redirectOpen ? { status: 'Active' } : null);
   const loadedVoucherId = v?.id;
   useEffect(() => {
     if (loadedVoucherId) rememberRecentVoucherId(loadedVoucherId);
@@ -133,8 +149,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     exclude: v.provider.address,
   });
   const redirectChosen =
-    redirectCandidates.find((candidate) => candidate.address === redirectTarget) ??
-    null;
+    redirectCandidates.find(
+      (candidate) => candidate.address === redirectTarget,
+    ) ?? null;
 
   async function confirmRedirect() {
     if (!address || !redirectChosen || !v) return;
@@ -167,7 +184,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   function addToCalendar() {
     if (!v || typeof window === 'undefined') return;
     const expiresAtMs =
-      typeof v.expiresAt === 'string' ? Date.parse(v.expiresAt) : v.expiresAt.getTime();
+      typeof v.expiresAt === 'string'
+        ? Date.parse(v.expiresAt)
+        : v.expiresAt.getTime();
     const expiresAt = Math.floor(expiresAtMs / 1000);
     const ics = buildVoucherExpiryIcs({
       id: v.id,
@@ -214,7 +233,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               aria-label="Copy link"
             >
               {copied ? (
-                <span className="font-medium text-emerald-700">{t('voucher.linkCopied')}</span>
+                <span className="font-medium text-emerald-700">
+                  {t('voucher.linkCopied')}
+                </span>
               ) : (
                 <>
                   <svg
@@ -262,15 +283,22 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           </h1>
           <p className="text-sm text-[var(--color-ink-soft)]">
             {t('voucher.at')}{' '}
-            <DetailLink detail={{ kind: 'clinic', id: v.provider.address }} className="underline underline-offset-2">
+            <DetailLink
+              detail={{ kind: 'clinic', id: v.provider.address }}
+              className="underline underline-offset-2"
+            >
               {v.provider.name}
             </DetailLink>{' '}
             · {v.provider.country}
           </p>
         </div>
         <div className="text-end">
-          <div className="mono text-2xl font-semibold">${formatUsdc(v.amount, locale)}</div>
-          <div className="text-xs text-[var(--color-ink-soft)]">{t('common.usdc')}</div>
+          <div className="mono text-2xl font-semibold">
+            ${formatUsdc(v.amount, locale)}
+          </div>
+          <div className="text-xs text-[var(--color-ink-soft)]">
+            {t('common.usdc')}
+          </div>
         </div>
       </div>
 
@@ -354,12 +382,15 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             <Field label={t('voucher.disputeOutcome')}>
               <span className="font-medium">
                 {v.disputeOutcome}
-                {v.disputeResolvedAt && ` · ${formatDate(v.disputeResolvedAt, locale)}`}
+                {v.disputeResolvedAt &&
+                  ` · ${formatDate(v.disputeResolvedAt, locale)}`}
               </span>
             </Field>
           )}
           {v.receipt && (
-            <Field label={t('voucher.careReceipt')}>{t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}</Field>
+            <Field label={t('voucher.careReceipt')}>
+              {t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}
+            </Field>
           )}
           <div className="space-y-4 print:hidden">
             <Field label={t('voucher.patientReference')}>
@@ -382,9 +413,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
       {/* A funded voucher whose clinic cannot deliver can be moved before
           the patient attends (#287). Only the funder may redirect it. */}
       {address === v.funder && v.status === 'Funded' && (
-        <Card className="print:hidden flex flex-wrap items-center justify-between gap-3 p-5">
+        <Card className="flex flex-wrap items-center justify-between gap-3 p-5 print:hidden">
           <div>
-            <h2 className="text-sm font-semibold">{t('voucher.redirect.action')}</h2>
+            <h2 className="text-sm font-semibold">
+              {t('voucher.redirect.action')}
+            </h2>
             <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
               {t('voucher.redirect.intro', {
                 amount: formatCurrency(v.amount, 'USD', locale),
@@ -409,7 +442,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               disabled={!redirectChosen || redirectBusy}
               onClick={() => void confirmRedirect()}
             >
-              {redirectBusy ? t('voucher.redirect.moving') : t('voucher.redirect.confirm')}
+              {redirectBusy
+                ? t('voucher.redirect.moving')
+                : t('voucher.redirect.confirm')}
             </Button>
             <Button
               variant="ghost"
@@ -433,12 +468,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           ) : (
             <>
               <label className="block">
-                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t('voucher.redirect.choose')}
                 </span>
                 <select
                   value={redirectTarget ?? ''}
-                  onChange={(event) => setRedirectTarget(event.target.value || null)}
+                  onChange={(event) =>
+                    setRedirectTarget(event.target.value || null)
+                  }
                   className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
                 >
                   <option value="">—</option>
@@ -483,7 +520,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
       {/* Only the funder can dispute, but anyone who notices a problem can
           report it (#138). The prefilled issue carries public voucher
           details only — never the patient reference. */}
-      <Card className="print:hidden space-y-2 p-5">
+      <Card className="space-y-2 p-5 print:hidden">
         <h2 className="text-sm font-semibold">{t('voucher.reportProblem')}</h2>
         <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
           {t('voucher.reportProblemIntro')}

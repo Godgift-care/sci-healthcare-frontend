@@ -97,7 +97,8 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'no-float',
     category: 'Economics & Costs',
-    question: 'Why is there no general float or pool balance held in the protocol?',
+    question:
+      'Why is there no general float or pool balance held in the protocol?',
     answer:
       'SCI Healthcare operates strictly as purpose-bound, prepaid escrow rather than a pooled fund or banking deposit. Money enters the contract only as a voucher already earmarked for a specific clinic, service, and expiry date. This eliminates pooling risk, prevents insolvency, and conforms to non-custodial prepaid regulatory standards.',
     docTitle: 'Protocol Economics: Why There is No Float',
@@ -138,7 +139,12 @@ const FAQ_ITEMS: FaqItem[] = [
 
 export default function FaqPage() {
   const [openIds, setOpenIds] = useState<Set<string>>(
-    () => new Set(['patient-never-attends', 'claimed-never-attested', 'who-are-attesters']),
+    () =>
+      new Set([
+        'patient-never-attends',
+        'claimed-never-attested',
+        'who-are-attesters',
+      ]),
   );
 
   const toggleItem = (id: string) => {
@@ -161,18 +167,22 @@ export default function FaqPage() {
     setOpenIds(new Set());
   };
 
-  const categories = Array.from(new Set(FAQ_ITEMS.map((item) => item.category)));
+  const categories = Array.from(
+    new Set(FAQ_ITEMS.map((item) => item.category)),
+  );
 
   return (
     <article className="mx-auto max-w-3xl space-y-10">
       <header className="space-y-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-200">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800 ring-1 ring-blue-200 ring-inset">
           Knowledge Base &amp; FAQ
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Frequently Asked Questions</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Frequently Asked Questions
+        </h1>
         <p className="text-base leading-relaxed text-[var(--color-ink-soft)]">
-          Answers to common questions about how SCI Healthcare vouchers work, who
-          verifies care delivery, fees, and cryptographic patient privacy.
+          Answers to common questions about how SCI Healthcare vouchers work,
+          who verifies care delivery, fees, and cryptographic patient privacy.
         </p>
         <div className="flex items-center gap-3 pt-2 text-xs">
           <button
@@ -217,11 +227,15 @@ export default function FaqPage() {
                         onClick={() => toggleItem(item.id)}
                         className="flex w-full items-start justify-between gap-4 text-start font-medium text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
                       >
-                        <span className="text-sm sm:text-base">{item.question}</span>
+                        <span className="text-sm sm:text-base">
+                          {item.question}
+                        </span>
                         <span
                           aria-hidden="true"
                           className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-[var(--color-line)] text-xs transition-transform duration-200 ${
-                            isOpen ? 'rotate-180 bg-[var(--color-canvas)] text-[var(--color-ink)]' : 'text-[var(--color-ink-soft)]'
+                            isOpen
+                              ? 'rotate-180 bg-[var(--color-canvas)] text-[var(--color-ink)]'
+                              : 'text-[var(--color-ink-soft)]'
                           }`}
                         >
                           ▼
@@ -258,13 +272,17 @@ export default function FaqPage() {
         })}
       </div>
 
-      <footer className="rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-6 text-center space-y-2">
+      <footer className="space-y-2 rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-6 text-center">
         <h3 className="text-base font-semibold">Have more questions?</h3>
-        <p className="text-xs text-[var(--color-ink-soft)] max-w-md mx-auto">
-          Read our in-depth protocol architecture documentation or review how patient data is protected.
+        <p className="mx-auto max-w-md text-xs text-[var(--color-ink-soft)]">
+          Read our in-depth protocol architecture documentation or review how
+          patient data is protected.
         </p>
         <div className="flex justify-center gap-4 pt-2 text-xs font-medium">
-          <Link href="/privacy" className="text-[var(--color-brand)] hover:underline">
+          <Link
+            href="/privacy"
+            className="text-[var(--color-brand)] hover:underline"
+          >
             Privacy Architecture &rarr;
           </Link>
           <a

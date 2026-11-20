@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
 
-import { Skeleton, SkeletonCard, SkeletonDetail, SkeletonRow } from './Skeleton';
+import {
+  Skeleton,
+  SkeletonCard,
+  SkeletonDetail,
+  SkeletonRow,
+} from './Skeleton';
 
 const meta: Meta = {
   title: 'UI/Skeleton',

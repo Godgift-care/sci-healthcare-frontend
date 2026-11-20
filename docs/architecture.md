@@ -92,24 +92,24 @@ lives in SWR and in the browser, and there is no server-side data fetching to
 keep in sync. Two routes are static server components (`/how-it-works`,
 `/privacy`).
 
-| Route | File | Reads | Notes |
-| --- | --- | --- | --- |
-| `/` | `src/app/page.tsx` | `useLiveUpdates`, `useProviders`, `useStats`, `useLowBandwidth` | Clinic directory; the map is a `next/dynamic` import with `ssr: false` |
-| `/clinics/[address]` | `src/app/clinics/[address]/page.tsx` | `useProvider`, `useVouchers`, `useSavedIdentity` | The funding flow: quote, create, XLM swap |
-| `/my` | `src/app/my/page.tsx` | `useLiveUpdates`, `useProviders`, `useReceipts`, `useVouchers` | Funded vouchers, care-history lookup, CSV export |
-| `/my/transactions` | `src/app/my/transactions/page.tsx` | `useLiveUpdates`, `useWalletHistory` | The wallet's own transactions, newest first, each linked to the chain |
-| `/my/print` | `src/app/my/print/page.tsx` | `useProviders`, `useReceipts`, `useSavedIdentity` | Printable care summary |
-| `/clinic` | `src/app/clinic/page.tsx` | `useProvider`, `useVouchers`, `useLiveUpdates` | Clinic-side writes: register, list services, mark seen |
-| `/attest` | `src/app/attest/page.tsx` | `useIsAttester`, `useLiveUpdates`, `useVouchers`, `useNow` | Attester queue, sorted by urgency |
-| `/attesters` | `src/app/attesters/page.tsx` | `useAttesters({ all })` | Attester directory |
-| `/stats` | `src/app/stats/page.tsx` | `useStats`, `useDailyStats`, `useProviders` | Protocol statistics |
-| `/vouchers/[id]` | `src/app/vouchers/[id]/page.tsx` | `useVoucher`, `useVoucherEvents`, `useLiveUpdates`, `useNameIndex`, `useNow` | One voucher's timeline, receipt and actions |
-| `/faq` | `src/app/faq/page.tsx` | — | Static content; a client component, because the answers are accordions |
-| `/how-it-works`, `/privacy` | | — | Static content; server components, and the only two that export their own metadata |
+| Route                       | File                                 | Reads                                                                        | Notes                                                                              |
+| --------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `/`                         | `src/app/page.tsx`                   | `useLiveUpdates`, `useProviders`, `useStats`, `useLowBandwidth`              | Clinic directory; the map is a `next/dynamic` import with `ssr: false`             |
+| `/clinics/[address]`        | `src/app/clinics/[address]/page.tsx` | `useProvider`, `useVouchers`, `useSavedIdentity`                             | The funding flow: quote, create, XLM swap                                          |
+| `/my`                       | `src/app/my/page.tsx`                | `useLiveUpdates`, `useProviders`, `useReceipts`, `useVouchers`               | Funded vouchers, care-history lookup, CSV export                                   |
+| `/my/transactions`          | `src/app/my/transactions/page.tsx`   | `useLiveUpdates`, `useWalletHistory`                                         | The wallet's own transactions, newest first, each linked to the chain              |
+| `/my/print`                 | `src/app/my/print/page.tsx`          | `useProviders`, `useReceipts`, `useSavedIdentity`                            | Printable care summary                                                             |
+| `/clinic`                   | `src/app/clinic/page.tsx`            | `useProvider`, `useVouchers`, `useLiveUpdates`                               | Clinic-side writes: register, list services, mark seen                             |
+| `/attest`                   | `src/app/attest/page.tsx`            | `useIsAttester`, `useLiveUpdates`, `useVouchers`, `useNow`                   | Attester queue, sorted by urgency                                                  |
+| `/attesters`                | `src/app/attesters/page.tsx`         | `useAttesters({ all })`                                                      | Attester directory                                                                 |
+| `/stats`                    | `src/app/stats/page.tsx`             | `useStats`, `useDailyStats`, `useProviders`                                  | Protocol statistics                                                                |
+| `/vouchers/[id]`            | `src/app/vouchers/[id]/page.tsx`     | `useVoucher`, `useVoucherEvents`, `useLiveUpdates`, `useNameIndex`, `useNow` | One voucher's timeline, receipt and actions                                        |
+| `/faq`                      | `src/app/faq/page.tsx`               | —                                                                            | Static content; a client component, because the answers are accordions             |
+| `/how-it-works`, `/privacy` |                                      | —                                                                            | Static content; server components, and the only two that export their own metadata |
 
 **Metadata lives next door.** A page that is a client component cannot export
 `generateMetadata`, so the dynamic titles and link previews are produced by
-*sibling server layouts* — `src/app/clinics/[address]/layout.tsx` and
+_sibling server layouts_ — `src/app/clinics/[address]/layout.tsx` and
 `src/app/vouchers/[id]/layout.tsx` fetch from the API with a short deadline
 (`METADATA_TIMEOUT_MS`, 4s in `src/lib/api.ts`) and fall back to the default
 title. The sleeping indexer can therefore never block a page render. No
@@ -135,18 +135,18 @@ use it; anything below cannot.
         footer
 ```
 
-| Provider | Owns |
-| --- | --- |
-| `Analytics` | Cookieless Plausible pageviews; rendered only when a domain is configured |
-| `ErrorReporter` | Sentry init; a no-op without a DSN |
-| `PendingTransactionGuard` | The `beforeunload` warning, armed only while a write is in flight |
-| `ServiceWorkerRegistration` | Registers `public/sw.js` in production; failures are swallowed |
-| `WalletProvider` | The connected account, the sign function, funding checks |
-| `SwrProvider` | Application-wide SWR defaults; low-bandwidth mode relaxes them |
-| `LocaleProvider` | The active language; `en`, `fr`, `sw` |
-| `ToastProvider` | Transaction results and errors; mounted inside `<main>` so a toast appears where the user is looking |
+| Provider                    | Owns                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Analytics`                 | Cookieless Plausible pageviews; rendered only when a domain is configured                            |
+| `ErrorReporter`             | Sentry init; a no-op without a DSN                                                                   |
+| `PendingTransactionGuard`   | The `beforeunload` warning, armed only while a write is in flight                                    |
+| `ServiceWorkerRegistration` | Registers `public/sw.js` in production; failures are swallowed                                       |
+| `WalletProvider`            | The connected account, the sign function, funding checks                                             |
+| `SwrProvider`               | Application-wide SWR defaults; low-bandwidth mode relaxes them                                       |
+| `LocaleProvider`            | The active language; `en`, `fr`, `sw`                                                                |
+| `ToastProvider`             | Transaction results and errors; mounted inside `<main>` so a toast appears where the user is looking |
 
-`ToastProvider` sits *inside* `<main>` while `LocaleProvider` wraps both
+`ToastProvider` sits _inside_ `<main>` while `LocaleProvider` wraps both
 `<main>` and `<footer>`: the header's controls translate, and toasts do not
 paint over the footer.
 
@@ -159,21 +159,21 @@ return value. `useWalletHistory` is the exception: the indexer has no
 wallet-scoped event log, so it reads the wallet's vouchers and then their
 event logs, a few at a time.
 
-| Hook | SWR key | Endpoint |
-| --- | --- | --- |
-| `useVoucher(id)` | `['voucher', id]` | `GET /vouchers/:id` |
-| `useVoucherEvents(id)` | `['voucher-events', id]` | `GET /vouchers/:id/events` |
-| `useVouchers(params)` | `['vouchers', params]` | `GET /vouchers` |
-| `useWalletHistory(address)` | `['wallet-events', voucherIds]` | `GET /vouchers` + `GET /vouchers/:id/events` |
-| `useProvider(address)` | `['provider', address]` | `GET /providers/:address` |
-| `useProviders(params)` | `['providers', params ?? {}]` | `GET /providers` |
-| `useStats()` | `'stats'` | `GET /stats` |
-| `useDailyStats(days)` | `['dailyStats', days]` | `GET /stats/daily` |
-| `useAttesters(params)` | `['attesters', params ?? {}]` | `GET /attesters` |
-| `useReceipts(beneficiaryRef)` | `['receipts', beneficiaryRef]` | `GET /receipts` |
-| `useIsAttester(address)` | `['isAttester', address]` | on-chain read (`registry.isAttester`) |
-| `useNameIndex()` | derived from `useProviders` and `useAttesters` | address → name for the loaded directories |
-| `useNow()` | — | a shared 60-second clock, for countdowns |
+| Hook                          | SWR key                                        | Endpoint                                     |
+| ----------------------------- | ---------------------------------------------- | -------------------------------------------- |
+| `useVoucher(id)`              | `['voucher', id]`                              | `GET /vouchers/:id`                          |
+| `useVoucherEvents(id)`        | `['voucher-events', id]`                       | `GET /vouchers/:id/events`                   |
+| `useVouchers(params)`         | `['vouchers', params]`                         | `GET /vouchers`                              |
+| `useWalletHistory(address)`   | `['wallet-events', voucherIds]`                | `GET /vouchers` + `GET /vouchers/:id/events` |
+| `useProvider(address)`        | `['provider', address]`                        | `GET /providers/:address`                    |
+| `useProviders(params)`        | `['providers', params ?? {}]`                  | `GET /providers`                             |
+| `useStats()`                  | `'stats'`                                      | `GET /stats`                                 |
+| `useDailyStats(days)`         | `['dailyStats', days]`                         | `GET /stats/daily`                           |
+| `useAttesters(params)`        | `['attesters', params ?? {}]`                  | `GET /attesters`                             |
+| `useReceipts(beneficiaryRef)` | `['receipts', beneficiaryRef]`                 | `GET /receipts`                              |
+| `useIsAttester(address)`      | `['isAttester', address]`                      | on-chain read (`registry.isAttester`)        |
+| `useNameIndex()`              | derived from `useProviders` and `useAttesters` | address → name for the loaded directories    |
+| `useNow()`                    | —                                              | a shared 60-second clock, for countdowns     |
 
 Each hook returns `{ data, error, rawError, isLoading, isValidating, mutate }`.
 Two helpers keep the cache honest after a write:
@@ -195,11 +195,11 @@ The map popup anchors apply the same helper.
 
 Global SWR defaults live in `src/components/SwrProvider.tsx`:
 
-| | normal | low-bandwidth |
-| --- | --- | --- |
-| `revalidateOnFocus` | `true` | `false` |
-| `revalidateOnReconnect` | `true` | `false` |
-| `dedupingInterval` | 2s | 60s |
+|                         | normal | low-bandwidth |
+| ----------------------- | ------ | ------------- |
+| `revalidateOnFocus`     | `true` | `false`       |
+| `revalidateOnReconnect` | `true` | `false`       |
+| `dedupingInterval`      | 2s     | 60s           |
 
 Both objects are module-level constants so the context value keeps a stable
 identity between renders.
@@ -333,7 +333,7 @@ person can read.
   cache while the network answers.
 - Writes are untouched — they were never cacheable.
 
-A cached API answer would also be *wrong*, not just leaky: a voucher's state
+A cached API answer would also be _wrong_, not just leaky: a voucher's state
 comes from the chain, so yesterday's response invites a funder to act on a
 state that no longer holds.
 
@@ -356,27 +356,27 @@ vendor/sci-healthcare-client/  The generated OpenAPI client
 
 ## Cross-cutting modules
 
-| Module | Owns |
-| --- | --- |
-| `src/lib/config.ts` | Build-time configuration, `isTestnet`, explorer links |
-| `src/lib/amounts.ts` | i128 amounts (7 decimals), currency, date and address formatting |
-| `src/lib/beneficiary.ts` | The local HMAC that derives `beneficiaryRef`; the saved-patients store |
-| `src/lib/voucher-actions.ts` | Which actions a voucher currently allows (`availableActions`) |
-| `src/lib/timeline.ts` | The voucher timeline and its per-step transaction hashes |
-| `src/lib/disputes.ts` | Dispute reason codes and their labels |
-| `src/lib/errors.ts` | Contract error codes → plain language, per locale |
-| `src/lib/reconcile.ts` | Polling the indexer until it agrees with a write |
-| `src/lib/pending-tx.ts` | The in-flight write count that arms the unload guard |
-| `src/lib/low-bandwidth.ts` | The "low data" switch and its store |
-| `src/lib/theme.ts` | The theme store and the pre-paint init script |
-| `src/lib/tour.ts` | The demo-tour flag |
-| `src/lib/csv.ts` | CSV row building and download |
-| `src/lib/names.ts` | Address → name for the loaded directories |
-| `src/lib/analytics.ts` | The event allow-list and route normalisation |
-| `src/lib/error-reporting.ts` | The Sentry scrubber |
-| `src/lib/e2e-seam.ts` | The mock wallet and mock RPC the e2e suites install |
-| `src/i18n/LocaleContext.tsx` | The locale store, `t()` and the formatters |
-| `docs/i18n.md` | How to add a language |
+| Module                       | Owns                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `src/lib/config.ts`          | Build-time configuration, `isTestnet`, explorer links                  |
+| `src/lib/amounts.ts`         | i128 amounts (7 decimals), currency, date and address formatting       |
+| `src/lib/beneficiary.ts`     | The local HMAC that derives `beneficiaryRef`; the saved-patients store |
+| `src/lib/voucher-actions.ts` | Which actions a voucher currently allows (`availableActions`)          |
+| `src/lib/timeline.ts`        | The voucher timeline and its per-step transaction hashes               |
+| `src/lib/disputes.ts`        | Dispute reason codes and their labels                                  |
+| `src/lib/errors.ts`          | Contract error codes → plain language, per locale                      |
+| `src/lib/reconcile.ts`       | Polling the indexer until it agrees with a write                       |
+| `src/lib/pending-tx.ts`      | The in-flight write count that arms the unload guard                   |
+| `src/lib/low-bandwidth.ts`   | The "low data" switch and its store                                    |
+| `src/lib/theme.ts`           | The theme store and the pre-paint init script                          |
+| `src/lib/tour.ts`            | The demo-tour flag                                                     |
+| `src/lib/csv.ts`             | CSV row building and download                                          |
+| `src/lib/names.ts`           | Address → name for the loaded directories                              |
+| `src/lib/analytics.ts`       | The event allow-list and route normalisation                           |
+| `src/lib/error-reporting.ts` | The Sentry scrubber                                                    |
+| `src/lib/e2e-seam.ts`        | The mock wallet and mock RPC the e2e suites install                    |
+| `src/i18n/LocaleContext.tsx` | The locale store, `t()` and the formatters                             |
+| `docs/i18n.md`               | How to add a language                                                  |
 
 ## Sharp edges
 
@@ -468,15 +468,15 @@ disclaimer. Setting it to `public` hides all of it.
 
 ## Where to change what
 
-| You want to… | Start at |
-| --- | --- |
-| Add a page | `src/app/<route>/page.tsx`, then a sibling `layout.tsx` if it needs its own title |
-| Read a new piece of indexer data | `@sci-healthcare/client` → `src/lib/api.ts` → a hook in `src/lib/hooks/useData.ts` |
-| Change the cache behaviour | `src/components/SwrProvider.tsx` (global) or the hook's SWR config (per read) |
-| Add or change a contract call | `src/lib/contracts/generated/` → `src/lib/protocol.ts` → `src/lib/stellar.ts` |
-| Add a transaction | `src/lib/protocol.ts` (wrapper) → `src/components/VoucherRow.tsx` (the action) → `src/lib/reconcile.ts` (the catch-up) |
-| Change what a user can do with a voucher | `src/lib/voucher-actions.ts`, and the page's own copy of the rules |
-| Change the offline behaviour | `public/sw.js`, and `tests/e2e/offline-shell.spec.ts` |
-| Add a language | `docs/i18n.md` |
-| Change the wallet | `src/lib/wallet.tsx`, `src/lib/passkey.ts` |
-| Change a policy (CSP, headers) | `next.config.ts` |
+| You want to…                             | Start at                                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Add a page                               | `src/app/<route>/page.tsx`, then a sibling `layout.tsx` if it needs its own title                                      |
+| Read a new piece of indexer data         | `@sci-healthcare/client` → `src/lib/api.ts` → a hook in `src/lib/hooks/useData.ts`                                     |
+| Change the cache behaviour               | `src/components/SwrProvider.tsx` (global) or the hook's SWR config (per read)                                          |
+| Add or change a contract call            | `src/lib/contracts/generated/` → `src/lib/protocol.ts` → `src/lib/stellar.ts`                                          |
+| Add a transaction                        | `src/lib/protocol.ts` (wrapper) → `src/components/VoucherRow.tsx` (the action) → `src/lib/reconcile.ts` (the catch-up) |
+| Change what a user can do with a voucher | `src/lib/voucher-actions.ts`, and the page's own copy of the rules                                                     |
+| Change the offline behaviour             | `public/sw.js`, and `tests/e2e/offline-shell.spec.ts`                                                                  |
+| Add a language                           | `docs/i18n.md`                                                                                                         |
+| Change the wallet                        | `src/lib/wallet.tsx`, `src/lib/passkey.ts`                                                                             |
+| Change a policy (CSP, headers)           | `next.config.ts`                                                                                                       |

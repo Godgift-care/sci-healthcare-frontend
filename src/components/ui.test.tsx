@@ -25,7 +25,9 @@ describe('Modal', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    const heading = screen.getByRole('heading', { name: 'Confirm transaction' });
+    const heading = screen.getByRole('heading', {
+      name: 'Confirm transaction',
+    });
     expect(dialog.getAttribute('aria-labelledby')).toBe(heading.id);
   });
 
@@ -65,7 +67,12 @@ describe('Modal', () => {
 
   it('keeps Tab inside the dialog', () => {
     render(
-      <Modal open onClose={() => {}} title="Confirm" actions={<button>Confirm</button>}>
+      <Modal
+        open
+        onClose={() => {}}
+        title="Confirm"
+        actions={<button>Confirm</button>}
+      >
         <p>Body</p>
       </Modal>,
     );
@@ -74,7 +81,9 @@ describe('Modal', () => {
     // Tab from the last focusable wraps to the first, never to the page.
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(document.activeElement).not.toBe(document.body);
-    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(
+      true,
+    );
   });
 
   it('renders nothing while closed', () => {
@@ -98,7 +107,9 @@ describe('Button', () => {
 describe('Alert', () => {
   it('announces itself as an alert', () => {
     render(<Alert>Nothing was sent.</Alert>);
-    expect(screen.getByRole('alert').textContent).toContain('Nothing was sent.');
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Nothing was sent.',
+    );
   });
 });
 

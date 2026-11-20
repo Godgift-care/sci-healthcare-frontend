@@ -22,7 +22,8 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   reporter: 'list',
-  snapshotPathTemplate: '{testDir}/visual/__snapshots__/{projectName}-{arg}{ext}',
+  snapshotPathTemplate:
+    '{testDir}/visual/__snapshots__/{projectName}-{arg}{ext}',
   expect: {
     toHaveScreenshot: {
       animations: 'disabled',
@@ -71,7 +72,9 @@ export default defineConfig({
       NEXT_PUBLIC_API_URL: 'http://localhost:8080',
       // The visual-only command captures the default (flag-off) deployment.
       // E2E builds enable sponsorship to exercise the opt-in flow as well.
-      NEXT_PUBLIC_SPONSORED_FEES: process.argv.includes('tests/visual') ? 'false' : 'true',
+      NEXT_PUBLIC_SPONSORED_FEES: process.argv.includes('tests/visual')
+        ? 'false'
+        : 'true',
       NEXT_PUBLIC_STELLAR_NETWORK: 'testnet',
       NEXT_PUBLIC_SOROBAN_RPC_URL: 'https://soroban-testnet.stellar.org',
       NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015',

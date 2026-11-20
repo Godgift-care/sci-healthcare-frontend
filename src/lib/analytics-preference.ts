@@ -82,7 +82,10 @@ export function isAnalyticsOptedOut(): boolean {
 export function reportCoreWebVitals(
   send: (metric: { name: string; value: number }) => void,
 ): () => void {
-  if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
+  if (
+    typeof window === 'undefined' ||
+    typeof PerformanceObserver === 'undefined'
+  ) {
     return () => {};
   }
   if (isAnalyticsOptedOut()) return () => {};
@@ -96,9 +99,14 @@ export function reportCoreWebVitals(
     send({ name, value });
   };
 
-  const observe = (type: string, handler: (entries: PerformanceEntryList) => void) => {
+  const observe = (
+    type: string,
+    handler: (entries: PerformanceEntryList) => void,
+  ) => {
     try {
-      const observer = new PerformanceObserver((list) => handler(list.getEntries()));
+      const observer = new PerformanceObserver((list) =>
+        handler(list.getEntries()),
+      );
       observer.observe({ type, buffered: true } as PerformanceObserverInit);
       observers.push(observer);
     } catch {
@@ -108,14 +116,18 @@ export function reportCoreWebVitals(
 
   // LCP: the last entry before the page is hidden or unloaded.
   observe('largest-contentful-paint', (entries) => {
-    const last = entries[entries.length - 1] as PerformanceEntry & { startTime: number };
+    const last = entries[entries.length - 1] as PerformanceEntry & {
+      startTime: number;
+    };
     if (last) report('LCP', last.startTime);
   });
 
   // CLS: sum of layout shifts without recent input, reported on hide.
   let cls = 0;
   observe('layout-shift', (entries) => {
-    for (const entry of entries as Array<PerformanceEntry & { value: number; hadRecentInput: boolean }>) {
+    for (const entry of entries as Array<
+      PerformanceEntry & { value: number; hadRecentInput: boolean }
+    >) {
       if (!entry.hadRecentInput) cls += entry.value;
     }
   });
@@ -123,7 +135,9 @@ export function reportCoreWebVitals(
   // INP: the longest interaction duration observed, reported on hide.
   let inp = 0;
   observe('event', (entries) => {
-    for (const entry of entries as Array<PerformanceEntry & { duration: number }>) {
+    for (const entry of entries as Array<
+      PerformanceEntry & { duration: number }
+    >) {
       if (entry.duration > inp) inp = entry.duration;
     }
   });

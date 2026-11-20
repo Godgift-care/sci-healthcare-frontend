@@ -51,7 +51,9 @@ test('add to calendar downloads a valid .ics reminder for the expiry day', async
   });
 
   await page.goto(`/vouchers/${VOUCHER_ID}`);
-  await expect(page.getByRole('heading', { name: VOUCHER.serviceLabel })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: VOUCHER.serviceLabel }),
+  ).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Add to calendar' }).click();
@@ -71,7 +73,9 @@ test('add to calendar downloads a valid .ics reminder for the expiry day', async
   // All-day reminder on the expiry day, UTC.
   expect(content).toContain(`DTSTART;VALUE=DATE:20260619\r\n`);
   expect(content).toContain(`DTEND;VALUE=DATE:20260620\r\n`);
-  expect(content).toContain(`SUMMARY:Voucher expiry — Voucher #${VOUCHER_ID}\r\n`);
+  expect(content).toContain(
+    `SUMMARY:Voucher expiry — Voucher #${VOUCHER_ID}\r\n`,
+  );
   expect(content).toContain(`URL:${page.url()}\r\n`);
   // Public facts only — no patient or beneficiary data.
   expect(content).not.toContain('beneficiary');

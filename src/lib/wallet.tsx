@@ -83,7 +83,8 @@ function getNetworkName(passphrase: string): string {
     return 'Public network';
   }
   if (passphrase === 'Test SDF Network ; September 2015') return 'Testnet';
-  if (passphrase === 'Test SDF Future Network ; October 2022') return 'Futurenet';
+  if (passphrase === 'Test SDF Future Network ; October 2022')
+    return 'Futurenet';
   return passphrase;
 }
 
@@ -111,16 +112,16 @@ function ensureInit(): Promise<void> {
     // Passkey and the extension wallets that need no configuration. The
     // WalletConnect module is added below only when a project id is set, so
     // deployments that do not want mobile wallets keep the small bundle.
-    const modules: import('@creit.tech/stellar-wallets-kit').ModuleInterface[] = [
-      new PasskeyModule() as unknown as import('@creit.tech/stellar-wallets-kit').ModuleInterface,
-      ...defaultModules(),
-    ];
+    const modules: import('@creit.tech/stellar-wallets-kit').ModuleInterface[] =
+      [
+        new PasskeyModule() as unknown as import('@creit.tech/stellar-wallets-kit').ModuleInterface,
+        ...defaultModules(),
+      ];
 
     if (isWalletConnectConfigured()) {
       try {
-        const { WalletConnectModule, WalletConnectTargetChain } = await import(
-          '@creit.tech/stellar-wallets-kit/modules/wallet-connect'
-        );
+        const { WalletConnectModule, WalletConnectTargetChain } =
+          await import('@creit.tech/stellar-wallets-kit/modules/wallet-connect');
         const chain = walletConnectChainId(config.network);
         const origin =
           typeof window !== 'undefined'
@@ -167,7 +168,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isLowXlm, setIsLowXlm] = useState(false);
   const [spendableXlm, setSpendableXlm] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [walletNetworkName, setWalletNetworkName] = useState<string | null>(null);
+  const [walletNetworkName, setWalletNetworkName] = useState<string | null>(
+    null,
+  );
   const [networkMismatch, setNetworkMismatch] = useState(false);
 
   // Restore a previous session silently (#59).
@@ -219,7 +222,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (!cancelled && addr) {
           setAddress(addr);
           setWalletName(
-            getWalletDisplayName(savedWalletId || kit.selectedModule?.productId),
+            getWalletDisplayName(
+              savedWalletId || kit.selectedModule?.productId,
+            ),
           );
         }
       } catch {
@@ -251,7 +256,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const savedWalletId = window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
+        const savedWalletId = window.localStorage.getItem(
+          SELECTED_WALLET_ID_KEY,
+        );
         if (savedWalletId === PASSKEY_WALLET_ID) {
           clearNetwork();
           return;
@@ -365,7 +372,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(async () => {
     try {
       if (typeof window !== 'undefined') {
-        delete (window as unknown as { __SCI_MOCK_WALLET__?: unknown }).__SCI_MOCK_WALLET__;
+        delete (window as unknown as { __SCI_MOCK_WALLET__?: unknown })
+          .__SCI_MOCK_WALLET__;
       }
       try {
         const kit = await getKit();
@@ -396,10 +404,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (mockWalletAddress()) {
         // Test seam (#1): a test can make the mock wallet refuse to sign so
         // the rejection path is covered without a real wallet extension.
-        if (mockSignRejects()) throw new Error('User rejected the transaction in the wallet');
+        if (mockSignRejects())
+          throw new Error('User rejected the transaction in the wallet');
         return xdr;
       }
-      if (networkMismatch) throw new Error('Switch your wallet to the app network before signing');
+      if (networkMismatch)
+        throw new Error('Switch your wallet to the app network before signing');
       if (mockWalletAddress()) return xdr;
 
       const savedWalletId = (() => {

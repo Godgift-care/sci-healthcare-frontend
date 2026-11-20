@@ -9,6 +9,10 @@ export const metadata: Metadata = {
  * title here the print view would inherit "My vouchers" from the parent
  * layout — two routes, one title. Passes straight through to the page.
  */
-export default function PrintLayout({ children }: { children: React.ReactNode }) {
+export default function PrintLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }

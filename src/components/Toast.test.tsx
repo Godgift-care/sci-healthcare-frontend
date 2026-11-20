@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider, useToast } from './Toast';
@@ -53,15 +59,17 @@ describe('ToastProvider', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Notify' }));
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toContain(
-      'Voucher funded.',
-    );
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toContain('Voucher funded.');
 
     act(() => {
       vi.runAllTimers();
     });
 
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toBe('');
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toBe('');
   });
 
   it('can be dismissed by hand before the timeout', () => {
@@ -75,6 +83,8 @@ describe('ToastProvider', () => {
     const dismiss = screen.getByRole('button', { name: /dismiss/i });
     fireEvent.click(dismiss);
 
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toBe('');
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toBe('');
   });
 });

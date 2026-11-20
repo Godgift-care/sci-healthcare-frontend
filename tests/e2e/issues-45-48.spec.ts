@@ -10,7 +10,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Batch refund on My vouchers (#45)', () => {
-  test('refund all refundable vouchers with progress and summary', async ({ page }) => {
+  test('refund all refundable vouchers with progress and summary', async ({
+    page,
+  }) => {
     const v1 = {
       id: '451',
       funder: FUNDER,
@@ -71,7 +73,9 @@ test.describe('Batch refund on My vouchers (#45)', () => {
     await refundAllBtn.click();
 
     // Verify completion summary alert
-    await expect(page.getByText(/Refunded 2 voucher\(s\) successfully/)).toBeVisible();
+    await expect(
+      page.getByText(/Refunded 2 voucher\(s\) successfully/),
+    ).toBeVisible();
 
     // Verify smart contract calls
     const invokes = await mockInvokes(page);
@@ -132,7 +136,9 @@ test.describe('Printable care summary for a patient (#46)', () => {
 
     // 3. Verify on /my/print
     await expect(page).toHaveURL(/\/my\/print/);
-    await expect(page.getByRole('heading', { name: 'Patient Care Summary' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Patient Care Summary' }),
+    ).toBeVisible();
 
     // Verify receipt records
     await expect(page.getByText('Outpatient consult')).toBeVisible();
@@ -148,12 +154,16 @@ test.describe('Printable care summary for a patient (#46)', () => {
     expect(pageText).not.toContain(patientSecretKey);
 
     // Verify print button
-    await expect(page.getByRole('button', { name: 'Print summary' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Print summary' }),
+    ).toBeVisible();
   });
 });
 
 test.describe('Dispute outcome on voucher page (#47)', () => {
-  test('renders timeline step and details for Settled outcome', async ({ page }) => {
+  test('renders timeline step and details for Settled outcome', async ({
+    page,
+  }) => {
     const settledVoucher = {
       id: '471',
       funder: FUNDER,
@@ -198,14 +208,18 @@ test.describe('Dispute outcome on voucher page (#47)', () => {
     // Verify resolution step in timeline
     const timeline = page.locator('ol');
     await expect(timeline.getByText('Dispute resolved: Settled')).toBeVisible();
-    await expect(timeline.getByText(/Resolved in clinic’s favour/)).toBeVisible();
+    await expect(
+      timeline.getByText(/Resolved in clinic’s favour/),
+    ).toBeVisible();
 
     // Verify dispute outcome field in details card
     await expect(page.getByText('Dispute outcome')).toBeVisible();
     await expect(page.getByText(/Settled · 9 May 2026/)).toBeVisible();
   });
 
-  test('renders timeline step and details for Refunded outcome', async ({ page }) => {
+  test('renders timeline step and details for Refunded outcome', async ({
+    page,
+  }) => {
     const refundedVoucher = {
       id: '472',
       funder: FUNDER,
@@ -241,8 +255,12 @@ test.describe('Dispute outcome on voucher page (#47)', () => {
 
     // Verify resolution step in timeline
     const timeline = page.locator('ol');
-    await expect(timeline.getByText('Dispute resolved: Refunded')).toBeVisible();
-    await expect(timeline.getByText(/Resolved in funder’s favour/)).toBeVisible();
+    await expect(
+      timeline.getByText('Dispute resolved: Refunded'),
+    ).toBeVisible();
+    await expect(
+      timeline.getByText(/Resolved in funder’s favour/),
+    ).toBeVisible();
 
     // Verify dispute outcome field in details card
     await expect(page.getByText('Dispute outcome')).toBeVisible();
@@ -251,7 +269,10 @@ test.describe('Dispute outcome on voucher page (#47)', () => {
 });
 
 test.describe('Copy link on voucher page (#48)', () => {
-  test('copy link button copies voucher URL with confirmation message', async ({ page, context }) => {
+  test('copy link button copies voucher URL with confirmation message', async ({
+    page,
+    context,
+  }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     const voucher = {
@@ -293,7 +314,9 @@ test.describe('Copy link on voucher page (#48)', () => {
     await expect(page.getByText('Link copied!')).toBeVisible();
 
     // Verify clipboard content equals page URL
-    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    const clipboardText = await page.evaluate(() =>
+      navigator.clipboard.readText(),
+    );
     expect(clipboardText).toBe(page.url());
   });
 });

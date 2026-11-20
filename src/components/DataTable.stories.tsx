@@ -15,7 +15,12 @@ type Row = { clinic: string; service: string; amount: number };
 const columns: DataTableColumn<Row>[] = [
   { key: 'clinic', header: 'Clinic', accessor: (row) => row.clinic },
   { key: 'service', header: 'Service', accessor: (row) => row.service },
-  { key: 'amount', header: 'Amount', accessor: (row) => row.amount, align: 'right' },
+  {
+    key: 'amount',
+    header: 'Amount',
+    accessor: (row) => row.amount,
+    align: 'right',
+  },
 ];
 
 const rows: Row[] = [
@@ -33,11 +38,21 @@ export default meta;
 type Story = StoryObj<typeof DataTable<Row>>;
 
 export const Sorted: Story = {
-  args: { caption: 'Recent vouchers', columns, rows, getRowKey: (row: Row) => row.clinic },
+  args: {
+    caption: 'Recent vouchers',
+    columns,
+    rows,
+    getRowKey: (row: Row) => row.clinic,
+  },
 };
 
 export const Empty: Story = {
-  args: { caption: 'Recent vouchers', columns, rows: [], getRowKey: (row: Row) => row.clinic },
+  args: {
+    caption: 'Recent vouchers',
+    columns,
+    rows: [],
+    getRowKey: (row: Row) => row.clinic,
+  },
 };
 
 /** One value much longer than the rest: the table must not scroll sideways. */
@@ -47,8 +62,10 @@ export const LongContent: Story = {
     columns,
     rows: [
       {
-        clinic: 'Saint Mary Mother of God Specialist Teaching Hospital and Referral Centre, Annex B',
-        service: 'Comprehensive maternal and child health package including antenatal, delivery and postnatal review',
+        clinic:
+          'Saint Mary Mother of God Specialist Teaching Hospital and Referral Centre, Annex B',
+        service:
+          'Comprehensive maternal and child health package including antenatal, delivery and postnatal review',
         amount: 1250,
       },
       ...rows,

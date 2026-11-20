@@ -39,8 +39,12 @@ type EventsResult = {
 };
 
 export function useWalletHistory(address: string | null | undefined) {
-  const funded = useVouchers(address ? { funder: address, limit: PAGE_SIZE } : null);
-  const received = useVouchers(address ? { provider: address, limit: PAGE_SIZE } : null);
+  const funded = useVouchers(
+    address ? { funder: address, limit: PAGE_SIZE } : null,
+  );
+  const received = useVouchers(
+    address ? { provider: address, limit: PAGE_SIZE } : null,
+  );
 
   const vouchers = useMemo(
     () => mergeVouchers(funded.vouchers, received.vouchers),
@@ -59,16 +63,20 @@ export function useWalletHistory(address: string | null | undefined) {
   } = useSWR<EventsResult>(
     ids.length > 0 ? ['wallet-events', idKey] : null,
     async () => {
-      const results = await mapWithConcurrency(ids, EVENTS_CONCURRENCY, async (id) => {
-        try {
-          return { id, events: await api.voucherEvents(id), failed: false };
-        } catch {
-          // An indexer that predates the events endpoint answers 404. The
-          // history then shows the dates it has, without the on-chain links,
-          // instead of failing the whole page.
-          return { id, events: [] as VoucherEvent[], failed: true };
-        }
-      });
+      const results = await mapWithConcurrency(
+        ids,
+        EVENTS_CONCURRENCY,
+        async (id) => {
+          try {
+            return { id, events: await api.voucherEvents(id), failed: false };
+          } catch {
+            // An indexer that predates the events endpoint answers 404. The
+            // history then shows the dates it has, without the on-chain links,
+            // instead of failing the whole page.
+            return { id, events: [] as VoucherEvent[], failed: true };
+          }
+        },
+      );
 
       const byVoucher: Record<string, VoucherEvent[]> = {};
       let failed = 0;
@@ -92,10 +100,13 @@ export function useWalletHistory(address: string | null | undefined) {
   const errorMessage = funded.error ?? received.error ?? null;
   // Every log unreadable means the endpoint is missing, not that the
   // vouchers have no events — the two cases are shown differently.
-  const eventsUnavailable = Boolean(data && data.failed > 0 && data.failed === ids.length);
+  const eventsUnavailable = Boolean(
+    data && data.failed > 0 && data.failed === ids.length,
+  );
   // The indexer counts more vouchers than one page holds.
   const truncated =
-    funded.total > funded.vouchers.length || received.total > received.vouchers.length;
+    funded.total > funded.vouchers.length ||
+    received.total > received.vouchers.length;
 
   return {
     rows,

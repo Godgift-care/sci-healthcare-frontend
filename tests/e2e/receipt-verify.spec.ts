@@ -37,10 +37,14 @@ async function openPrintSummary(page: Page) {
     receipts: { total: 1, totalSpendDisplay: '3.00', receipts: [RECEIPT] },
   });
   await page.goto('/my/print');
-  await expect(page.getByRole('heading', { name: 'Printable care summary' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Printable care summary' }),
+  ).toBeVisible();
 }
 
-test('a receipt that matches the chain is marked verified', async ({ page }) => {
+test('a receipt that matches the chain is marked verified', async ({
+  page,
+}) => {
   await useMockWallet(page, FUNDER, 0, {
     [`${E2E_CONTRACTS.receipt}:get_receipt`]: {
       voucher_id: 139,
@@ -71,5 +75,7 @@ test('a mismatch is shown plainly field by field', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Verify on chain' }).click();
   await expect(page.getByText('Does not match the chain')).toBeVisible();
-  await expect(page.getByText(/Amount: shown \$3\.00, chain says \$9\.90/)).toBeVisible();
+  await expect(
+    page.getByText(/Amount: shown \$3\.00, chain says \$9\.90/),
+  ).toBeVisible();
 });

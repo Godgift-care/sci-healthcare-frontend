@@ -107,19 +107,27 @@ test('clinic desk — SEP-24 cash-out handoff', async ({ page }) => {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ withdraw: { USDC: { enabled: true, min_amount: 1, max_amount: 100 } } }),
+        body: JSON.stringify({
+          withdraw: { USDC: { enabled: true, min_amount: 1, max_amount: 100 } },
+        }),
       });
     }
     return route.fulfill({ status: 404, body: '{}' });
   });
 
   await page.goto('/clinic');
-  await expect(page.getByRole('heading', { name: 'Local cash-out' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Local cash-out' }),
+  ).toBeVisible();
   await page.getByLabel('Anchor').selectOption('anchor.example');
   await expect(page.getByText('Anchor limits: 1–100 USDC.')).toBeVisible();
-  await expect(page.getByText(/may require identity verification \(KYC\)/)).toBeVisible();
+  await expect(
+    page.getByText(/may require identity verification \(KYC\)/),
+  ).toBeVisible();
   await settle(page);
-  await expect(page.getByRole('region', { name: 'Local cash-out' })).toHaveScreenshot('clinic-cashout.png');
+  await expect(
+    page.getByRole('region', { name: 'Local cash-out' }),
+  ).toHaveScreenshot('clinic-cashout.png');
 });
 
 test('attest — disconnected', async ({ page }) => {
@@ -140,10 +148,14 @@ test('admin — verified operator console', async ({ page }) => {
      };`,
   );
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Admin console' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Admin console' }),
+  ).toBeVisible();
   await expect(page.getByText('Pending clinics')).toBeVisible();
   await expect(page.getByText('Disputed vouchers')).toBeVisible();
-  await expect(page.getByText('Attesters', { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText('Attesters', { exact: true }).first(),
+  ).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('admin.png');
 });

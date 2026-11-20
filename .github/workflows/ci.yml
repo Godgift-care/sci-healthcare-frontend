@@ -235,3 +235,41 @@ jobs:
       # every action pinned to a commit SHA and every workflow declaring
       # permissions. It needs no install, so it runs in this job too.
       - run: node --test .github/scripts/automerge.test.cjs .github/scripts/security-scan.test.cjs .github/scripts/workflow-policy.test.cjs
+
+  format:
+    name: format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # Config: .prettierrc.json and .prettierignore. `npm run format` fixes
+      # whatever this reports.
+      - run: npm run format:check
+
+  deadcode:
+    name: deadcode
+    runs-on: ubuntu-24.04
+    # knip loads next.config.ts, which validates the build environment.
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_STELLAR_NETWORK: testnet
+      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
+      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
+      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
+      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # Config: knip.json. Reports unused files, exports, types and
+      # dependencies; generated bindings are declared out of scope there.
+      - run: npm run deadcode

@@ -89,29 +89,42 @@ export default function ClinicPage({
   // Validate the route parameter before it reaches any API or contract call.
   if (!isValidAddress(address)) notFound();
 
-  const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
+  const {
+    provider,
+    error: loadError,
+    rawError: loadRawError,
+  } = useProvider(address);
   const serviceParam = searchParams.get('service');
-  const prefilledServiceCode = serviceParam && /^\d+$/.test(serviceParam)
-    ? Number(serviceParam)
-    : null;
+  const prefilledServiceCode =
+    serviceParam && /^\d+$/.test(serviceParam) ? Number(serviceParam) : null;
   const prefilledService = provider?.services.find(
-    (service) => service.code === prefilledServiceCode && service.active !== false,
+    (service) =>
+      service.code === prefilledServiceCode && service.active !== false,
   );
   // Until the funder changes the basket, the clinic's first active service
   // is selected, as before baskets existed: most funders pay for one thing.
-  const [selectedCodesOverride, setSelectedCodesOverride] = useState<number[] | null>(null);
-  const firstActive = provider?.services.find((s) => s.active !== false) ?? null;
+  const [selectedCodesOverride, setSelectedCodesOverride] = useState<
+    number[] | null
+  >(null);
+  const firstActive =
+    provider?.services.find((s) => s.active !== false) ?? null;
   const selectedCodes = useMemo(
     () =>
       selectedCodesOverride ??
-      (prefilledService ? [prefilledService.code] : firstActive ? [firstActive.code] : []),
+      (prefilledService
+        ? [prefilledService.code]
+        : firstActive
+          ? [firstActive.code]
+          : []),
     [selectedCodesOverride, prefilledService, firstActive],
   );
   const setSelectedCodes = (update: (current: number[]) => number[]) =>
     setSelectedCodesOverride(update(selectedCodes));
   const selectedServices = useMemo(() => {
     if (!provider) return [] as Service[];
-    return provider.services.filter((service) => selectedCodes.includes(service.code));
+    return provider.services.filter((service) =>
+      selectedCodes.includes(service.code),
+    );
   }, [provider, selectedCodes]);
   const selected = selectedServices.length === 1 ? selectedServices[0] : null;
 
@@ -130,26 +143,28 @@ export default function ClinicPage({
       ),
     [selectedServices],
   );
-    const requestedAmount =
-      selected && prefilledServiceCode === selected.code
-        ? searchParams.get('amount')
-        : null;
-    const validPrefilledAmount =
-      selected &&
-      requestedAmount !== null &&
-      validateAmountInput(requestedAmount, BigInt(selected.price)) === null
-        ? requestedAmount
-        : null;
+  const requestedAmount =
+    selected && prefilledServiceCode === selected.code
+      ? searchParams.get('amount')
+      : null;
+  const validPrefilledAmount =
+    selected &&
+    requestedAmount !== null &&
+    validateAmountInput(requestedAmount, BigInt(selected.price)) === null
+      ? requestedAmount
+      : null;
   const amount =
     amountOverride ??
     (selected
-        ? validPrefilledAmount ?? toAmountInput(selected.price)
+      ? (validPrefilledAmount ?? toAmountInput(selected.price))
       : selectedServices.length > 0
         ? toAmountInput(String(selectionTotal))
         : '');
   const amountMinimum = selected ? BigInt(selected.price) : selectionTotal;
   const amountError =
-    selectedServices.length > 0 ? validateAmountInput(amount, amountMinimum) : null;
+    selectedServices.length > 0
+      ? validateAmountInput(amount, amountMinimum)
+      : null;
   const [walletBalance, setWalletBalance] = useState<bigint | null>(null);
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(30);
   const [customExpiry, setCustomExpiry] = useState('');
@@ -230,14 +245,19 @@ export default function ClinicPage({
   // What the clinic actually receives, read from the contract so the fee
   // shown is the fee charged. Kept with the amount it was quoted for, so a
   // stale quote is never shown against a newer amount.
-  const [quote, setQuote] = useState<{ amount: bigint; fee: bigint; net: bigint } | null>(null);
+  const [quote, setQuote] = useState<{
+    amount: bigint;
+    fee: bigint;
+    net: bigint;
+  } | null>(null);
   useEffect(() => {
     if (baseAmount === null) return;
     let ignore = false;
     const timer = setTimeout(async () => {
       try {
         const [fee, net] = await voucher.quote(baseAmount);
-        if (!ignore) setQuote({ amount: baseAmount, fee: BigInt(fee), net: BigInt(net) });
+        if (!ignore)
+          setQuote({ amount: baseAmount, fee: BigInt(fee), net: BigInt(net) });
       } catch {
         // A quote is a convenience; funding still validates on chain.
       }
@@ -280,7 +300,9 @@ export default function ClinicPage({
               provider: address,
               serviceCode: service.code,
               amount:
-                selectedServices.length === 1 ? baseAmount : BigInt(service.price),
+                selectedServices.length === 1
+                  ? baseAmount
+                  : BigInt(service.price),
               expiresAt,
             }),
           ),
@@ -293,7 +315,8 @@ export default function ClinicPage({
           });
         }
       } catch {
-        if (!ignore) setNetworkFee({ key: feeRequestKey, fee: null, failed: true });
+        if (!ignore)
+          setNetworkFee({ key: feeRequestKey, fee: null, failed: true });
       }
     }, 350);
 
@@ -301,16 +324,26 @@ export default function ClinicPage({
       ignore = true;
       clearTimeout(timer);
     };
-  }, [address, baseAmount, customExpiry, expiryChoice, feeRequestKey, selectedServices, wallet]);
+  }, [
+    address,
+    baseAmount,
+    customExpiry,
+    expiryChoice,
+    feeRequestKey,
+    selectedServices,
+    wallet,
+  ]);
 
-  const currentNetworkFee = networkFee?.key === feeRequestKey ? networkFee : null;
+  const currentNetworkFee =
+    networkFee?.key === feeRequestKey ? networkFee : null;
   const networkFeeText = !wallet
     ? 'Connect wallet to estimate'
     : !feeRequestKey
       ? 'Enter a valid amount to estimate'
       : currentNetworkFee?.failed
         ? 'Estimate unavailable'
-        : currentNetworkFee?.fee !== null && currentNetworkFee?.fee !== undefined
+        : currentNetworkFee?.fee !== null &&
+            currentNetworkFee?.fee !== undefined
           ? `${formatXlm(currentNetworkFee.fee)} XLM`
           : 'Estimating…';
 
@@ -351,18 +384,26 @@ export default function ClinicPage({
     walletBalance !== null &&
     walletBalance < baseAmount;
   const missingUsdcForFunding =
-    wallet !== null && baseAmount !== null && walletBalance !== null && insufficientUsdcBalance;
-  const usdcShortfall =
-    missingUsdcForFunding ? baseAmount - walletBalance : null;
+    wallet !== null &&
+    baseAmount !== null &&
+    walletBalance !== null &&
+    insufficientUsdcBalance;
+  const usdcShortfall = missingUsdcForFunding
+    ? baseAmount - walletBalance
+    : null;
   let sponsorAmount = 0n;
   try {
     sponsorAmount = toBaseUnits(amount);
   } catch {
     // Incomplete/invalid amounts cannot opt into sponsorship.
   }
-  const canSponsor = sponsorshipAvailable() && selectedServices.length === 1 &&
-    sponsorAmount > 0n && sponsorAmount <= SPONSOR_MAX_AMOUNT &&
-    walletBalance !== null && walletBalance >= sponsorAmount;
+  const canSponsor =
+    sponsorshipAvailable() &&
+    selectedServices.length === 1 &&
+    sponsorAmount > 0n &&
+    sponsorAmount <= SPONSOR_MAX_AMOUNT &&
+    walletBalance !== null &&
+    walletBalance >= sponsorAmount;
   const useSponsor = sponsored;
   const maskedSecret = secret
     ? secret.length <= 8
@@ -385,7 +426,9 @@ export default function ClinicPage({
     if (!wallet) return void connect();
     if (selectedServices.length === 0) return;
     if (useSponsor && !canSponsor) {
-      toast.error('Sponsored funding requires one voucher up to 100 USDC and enough USDC in your wallet.');
+      toast.error(
+        'Sponsored funding requires one voucher up to 100 USDC and enough USDC in your wallet.',
+      );
       return;
     }
 
@@ -435,7 +478,11 @@ export default function ClinicPage({
 
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
+      await localIdentity.save(
+        saved.selectedNickname || 'Saved patient',
+        identifier,
+        secret,
+      );
 
       for (let i = 0; i < requests.length; i++) {
         const request = { ...requests[i], beneficiaryRef: ref };
@@ -454,7 +501,9 @@ export default function ClinicPage({
             if (held < request.amount) missingUsdc = request.amount - held;
           }
           if (useSponsor && missingUsdc > 0n) {
-            throw new Error('Sponsored funding requires enough USDC; XLM swaps are not sponsored.');
+            throw new Error(
+              'Sponsored funding requires enough USDC; XLM swaps are not sponsored.',
+            );
           }
           const res =
             missingUsdc > 0n
@@ -468,7 +517,10 @@ export default function ClinicPage({
           if (balance !== null) setWalletBalance(balance);
 
           let newId: string | null = null;
-          if (typeof res.returnValue === 'bigint' || typeof res.returnValue === 'number') {
+          if (
+            typeof res.returnValue === 'bigint' ||
+            typeof res.returnValue === 'number'
+          ) {
             newId = String(res.returnValue);
             succeeded.push(newId);
             successfulTxs.push({ hash: res.hash, id: newId });
@@ -495,7 +547,10 @@ export default function ClinicPage({
               const balance = await usdc.balance(wallet).catch(() => null);
               if (balance !== null) setWalletBalance(balance);
               let newId: string | null = null;
-              if (typeof retry.returnValue === 'bigint' || typeof retry.returnValue === 'number') {
+              if (
+                typeof retry.returnValue === 'bigint' ||
+                typeof retry.returnValue === 'number'
+              ) {
                 newId = String(retry.returnValue);
                 succeeded.push(newId);
                 successfulTxs.push({ hash: retry.hash, id: newId });
@@ -533,24 +588,35 @@ export default function ClinicPage({
       const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
         <>
-          {requests.length === 1 ? 'Voucher funded.' : `${succeeded.length} vouchers funded.`}
+          {requests.length === 1
+            ? 'Voucher funded.'
+            : `${succeeded.length} vouchers funded.`}
           {firstId && (
             <>
               {' '}
-              <DetailLink detail={{ kind: 'voucher', id: firstId }} className="underline underline-offset-2">
+              <DetailLink
+                detail={{ kind: 'voucher', id: firstId }}
+                className="underline underline-offset-2"
+              >
                 Open voucher #{firstId}
-              </DetailLink>
-              {' '}
+              </DetailLink>{' '}
               ·{' '}
             </>
           )}
-          {lastHash && <ExplorerLink href={explorerTx(lastHash)}>View transaction</ExplorerLink>}
+          {lastHash && (
+            <ExplorerLink href={explorerTx(lastHash)}>
+              View transaction
+            </ExplorerLink>
+          )}
         </>,
       );
     } catch (err) {
       const message = humaniseError(err, VOUCHER_ERRORS);
       setBatchProgress(null);
-      setBatchSummary({ succeeded, failed: [{ label: 'Funding', error: message }] });
+      setBatchSummary({
+        succeeded,
+        failed: [{ label: 'Funding', error: message }],
+      });
       toast.error(message);
     } finally {
       setBusy(false);
@@ -558,14 +624,17 @@ export default function ClinicPage({
   }
 
   // An unknown clinic is a missing page, not an API failure.
-  if (loadRawError instanceof ApiError && loadRawError.status === 404) notFound();
+  if (loadRawError instanceof ApiError && loadRawError.status === 404)
+    notFound();
   if (loadError) return <Alert>{loadError}</Alert>;
   if (!provider) {
     return <SkeletonDetail />;
   }
 
   const status = STATUS_BADGES[provider.status] ?? UNKNOWN_STATUS;
-  const registeredAt = Number.isFinite(new Date(provider.registeredAt).getTime())
+  const registeredAt = Number.isFinite(
+    new Date(provider.registeredAt).getTime(),
+  )
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;
@@ -576,7 +645,9 @@ export default function ClinicPage({
         <Card className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {provider.name}
+              </h1>
               <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
                 {provider.country} ·{' '}
                 <CopyValue
@@ -587,7 +658,10 @@ export default function ClinicPage({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <FavouriteButton address={provider.address} clinicName={provider.name} />
+              <FavouriteButton
+                address={provider.address}
+                clinicName={provider.name}
+              />
               <span
                 className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${status.className}`}
               >
@@ -600,7 +674,7 @@ export default function ClinicPage({
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--color-line)] pt-4 sm:grid-cols-3">
               {registeredAt && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  <dt className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                     Registered
                   </dt>
                   <dd className="mt-0.5 text-sm">{formatDate(registeredAt)}</dd>
@@ -608,10 +682,12 @@ export default function ClinicPage({
               )}
               {showSettled && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  <dt className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                     Vouchers settled
                   </dt>
-                  <dd className="mt-0.5 text-sm tabular-nums">{settledCount}</dd>
+                  <dd className="mt-0.5 text-sm tabular-nums">
+                    {settledCount}
+                  </dd>
                 </div>
               )}
             </dl>
@@ -697,7 +773,8 @@ export default function ClinicPage({
                 {batchSummary.failed.length === 1 ? '' : 's'}:{' '}
                 {batchSummary.failed
                   .map((failure) => `${failure.label} (${failure.error})`)
-                  .join(', ')}.
+                  .join(', ')}
+                .
               </Alert>
             )}
           </div>
@@ -714,9 +791,14 @@ export default function ClinicPage({
             <Field label="Selected services">
               <div className="space-y-2">
                 {selectedServices.map((service) => (
-                  <div key={service.code} className="flex items-center justify-between gap-3">
+                  <div
+                    key={service.code}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <span className="text-sm">{service.label}</span>
-                    <span className="mono text-sm">${formatUsdc(service.price)}</span>
+                    <span className="mono text-sm">
+                      ${formatUsdc(service.price)}
+                    </span>
                   </div>
                 ))}
                 <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-2 text-sm font-medium">
@@ -736,7 +818,7 @@ export default function ClinicPage({
             />
 
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 Patient reference
               </span>
               <input
@@ -748,7 +830,7 @@ export default function ClinicPage({
             </label>
 
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 Secret key (32+ characters)
               </span>
               <div className="mt-1 flex gap-2">
@@ -773,21 +855,21 @@ export default function ClinicPage({
                 </Button>
               </div>
               <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
-                Used to derive an opaque reference. Never sent anywhere, and never
-                written to the ledger.
+                Used to derive an opaque reference. Never sent anywhere, and
+                never written to the ledger.
               </span>
             </label>
 
             {generatedKey && (
               <Alert kind="info">
-                This key is the only way to look up this patient&apos;s care history
-                later. Save the patient on this browser or keep a separate backup;
-                the key cannot be recovered.
+                This key is the only way to look up this patient&apos;s care
+                history later. Save the patient on this browser or keep a
+                separate backup; the key cannot be recovered.
               </Alert>
             )}
 
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 Amount (USDC)
               </span>
               <input
@@ -796,11 +878,16 @@ export default function ClinicPage({
                 inputMode="decimal"
                 readOnly={selectedServices.length > 1}
                 aria-invalid={Boolean(amountError)}
-                aria-describedby={amountError ? 'clinic-amount-error' : undefined}
+                aria-describedby={
+                  amountError ? 'clinic-amount-error' : undefined
+                }
                 className={`mono mt-1 w-full rounded-lg border px-3 py-2 text-sm ${amountError ? 'border-red-500' : 'border-[var(--color-line)]'}`}
               />
               {amountError ? (
-                <span id="clinic-amount-error" className="mt-1 block text-xs text-red-600">
+                <span
+                  id="clinic-amount-error"
+                  className="mt-1 block text-xs text-red-600"
+                >
                   {amountError}
                 </span>
               ) : selectedServices.length > 0 ? (
@@ -811,11 +898,11 @@ export default function ClinicPage({
               <div className="mt-2 flex items-center justify-between gap-3 text-xs">
                 <span className="text-[var(--color-ink-soft)]">
                   Wallet USDC balance:{' '}
-                  {wallet ? (
-                    walletBalance === null ? '—' : `$${formatUsdc(walletBalance)}`
-                  ) : (
-                    'Connect wallet'
-                  )}
+                  {wallet
+                    ? walletBalance === null
+                      ? '—'
+                      : `$${formatUsdc(walletBalance)}`
+                    : 'Connect wallet'}
                 </span>
                 {usdcShortfall !== null && (
                   <span className="font-medium text-red-600">
@@ -829,30 +916,37 @@ export default function ClinicPage({
                   {formatUsdc(currentQuote.fee)} protocol fee. Refunds are free.
                 </span>
               )}
-              <span role="status" className="mt-1 block text-xs text-[var(--color-ink-soft)]">
+              <span
+                role="status"
+                className="mt-1 block text-xs text-[var(--color-ink-soft)]"
+              >
                 Estimated network fee: {networkFeeText}
               </span>
               {xlmSwapQuote && (
                 <span className="mt-2 block rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   XLM swap: {formatXlm(xlmSwapQuote.xlmCost)} XLM quoted to buy{' '}
-                  {formatUsdc(xlmSwapQuote.usdcAmount)} USDC, with a 1% slippage cap of{' '}
-                  {formatXlm(xlmSwapQuote.maxXlm)} XLM before the transaction aborts.
+                  {formatUsdc(xlmSwapQuote.usdcAmount)} USDC, with a 1% slippage
+                  cap of {formatXlm(xlmSwapQuote.maxXlm)} XLM before the
+                  transaction aborts.
                 </span>
               )}
               {!xlmSwapQuote && insufficientUsdcBalance && (
                 <span className="mt-2 block text-xs text-red-600">
-                  Not enough USDC in your wallet for this. You need ${formatUsdc(usdcShortfall ?? 0n)} more.
+                  Not enough USDC in your wallet for this. You need $
+                  {formatUsdc(usdcShortfall ?? 0n)} more.
                 </span>
               )}
             </label>
 
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 Patient must attend within
               </span>
               <select
                 value={expiryChoice}
-                onChange={(e) => setExpiryChoice(e.target.value as ExpiryChoice)}
+                onChange={(e) =>
+                  setExpiryChoice(e.target.value as ExpiryChoice)
+                }
                 className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
               >
                 {EXPIRY_OPTIONS.map((d) => (
@@ -867,7 +961,7 @@ export default function ClinicPage({
             {expiryChoice === 'custom' && (
               <div>
                 <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                     Expiry date
                   </span>
                   <input
@@ -908,14 +1002,19 @@ export default function ClinicPage({
             {sponsorshipAvailable() && (
               <div className="space-y-2 text-sm">
                 <label className="flex items-start gap-2">
-                  <input type="checkbox" checked={useSponsor} disabled={(!canSponsor && !sponsored) || busy}
-                    onChange={(event) => setSponsored(event.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={useSponsor}
+                    disabled={(!canSponsor && !sponsored) || busy}
+                    onChange={(event) => setSponsored(event.target.checked)}
+                  />
                   <span>Request sponsored fees (first voucher)</span>
                 </label>
                 <p className="text-xs text-[var(--color-ink-soft)]">
-                  Testnet only: one voucher up to 100 USDC, with fees up to 1 XLM.
-                  You still need an active account and enough USDC. The sponsor checks
-                  eligibility. If declined, you can turn this off to pay fees with XLM.
+                  Testnet only: one voucher up to 100 USDC, with fees up to 1
+                  XLM. You still need an active account and enough USDC. The
+                  sponsor checks eligibility. If declined, you can turn this off
+                  to pay fees with XLM.
                 </p>
               </div>
             )}
@@ -951,7 +1050,9 @@ export default function ClinicPage({
                   setReviewing(true);
                 }}
                 disabled={
-                  busy || trustline.status === 'checking' || (insufficientUsdcBalance && !xlmSwapQuote)
+                  busy ||
+                  trustline.status === 'checking' ||
+                  (insufficientUsdcBalance && !xlmSwapQuote)
                 }
                 className="w-full"
               >
@@ -980,7 +1081,9 @@ export default function ClinicPage({
                   toast.success(
                     <>
                       Voucher funded from a SEP-7 wallet.{' '}
-                      <ExplorerLink href={explorerTx(hash)}>View transaction</ExplorerLink>
+                      <ExplorerLink href={explorerTx(hash)}>
+                        View transaction
+                      </ExplorerLink>
                     </>,
                   );
                 }}
@@ -994,8 +1097,8 @@ export default function ClinicPage({
                 chars={4}
                 label={t('components.copyValue.labels.contractId')}
               />{' '}
-              and released to the clinic only after an attester confirms delivery.
-              Unclaimed vouchers are refundable after {expirySummary}.
+              and released to the clinic only after an attester confirms
+              delivery. Unclaimed vouchers are refundable after {expirySummary}.
             </p>
           </>
         )}
@@ -1006,7 +1109,10 @@ export default function ClinicPage({
               <h3 className="text-lg font-medium">Review funding</h3>
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
                 Check the details below before signing{' '}
-                {selectedServices.length === 1 ? 'the voucher' : `${selectedServices.length} vouchers`}.
+                {selectedServices.length === 1
+                  ? 'the voucher'
+                  : `${selectedServices.length} vouchers`}
+                .
               </p>
             </div>
 
@@ -1019,13 +1125,20 @@ export default function ClinicPage({
                 <dt className="text-[var(--color-ink-soft)]">Services</dt>
                 <dd className="text-end font-medium">
                   {selectedServices
-                    .map((service) => `${service.label} · $${formatUsdc(service.price)}`)
+                    .map(
+                      (service) =>
+                        `${service.label} · $${formatUsdc(service.price)}`,
+                    )
                     .join(', ')}
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
-                <dt className="text-[var(--color-ink-soft)]">Patient reference</dt>
-                <dd className="text-end font-medium">{identifier || 'Not set'}</dd>
+                <dt className="text-[var(--color-ink-soft)]">
+                  Patient reference
+                </dt>
+                <dd className="text-end font-medium">
+                  {identifier || 'Not set'}
+                </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Patient key</dt>
@@ -1051,8 +1164,8 @@ export default function ClinicPage({
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-[var(--color-ink-soft)]">Paid in XLM</dt>
                   <dd className="mono text-end font-medium">
-                    up to {formatXlm(xlmSwapQuote.maxXlm)} XLM for {formatUsdc(xlmSwapQuote.usdcAmount)}{' '}
-                    USDC
+                    up to {formatXlm(xlmSwapQuote.maxXlm)} XLM for{' '}
+                    {formatUsdc(xlmSwapQuote.usdcAmount)} USDC
                   </dd>
                 </div>
               )}
@@ -1064,14 +1177,19 @@ export default function ClinicPage({
 
             {useSponsor && (
               <Alert kind="info">
-                Requesting sponsored transaction fees. Your signed funding transaction
-                is sent to the sponsor; your patient identifier and secret key stay here.
-                A declined request will not fall back to charging your XLM.
+                Requesting sponsored transaction fees. Your signed funding
+                transaction is sent to the sponsor; your patient identifier and
+                secret key stay here. A declined request will not fall back to
+                charging your XLM.
               </Alert>
             )}
 
             <div className="flex gap-2">
-              <Button variant="ghost" className="flex-1" onClick={() => setReviewing(false)}>
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={() => setReviewing(false)}
+              >
                 Back
               </Button>
               <Button

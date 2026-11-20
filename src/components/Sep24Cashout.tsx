@@ -55,24 +55,34 @@ export function Sep24Cashout({
   signTransaction: (xdr: string) => Promise<string>;
 }) {
   const { t } = useLocaleContext();
-  const countryAnchors = config.sep24Anchors.filter((anchor) => supportsCountry(anchor, country));
+  const countryAnchors = config.sep24Anchors.filter((anchor) =>
+    supportsCountry(anchor, country),
+  );
   const anchors = countryAnchors.filter(
     (anchor) => anchor.assetIssuer === config.usdcIssuer,
   );
   const [selectedDomain, setSelectedDomain] = useState('');
   const [amount, setAmount] = useState('');
-  const [info, setInfo] = useState<{ enabled: boolean; minAmount?: string | number; maxAmount?: string | number } | null>(null);
+  const [info, setInfo] = useState<{
+    enabled: boolean;
+    minAmount?: string | number;
+    maxAmount?: string | number;
+  } | null>(null);
   const [anchor, setAnchor] = useState<DiscoveredAnchor | null>(null);
   const [withdrawal, setWithdrawal] = useState<WithdrawalState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pollError, setPollError] = useState<string | null>(null);
   const moreInfoUrl = withdrawal?.transaction.more_info_url
-    ? safeAnchorLink(withdrawal.transaction.more_info_url, withdrawal.anchor.config.domain)
+    ? safeAnchorLink(
+        withdrawal.transaction.more_info_url,
+        withdrawal.anchor.config.domain,
+      )
     : null;
 
   useEffect(() => {
-    if (!withdrawal || TERMINAL_STATUSES.has(withdrawal.transaction.status)) return;
+    if (!withdrawal || TERMINAL_STATUSES.has(withdrawal.transaction.status))
+      return;
     const current = withdrawal;
     const timer = window.setInterval(async () => {
       try {
@@ -118,7 +128,10 @@ export function Sep24Cashout({
     if (!configured) return;
     setBusy(true);
     try {
-      const discovered = await discoverAnchor(configured, config.networkPassphrase);
+      const discovered = await discoverAnchor(
+        configured,
+        config.networkPassphrase,
+      );
       const withdrawalInfo = await getWithdrawalInfo(discovered);
       setAnchor(discovered);
       setInfo(withdrawalInfo);
@@ -145,8 +158,10 @@ export function Sep24Cashout({
       return;
     }
     if (
-      (info.minAmount !== undefined && amountValue < toBaseUnits(String(info.minAmount))) ||
-      (info.maxAmount !== undefined && amountValue > toBaseUnits(String(info.maxAmount)))
+      (info.minAmount !== undefined &&
+        amountValue < toBaseUnits(String(info.minAmount))) ||
+      (info.maxAmount !== undefined &&
+        amountValue > toBaseUnits(String(info.maxAmount)))
     ) {
       setError(
         t('components.sep24Cashout.limitsAccepted', {
@@ -246,9 +261,13 @@ export function Sep24Cashout({
                 disabled={busy}
                 className="min-h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm"
               >
-                <option value="" disabled>{t('components.sep24Cashout.selectAnchor')}</option>
+                <option value="" disabled>
+                  {t('components.sep24Cashout.selectAnchor')}
+                </option>
                 {anchors.map((candidate) => (
-                  <option key={candidate.domain} value={candidate.domain}>{candidate.name}</option>
+                  <option key={candidate.domain} value={candidate.domain}>
+                    {candidate.name}
+                  </option>
                 ))}
               </select>
             </label>
@@ -271,7 +290,8 @@ export function Sep24Cashout({
                 !info?.enabled ||
                 busy ||
                 !amount.trim() ||
-                (!!withdrawal && !TERMINAL_STATUSES.has(withdrawal.transaction.status))
+                (!!withdrawal &&
+                  !TERMINAL_STATUSES.has(withdrawal.transaction.status))
               }
               onClick={() => void beginCashout()}
             >
@@ -305,10 +325,14 @@ export function Sep24Cashout({
       {withdrawal && (
         <Card className="space-y-2 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-medium">{t('components.sep24Cashout.statusTitle')}</h3>
-            <span className="rounded-md bg-[var(--color-canvas)] px-2 py-1 text-xs font-semibold uppercase">{withdrawal.transaction.status.replaceAll('_', ' ')}</span>
+            <h3 className="font-medium">
+              {t('components.sep24Cashout.statusTitle')}
+            </h3>
+            <span className="rounded-md bg-[var(--color-canvas)] px-2 py-1 text-xs font-semibold uppercase">
+              {withdrawal.transaction.status.replaceAll('_', ' ')}
+            </span>
           </div>
-          <p className="break-all text-xs text-[var(--color-ink-soft)]">
+          <p className="text-xs break-all text-[var(--color-ink-soft)]">
             {t('components.sep24Cashout.transaction', { id: withdrawal.id })}
           </p>
           {withdrawal.transaction.amount_out && (
@@ -319,7 +343,9 @@ export function Sep24Cashout({
               })}
             </p>
           )}
-          {withdrawal.transaction.message && <p className="text-sm">{withdrawal.transaction.message}</p>}
+          {withdrawal.transaction.message && (
+            <p className="text-sm">{withdrawal.transaction.message}</p>
+          )}
           {moreInfoUrl && (
             <ExplorerLink href={moreInfoUrl}>
               {t('components.sep24Cashout.moreInfo')}

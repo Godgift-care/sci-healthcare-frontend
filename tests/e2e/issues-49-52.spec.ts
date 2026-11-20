@@ -9,7 +9,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Live countdowns on voucher page (#49)', () => {
-  test('dispute window countdown displays and updates with live timer', async ({ page }) => {
+  test('dispute window countdown displays and updates with live timer', async ({
+    page,
+  }) => {
     const baseTime = Date.now();
     // 125 minutes in the future from baseTime
     const futureDeadline = new Date(baseTime + 125 * 60 * 1000).toISOString();
@@ -60,7 +62,9 @@ test.describe('Live countdowns on voucher page (#49)', () => {
 });
 
 test.describe('Public statistics page (#50)', () => {
-  test('renders totals, daily charts, and accessible data table alternative', async ({ page }) => {
+  test('renders totals, daily charts, and accessible data table alternative', async ({
+    page,
+  }) => {
     await mockBackend(page, {
       provider: CLINIC,
       dailyStats: {
@@ -87,24 +91,34 @@ test.describe('Public statistics page (#50)', () => {
     await page.goto('/stats');
 
     // Heading and totals
-    await expect(page.getByRole('heading', { name: 'Protocol statistics' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Protocol statistics' }),
+    ).toBeVisible();
     await expect(page.getByText('Active clinics')).toBeVisible();
     await expect(page.getByText('Countries')).toBeVisible();
 
     // Charts
-    const fundedChart = page.getByRole('img', { name: /Daily Vouchers Funded/ });
+    const fundedChart = page.getByRole('img', {
+      name: /Daily Vouchers Funded/,
+    });
     const settledChart = page.getByRole('img', { name: /Daily Care Settled/ });
     await expect(fundedChart).toBeVisible();
     await expect(settledChart).toBeVisible();
 
     // Toggle accessible data table
-    const tableToggle = page.getByRole('button', { name: 'Show accessible data tables' });
+    const tableToggle = page.getByRole('button', {
+      name: 'Show accessible data tables',
+    });
     await expect(tableToggle).toBeVisible();
     await tableToggle.click();
 
     await expect(page.getByText('Hide data tables')).toBeVisible();
-    await expect(page.getByRole('table', { name: 'Daily vouchers funded data table' })).toBeVisible();
-    await expect(page.getByRole('table', { name: 'Daily care settled data table' })).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Daily vouchers funded data table' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Daily care settled data table' }),
+    ).toBeVisible();
   });
 
   test('renders cleanly with empty activity data', async ({ page }) => {
@@ -119,13 +133,17 @@ test.describe('Public statistics page (#50)', () => {
     });
 
     await page.goto('/stats');
-    await expect(page.getByText('No activity recorded in this period.')).toBeVisible();
+    await expect(
+      page.getByText('No activity recorded in this period.'),
+    ).toBeVisible();
     await expect(page.getByText('No clinics recorded yet.')).toBeVisible();
   });
 });
 
 test.describe('Attester directory (#51)', () => {
-  test('renders list of active attesters with confirmations and explorer links', async ({ page }) => {
+  test('renders list of active attesters with confirmations and explorer links', async ({
+    page,
+  }) => {
     await mockBackend(page, {
       attesters: [
         {
@@ -142,9 +160,13 @@ test.describe('Attester directory (#51)', () => {
 
     await page.goto('/attesters');
 
-    await expect(page.getByRole('heading', { name: 'Attester directory' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Attester directory' }),
+    ).toBeVisible();
     await expect(page.getByText('Red Cross Clinical Inspector')).toBeVisible();
-    await expect(page.getByText('International Medical Verification')).toBeVisible();
+    await expect(
+      page.getByText('International Medical Verification'),
+    ).toBeVisible();
     await expect(page.getByRole('cell', { name: '25' })).toBeVisible();
 
     // Explorer link verification
@@ -158,7 +180,9 @@ test.describe('Attester directory (#51)', () => {
 });
 
 test.describe('How it works page (#52)', () => {
-  test('illustrates full voucher flow and is linked from nav and home page', async ({ page }, testInfo) => {
+  test('illustrates full voucher flow and is linked from nav and home page', async ({
+    page,
+  }, testInfo) => {
     await mockBackend(page, {
       provider: CLINIC,
       vouchers: [],
@@ -167,7 +191,10 @@ test.describe('How it works page (#52)', () => {
     // 1. Linked from nav (desktop) or footer (both)
     await page.goto('/');
     if (testInfo.project.name === 'desktop') {
-      const navLink = page.getByRole('navigation').getByRole('link', { name: 'How it works' }).first();
+      const navLink = page
+        .getByRole('navigation')
+        .getByRole('link', { name: 'How it works' })
+        .first();
       await expect(navLink).toBeVisible();
       await navLink.click();
     } else {
@@ -178,14 +205,26 @@ test.describe('How it works page (#52)', () => {
 
     // 2. Verified on /how-it-works
     await expect(page).toHaveURL(/\/how-it-works/);
-    await expect(page.getByRole('heading', { name: 'How SCI Healthcare Works' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'How SCI Healthcare Works' }),
+    ).toBeVisible();
 
     // 3. Walks through the five stages: fund → claim → attest → dispute window → pay or refund
-    await expect(page.getByRole('heading', { name: 'Fund into Escrow' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Clinic Claims Attendance' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Independent Attestation' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Time-Locked Dispute Window' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: '5. Settlement: Pay or Refund' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Fund into Escrow' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Clinic Claims Attendance' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Independent Attestation' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Time-Locked Dispute Window' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '5. Settlement: Pay or Refund' }),
+    ).toBeVisible();
 
     // Outcomes
     await expect(page.getByText('Outcome A: Care Paid')).toBeVisible();

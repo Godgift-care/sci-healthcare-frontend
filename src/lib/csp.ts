@@ -95,10 +95,7 @@ const MAP_TILES = 'https://tile.openstreetmap.org';
  * `isDev` is passed rather than read from `process.env.NODE_ENV` so the
  * development-only allowances (`'unsafe-eval'`, `ws:`) are assertable too.
  */
-export function contentSecurityPolicy(
-  env: CspEnv,
-  isDev = false,
-): string {
+export function contentSecurityPolicy(env: CspEnv, isDev = false): string {
   const network = env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet';
   const api = originOf(env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080');
   const rpc = originOf(env.NEXT_PUBLIC_SOROBAN_RPC_URL);
@@ -138,7 +135,12 @@ export function contentSecurityPolicy(
     // run. External scripts are still restricted to 'self' and Plausible,
     // which is where the injected-script risk lives. Dev additionally needs
     // 'unsafe-eval' for the HMR runtime.
-    'script-src': ["'self'", "'unsafe-inline'", plausible, isDev && "'unsafe-eval'"],
+    'script-src': [
+      "'self'",
+      "'unsafe-inline'",
+      plausible,
+      isDev && "'unsafe-eval'",
+    ],
     // Trusted Types (#147): the DOM sinks behind script-src's blind spot.
     // `trusted-types` limits policy creation to this app's own policy;
     // `require-trusted-types-for 'script'` is what turns string sinks into
@@ -190,10 +192,7 @@ export function contentSecurityPolicy(
     // Wallet signing happens in a popup (window.open), never an iframe, so
     // only this app's own frames are allowed. WalletConnect's Verify screen
     // is the one exception: AppKit embeds it while a mobile wallet pairs.
-    'frame-src': [
-      "'self'",
-      walletConnectEnabled && WALLET_CONNECT.verify,
-    ],
+    'frame-src': ["'self'", walletConnectEnabled && WALLET_CONNECT.verify],
     'worker-src': ["'self'"],
     'manifest-src': ["'self'"],
   };

@@ -30,7 +30,11 @@ function voucher(overrides: Partial<Voucher> = {}): Voucher {
     id: '1',
     funder: FUNDER,
     beneficiaryRef: 'ab'.repeat(32),
-    provider: { address: PROVIDER, name: 'Ikeja General Clinic', country: 'NG' },
+    provider: {
+      address: PROVIDER,
+      name: 'Ikeja General Clinic',
+      country: 'NG',
+    },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',
@@ -51,7 +55,9 @@ function voucher(overrides: Partial<Voucher> = {}): Voucher {
   };
 }
 
-function event(overrides: Partial<VoucherEvent> & { name: string }): VoucherEvent {
+function event(
+  overrides: Partial<VoucherEvent> & { name: string },
+): VoucherEvent {
   return {
     id: `${overrides.name}-1`,
     txHash: `TX-${overrides.name.toUpperCase()}`,
@@ -69,7 +75,10 @@ describe('wallet roles', () => {
 
 describe('mergeVouchers', () => {
   it('keeps one copy of a voucher listed twice', () => {
-    const merged = mergeVouchers([voucher({ id: '1' })], [voucher({ id: '1' }), voucher({ id: '2' })]);
+    const merged = mergeVouchers(
+      [voucher({ id: '1' })],
+      [voucher({ id: '1' }), voucher({ id: '2' })],
+    );
     expect(merged.map((v) => v.id)).toEqual(['1', '2']);
   });
 });
@@ -113,22 +122,35 @@ describe('eventTimestamp', () => {
   });
 
   it('falls back to the creation time of the voucher for a step with no date', () => {
-    const { at } = eventTimestamp(event({ name: 'voucher_settled' }), voucher());
+    const { at } = eventTimestamp(
+      event({ name: 'voucher_settled' }),
+      voucher(),
+    );
     expect(at).toBe('2026-05-01T10:00:00.000Z');
   });
 });
 
 describe('buildHistoryRows', () => {
   const funded = voucher({ id: '1' });
-  const received = voucher({ id: '2', funder: 'GOTHER', provider: { address: FUNDER, name: 'Ikeja General Clinic', country: 'NG' } });
+  const received = voucher({
+    id: '2',
+    funder: 'GOTHER',
+    provider: { address: FUNDER, name: 'Ikeja General Clinic', country: 'NG' },
+  });
 
   it('builds one row per event, with the transaction hash', () => {
     const rows = buildHistoryRows(
       [funded],
       {
         '1': [
-          event({ name: 'voucher_created', closedAt: '2026-05-01T10:00:00.000Z' }),
-          event({ name: 'voucher_claimed', closedAt: '2026-05-05T10:00:00.000Z' }),
+          event({
+            name: 'voucher_created',
+            closedAt: '2026-05-01T10:00:00.000Z',
+          }),
+          event({
+            name: 'voucher_claimed',
+            closedAt: '2026-05-05T10:00:00.000Z',
+          }),
         ],
       },
       FUNDER,
@@ -145,7 +167,13 @@ describe('buildHistoryRows', () => {
 
   it('skips vouchers the wallet is not part of', () => {
     const rows = buildHistoryRows(
-      [voucher({ id: '9', funder: 'GOTHER', provider: { address: 'GOTHER2', name: 'Clinic', country: 'NG' } })],
+      [
+        voucher({
+          id: '9',
+          funder: 'GOTHER',
+          provider: { address: 'GOTHER2', name: 'Clinic', country: 'NG' },
+        }),
+      ],
       { '9': [event({ name: 'voucher_created' })] },
       FUNDER,
     );
@@ -192,10 +220,21 @@ describe('sortHistoryRows', () => {
     [voucher({ id: '1' }), voucher({ id: '2' })],
     {
       '1': [
-        event({ name: 'voucher_created', closedAt: '2026-05-01T10:00:00.000Z' }),
-        event({ name: 'voucher_claimed', closedAt: '2026-05-05T10:00:00.000Z' }),
+        event({
+          name: 'voucher_created',
+          closedAt: '2026-05-01T10:00:00.000Z',
+        }),
+        event({
+          name: 'voucher_claimed',
+          closedAt: '2026-05-05T10:00:00.000Z',
+        }),
       ],
-      '2': [event({ name: 'voucher_created', closedAt: '2026-05-03T10:00:00.000Z' })],
+      '2': [
+        event({
+          name: 'voucher_created',
+          closedAt: '2026-05-03T10:00:00.000Z',
+        }),
+      ],
     },
     FUNDER,
   );
@@ -229,19 +268,27 @@ describe('sortHistoryRows', () => {
 
 describe('mapWithConcurrency', () => {
   it('keeps the order of the input', async () => {
-    const out = await mapWithConcurrency([1, 2, 3, 4, 5], 2, async (n) => n * 2);
+    const out = await mapWithConcurrency(
+      [1, 2, 3, 4, 5],
+      2,
+      async (n) => n * 2,
+    );
     expect(out).toEqual([2, 4, 6, 8, 10]);
   });
 
   it('never runs more than the limit at once', async () => {
     let running = 0;
     let peak = 0;
-    await mapWithConcurrency(Array.from({ length: 10 }, (_, i) => i), 3, async () => {
-      running += 1;
-      peak = Math.max(peak, running);
-      await Promise.resolve();
-      running -= 1;
-    });
+    await mapWithConcurrency(
+      Array.from({ length: 10 }, (_, i) => i),
+      3,
+      async () => {
+        running += 1;
+        peak = Math.max(peak, running);
+        await Promise.resolve();
+        running -= 1;
+      },
+    );
     expect(peak).toBeLessThanOrEqual(3);
   });
 });

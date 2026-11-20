@@ -22,7 +22,14 @@ declare global {
 // Only pageview/custom events are gated by the opt-out. Core Web Vitals
 // reports (e.g. ["LCP", {props: {...}}]) are a separate stream and are
 // excluded here so this spec asserts the opt-out contract alone.
-const VITAL_NAMES = new Set(['core_web_vitals', 'LCP', 'CLS', 'INP', 'FCP', 'TTFB']);
+const VITAL_NAMES = new Set([
+  'core_web_vitals',
+  'LCP',
+  'CLS',
+  'INP',
+  'FCP',
+  'TTFB',
+]);
 
 function isGatedEvent(e: unknown[]): boolean {
   return e.length > 0 && !VITAL_NAMES.has(String(e[0]));
@@ -59,7 +66,9 @@ async function events(page: Page): Promise<unknown[][]> {
 }
 
 test.describe('analytics opt-out', () => {
-  test('sends a pageview when analytics is on (positive control)', async ({ page }) => {
+  test('sends a pageview when analytics is on (positive control)', async ({
+    page,
+  }) => {
     const requests = await recordAnalytics(page);
     await mockBackend(page, { provider: CLINIC });
 
@@ -69,7 +78,10 @@ test.describe('analytics opt-out', () => {
       .poll(() => requests.length, { timeout: 10_000 })
       .toBeGreaterThan(0);
     await expect
-      .poll(async () => (await events(page)).filter((e) => e[0] === 'pageview').length)
+      .poll(
+        async () =>
+          (await events(page)).filter((e) => e[0] === 'pageview').length,
+      )
       .toBe(1);
   });
 
@@ -102,7 +114,9 @@ test.describe('analytics opt-out', () => {
     await mockBackend(page, { provider: CLINIC });
 
     await page.goto('/privacy');
-    const toggle = page.getByRole('switch', { name: 'Usage analytics' }).first();
+    const toggle = page
+      .getByRole('switch', { name: 'Usage analytics' })
+      .first();
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
     // Let the first page's script request land before clearing the log, so

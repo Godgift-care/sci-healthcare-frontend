@@ -10,7 +10,9 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('opens with the keyboard and navigates to a matching clinic', async ({ page }) => {
+test('opens with the keyboard and navigates to a matching clinic', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.keyboard.press('Control+k');
 
@@ -21,7 +23,9 @@ test('opens with the keyboard and navigates to a matching clinic', async ({ page
   await expect(dialog).toBeVisible();
   await expect(search).toBeFocused();
   await search.fill('Ikeja');
-  await expect(page.getByRole('option', { name: /Ikeja General Clinic/ })).toBeVisible();
+  await expect(
+    page.getByRole('option', { name: /Ikeja General Clinic/ }),
+  ).toBeVisible();
   await search.press('ArrowDown');
   await search.press('Enter');
 
@@ -48,12 +52,16 @@ test('opens a voucher by number and closes on Escape', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Go to' })).not.toBeVisible();
 });
 
-test('does not show the admin destination without admin access', async ({ page }) => {
+test('does not show the admin destination without admin access', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox', {
-    name: 'Search clinics, pages, or voucher number',
-  }).fill('Admin');
+  await page
+    .getByRole('combobox', {
+      name: 'Search clinics, pages, or voucher number',
+    })
+    .fill('Admin');
 
   await expect(page.getByRole('option', { name: /^Admin/ })).toHaveCount(0);
 });

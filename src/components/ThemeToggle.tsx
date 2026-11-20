@@ -24,7 +24,7 @@ export function ThemeToggle() {
           : 'Light theme is on. Switch to the dark theme, or follow your system setting by default.'
       }
       onClick={() => setTheme(dark ? 'light' : 'dark')}
-      className="inline-flex items-center gap-1 rounded-full bg-[var(--color-canvas)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] ring-1 ring-inset ring-[var(--color-line)] transition hover:text-[var(--color-ink)] max-sm:min-h-11 max-sm:px-3"
+      className="inline-flex items-center gap-1 rounded-full bg-[var(--color-canvas)] px-2 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] ring-1 ring-[var(--color-line)] transition ring-inset hover:text-[var(--color-ink)] max-sm:min-h-11 max-sm:px-3"
     >
       <span aria-hidden>{dark ? '☾' : '☀'}</span>
       {dark ? 'Dark' : 'Light'}

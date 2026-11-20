@@ -1,0 +1,3 @@
+# Runs ESLint and Prettier on the files this commit touches (#362).
+# Skip once with `git commit --no-verify`; the same checks run in CI.
+npx lint-staged

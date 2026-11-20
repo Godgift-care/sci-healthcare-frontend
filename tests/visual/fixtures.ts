@@ -119,9 +119,8 @@ export async function freezeClock(page: Page): Promise<void> {
 
 /** Never hit the real RPC in snapshots; quotes fail silently by design. */
 export async function blockRpc(page: Page): Promise<void> {
-  await page.route(
-    '**/soroban-testnet.stellar.org/**',
-    (route) => route.abort(),
+  await page.route('**/soroban-testnet.stellar.org/**', (route) =>
+    route.abort(),
   );
 }
 
@@ -216,14 +215,23 @@ export async function mockApi(page: Page): Promise<void> {
         return json({
           ...providerDetail,
           vouchers: 0,
-          byStatus: { Funded: 0, Claimed: 0, Attested: 0, Settled: 0, Disputed: 0, Refunded: 0 },
+          byStatus: {
+            Funded: 0,
+            Claimed: 0,
+            Attested: 0,
+            Settled: 0,
+            Disputed: 0,
+            Refunded: 0,
+          },
           settledVouchers: 0,
           settledValue: '0',
         });
       }
       // /providers/<address> — the last segment is the address.
       if (parts.length === 2) {
-        const found = providersList.providers.find((p) => p.address === parts[1]);
+        const found = providersList.providers.find(
+          (p) => p.address === parts[1],
+        );
         if (found) return json(found);
         return json({ message: 'Not found' }, 404);
       }
@@ -234,12 +242,15 @@ export async function mockApi(page: Page): Promise<void> {
       if (url.searchParams.get('status') === 'Disputed') {
         return json({
           total: 1,
-          vouchers: [{
-            ...voucherDetail,
-            funder: 'GFUNDERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXYZ',
-            status: 'Disputed',
-            disputeReason: 2,
-          }],
+          vouchers: [
+            {
+              ...voucherDetail,
+              funder:
+                'GFUNDERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXYZ',
+              status: 'Disputed',
+              disputeReason: 2,
+            },
+          ],
         });
       }
       // /vouchers/<id>/events — a pre-#13 indexer answers 404, so the

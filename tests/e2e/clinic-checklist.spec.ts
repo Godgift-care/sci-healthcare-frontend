@@ -1,12 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { E2E_CONTRACTS } from './contracts';
-import {
-  CLAIMED_VOUCHER,
-  CLINIC,
-  FUNDED_VOUCHER,
-  PROVIDER,
-} from './fixtures';
+import { CLAIMED_VOUCHER, CLINIC, FUNDED_VOUCHER, PROVIDER } from './fixtures';
 import { mockBackend, useMockWallet } from './helpers';
 
 /**
@@ -99,7 +94,9 @@ test.describe('Clinic onboarding checklist (#31)', () => {
     await expect(page.getByText('1 of 5 done')).toBeVisible();
   });
 
-  test('a verified clinic without services is asked to list one', async ({ page }) => {
+  test('a verified clinic without services is asked to list one', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: { ...CLINIC, services: [] },
@@ -143,7 +140,9 @@ test.describe('Clinic onboarding checklist (#31)', () => {
     await expectState(page, 'Get paid', 'pending');
   });
 
-  test('claimed care waits for the attester before payment', async ({ page }) => {
+  test('claimed care waits for the attester before payment', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: CLINIC,
@@ -161,7 +160,9 @@ test.describe('Clinic onboarding checklist (#31)', () => {
     await expect(page.getByText('4 of 5 done')).toBeVisible();
   });
 
-  test('a clinic with a settled voucher sees every step done', async ({ page }) => {
+  test('a clinic with a settled voucher sees every step done', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: CLINIC,
@@ -182,7 +183,9 @@ test.describe('Clinic onboarding checklist (#31)', () => {
     }
     await expect(page.getByText('5 of 5 done')).toBeVisible();
     await expect(
-      page.getByText('All five steps are complete. Settled payments appear in Earnings.'),
+      page.getByText(
+        'All five steps are complete. Settled payments appear in Earnings.',
+      ),
     ).toBeVisible();
   });
 });

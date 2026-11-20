@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { CLINIC, FUNDED_VOUCHER, FUNDER, PROVIDER, UNLOCATED_CLINIC } from './fixtures';
+import {
+  CLINIC,
+  FUNDED_VOUCHER,
+  FUNDER,
+  PROVIDER,
+  UNLOCATED_CLINIC,
+} from './fixtures';
 import { mockBackend, mockInvokes, useMockWallet } from './helpers';
 
 /**
@@ -28,7 +34,9 @@ const TOO_EXPENSIVE = {
   ],
 };
 
-test('funder moves a funded voucher to an eligible clinic', async ({ page }) => {
+test('funder moves a funded voucher to an eligible clinic', async ({
+  page,
+}) => {
   await useMockWallet(page, FUNDER);
   await mockBackend(page, {
     providers: [CLINIC, UNLOCATED_CLINIC, TOO_EXPENSIVE],
@@ -39,9 +47,7 @@ test('funder moves a funded voucher to an eligible clinic', async ({ page }) => 
   await page.goto(`/vouchers/${VOUCHER_ID}`);
   await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
 
-  await page
-    .getByRole('button', { name: 'Use at a different clinic' })
-    .click();
+  await page.getByRole('button', { name: 'Use at a different clinic' }).click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText(`Move voucher #${VOUCHER_ID}`);
@@ -58,7 +64,9 @@ test('funder moves a funded voucher to an eligible clinic', async ({ page }) => 
   );
 
   await dialog.getByRole('button', { name: 'Move voucher' }).click();
-  await expect(page.getByText('Voucher moved to Lekki Care Centre.')).toBeVisible();
+  await expect(
+    page.getByText('Voucher moved to Lekki Care Centre.'),
+  ).toBeVisible();
 
   const invokes = await mockInvokes(page);
   expect(invokes.map(({ method }) => method)).toEqual(['redirect']);

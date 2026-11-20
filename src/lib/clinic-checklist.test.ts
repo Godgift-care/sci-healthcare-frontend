@@ -10,11 +10,18 @@ function states(input: ClinicChecklistInput) {
 }
 
 const SERVICE = { active: true };
-const voucher = (status: string, isSettleable = false) => ({ status, isSettleable });
+const voucher = (status: string, isSettleable = false) => ({
+  status,
+  isSettleable,
+});
 
 describe('clinicChecklist', () => {
   it('starts an unregistered wallet on registration', () => {
-    const steps = clinicChecklist({ status: 'Unregistered', services: [], vouchers: [] });
+    const steps = clinicChecklist({
+      status: 'Unregistered',
+      services: [],
+      vouchers: [],
+    });
 
     expect(steps.map((step) => step.state)).toEqual([
       'current',
@@ -23,11 +30,19 @@ describe('clinicChecklist', () => {
       'pending',
       'pending',
     ]);
-    expect(steps[0]).toEqual({ id: 'register', state: 'current', hint: 'register' });
+    expect(steps[0]).toEqual({
+      id: 'register',
+      state: 'current',
+      hint: 'register',
+    });
   });
 
   it('marks registration done and waits for verification while pending', () => {
-    const steps = clinicChecklist({ status: 'Pending', services: [], vouchers: [] });
+    const steps = clinicChecklist({
+      status: 'Pending',
+      services: [],
+      vouchers: [],
+    });
 
     expect(steps[0].state).toBe('done');
     expect(steps[0].hint).toBeNull();
@@ -36,7 +51,9 @@ describe('clinicChecklist', () => {
       state: 'current',
       hint: 'waitingVerification',
     });
-    expect(states({ status: 'Pending', services: [], vouchers: [] })).toMatchObject({
+    expect(
+      states({ status: 'Pending', services: [], vouchers: [] }),
+    ).toMatchObject({
       service: 'pending',
       claim: 'pending',
       paid: 'pending',
@@ -44,10 +61,21 @@ describe('clinicChecklist', () => {
   });
 
   it('asks a verified clinic to list its first service', () => {
-    const steps = clinicChecklist({ status: 'Active', services: [], vouchers: [] });
+    const steps = clinicChecklist({
+      status: 'Active',
+      services: [],
+      vouchers: [],
+    });
 
-    expect(steps.slice(0, 2).map((step) => step.state)).toEqual(['done', 'done']);
-    expect(steps[2]).toEqual({ id: 'service', state: 'current', hint: 'listService' });
+    expect(steps.slice(0, 2).map((step) => step.state)).toEqual([
+      'done',
+      'done',
+    ]);
+    expect(steps[2]).toEqual({
+      id: 'service',
+      state: 'current',
+      hint: 'listService',
+    });
     expect(steps[3].state).toBe('pending');
   });
 
@@ -58,7 +86,11 @@ describe('clinicChecklist', () => {
       vouchers: [],
     });
 
-    expect(steps[2]).toEqual({ id: 'service', state: 'current', hint: 'listService' });
+    expect(steps[2]).toEqual({
+      id: 'service',
+      state: 'current',
+      hint: 'listService',
+    });
   });
 
   it('asks for a funder when nothing has been funded yet', () => {
@@ -69,7 +101,11 @@ describe('clinicChecklist', () => {
     });
 
     expect(steps[2].state).toBe('done');
-    expect(steps[3]).toEqual({ id: 'claim', state: 'current', hint: 'shareClinic' });
+    expect(steps[3]).toEqual({
+      id: 'claim',
+      state: 'current',
+      hint: 'shareClinic',
+    });
   });
 
   it('points at a waiting voucher when one has been funded', () => {
@@ -79,7 +115,11 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Funded')],
     });
 
-    expect(steps[3]).toEqual({ id: 'claim', state: 'current', hint: 'claimVoucher' });
+    expect(steps[3]).toEqual({
+      id: 'claim',
+      state: 'current',
+      hint: 'claimVoucher',
+    });
   });
 
   it.each(['Claimed', 'Attested', 'Settled', 'Disputed'])(
@@ -113,7 +153,11 @@ describe('clinicChecklist', () => {
     });
 
     expect(steps[3].state).toBe('done');
-    expect(steps[4]).toEqual({ id: 'paid', state: 'current', hint: 'waitingAttester' });
+    expect(steps[4]).toEqual({
+      id: 'paid',
+      state: 'current',
+      hint: 'waitingAttester',
+    });
   });
 
   it('waits for the dispute window once care is attested', () => {
@@ -133,7 +177,11 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Attested', true)],
     });
 
-    expect(steps[4]).toEqual({ id: 'paid', state: 'current', hint: 'releasePayment' });
+    expect(steps[4]).toEqual({
+      id: 'paid',
+      state: 'current',
+      hint: 'releasePayment',
+    });
   });
 
   it('explains that a dispute freezes the payout', () => {
@@ -143,7 +191,11 @@ describe('clinicChecklist', () => {
       vouchers: [voucher('Disputed')],
     });
 
-    expect(steps[4]).toEqual({ id: 'paid', state: 'current', hint: 'disputed' });
+    expect(steps[4]).toEqual({
+      id: 'paid',
+      state: 'current',
+      hint: 'disputed',
+    });
   });
 
   it('marks every step done after the first settlement', () => {

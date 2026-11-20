@@ -67,7 +67,9 @@ export function recordMockCall(call: MockRpcCall, args: string[] = []): void {
 
 /** True once Playwright has made the mock wallet refuse to sign (#1). */
 export function mockSignRejects(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_SIGN_REJECT__);
+  return (
+    typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_SIGN_REJECT__)
+  );
 }
 
 /**

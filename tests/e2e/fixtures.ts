@@ -100,7 +100,10 @@ export const SERVICE_CATALOGUE = [
 ];
 
 /** `GET /services/:code` lookup keyed by code string. */
-export const SERVICE_BY_CODE: Record<string, (typeof SERVICE_CATALOGUE)[number]> = {
+export const SERVICE_BY_CODE: Record<
+  string,
+  (typeof SERVICE_CATALOGUE)[number]
+> = {
   '101': SERVICE_CATALOGUE[0],
   '102': SERVICE_CATALOGUE[1],
 };
@@ -133,7 +136,11 @@ function baseVoucher(id: string, overrides: Record<string, unknown>) {
     id,
     funder: FUNDER,
     beneficiaryRef: PATIENT_REF,
-    provider: { address: PROVIDER, name: 'Ikeja General Clinic', country: 'NG' },
+    provider: {
+      address: PROVIDER,
+      name: 'Ikeja General Clinic',
+      country: 'NG',
+    },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',

@@ -23,11 +23,7 @@ import { useWallet } from '../wallet';
  * because a transient read must never block a payment that can succeed.
  */
 export type UsdcTrustlineStatus =
-  | 'idle'
-  | 'checking'
-  | 'missing'
-  | 'ready'
-  | 'unknown';
+  'idle' | 'checking' | 'missing' | 'ready' | 'unknown';
 
 export interface UsdcTrustlineState {
   status: UsdcTrustlineStatus;
@@ -74,11 +70,7 @@ export function useUsdcTrustline(): UsdcTrustlineState {
 
   const fresh = result && result.address === address ? result : null;
   const status: UsdcTrustlineStatus =
-    !address || !config.usdcIssuer
-      ? 'idle'
-      : fresh
-        ? fresh.status
-        : 'checking';
+    !address || !config.usdcIssuer ? 'idle' : fresh ? fresh.status : 'checking';
   const balance = fresh ? fresh.balance : null;
 
   const add = useCallback(async () => {

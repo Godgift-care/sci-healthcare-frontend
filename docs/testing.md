@@ -3,12 +3,12 @@
 Four layers, cheapest first. A change usually needs one or two of them, not
 four; the pull request template asks which ones you ran.
 
-| Layer | Command | What it proves |
-| --- | --- | --- |
-| Unit (Vitest) | `npm run test:unit` | Pure functions: amount parsing, message catalogues, the CSP string, error mapping. Files sit beside the code as `*.test.ts`. |
-| End-to-end (Playwright) | `npm run test:e2e` | A user flow in a real browser against a mocked API, a mock wallet and mocked Soroban RPC. No testnet, indexer or wallet needed. |
-| Visual (Playwright) | `npm run test:visual` | The six routes at desktop and 390px widths, screenshot-compared with the clock frozen and the API mocked. |
-| Build | `npm run build` | The production build, including the `NEXT_PUBLIC_*` check (#76) and type errors. |
+| Layer                   | Command               | What it proves                                                                                                                  |
+| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Unit (Vitest)           | `npm run test:unit`   | Pure functions: amount parsing, message catalogues, the CSP string, error mapping. Files sit beside the code as `*.test.ts`.    |
+| End-to-end (Playwright) | `npm run test:e2e`    | A user flow in a real browser against a mocked API, a mock wallet and mocked Soroban RPC. No testnet, indexer or wallet needed. |
+| Visual (Playwright)     | `npm run test:visual` | The six routes at desktop and 390px widths, screenshot-compared with the clock frozen and the API mocked.                       |
+| Build                   | `npm run build`       | The production build, including the `NEXT_PUBLIC_*` check (#76) and type errors.                                                |
 
 `npm run test:e2e` and `npm run test:visual` build and serve the app on port
 3100 themselves (`playwright.config.ts`), so run them one at a time.
@@ -30,9 +30,16 @@ nothing sets them outside Playwright, so production behaviour is unchanged:
 The helpers in `tests/e2e/helpers.ts` set them for you:
 
 ```ts
-await useMockWallet(page, FUNDER);            // address from tests/e2e/fixtures.ts
-await mockBackend(page, { provider: CLINIC, voucherById: { 7: CLAIMED_VOUCHER('7') } });
-expect(await mockInvokes(page)).toContainEqual({ kind: 'invoke', contractId: E2E_CONTRACTS.voucher, method: 'create_voucher' });
+await useMockWallet(page, FUNDER); // address from tests/e2e/fixtures.ts
+await mockBackend(page, {
+  provider: CLINIC,
+  voucherById: { 7: CLAIMED_VOUCHER('7') },
+});
+expect(await mockInvokes(page)).toContainEqual({
+  kind: 'invoke',
+  contractId: E2E_CONTRACTS.voucher,
+  method: 'create_voucher',
+});
 ```
 
 `useMockWallet` also aborts requests to `plausible.io`, so a test never sends
@@ -97,7 +104,7 @@ belongs in an e2e test.
 ## Debugging a failing run
 
 - **`--headed` and `--debug`.** `npx playwright test tests/e2e/fund.spec.ts
-  --headed` watches it happen; `--debug` opens the inspector.
+--headed` watches it happen; `--debug` opens the inspector.
 - **A trace.** `npx playwright test --trace on` writes one per test; open it
   with `npx playwright show-trace`. CI uploads the same traces when a job
   fails.

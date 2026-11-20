@@ -107,8 +107,8 @@ your browser, unlike the container's `localhost:8080`, and the CSP follows the
 same variable, so no other change is needed. Restart `npm run dev` after the
 script runs, since Next reads `.env.local` once at start-up.
 
-To use a backend running in *another* codespace instead, forward its port
-publicly (**Ports** tab → the 8080 port → *Public*) and run:
+To use a backend running in _another_ codespace instead, forward its port
+publicly (**Ports** tab → the 8080 port → _Public_) and run:
 
 ```bash
 SCI_BACKEND_CODESPACE=<that-codespace-name> node scripts/codespace-env.mjs --force
@@ -133,6 +133,20 @@ fix(wallet): restore session after the kit rotates its storage key
 ```
 
 - `npm run typecheck` and `npm run build` must pass.
+- `npm run format:check` must pass; `npm run format` fixes it. Prettier also
+  sorts Tailwind classes. One commit in the history only reformats the tree
+  and is listed in `.git-blame-ignore-revs`: run
+  `git config blame.ignoreRevsFile .git-blame-ignore-revs` once so `git blame`
+  skips it.
+
+Git hooks. `npm install` installs a pre-commit hook (`.husky/pre-commit`) that
+runs ESLint and Prettier on the staged files only — through lint-staged, so a
+commit touching two files does not lint the repository — and stages the fixes.
+A typical commit takes a few seconds. `git commit --no-verify` skips it once;
+CI runs the same checks, so skipping only moves the wait later. The installer
+does nothing in CI and honours `HUSKY=0`, so a dependency install never
+depends on the hook.
+
 - Screenshots for any visible change, light background at minimum.
 - Visual snapshots cover the six routes at desktop and 390px widths
   (`npm run test:visual`, mocked API, frozen clock). After an intentional UI

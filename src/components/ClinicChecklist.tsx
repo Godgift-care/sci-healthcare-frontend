@@ -78,13 +78,15 @@ export function ClinicChecklist({
               >
                 {isDone ? '✓' : index + 1}
               </span>
-              <div className={`min-w-0 ${index < steps.length - 1 ? 'pb-4' : ''}`}>
+              <div
+                className={`min-w-0 ${index < steps.length - 1 ? 'pb-4' : ''}`}
+              >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <h3 className="text-sm font-medium">
                     {t(`clinic.checklist.steps.${step.id}`)}
                   </h3>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${BADGE_STYLES[step.state]}`}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase ring-1 ring-inset ${BADGE_STYLES[step.state]}`}
                   >
                     {isDone
                       ? t('clinic.checklist.done')

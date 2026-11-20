@@ -28,7 +28,9 @@ import { sameOriginScriptUrl } from '@/lib/trusted-types';
  */
 export function ServiceWorkerRegistration() {
   const { t } = useLocaleContext();
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(
+    null,
+  );
   const [pending, setPending] = useState(false);
   const updateRequested = useRef(false);
   const reloadAfterPending = useRef(false);
@@ -36,7 +38,8 @@ export function ServiceWorkerRegistration() {
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') return;
-    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator))
+      return;
 
     let disposed = false;
     let transactionPending = isTransactionPending();
@@ -94,7 +97,10 @@ export function ServiceWorkerRegistration() {
       if (!isPending && reloadAfterPending.current) reload();
     });
 
-    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      onControllerChange,
+    );
 
     // `register` is a TrustedScriptURL sink (#147): the CSP only lets a
     // `TrustedScriptURL` through, so the path goes via the allowlisted

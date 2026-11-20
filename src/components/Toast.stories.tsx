@@ -44,7 +44,10 @@ export const Success: Story = {
 export const Failure: Story = {
   render: () => (
     <ToastProvider>
-      <Fire kind="error" message="The wallet refused to sign. Nothing was sent." />
+      <Fire
+        kind="error"
+        message="The wallet refused to sign. Nothing was sent."
+      />
     </ToastProvider>
   ),
 };

@@ -28,7 +28,10 @@ test('funder disputes a claimed voucher', async ({ page }) => {
   await page
     .getByLabel('What went wrong?')
     .selectOption({ label: 'A different service was provided' });
-  await page.getByRole('dialog').getByRole('button', { name: 'Open dispute' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Open dispute' })
+    .click();
 
   await expect(page.getByText('Done.')).toBeVisible();
   expect(await mockInvokes(page)).toContainEqual({

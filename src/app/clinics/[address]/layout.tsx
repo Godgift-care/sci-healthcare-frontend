@@ -13,7 +13,9 @@ type ClinicParams = { params: Promise<{ address: string }> };
  * never hold the page open — with any failure falling back to the default
  * title from the root layout. Nothing beneficiary-related appears in it.
  */
-export async function generateMetadata({ params }: ClinicParams): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: ClinicParams): Promise<Metadata> {
   const { address } = await params;
   const p = await api
     .provider(address, { signal: AbortSignal.timeout(METADATA_TIMEOUT_MS) })
@@ -42,6 +44,10 @@ export async function generateMetadata({ params }: ClinicParams): Promise<Metada
 }
 
 /** Metadata only; the page below is a client component. */
-export default function ClinicLayout({ children }: { children: React.ReactNode }) {
+export default function ClinicLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }

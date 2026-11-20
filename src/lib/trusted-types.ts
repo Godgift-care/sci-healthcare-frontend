@@ -113,8 +113,9 @@ export function installTrustedTypesDefaultPolicy(): void {
         return input;
       },
     });
-    (window as unknown as { __sciTrustedTypesDefault?: boolean })
-      .__sciTrustedTypesDefault = true;
+    (
+      window as unknown as { __sciTrustedTypesDefault?: boolean }
+    ).__sciTrustedTypesDefault = true;
   } catch {
     // The CSP does not allow the default policy (older build) or it already
     // exists; either way the page keeps working where TT is report-only.

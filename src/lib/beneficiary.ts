@@ -11,10 +11,14 @@
  * data cannot enumerate patients, because HMAC without the key is not
  * searchable.
  */
-export async function beneficiaryRef(identifier: string, key: string): Promise<string> {
+export async function beneficiaryRef(
+  identifier: string,
+  key: string,
+): Promise<string> {
   const id = identifier.trim().toLowerCase();
   if (!id) throw new Error('Enter a patient reference');
-  if (key.length < 32) throw new Error('The secret key must be at least 32 characters');
+  if (key.length < 32)
+    throw new Error('The secret key must be at least 32 characters');
 
   const enc = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
@@ -25,7 +29,9 @@ export async function beneficiaryRef(identifier: string, key: string): Promise<s
     ['sign'],
   );
   const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(id));
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(sig)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 /**
@@ -65,7 +71,11 @@ export async function matchesBeneficiaryRef(
   return derived === expectedRef.trim().toLowerCase();
 }
 
-export type SavedPatient = { nickname: string; identifier: string; key: string };
+export type SavedPatient = {
+  nickname: string;
+  identifier: string;
+  key: string;
+};
 
 /**
  * Reads a patient backup: a file or text holding JSON (the app's own backup
@@ -74,7 +84,8 @@ export type SavedPatient = { nickname: string; identifier: string; key: string }
  */
 function normalisePatientValue(value: unknown): string {
   if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value);
   return '';
 }
 
@@ -96,12 +107,16 @@ function parseSavedPatientRecord(value: unknown): SavedPatient {
     const parsed = parseMaybeJson(cleaned);
     if (parsed !== cleaned) return parseSavedPatientRecord(parsed);
 
-    const [idPart, keyPart] = cleaned.split(/\s*\|\s*|\r?\n/).map((part) => part.trim());
+    const [idPart, keyPart] = cleaned
+      .split(/\s*\|\s*|\r?\n/)
+      .map((part) => part.trim());
     if (idPart && keyPart) {
       return { nickname: idPart, identifier: idPart, key: keyPart };
     }
 
-    throw new Error('The backup must be a JSON object with an identifier and key.');
+    throw new Error(
+      'The backup must be a JSON object with an identifier and key.',
+    );
   }
 
   if (Array.isArray(value)) {
@@ -145,20 +160,26 @@ function parseSavedPatientRecord(value: unknown): SavedPatient {
       record.secret,
   );
 
-  if (!identifier) throw new Error('This backup is missing a patient reference.');
+  if (!identifier)
+    throw new Error('This backup is missing a patient reference.');
   if (!key) throw new Error('This backup is missing a patient key.');
-  if (key.length < 32) throw new Error('The patient key must be at least 32 characters long.');
+  if (key.length < 32)
+    throw new Error('The patient key must be at least 32 characters long.');
 
   // Backups made by this app carry a nickname; anything else is listed under
   // its patient reference, which only ever lives on this device.
   const nickname =
     normalisePatientValue(
-      (nested as Record<string, unknown>).nickname ?? record.nickname ?? record.name,
+      (nested as Record<string, unknown>).nickname ??
+        record.nickname ??
+        record.name,
     ) || identifier;
   return { nickname, identifier, key };
 }
 
-export async function parsePatientBackup(input: string | File | unknown): Promise<SavedPatient> {
+export async function parsePatientBackup(
+  input: string | File | unknown,
+): Promise<SavedPatient> {
   if (input instanceof File) {
     return parseSavedPatientRecord(await input.text());
   }
@@ -183,9 +204,11 @@ export function serialisePatientBackup(patient: {
   const key = patient.key.trim();
   const nickname = patient.nickname?.trim();
 
-  if (!identifier) throw new Error('This backup is missing a patient reference.');
+  if (!identifier)
+    throw new Error('This backup is missing a patient reference.');
   if (!key) throw new Error('This backup is missing a patient key.');
-  if (key.length < 32) throw new Error('The patient key must be at least 32 characters long.');
+  if (key.length < 32)
+    throw new Error('The patient key must be at least 32 characters long.');
 
   return JSON.stringify(
     {
@@ -236,7 +259,9 @@ function decodeBytes(value: string): Uint8Array {
   return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
 }
 
-function parseEncryptedPatients(value: string | null): EncryptedPatients | null {
+function parseEncryptedPatients(
+  value: string | null,
+): EncryptedPatients | null {
   if (!value) return null;
   try {
     const parsed: unknown = JSON.parse(value);
@@ -267,7 +292,11 @@ function parseEncryptedPatients(value: string | null): EncryptedPatients | null 
   }
 }
 
-async function deriveStorageKey(passphrase: string, salt: Uint8Array, iterations: number) {
+async function deriveStorageKey(
+  passphrase: string,
+  salt: Uint8Array,
+  iterations: number,
+) {
   const material = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(passphrase),
@@ -305,7 +334,10 @@ async function encryptPatients(
   };
 }
 
-async function decryptPatients(envelope: EncryptedPatients, passphrase: string) {
+async function decryptPatients(
+  envelope: EncryptedPatients,
+  passphrase: string,
+) {
   const key = await deriveStorageKey(
     passphrase,
     decodeBytes(envelope.salt),
@@ -317,7 +349,11 @@ async function decryptPatients(envelope: EncryptedPatients, passphrase: string) 
     decodeBytes(envelope.ciphertext),
   );
   const parsed: unknown = JSON.parse(new TextDecoder().decode(plaintext));
-  if (typeof parsed !== 'object' || parsed === null || !('patients' in parsed)) {
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('patients' in parsed)
+  ) {
     throw new Error('The encrypted patient data is invalid.');
   }
   const patients = readPatients(JSON.stringify(parsed.patients));
@@ -356,7 +392,9 @@ async function persist(store: SavedPatientStore): Promise<boolean> {
         store.selectedNickname,
         unlockedKey,
       );
-      const existing = parseEncryptedPatients(localStorage.getItem(PATIENTS_STORAGE));
+      const existing = parseEncryptedPatients(
+        localStorage.getItem(PATIENTS_STORAGE),
+      );
       if (!existing) return false;
       envelope.salt = existing.salt;
       localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(envelope));
@@ -382,18 +420,24 @@ async function persist(store: SavedPatientStore): Promise<boolean> {
 export const localIdentity = {
   load(): SavedPatientStore {
     if (typeof window === 'undefined') {
-      return { patients: [], selectedNickname: '', encrypted: false, locked: false };
+      return {
+        patients: [],
+        selectedNickname: '',
+        encrypted: false,
+        locked: false,
+      };
     }
     try {
       const stored = localStorage.getItem(PATIENTS_STORAGE);
       const encrypted = parseEncryptedPatients(stored);
       if (encrypted) {
-        const patients = unlockedKey && unlockedPatients ? unlockedPatients : [];
+        const patients =
+          unlockedKey && unlockedPatients ? unlockedPatients : [];
         const selectedNickname = patients.some(
           (patient) => patient.nickname === unlockedSelectedNickname,
         )
           ? unlockedSelectedNickname
-          : patients.at(-1)?.nickname ?? '';
+          : (patients.at(-1)?.nickname ?? '');
         return {
           patients,
           selectedNickname,
@@ -413,12 +457,19 @@ export const localIdentity = {
         }
       }
       const requested = localStorage.getItem(SELECTED_STORAGE) ?? '';
-      const selectedNickname = patients.some((patient) => patient.nickname === requested)
+      const selectedNickname = patients.some(
+        (patient) => patient.nickname === requested,
+      )
         ? requested
-        : patients.at(-1)?.nickname ?? '';
+        : (patients.at(-1)?.nickname ?? '');
       return { patients, selectedNickname, encrypted: false, locked: false };
     } catch {
-      return { patients: [], selectedNickname: '', encrypted: false, locked: false };
+      return {
+        patients: [],
+        selectedNickname: '',
+        encrypted: false,
+        locked: false,
+      };
     }
   },
   async enableEncryption(passphrase: string): Promise<boolean> {
@@ -429,8 +480,16 @@ export const localIdentity = {
       const { patients } = this.load();
       const selectedNickname = localStorage.getItem(SELECTED_STORAGE) ?? '';
       const salt = crypto.getRandomValues(new Uint8Array(16));
-      const storageKey = await deriveStorageKey(passphrase, salt, PBKDF2_ITERATIONS);
-      const envelope = await encryptPatients(patients, selectedNickname, storageKey);
+      const storageKey = await deriveStorageKey(
+        passphrase,
+        salt,
+        PBKDF2_ITERATIONS,
+      );
+      const envelope = await encryptPatients(
+        patients,
+        selectedNickname,
+        storageKey,
+      );
       envelope.salt = encodeBytes(salt);
       localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(envelope));
       localStorage.removeItem(SELECTED_STORAGE);
@@ -448,7 +507,9 @@ export const localIdentity = {
   async unlock(passphrase: string): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     try {
-      const envelope = parseEncryptedPatients(localStorage.getItem(PATIENTS_STORAGE));
+      const envelope = parseEncryptedPatients(
+        localStorage.getItem(PATIENTS_STORAGE),
+      );
       if (!envelope) return false;
       const result = await decryptPatients(envelope, passphrase);
       unlockedKey = result.key;
@@ -467,26 +528,36 @@ export const localIdentity = {
     unlockedSelectedNickname = '';
     if (typeof window !== 'undefined') announcePatientsChanged();
   },
-  async save(nickname: string, identifier: string, key: string): Promise<boolean> {
+  async save(
+    nickname: string,
+    identifier: string,
+    key: string,
+  ): Promise<boolean> {
     const cleanNickname = nickname.trim();
     if (!cleanNickname) return false;
     const store = this.load();
     if (store.locked) return false;
     const { patients } = store;
     const existing = patients.findIndex(
-      (patient) => patient.nickname.toLowerCase() === cleanNickname.toLowerCase(),
+      (patient) =>
+        patient.nickname.toLowerCase() === cleanNickname.toLowerCase(),
     );
     const patient = { nickname: cleanNickname, identifier, key };
     const next = [...patients];
     if (existing >= 0) next[existing] = patient;
     else next.push(patient);
-    return persist({ ...store, patients: next, selectedNickname: cleanNickname });
+    return persist({
+      ...store,
+      patients: next,
+      selectedNickname: cleanNickname,
+    });
   },
   async select(nickname: string): Promise<boolean> {
     const store = this.load();
     if (store.locked) return false;
     const { patients } = store;
-    if (nickname && !patients.some((patient) => patient.nickname === nickname)) return false;
+    if (nickname && !patients.some((patient) => patient.nickname === nickname))
+      return false;
     return persist({ ...store, patients, selectedNickname: nickname });
   },
   async rename(currentNickname: string, newNickname: string): Promise<boolean> {
@@ -509,10 +580,13 @@ export const localIdentity = {
         ? { ...patient, nickname: cleanNickname }
         : patient,
     );
-    if (!next.some((patient) => patient.nickname === cleanNickname)) return false;
-    return persist({ ...store,
+    if (!next.some((patient) => patient.nickname === cleanNickname))
+      return false;
+    return persist({
+      ...store,
       patients: next,
-      selectedNickname: selectedNickname === currentNickname ? cleanNickname : selectedNickname,
+      selectedNickname:
+        selectedNickname === currentNickname ? cleanNickname : selectedNickname,
     });
   },
   async remove(nickname: string): Promise<boolean> {
@@ -521,7 +595,14 @@ export const localIdentity = {
     const { patients, selectedNickname } = store;
     const next = patients.filter((patient) => patient.nickname !== nickname);
     if (next.length === patients.length) return false;
-    const nextSelected = selectedNickname === nickname ? next.at(-1)?.nickname ?? '' : selectedNickname;
-    return persist({ ...store, patients: next, selectedNickname: nextSelected });
+    const nextSelected =
+      selectedNickname === nickname
+        ? (next.at(-1)?.nickname ?? '')
+        : selectedNickname;
+    return persist({
+      ...store,
+      patients: next,
+      selectedNickname: nextSelected,
+    });
   },
 };

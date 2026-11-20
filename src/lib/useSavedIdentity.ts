@@ -29,7 +29,9 @@ let cached: SavedIdentity = EMPTY;
 function snapshot(): SavedIdentity {
   const store = localIdentity.load();
   const selectedPatient =
-    store.patients.find((patient) => patient.nickname === store.selectedNickname) ?? null;
+    store.patients.find(
+      (patient) => patient.nickname === store.selectedNickname,
+    ) ?? null;
   const next: SavedIdentity = {
     ...store,
     selectedPatient,

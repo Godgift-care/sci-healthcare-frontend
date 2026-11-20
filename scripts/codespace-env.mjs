@@ -45,7 +45,9 @@ const cwd = process.cwd();
 const envPath = resolve(cwd, '.env.local');
 const examplePath = resolve(cwd, '.env.example');
 if (!existsSync(examplePath)) {
-  console.error(`codespace-env: ${examplePath} is missing; run this from the repository root`);
+  console.error(
+    `codespace-env: ${examplePath} is missing; run this from the repository root`,
+  );
   process.exit(1);
 }
 
@@ -56,10 +58,14 @@ let env = existsSync(envPath)
   : readFileSync(examplePath, 'utf8');
 
 if (keyPattern.test(env)) {
-  const current = env.match(keyPattern)[0].slice(KEY.length + 1).trim();
+  const current = env
+    .match(keyPattern)[0]
+    .slice(KEY.length + 1)
+    .trim();
   // A value the contributor set themselves wins, unless it is still the
   // container-local default that cannot work from their browser.
-  const isContainerLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(current);
+  const isContainerLocal =
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(current);
   if (current && !isContainerLocal && current !== target) {
     console.log(`codespace-env: keeping ${KEY}=${current}`);
     process.exit(0);

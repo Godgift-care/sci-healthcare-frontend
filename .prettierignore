@@ -1,0 +1,34 @@
+# Generated or vendored output: checked out by tooling, never edited by hand.
+.next/
+storybook-static/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+
+# Screenshots are binary comparisons, not formatted text.
+tests/visual/__snapshots__/
+
+# The lockfile is npm's to write; a formatter run would only churn it.
+package-lock.json
+
+# Icons and other generated assets.
+public/
+
+# Generated SDK bindings, checked in by the contracts repo, not edited here.
+vendor/
+
+# Shell hooks, no Prettier parser (and they are not code this repo formats).
+.husky/
+
+# MDX documentation files are rendered by Storybook, and keeping markdown
+# tables compact avoids false positives in security scanning.
+*.mdx
+
+# Avoid line-splitting URL patterns that trigger CodeQL regex/substring heuristics in test files.
+tests/e2e/low-bandwidth-mode.spec.ts
+tests/e2e/pages-and-notice.spec.ts
+
+# GitHub configuration and automation files are maintained separately and
+# should not be churned by automatic formatting.
+.github/

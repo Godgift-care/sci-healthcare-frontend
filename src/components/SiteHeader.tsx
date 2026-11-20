@@ -35,7 +35,9 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { address } = useWallet();
   const { isAdmin } = useAdminAccess(address);
-  const links = isAdmin ? [...LINKS, { href: '/admin', label: 'Admin' }] : LINKS;
+  const links = isAdmin
+    ? [...LINKS, { href: '/admin', label: 'Admin' }]
+    : LINKS;
   // Keyed by the route that opened it, so a navigation (including Back) closes
   // the panel without an effect that would set state during render.
   const [openPath, setOpenPath] = useState<string | null>(null);
@@ -64,7 +66,10 @@ export function SiteHeader() {
             </span>
             SCI Healthcare
           </Link>
-          <nav aria-label="Primary" className="hidden items-center gap-1 sm:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-1 sm:flex"
+          >
             {links.map((link) => (
               <NavLink key={link.href} href={link.href}>
                 {link.label}

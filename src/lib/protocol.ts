@@ -3,11 +3,7 @@ import type { xdr } from '@stellar/stellar-sdk';
 
 import { claimOrQueue } from './claim-queue';
 import { config, isTestnet } from './config';
-import {
-  FaucetClient,
-  RegistryClient,
-  VoucherClient,
-} from './contracts';
+import { FaucetClient, RegistryClient, VoucherClient } from './contracts';
 import { ProviderStatus } from './contracts/generated/registry';
 import {
   arg,
@@ -21,8 +17,6 @@ import {
   type PreparedInvocation,
   type SignFn,
 } from './stellar';
-
-export { RegistryClient, VoucherClient, FaucetClient } from './contracts';
 
 /**
  * Typed wrappers for every contract call the app makes.
@@ -97,7 +91,12 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false, fee?: bigint) {
+  async create(
+    params: CreateVoucherParams,
+    sign: SignFn,
+    sponsored = false,
+    fee?: bigint,
+  ) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
@@ -171,9 +170,21 @@ export const voucher = {
       expiresAt: number;
     }>,
     sign: SignFn,
-    onProgress?: (index: number, request: { funder: string; beneficiaryRef: string; provider: string; serviceCode: number; amount: bigint; expiresAt: number }, total: number) => void,
+    onProgress?: (
+      index: number,
+      request: {
+        funder: string;
+        beneficiaryRef: string;
+        provider: string;
+        serviceCode: number;
+        amount: bigint;
+        expiresAt: number;
+      },
+      total: number,
+    ) => void,
   ) {
-    if (requests.length === 0) return [] as Array<{ hash: string; returnValue: unknown }>;
+    if (requests.length === 0)
+      return [] as Array<{ hash: string; returnValue: unknown }>;
 
     const batchCalls: ContractCall[] = [];
     const callArgs = requests.map((params) => {
@@ -237,9 +248,11 @@ export const voucher = {
   /** attestations_left(attester) -> u32, remaining today (UTC). */
   async attestationsLeft(attester: string): Promise<number> {
     return Number(
-      await readContract<bigint>(config.contracts.voucher, 'attestations_left', [
-        await arg.address(attester),
-      ]),
+      await readContract<bigint>(
+        config.contracts.voucher,
+        'attestations_left',
+        [await arg.address(attester)],
+      ),
     );
   },
 
@@ -260,18 +273,35 @@ export const voucher = {
       attester,
       voucher_id: BigInt(voucherId),
     });
-    return invokeContract(config.contracts.voucher, 'attest', args, attester, sign);
+    return invokeContract(
+      config.contracts.voucher,
+      'attest',
+      args,
+      attester,
+      sign,
+    );
   },
 
   /** dispute(funder, voucher_id, reason_code) */
-  async dispute(funder: string, voucherId: string, reasonCode: number, sign: SignFn) {
+  async dispute(
+    funder: string,
+    voucherId: string,
+    reasonCode: number,
+    sign: SignFn,
+  ) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('dispute', {
       funder,
       voucher_id: BigInt(voucherId),
       reason_code: reasonCode,
     });
-    return invokeContract(config.contracts.voucher, 'dispute', args, funder, sign);
+    return invokeContract(
+      config.contracts.voucher,
+      'dispute',
+      args,
+      funder,
+      sign,
+    );
   },
 
   /** settle(voucher_id) — permissionless, so any address may submit it. */
@@ -280,7 +310,13 @@ export const voucher = {
     const args = client.spec.funcArgsToScVals('settle', {
       voucher_id: BigInt(voucherId),
     });
-    return invokeContract(config.contracts.voucher, 'settle', args, caller, sign);
+    return invokeContract(
+      config.contracts.voucher,
+      'settle',
+      args,
+      caller,
+      sign,
+    );
   },
 
   /**
@@ -305,7 +341,10 @@ export const voucher = {
     voucherIds: string[],
     sign: SignFn,
     onProgress?: (settled: number, total: number, id: string) => void,
-  ): Promise<{ settled: string[]; failed: Array<{ id: string; error: unknown }> }> {
+  ): Promise<{
+    settled: string[];
+    failed: Array<{ id: string; error: unknown }>;
+  }> {
     const settled: string[] = [];
     const failed: Array<{ id: string; error: unknown }> = [];
     const total = voucherIds.length;
@@ -354,7 +393,13 @@ export const voucher = {
     const args = client.spec.funcArgsToScVals('refund', {
       voucher_id: BigInt(voucherId),
     });
-    return invokeContract(config.contracts.voucher, 'refund', args, caller, sign);
+    return invokeContract(
+      config.contracts.voucher,
+      'refund',
+      args,
+      caller,
+      sign,
+    );
   },
 
   /**
@@ -367,7 +412,10 @@ export const voucher = {
     voucherIds: string[],
     sign: SignFn,
     onProgress?: (current: number, total: number, id: string) => void,
-  ): Promise<{ refunded: string[]; failed: Array<{ id: string; error: unknown }> }> {
+  ): Promise<{
+    refunded: string[];
+    failed: Array<{ id: string; error: unknown }>;
+  }> {
     const refunded: string[] = [];
     const failed: Array<{ id: string; error: unknown }> = [];
     const total = voucherIds.length;
@@ -390,7 +438,11 @@ export const voucher = {
   async quote(amount: bigint): Promise<[bigint, bigint]> {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('quote', { amount });
-    return readContract<[bigint, bigint]>(config.contracts.voucher, 'quote', args);
+    return readContract<[bigint, bigint]>(
+      config.contracts.voucher,
+      'quote',
+      args,
+    );
   },
 
   /** resolve_dispute(admin, voucher_id, refund_funder) */
@@ -525,7 +577,10 @@ export const registry = {
   /** add_attester(admin, attester) */
   async addAttester(admin: string, attester: string, sign: SignFn) {
     const client = getRegistryClient();
-    const args = client.spec.funcArgsToScVals('add_attester', { admin, attester });
+    const args = client.spec.funcArgsToScVals('add_attester', {
+      admin,
+      attester,
+    });
     return invokeContract(
       config.contracts.registry,
       'add_attester',
@@ -538,7 +593,10 @@ export const registry = {
   /** remove_attester(admin, attester) */
   async removeAttester(admin: string, attester: string, sign: SignFn) {
     const client = getRegistryClient();
-    const args = client.spec.funcArgsToScVals('remove_attester', { admin, attester });
+    const args = client.spec.funcArgsToScVals('remove_attester', {
+      admin,
+      attester,
+    });
     return invokeContract(
       config.contracts.registry,
       'remove_attester',
@@ -641,7 +699,11 @@ export const registry = {
     const args = client.spec.funcArgsToScVals('is_active_provider', {
       provider_addr: address,
     });
-    return readContract<boolean>(config.contracts.registry, 'is_active_provider', args);
+    return readContract<boolean>(
+      config.contracts.registry,
+      'is_active_provider',
+      args,
+    );
   },
 
   async isAttester(address: string): Promise<boolean> {
@@ -649,7 +711,11 @@ export const registry = {
     const args = client.spec.funcArgsToScVals('is_attester', {
       addr: address,
     });
-    return readContract<boolean>(config.contracts.registry, 'is_attester', args);
+    return readContract<boolean>(
+      config.contracts.registry,
+      'is_attester',
+      args,
+    );
   },
 };
 
@@ -677,7 +743,11 @@ export const faucet = {
   async amount(): Promise<bigint> {
     const client = getFaucetClient();
     const args = client.spec.funcArgsToScVals('get_config', {});
-    const c = await readContract<{ amount: bigint }>(config.contracts.faucet, 'get_config', args);
+    const c = await readContract<{ amount: bigint }>(
+      config.contracts.faucet,
+      'get_config',
+      args,
+    );
     return BigInt(c.amount);
   },
 };

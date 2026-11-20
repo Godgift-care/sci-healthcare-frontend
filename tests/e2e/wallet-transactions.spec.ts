@@ -100,7 +100,9 @@ const EXPLORER = 'https://stellar.expert/explorer/testnet/tx/';
 async function linkedTransactions(page: Page): Promise<string[]> {
   return page
     .locator(`a[href^="${EXPLORER}"]`)
-    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+    .evaluateAll((links) =>
+      links.map((link) => link.getAttribute('href') ?? ''),
+    );
 }
 
 test.beforeEach(async ({ page }) => {
@@ -110,7 +112,10 @@ test.beforeEach(async ({ page }) => {
     provider: CLINIC,
     vouchers: [FUNDED_VOUCHER, CLINIC_VOUCHER],
     voucherById: { [FUNDED_ID]: FUNDED_VOUCHER, [CLINIC_ID]: CLINIC_VOUCHER },
-    voucherEventsById: { [FUNDED_ID]: FUNDED_EVENTS, [CLINIC_ID]: CLINIC_EVENTS },
+    voucherEventsById: {
+      [FUNDED_ID]: FUNDED_EVENTS,
+      [CLINIC_ID]: CLINIC_EVENTS,
+    },
   });
 });
 
@@ -120,26 +125,32 @@ test.describe('Wallet transaction history (#165)', () => {
   }) => {
     await page.goto('/my/transactions');
 
-    await expect(page.getByRole('heading', { name: 'Transaction history' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Transaction history' }),
+    ).toBeVisible();
 
     // Newest first, across both vouchers the wallet took part in.
-    await expect.poll(() => linkedTransactions(page)).toEqual([
-      `${EXPLORER}TXSETTLED`,
-      `${EXPLORER}TXCLINICCLAIMED`,
-      `${EXPLORER}TXCLAIMED`,
-      `${EXPLORER}TXOTHERCREATED`,
-      `${EXPLORER}TXCREATED`,
-    ]);
+    await expect
+      .poll(() => linkedTransactions(page))
+      .toEqual([
+        `${EXPLORER}TXSETTLED`,
+        `${EXPLORER}TXCLINICCLAIMED`,
+        `${EXPLORER}TXCLAIMED`,
+        `${EXPLORER}TXOTHERCREATED`,
+        `${EXPLORER}TXCREATED`,
+      ]);
 
     // The oldest first order is the same list, reversed.
     await page.getByRole('combobox', { name: 'Order' }).selectOption('oldest');
-    await expect.poll(() => linkedTransactions(page)).toEqual([
-      `${EXPLORER}TXCREATED`,
-      `${EXPLORER}TXOTHERCREATED`,
-      `${EXPLORER}TXCLAIMED`,
-      `${EXPLORER}TXCLINICCLAIMED`,
-      `${EXPLORER}TXSETTLED`,
-    ]);
+    await expect
+      .poll(() => linkedTransactions(page))
+      .toEqual([
+        `${EXPLORER}TXCREATED`,
+        `${EXPLORER}TXOTHERCREATED`,
+        `${EXPLORER}TXCLAIMED`,
+        `${EXPLORER}TXCLINICCLAIMED`,
+        `${EXPLORER}TXSETTLED`,
+      ]);
   });
 
   test('says who signed each transaction', async ({ page }) => {
@@ -155,25 +166,32 @@ test.describe('Wallet transaction history (#165)', () => {
     await expect(page.getByText('the signer is not recorded')).toHaveCount(1);
   });
 
-  test('filters down to the transactions this wallet signed', async ({ page }) => {
+  test('filters down to the transactions this wallet signed', async ({
+    page,
+  }) => {
     await page.goto('/my/transactions');
 
     await page.getByRole('combobox', { name: 'Show' }).selectOption('signed');
 
-    await expect.poll(() => linkedTransactions(page)).toEqual([
-      `${EXPLORER}TXCLINICCLAIMED`,
-      `${EXPLORER}TXCREATED`,
-    ]);
+    await expect
+      .poll(() => linkedTransactions(page))
+      .toEqual([`${EXPLORER}TXCLINICCLAIMED`, `${EXPLORER}TXCREATED`]);
   });
 
   test('links to the voucher each transaction belongs to', async ({ page }) => {
     await page.goto('/my/transactions');
 
-    await expect(page.getByRole('link', { name: `Voucher #${FUNDED_ID}` }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: `Voucher #${CLINIC_ID}` }).first()).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: `Voucher #${FUNDED_ID}` }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: `Voucher #${CLINIC_ID}` }).first(),
+    ).toBeVisible();
   });
 
-  test('says so when the indexer has no event log to read', async ({ page }) => {
+  test('says so when the indexer has no event log to read', async ({
+    page,
+  }) => {
     // No event log in the mock: the endpoint answers 404, exactly like an
     // indexer that predates backend #13.
     await mockBackend(page, {
@@ -197,6 +215,8 @@ test.describe('Wallet transaction history (#165)', () => {
     await expect(link).toBeVisible();
     await link.click();
 
-    await expect(page.getByRole('heading', { name: 'Transaction history' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Transaction history' }),
+    ).toBeVisible();
   });
 });

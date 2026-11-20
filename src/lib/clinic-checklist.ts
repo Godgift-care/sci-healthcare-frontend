@@ -55,7 +55,12 @@ export type ClinicChecklistInput = {
 };
 
 /** Statuses a voucher reaches only after the clinic marked the patient seen. */
-const CLAIMED_STATUSES = new Set(['Claimed', 'Attested', 'Settled', 'Disputed']);
+const CLAIMED_STATUSES = new Set([
+  'Claimed',
+  'Attested',
+  'Settled',
+  'Disputed',
+]);
 
 /**
  * The five steps, in order, each done/current/pending.
@@ -75,7 +80,9 @@ export function clinicChecklist({
   // now and none of the later steps can proceed from here.
   const verified = status === 'Active';
   const hasService = services.some((service) => service.active !== false);
-  const claimed = vouchers.some((voucher) => CLAIMED_STATUSES.has(voucher.status));
+  const claimed = vouchers.some((voucher) =>
+    CLAIMED_STATUSES.has(voucher.status),
+  );
   const paid = vouchers.some((voucher) => voucher.status === 'Settled');
 
   const funded = vouchers.some((voucher) => voucher.status === 'Funded');
@@ -99,7 +106,11 @@ export function clinicChecklist({
       hint: status === 'Suspended' ? 'suspended' : 'waitingVerification',
     },
     { id: 'service', done: hasService, hint: 'listService' },
-    { id: 'claim', done: claimed, hint: funded ? 'claimVoucher' : 'shareClinic' },
+    {
+      id: 'claim',
+      done: claimed,
+      hint: funded ? 'claimVoucher' : 'shareClinic',
+    },
     { id: 'paid', done: paid, hint: paidHint },
   ];
 

@@ -43,7 +43,8 @@ export function Button({
       'bg-[var(--color-brand)] text-[var(--color-brand-text)] hover:opacity-90 disabled:opacity-40',
     ghost:
       'border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] disabled:opacity-40',
-    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 disabled:opacity-40',
+    danger:
+      'bg-[var(--color-danger)] text-white hover:opacity-90 disabled:opacity-40',
   }[variant];
 
   return (
@@ -51,7 +52,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={` inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed max-sm:min-h-11 ${styles} ${className}`}
     >
       {children}
     </button>
@@ -77,10 +78,16 @@ export function StatusBadge({ status }: { status: VoucherStatus }) {
   );
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+      <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
         {label}
       </div>
       <div className="mt-1 text-sm">{children}</div>
@@ -133,16 +140,26 @@ export function Empty({
   return (
     <div className="rounded-xl border border-dashed border-[var(--color-line)] px-6 py-12 text-center text-sm text-[var(--color-ink-soft)]">
       {title && (
-        <p className="text-base font-semibold text-[var(--color-ink)]">{title}</p>
+        <p className="text-base font-semibold text-[var(--color-ink)]">
+          {title}
+        </p>
       )}
       {description && <div className="mt-1.5">{description}</div>}
-      {children && <div className={title || description ? 'mt-1.5' : ''}>{children}</div>}
+      {children && (
+        <div className={title || description ? 'mt-1.5' : ''}>{children}</div>
+      )}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   );
 }
 
-export function ExplorerLink( { href, children }: { href: string; children: ReactNode }) {
+export function ExplorerLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
     <a
       href={href}
@@ -155,7 +172,13 @@ export function ExplorerLink( { href, children }: { href: string; children: Reac
   );
 }
 
-export function NavLink( { href, children }: { href: string; children: ReactNode }) {
+export function NavLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}

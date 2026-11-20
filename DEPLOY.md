@@ -12,8 +12,8 @@ depends on where the backend landed.
 2. Framework preset is detected as Next.js from `vercel.json`.
 3. Under **Environment Variables**, add one:
 
-   | Name | Value |
-   | --- | --- |
+   | Name                  | Value                                                           |
+   | --------------------- | --------------------------------------------------------------- |
    | `NEXT_PUBLIC_API_URL` | your Render URL, e.g. `https://sci-healthcare-api.onrender.com` |
 
 4. Deploy.

@@ -10,7 +10,8 @@ const FORMULA_PREFIX = /^[=+\-@\t\r]/;
 
 export function csvEscape(value: string | number | null | undefined): string {
   const raw = value == null ? '' : String(value);
-  const safe = typeof value !== 'number' && FORMULA_PREFIX.test(raw) ? `'${raw}` : raw;
+  const safe =
+    typeof value !== 'number' && FORMULA_PREFIX.test(raw) ? `'${raw}` : raw;
   const escaped = safe.replaceAll('"', '""');
   return /[",\n\r]/.test(safe) ? `"${escaped}"` : escaped;
 }
@@ -24,7 +25,9 @@ export function toCsvString(
 export function buildVoucherCsvRows(
   vouchers: Voucher[],
   providerNames?: Map<string, string>,
-  baseUrl = typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+  baseUrl = typeof window === 'undefined'
+    ? 'http://localhost'
+    : window.location.origin,
   staffNotes?: Record<string, string>,
 ): Array<Array<string>> {
   const rows: Array<Array<string>> = [
@@ -42,7 +45,8 @@ export function buildVoucherCsvRows(
   ];
 
   for (const voucher of vouchers) {
-    const clinic = providerNames?.get(voucher.provider.address) ?? voucher.provider.name;
+    const clinic =
+      providerNames?.get(voucher.provider.address) ?? voucher.provider.name;
     rows.push([
       voucher.id,
       clinic,
@@ -50,7 +54,12 @@ export function buildVoucherCsvRows(
       formatUsdc(voucher.amount).replaceAll(',', ''),
       voucher.status,
       formatDate(voucher.createdAt),
-      formatDate(voucher.disputeResolvedAt ?? voucher.attestedAt ?? voucher.claimedAt ?? voucher.createdAt),
+      formatDate(
+        voucher.disputeResolvedAt ??
+          voucher.attestedAt ??
+          voucher.claimedAt ??
+          voucher.createdAt,
+      ),
       new URL(`/vouchers/${voucher.id}`, baseUrl).toString(),
       staffNotes?.[voucher.id] ?? '',
     ]);
@@ -66,7 +75,8 @@ export function buildReceiptCsvRows(
   const rows: Array<Array<string>> = [['date', 'clinic', 'service', 'amount']];
 
   for (const receipt of receipts) {
-    const clinic = providerNames?.get(receipt.providerAddress) ?? receipt.providerAddress;
+    const clinic =
+      providerNames?.get(receipt.providerAddress) ?? receipt.providerAddress;
     rows.push([
       formatDate(receipt.settledAt),
       clinic,
@@ -159,7 +169,9 @@ export function downloadCsv(
   rows: Array<Array<string | number | null | undefined>>,
 ): void {
   if (typeof document === 'undefined') return;
-  const blob = new Blob([toCsvString(rows)], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([toCsvString(rows)], {
+    type: 'text/csv;charset=utf-8;',
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

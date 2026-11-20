@@ -44,7 +44,7 @@ Out of scope:
 - Anything requiring the admin key to be compromised (the trust model documents
   admin powers explicitly)
 - Attesters confirming care that did not happen — this is a known and documented
-  trust assumption, not a vulnerability. Reports that *narrow* it are welcome.
+  trust assumption, not a vulnerability. Reports that _narrow_ it are welcome.
 - Denial of service against public Soroban RPC endpoints
 - Missing rate limits on read-only endpoints already behind a rate limiter
 - Testnet-only misconfiguration

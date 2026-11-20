@@ -3,9 +3,15 @@ export const MAX_RECENT_VOUCHERS = 10;
 export const RECENT_VOUCHERS_CHANGE_EVENT = 'sci-recent-vouchers-change';
 
 /** Keep only unique numeric voucher ids, newest first. */
-export function addRecentVoucherId(ids: readonly string[], id: string): string[] {
+export function addRecentVoucherId(
+  ids: readonly string[],
+  id: string,
+): string[] {
   if (!/^\d+$/.test(id)) return [...ids].slice(0, MAX_RECENT_VOUCHERS);
-  return [id, ...ids.filter((recentId) => recentId !== id)].slice(0, MAX_RECENT_VOUCHERS);
+  return [id, ...ids.filter((recentId) => recentId !== id)].slice(
+    0,
+    MAX_RECENT_VOUCHERS,
+  );
 }
 
 export function getRecentVoucherIdsSnapshot(): string {
@@ -43,10 +49,12 @@ export function rememberRecentVoucherId(id: string): void {
   try {
     window.localStorage.setItem(
       RECENT_VOUCHERS_STORAGE_KEY,
-      JSON.stringify(addRecentVoucherId(
-        parseRecentVoucherIds(getRecentVoucherIdsSnapshot()),
-        id,
-      )),
+      JSON.stringify(
+        addRecentVoucherId(
+          parseRecentVoucherIds(getRecentVoucherIdsSnapshot()),
+          id,
+        ),
+      ),
     );
     window.dispatchEvent(new Event(RECENT_VOUCHERS_CHANGE_EVENT));
   } catch {

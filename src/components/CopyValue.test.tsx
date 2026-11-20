@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CopyValue } from './CopyValue';
@@ -43,10 +49,14 @@ it('announces success without renaming the button', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Copy clinic address' }));
 
   await waitFor(() =>
-    expect(screen.getByRole('status').textContent).toBe('clinic address copied'),
+    expect(screen.getByRole('status').textContent).toBe(
+      'clinic address copied',
+    ),
   );
   // The accessible name never changes, so the button cannot be "lost".
-  expect(screen.getByRole('button', { name: 'Copy clinic address' })).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Copy clinic address' }),
+  ).toBeTruthy();
 });
 
 it('says so when the clipboard refuses', async () => {
@@ -56,13 +66,17 @@ it('says so when the clipboard refuses', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Copy clinic address' }));
 
   await waitFor(() =>
-    expect(screen.getByRole('status').textContent).toBe('Could not copy clinic address'),
+    expect(screen.getByRole('status').textContent).toBe(
+      'Could not copy clinic address',
+    ),
   );
 });
 
 it('exposes the full value as the hover title', () => {
   render(<CopyValue value={ADDRESS} label="clinic address" />);
-  expect(screen.getByRole('button', { name: 'Copy clinic address' }).getAttribute('title')).toBe(
-    ADDRESS,
-  );
+  expect(
+    screen
+      .getByRole('button', { name: 'Copy clinic address' })
+      .getAttribute('title'),
+  ).toBe(ADDRESS);
 });

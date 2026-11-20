@@ -52,7 +52,10 @@ export function sortRows<T>(
  * Cycles a column's sort direction: a new column starts ascending, and
  * re-activating the current column toggles between ascending and descending.
  */
-export function nextSortDirection(current: SortState | null, key: string): SortState {
+export function nextSortDirection(
+  current: SortState | null,
+  key: string,
+): SortState {
   if (!current || current.key !== key) {
     return { key, direction: 'ascending' };
   }

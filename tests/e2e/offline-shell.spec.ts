@@ -45,7 +45,9 @@ async function waitForController(page: Page): Promise<void> {
     .toBe(true);
 }
 
-test('the manifest and its icons make the app installable', async ({ page }) => {
+test('the manifest and its icons make the app installable', async ({
+  page,
+}) => {
   await page.goto('/');
 
   const href = await page.getAttribute('link[rel="manifest"]', 'href');
@@ -84,16 +86,19 @@ test('the manifest and its icons make the app installable', async ({ page }) => 
 
   // An image that does not decode is not an icon: check the real dimensions the
   // generator claims, in the browser that would have to render them.
-  const decoded = await page.evaluate(async (sources: string[]) => {
-    const load = (src: string) =>
-      new Promise<[string, number]>((resolve) => {
-        const image = new Image();
-        image.onload = () => resolve([src, image.naturalWidth]);
-        image.onerror = () => resolve([src, 0]);
-        image.src = src;
-      });
-    return Promise.all(sources.map(load));
-  }, manifest.icons.map((icon) => icon.src));
+  const decoded = await page.evaluate(
+    async (sources: string[]) => {
+      const load = (src: string) =>
+        new Promise<[string, number]>((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve([src, image.naturalWidth]);
+          image.onerror = () => resolve([src, 0]);
+          image.src = src;
+        });
+      return Promise.all(sources.map(load));
+    },
+    manifest.icons.map((icon) => icon.src),
+  );
 
   const dimensions = Object.fromEntries(decoded);
   expect(dimensions['/icons/icon.svg']).toBeGreaterThan(0);
@@ -127,7 +132,10 @@ test('the shell loads offline, and the app still asks the indexer', async ({
   await expect
     .poll(async () => (await cachedUrls(page)).includes(`${origin}/`))
     .toBe(true);
-  expect(apiRequests.length, 'the app should have called the indexer').toBeGreaterThan(0);
+  expect(
+    apiRequests.length,
+    'the app should have called the indexer',
+  ).toBeGreaterThan(0);
 
   const whileOnline = apiRequests.length;
 
@@ -136,10 +144,15 @@ test('the shell loads offline, and the app still asks the indexer', async ({
 
   // The document itself came from the worker's cache, not from the browser's
   // HTTP cache or a still-open connection.
-  expect(reloaded?.fromServiceWorker(), 'reload should be served by the worker').toBe(true);
+  expect(
+    reloaded?.fromServiceWorker(),
+    'reload should be served by the worker',
+  ).toBe(true);
 
   // Header, footer and nav come from the cached shell...
-  await expect(page.getByRole('link', { name: 'SCI Healthcare' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'SCI Healthcare' }),
+  ).toBeVisible();
   await expect(
     page.getByRole('navigation', { name: 'Footer navigation' }),
   ).toBeVisible();
@@ -169,7 +182,9 @@ test('a waiting second worker prompts the user to reload', async ({ page }) => {
     )
     .toBe('installed');
 
-  await expect(page.getByRole('button', { name: 'Reload to update' })).toBeVisible({
+  await expect(
+    page.getByRole('button', { name: 'Reload to update' }),
+  ).toBeVisible({
     timeout: 15_000,
   });
   expect(
@@ -185,7 +200,9 @@ test('a waiting second worker prompts the user to reload', async ({ page }) => {
   await waitForController(page);
 });
 
-test('indexer data is never cached, however patient-shaped it is', async ({ page }) => {
+test('indexer data is never cached, however patient-shaped it is', async ({
+  page,
+}) => {
   await useMockWallet(page, FUNDER);
   await mockBackend(page, {
     providers: [CLINIC],
@@ -212,6 +229,8 @@ test('indexer data is never cached, however patient-shaped it is', async ({ page
   // ...the API host and the RSC payloads are not, and neither is any route
   // that names a clinic or a voucher.
   expect(urls.filter((url) => url.includes('localhost:8080'))).toEqual([]);
-  expect(paths.filter((path) => /^\/(clinics|vouchers|my)\b/.test(path))).toEqual([]);
+  expect(
+    paths.filter((path) => /^\/(clinics|vouchers|my)\b/.test(path)),
+  ).toEqual([]);
   expect(urls.filter((url) => url.includes('_rsc='))).toEqual([]);
 });

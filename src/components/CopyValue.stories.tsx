@@ -27,7 +27,11 @@ export const Address: Story = {
 
 /** A known name replaces the shortened address. */
 export const NamedClinic: Story = {
-  args: { value: ADDRESS, label: 'clinic address', name: 'Ikeja General Clinic' },
+  args: {
+    value: ADDRESS,
+    label: 'clinic address',
+    name: 'Ikeja General Clinic',
+  },
 };
 
 /** Beside a value that is already displayed in full. */

@@ -21,7 +21,9 @@ export default function Error({
     <div className="mx-auto max-w-xl">
       <Card className="space-y-4 p-6">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">Something went wrong</h1>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Something went wrong
+          </h1>
           <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
             This page could not be shown. Your wallet was not asked to sign
             anything, so no transaction was submitted.

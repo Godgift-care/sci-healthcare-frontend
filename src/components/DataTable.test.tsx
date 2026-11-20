@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { DataTable, type DataTableColumn } from './DataTable';
@@ -18,7 +24,12 @@ type Row = { name: string; amount: number };
 
 const columns: DataTableColumn<Row>[] = [
   { key: 'name', header: 'Clinic', accessor: (row) => row.name },
-  { key: 'amount', header: 'Amount', accessor: (row) => row.amount, align: 'right' },
+  {
+    key: 'amount',
+    header: 'Amount',
+    accessor: (row) => row.amount,
+    align: 'right',
+  },
 ];
 
 const rows: Row[] = [
@@ -35,7 +46,12 @@ function bodyNames(): string[] {
 
 it('sorts by the first column and says so', () => {
   render(
-    <DataTable caption="Recent vouchers" columns={columns} rows={rows} getRowKey={(r) => r.name} />,
+    <DataTable
+      caption="Recent vouchers"
+      columns={columns}
+      rows={rows}
+      getRowKey={(r) => r.name}
+    />,
   );
 
   // A caption for screen readers, and a real button in each sortable header.
@@ -47,19 +63,32 @@ it('sorts by the first column and says so', () => {
 
 it('reverses when the same header is activated again', () => {
   render(
-    <DataTable caption="Recent vouchers" columns={columns} rows={rows} getRowKey={(r) => r.name} />,
+    <DataTable
+      caption="Recent vouchers"
+      columns={columns}
+      rows={rows}
+      getRowKey={(r) => r.name}
+    />,
   );
 
   fireEvent.click(screen.getByRole('button', { name: /Clinic/ }));
-  expect(screen.getByRole('button', { name: /Clinic/ }).closest('th')?.getAttribute('aria-sort')).toBe(
-    'descending',
-  );
+  expect(
+    screen
+      .getByRole('button', { name: /Clinic/ })
+      .closest('th')
+      ?.getAttribute('aria-sort'),
+  ).toBe('descending');
   expect(bodyNames()).toEqual(['Lekki Care Centre', 'Ikeja General Clinic']);
 });
 
 it('sorts a numeric column by value, not by text', () => {
   render(
-    <DataTable caption="Recent vouchers" columns={columns} rows={rows} getRowKey={(r) => r.name} />,
+    <DataTable
+      caption="Recent vouchers"
+      columns={columns}
+      rows={rows}
+      getRowKey={(r) => r.name}
+    />,
   );
 
   fireEvent.click(screen.getByRole('button', { name: /Amount/ }));
@@ -69,6 +98,13 @@ it('sorts a numeric column by value, not by text', () => {
 });
 
 it('shows the empty message instead of an empty table', () => {
-  render(<DataTable caption="Recent vouchers" columns={columns} rows={[]} getRowKey={(r) => r.name} />);
+  render(
+    <DataTable
+      caption="Recent vouchers"
+      columns={columns}
+      rows={[]}
+      getRowKey={(r) => r.name}
+    />,
+  );
   expect(screen.getByText('No data recorded yet.')).toBeTruthy();
 });

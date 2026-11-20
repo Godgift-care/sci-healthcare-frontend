@@ -18,10 +18,16 @@ import { Alert, Button, Card } from '@/components/ui';
 /** Re-check readiness while the page is open; it is what people watch. */
 const READY_REFRESH_MS = 30_000;
 
-const HEADLINE: Record<Overall, { kind: 'success' | 'error' | 'info'; text: string }> = {
+const HEADLINE: Record<
+  Overall,
+  { kind: 'success' | 'error' | 'info'; text: string }
+> = {
   checking: { kind: 'info', text: 'Checking the API…' },
   operational: { kind: 'success', text: 'All systems operational' },
-  degraded: { kind: 'error', text: 'Degraded: the API is up but not fully healthy' },
+  degraded: {
+    kind: 'error',
+    text: 'Degraded: the API is up but not fully healthy',
+  },
   unreachable: { kind: 'error', text: 'The API cannot be reached' },
 };
 
@@ -34,8 +40,17 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: string; failText: string }) {
-  if (ok === undefined) return <span className="text-[var(--color-ink-soft)]">Not reported</span>;
+function Check({
+  ok,
+  okText,
+  failText,
+}: {
+  ok: boolean | undefined;
+  okText: string;
+  failText: string;
+}) {
+  if (ok === undefined)
+    return <span className="text-[var(--color-ink-soft)]">Not reported</span>;
   return ok ? (
     <span className="text-[var(--color-ok)]">{okText}</span>
   ) : (
@@ -57,8 +72,13 @@ export default function StatusPage() {
     error: readyError,
     isValidating,
     mutate,
-  } = useReady({ refreshInterval: READY_REFRESH_MS, shouldRetryOnError: false });
-  const { version, error: versionError } = useVersion({ shouldRetryOnError: false });
+  } = useReady({
+    refreshInterval: READY_REFRESH_MS,
+    shouldRetryOnError: false,
+  });
+  const { version, error: versionError } = useVersion({
+    shouldRetryOnError: false,
+  });
 
   // A cached answer stays on screen while a refresh fails, so the page only
   // calls the API unreachable when there is no answer at all.
@@ -83,7 +103,11 @@ export default function StatusPage() {
             they do not depend on the API being healthy.
           </p>
         </div>
-        <Button variant="ghost" disabled={isValidating} onClick={() => void mutate()}>
+        <Button
+          variant="ghost"
+          disabled={isValidating}
+          onClick={() => void mutate()}
+        >
           {isValidating ? 'Checking…' : 'Check again'}
         </Button>
       </div>
@@ -93,9 +117,10 @@ export default function StatusPage() {
           <p className="font-semibold">{headline.text}</p>
           {overall === 'unreachable' && (
             <p className="mt-1">
-              The API at <span className="mono break-all">{config.apiUrl}</span> did
-              not answer. Pages that list clinics or vouchers will not load until it
-              is back; it may also be waking up, which can take up to a minute.
+              The API at <span className="mono break-all">{config.apiUrl}</span>{' '}
+              did not answer. Pages that list clinics or vouchers will not load
+              until it is back; it may also be waking up, which can take up to a
+              minute.
             </p>
           )}
           {problems.length > 0 && (
@@ -110,7 +135,9 @@ export default function StatusPage() {
 
       {mismatches.length > 0 && (
         <Alert>
-          <p className="font-semibold">This app and the API disagree about the deployment</p>
+          <p className="font-semibold">
+            This app and the API disagree about the deployment
+          </p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {mismatches.map((m) => (
               <li key={m}>{m}</li>
@@ -120,12 +147,18 @@ export default function StatusPage() {
       )}
 
       <section aria-labelledby="status-api" className="space-y-2">
-        <h2 id="status-api" className="text-base font-semibold">API readiness</h2>
+        <h2 id="status-api" className="text-base font-semibold">
+          API readiness
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label="Readiness">
               {ready ? (
-                <Check ok={ready.status === 'ready'} okText="Ready" failText="Degraded" />
+                <Check
+                  ok={ready.status === 'ready'}
+                  okText="Ready"
+                  failText="Degraded"
+                />
               ) : overall === 'unreachable' ? (
                 <span className="text-[var(--color-danger)]">Unreachable</span>
               ) : (
@@ -134,7 +167,11 @@ export default function StatusPage() {
             </Row>
             <Row label="Database">
               {ready ? (
-                <Check ok={ready.checks.database} okText="Connected" failText="Unreachable" />
+                <Check
+                  ok={ready.checks.database}
+                  okText="Connected"
+                  failText="Unreachable"
+                />
               ) : (
                 '—'
               )}
@@ -144,14 +181,20 @@ export default function StatusPage() {
             </Row>
             <Row label="Latest indexed ledger">
               {ready?.checks.indexedLedger !== undefined ? (
-                <span className="mono">{ready.checks.indexedLedger.toLocaleString('en')}</span>
+                <span className="mono">
+                  {ready.checks.indexedLedger.toLocaleString('en')}
+                </span>
               ) : (
                 '—'
               )}
             </Row>
             <Row label="Ledger history">
               {ready?.checks.gapDetected !== undefined ? (
-                <Check ok={!ready.checks.gapDetected} okText="Complete" failText="Gap detected" />
+                <Check
+                  ok={!ready.checks.gapDetected}
+                  okText="Complete"
+                  failText="Gap detected"
+                />
               ) : (
                 '—'
               )}
@@ -161,7 +204,9 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-network" className="space-y-2">
-        <h2 id="status-network" className="text-base font-semibold">Network</h2>
+        <h2 id="status-network" className="text-base font-semibold">
+          Network
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label="This app signs for">{config.network}</Row>
@@ -171,7 +216,9 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-versions" className="space-y-2">
-        <h2 id="status-versions" className="text-base font-semibold">Versions</h2>
+        <h2 id="status-versions" className="text-base font-semibold">
+          Versions
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label="Web app">
@@ -187,13 +234,17 @@ export default function StatusPage() {
                   {apiCommit && ` (${apiCommit})`}
                 </span>
               ) : versionError ? (
-                <span className="text-[var(--color-ink-soft)]">Not available</span>
+                <span className="text-[var(--color-ink-soft)]">
+                  Not available
+                </span>
               ) : (
                 '…'
               )}
             </Row>
             {version?.startedAt && (
-              <Row label="API running since">{formatDate(version.startedAt)}</Row>
+              <Row label="API running since">
+                {formatDate(version.startedAt)}
+              </Row>
             )}
           </dl>
         </Card>

@@ -32,7 +32,9 @@ describe('buildProblemReport', () => {
 
   it('explains that only the funder can open a dispute', () => {
     const report = buildProblemReport({ id: '7', status: 'Attested' });
-    expect(report.body).toContain('Only the wallet that funded a voucher can open a dispute');
+    expect(report.body).toContain(
+      'Only the wallet that funded a voucher can open a dispute',
+    );
     expect(report.body.toLowerCase()).toContain('patient');
   });
 

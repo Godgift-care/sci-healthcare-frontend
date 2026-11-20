@@ -18,13 +18,16 @@ export type ClinicFilters = {
 
 /** The distinct countries present, in stable alphabetical order. */
 export function clinicCountries(providers: Provider[]): string[] {
-  return [...new Set(providers.map((p) => p.country).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b),
+  return [...new Set(providers.map((p) => p.country).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b),
   );
 }
 
 /** An unknown or absent `country` means "every country". */
-export function parseCountry(raw: string | null, countries: string[]): string | null {
+export function parseCountry(
+  raw: string | null,
+  countries: string[],
+): string | null {
   return raw && countries.includes(raw) ? raw : null;
 }
 
@@ -39,10 +42,14 @@ function searchText(p: Provider): string {
  * Name/service text and country filtering combine: a clinic must match the
  * term *and* the chosen country. An empty term matches everything.
  */
-export function filterClinics(providers: Provider[], { q, country }: ClinicFilters): Provider[] {
+export function filterClinics(
+  providers: Provider[],
+  { q, country }: ClinicFilters,
+): Provider[] {
   const term = q.trim().toLowerCase();
   return providers.filter(
     (p) =>
-      (!country || p.country === country) && (!term || searchText(p).includes(term)),
+      (!country || p.country === country) &&
+      (!term || searchText(p).includes(term)),
   );
 }

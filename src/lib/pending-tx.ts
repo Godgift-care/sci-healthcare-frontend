@@ -46,7 +46,9 @@ export function isTransactionPending(): boolean {
  * Subscribes to pending changes. The listener is called immediately with the
  * current state, then on every change. Returns an unsubscribe function.
  */
-export function subscribePendingTransactions(listener: PendingListener): () => void {
+export function subscribePendingTransactions(
+  listener: PendingListener,
+): () => void {
   listeners.add(listener);
   listener(pendingCount > 0);
   return () => {

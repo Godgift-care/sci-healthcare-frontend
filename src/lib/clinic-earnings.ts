@@ -26,7 +26,11 @@ export type EarningsVoucher = {
  * A `Funded` voucher is not pending payout: nobody has claimed it yet, and
  * it may still expire and refund. `Settled` has paid, `Refunded` never will.
  */
-export const PENDING_PAYOUT_STATUSES = ['Claimed', 'Attested', 'Disputed'] as const;
+export const PENDING_PAYOUT_STATUSES = [
+  'Claimed',
+  'Attested',
+  'Disputed',
+] as const;
 
 const PENDING = new Set<string>(PENDING_PAYOUT_STATUSES);
 
@@ -137,19 +141,31 @@ export function summariseEarnings(vouchers: EarningsVoucher[]): ClinicEarnings {
  * and months with neither settled nor pending money are omitted — a row of
  * zeros adds nothing to a cash-flow table.
  */
-export function monthlyEarnings(vouchers: EarningsVoucher[]): ClinicEarningsMonth[] {
+export function monthlyEarnings(
+  vouchers: EarningsVoucher[],
+): ClinicEarningsMonth[] {
   const months = new Map<
     string,
-    { settled: bigint; pending: bigint; fees: bigint; settledCount: number; pendingCount: number }
+    {
+      settled: bigint;
+      pending: bigint;
+      fees: bigint;
+      settledCount: number;
+      pendingCount: number;
+    }
   >();
 
   for (const voucher of vouchers) {
     const key = monthKey(voucher.createdAt);
     if (!key) continue;
     const amount = units(voucher.amount);
-    const row =
-      months.get(key) ??
-      { settled: 0n, pending: 0n, fees: 0n, settledCount: 0, pendingCount: 0 };
+    const row = months.get(key) ?? {
+      settled: 0n,
+      pending: 0n,
+      fees: 0n,
+      settledCount: 0,
+      pendingCount: 0,
+    };
 
     if (voucher.status === 'Settled') {
       row.settled += amount;

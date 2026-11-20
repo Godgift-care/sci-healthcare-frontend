@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -76,12 +82,16 @@ describe('ServiceWorkerRegistration', () => {
       renderRegistration();
       await Promise.resolve();
     });
-    expect(screen.queryByRole('button', { name: 'Reload to update' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Reload to update' }),
+    ).toBeNull();
 
     act(() => finishPending?.());
     finishPending = undefined;
 
-    expect(screen.getByRole('button', { name: 'Reload to update' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Reload to update' }),
+    ).toBeTruthy();
     expect(waitingWorker.postMessage).not.toHaveBeenCalled();
   });
 });

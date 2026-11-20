@@ -13,7 +13,11 @@
  * (contracts #4). The deployed contract need not have any of them — batch
  * settle is an optional upgrade — so this is a probe, not an assumption.
  */
-export const BATCH_SETTLE_METHODS = ['settle_many', 'settle_batch', 'batch_settle'] as const;
+export const BATCH_SETTLE_METHODS = [
+  'settle_many',
+  'settle_batch',
+  'batch_settle',
+] as const;
 
 /**
  * The vouchers the contract will accept `settle` for right now, in list
@@ -32,5 +36,7 @@ export function settleableVouchers<T extends { isSettleable: boolean }>(
  * voucher, which is what a contract without #4 requires.
  */
 export function batchSettleMethod(functions: readonly string[]): string | null {
-  return BATCH_SETTLE_METHODS.find((method) => functions.includes(method)) ?? null;
+  return (
+    BATCH_SETTLE_METHODS.find((method) => functions.includes(method)) ?? null
+  );
 }

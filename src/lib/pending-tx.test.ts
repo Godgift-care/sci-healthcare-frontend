@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { beginPendingTransaction, isTransactionPending, subscribePendingTransactions } from './pending-tx';
+import {
+  beginPendingTransaction,
+  isTransactionPending,
+  subscribePendingTransactions,
+} from './pending-tx';
 
 describe('pending-tx (#316 coverage)', () => {
   afterEach(() => {

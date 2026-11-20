@@ -23,11 +23,17 @@ const onChain: ChainReceipt = {
 
 describe('compareReceipt', () => {
   it('matches every displayed field', () => {
-    expect(compareReceipt(displayed, onChain)).toEqual({ ok: true, mismatches: [] });
+    expect(compareReceipt(displayed, onChain)).toEqual({
+      ok: true,
+      mismatches: [],
+    });
   });
 
   it('reports a changed amount instead of hiding it', () => {
-    const result = compareReceipt(displayed, { ...onChain, amount: 99_000_000n });
+    const result = compareReceipt(displayed, {
+      ...onChain,
+      amount: 99_000_000n,
+    });
     expect(result.ok).toBe(false);
     expect(result.mismatches).toEqual([
       { field: 'amount', displayed: '30000000', onChain: '99000000' },
@@ -40,7 +46,10 @@ describe('compareReceipt', () => {
       provider: 'GOTHER',
       service_code: 999,
     });
-    expect(result.mismatches.map((m) => m.field)).toEqual(['provider', 'service']);
+    expect(result.mismatches.map((m) => m.field)).toEqual([
+      'provider',
+      'service',
+    ]);
   });
 
   it('compares settlement time to the second', () => {

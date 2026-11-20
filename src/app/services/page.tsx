@@ -68,13 +68,13 @@ export default function ServicesPage() {
     <div className="space-y-6">
       <section className="rounded-2xl border border-[var(--color-line)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-canvas)] p-4 sm:p-5">
         <div className="max-w-2xl space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset">
             Care-voucher protocol on Stellar
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-ink)]">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--color-ink)] sm:text-2xl">
             Find care by service
           </h1>
-          <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink-soft)]">
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)] sm:text-sm">
             Search for the care you want to pay for and compare what clinics
             charge for it, then fund a voucher from the clinic page.
           </p>
@@ -83,13 +83,13 @@ export default function ServicesPage() {
         <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
           <Link
             href="/"
-            className="inline-flex max-sm:min-h-15 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-15"
           >
             Browse clinics →
           </Link>
           <Link
             href="/how-it-works"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
           >
             How it works →
           </Link>
@@ -101,7 +101,10 @@ export default function ServicesPage() {
           <h2 className="text-lg font-semibold">Service catalogue</h2>
         </div>
 
-        <div role="search" className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
+        <div
+          role="search"
+          className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]"
+        >
           <label className="block">
             <span className="sr-only">Search service name</span>
             <input
@@ -136,7 +139,7 @@ export default function ServicesPage() {
             action={
               <Link
                 href="/clinic"
-                className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90 max-sm:min-h-11"
               >
                 List a service
               </Link>
@@ -193,7 +196,7 @@ function ServiceCard({
               {s.clinicCount} clinic{s.clinicCount === 1 ? '' : 's'}
             </p>
           </div>
-          <span className="shrink-0 mono text-sm font-medium">
+          <span className="mono shrink-0 text-sm font-medium">
             ${formatUsdc(s.minPrice)}
           </span>
         </div>
@@ -207,7 +210,7 @@ function ServiceCard({
           </p>
         </div>
 
-        <p className="mt-3 text-xs text-[var(--color-brand)] font-medium underline underline-offset-2 hover:opacity-80">
+        <p className="mt-3 text-xs font-medium text-[var(--color-brand)] underline underline-offset-2 hover:opacity-80">
           Compare clinics →
         </p>
       </Card>

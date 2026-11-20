@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { BATCH_SETTLE_METHODS, batchSettleMethod, settleableVouchers } from './batch-settle';
+import {
+  BATCH_SETTLE_METHODS,
+  batchSettleMethod,
+  settleableVouchers,
+} from './batch-settle';
 
 /**
  * Settle-all rules for the clinic desk. Only vouchers the indexer marks
@@ -40,11 +44,15 @@ describe('batchSettleMethod', () => {
   it('returns null when the contract only has the single settle', () => {
     // Today's deployed spec: batch settle (contracts #4) is not there, so the
     // caller settles one voucher per write.
-    expect(batchSettleMethod(['claim', 'attest', 'settle', 'refund'])).toBeNull();
+    expect(
+      batchSettleMethod(['claim', 'attest', 'settle', 'refund']),
+    ).toBeNull();
     expect(batchSettleMethod([])).toBeNull();
   });
 
   it('does not mistake a similar name for the batch method', () => {
-    expect(batchSettleMethod(['settle', 'settle_one', 'settled_many'])).toBeNull();
+    expect(
+      batchSettleMethod(['settle', 'settle_one', 'settled_many']),
+    ).toBeNull();
   });
 });

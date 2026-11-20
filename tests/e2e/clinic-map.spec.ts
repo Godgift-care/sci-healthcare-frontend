@@ -18,7 +18,9 @@ test.beforeEach(async ({ page }) => {
   await page.route('**tile.openstreetmap.org/**', (route) => route.abort());
 });
 
-test('maps clinics with coordinates and lists the rest below', async ({ page }) => {
+test('maps clinics with coordinates and lists the rest below', async ({
+  page,
+}) => {
   await page.goto('/');
   await expect(page.getByText('Verified clinics')).toBeVisible();
 
@@ -29,17 +31,23 @@ test('maps clinics with coordinates and lists the rest below', async ({ page }) 
   await page.getByRole('button', { name: 'Map' }).click();
 
   // The map renders for the one clinic with coordinates, with attribution.
-  await expect(page.getByRole('img', { name: 'Map of 1 clinic with published locations' })).toBeVisible();
+  await expect(
+    page.getByRole('img', { name: 'Map of 1 clinic with published locations' }),
+  ).toBeVisible();
   await expect(page.getByText('OpenStreetMap')).toBeVisible();
 
   // The clinic without a location is listed below, not dropped.
-  await expect(page.getByText('Clinics without a published location')).toBeVisible();
+  await expect(
+    page.getByText('Clinics without a published location'),
+  ).toBeVisible();
   await expect(page.getByText('Lekki Care Centre')).toBeVisible();
   // The located clinic lives on the map only.
   await expect(page.getByText('Ikeja General Clinic')).toHaveCount(0);
 });
 
-test('a map that fails to load leaves the rest of the directory up (#169)', async ({ page }) => {
+test('a map that fails to load leaves the rest of the directory up (#169)', async ({
+  page,
+}) => {
   await page.goto('/');
   await expect(page.getByText('Lekki Care Centre')).toBeVisible();
 
@@ -49,7 +57,9 @@ test('a map that fails to load leaves the rest of the directory up (#169)', asyn
   await page.getByRole('button', { name: 'Map' }).click();
 
   await expect(page.getByText('The map could not be shown')).toBeVisible();
-  await expect(page.getByText('Clinics without a published location')).toBeVisible();
+  await expect(
+    page.getByText('Clinics without a published location'),
+  ).toBeVisible();
   await expect(page.getByText('Lekki Care Centre')).toBeVisible();
   await expect(page.getByText('Something went wrong')).toHaveCount(0);
 });

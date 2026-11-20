@@ -62,7 +62,9 @@ describe('splitBreakdown', () => {
     for (const toProvider of [0n, 1n, 7_500_001n, 29_999_999n, escrow]) {
       const preview = splitBreakdown(escrow, toProvider, toProvider / 100n);
       expect(preview).not.toBeNull();
-      expect(preview!.providerNet + preview!.fee + preview!.toFunder).toBe(escrow);
+      expect(preview!.providerNet + preview!.fee + preview!.toFunder).toBe(
+        escrow,
+      );
     }
   });
 

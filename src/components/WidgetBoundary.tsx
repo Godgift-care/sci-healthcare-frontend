@@ -43,8 +43,15 @@ export class WidgetBoundary extends Component<
         role="alert"
         className="rounded-xl border border-dashed border-[var(--color-line)] px-6 py-8 text-center text-sm text-[var(--color-ink-soft)]"
       >
-        <p>{this.props.label} could not be shown. The rest of the page still works.</p>
-        <Button variant="ghost" className="mt-3" onClick={() => this.setState({ failed: false })}>
+        <p>
+          {this.props.label} could not be shown. The rest of the page still
+          works.
+        </p>
+        <Button
+          variant="ghost"
+          className="mt-3"
+          onClick={() => this.setState({ failed: false })}
+        >
           Try again
         </Button>
       </div>

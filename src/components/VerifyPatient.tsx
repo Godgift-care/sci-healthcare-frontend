@@ -77,7 +77,9 @@ export function VerifyPatient({
     } catch (err) {
       if (!mounted.current) return;
       setResult('idle');
-      setError(err instanceof Error ? err.message : 'Could not check those details.');
+      setError(
+        err instanceof Error ? err.message : 'Could not check those details.',
+      );
       onVerifiedChange?.(false);
     }
   }
@@ -98,7 +100,7 @@ export function VerifyPatient({
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <label htmlFor={identifierId} className="block">
-          <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Patient reference
           </span>
           <input
@@ -116,7 +118,7 @@ export function VerifyPatient({
           />
         </label>
         <label htmlFor={keyId} className="block">
-          <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Patient secret key
           </span>
           <input
@@ -152,15 +154,15 @@ export function VerifyPatient({
       <div role="status" aria-live="polite">
         {result === 'match' && (
           <Alert kind="success">
-            <span className="font-medium">Match.</span> These details belong to this
-            voucher&apos;s patient reference.
+            <span className="font-medium">Match.</span> These details belong to
+            this voucher&apos;s patient reference.
           </Alert>
         )}
         {result === 'no-match' && (
           <Alert>
-            <span className="font-medium">No match.</span> These details do not belong
-            to this voucher. Check the reference and key with the patient before
-            claiming.
+            <span className="font-medium">No match.</span> These details do not
+            belong to this voucher. Check the reference and key with the patient
+            before claiming.
           </Alert>
         )}
         {error && <Alert>{error}</Alert>}
@@ -168,15 +170,19 @@ export function VerifyPatient({
 
       <div className="space-y-1 text-xs leading-relaxed text-[var(--color-ink-soft)]">
         <p>
-          <span className="font-medium text-[var(--color-ink)]">What a match proves:</span>{' '}
-          whoever entered this key is the patient this voucher was funded for, or
-          holds their key.
+          <span className="font-medium text-[var(--color-ink)]">
+            What a match proves:
+          </span>{' '}
+          whoever entered this key is the patient this voucher was funded for,
+          or holds their key.
         </p>
         <p>
-          <span className="font-medium text-[var(--color-ink)]">What it does not:</span>{' '}
-          that the person is who they say they are, or that this care is the right
-          care. A copied key or a relative acting for the patient also matches. Check
-          identity the way your clinic normally does.
+          <span className="font-medium text-[var(--color-ink)]">
+            What it does not:
+          </span>{' '}
+          that the person is who they say they are, or that this care is the
+          right care. A copied key or a relative acting for the patient also
+          matches. Check identity the way your clinic normally does.
         </p>
       </div>
     </div>

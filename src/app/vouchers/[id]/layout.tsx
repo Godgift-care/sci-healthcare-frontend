@@ -16,7 +16,9 @@ type VoucherParams = { params: Promise<{ id: string }> };
  * on the ledger: service, clinic, amount, status. No patient or beneficiary
  * reference appears in it.
  */
-export async function generateMetadata({ params }: VoucherParams): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: VoucherParams): Promise<Metadata> {
   const { id } = await params;
   const v = await api
     .voucher(id, { signal: AbortSignal.timeout(METADATA_TIMEOUT_MS) })
@@ -43,7 +45,10 @@ export async function generateMetadata({ params }: VoucherParams): Promise<Metad
 }
 
 /** `$3.00`, as the page shows it; the API's display string if it won't parse. */
-function usdcAmount(v: { amount: string; amountDisplay?: string | null }): string | null {
+function usdcAmount(v: {
+  amount: string;
+  amountDisplay?: string | null;
+}): string | null {
   try {
     return `$${formatUsdc(v.amount)}`;
   } catch {
@@ -52,6 +57,10 @@ function usdcAmount(v: { amount: string; amountDisplay?: string | null }): strin
 }
 
 /** Metadata only; the page below is a client component. */
-export default function VoucherLayout({ children }: { children: React.ReactNode }) {
+export default function VoucherLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }

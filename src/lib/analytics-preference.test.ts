@@ -39,7 +39,9 @@ function stubBrowser(options: {
   storageThrows?: boolean;
 }) {
   const storage = memoryStorage(
-    options.stored === undefined ? {} : { [ANALYTICS_PREFERENCE_KEY]: options.stored },
+    options.stored === undefined
+      ? {}
+      : { [ANALYTICS_PREFERENCE_KEY]: options.stored },
   );
   if (options.storageThrows) {
     storage.getItem = () => {

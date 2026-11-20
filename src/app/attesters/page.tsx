@@ -23,15 +23,18 @@ export default function AttestersPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold tracking-tight">Attester directory</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Attester directory
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-            Independent third parties who verify clinical care delivery. Escrowed funds
-            only release to clinics when an authorized attester confirms the patient was seen.
+            Independent third parties who verify clinical care delivery.
+            Escrowed funds only release to clinics when an authorized attester
+            confirms the patient was seen.
           </p>
         </div>
 
         {/* Filter */}
-        <label className="flex items-center gap-2 text-xs font-medium text-[var(--color-ink-soft)] cursor-pointer">
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[var(--color-ink-soft)]">
           <input
             type="checkbox"
             checked={includeInactive}
@@ -66,14 +69,26 @@ export default function AttestersPage() {
               be read at 360px. */}
           <Card className="overflow-x-auto p-4">
             <table className="block w-full text-start text-sm sm:table">
-              <caption className="sr-only">Directory of authorized attesters</caption>
+              <caption className="sr-only">
+                Directory of authorized attesters
+              </caption>
               <thead className="hidden sm:table-header-group">
                 <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
-                  <th scope="col" className="pb-3 font-medium">Attester / Organisation</th>
-                  <th scope="col" className="pb-3 font-medium">Stellar address</th>
-                  <th scope="col" className="pb-3 text-end font-medium">Confirmations</th>
-                  <th scope="col" className="pb-3 font-medium">Added</th>
-                  <th scope="col" className="pb-3 text-end font-medium">Status</th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Attester / Organisation
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Stellar address
+                  </th>
+                  <th scope="col" className="pb-3 text-end font-medium">
+                    Confirmations
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Added
+                  </th>
+                  <th scope="col" className="pb-3 text-end font-medium">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="block space-y-3 sm:table-row-group sm:space-y-0 sm:divide-y sm:divide-[var(--color-line)]">
@@ -83,7 +98,7 @@ export default function AttestersPage() {
                     className="block rounded-2xl border border-[var(--color-line)] p-4 transition hover:bg-[var(--color-canvas)]/50 sm:rounded-none sm:border-x-0 sm:border-b-0 sm:p-0"
                   >
                     <td className="block sm:table-cell sm:py-3.5">
-                      <div className="break-words font-medium text-[var(--color-ink)]">
+                      <div className="font-medium break-words text-[var(--color-ink)]">
                         {a.name || 'Accredited Medical Attester'}
                       </div>
                       <div className="text-xs text-[var(--color-ink-soft)]">
@@ -98,24 +113,26 @@ export default function AttestersPage() {
                         <CopyValue
                           value={a.address}
                           buttonOnly
-                          label={t('components.copyValue.labels.attesterAddress')}
+                          label={t(
+                            'components.copyValue.labels.attesterAddress',
+                          )}
                         />
                       </span>
                     </td>
                     <td className="mt-3 flex items-center justify-between text-sm sm:mt-0 sm:table-cell sm:py-3.5 sm:text-end">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                      <span className="text-[10px] font-medium tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                         Confirmations
                       </span>
                       <span className="font-medium">{a.attestations}</span>
                     </td>
                     <td className="mt-1 flex items-center justify-between text-xs text-[var(--color-ink-soft)] sm:mt-0 sm:table-cell sm:py-3.5">
-                      <span className="text-[10px] font-medium uppercase tracking-wide sm:hidden">
+                      <span className="text-[10px] font-medium tracking-wide uppercase sm:hidden">
                         Added
                       </span>
                       <span>{formatDate(a.addedAt)}</span>
                     </td>
                     <td className="mt-2 flex items-center justify-between text-end sm:mt-0 sm:table-cell sm:py-3.5">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                      <span className="text-[10px] font-medium tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                         Status
                       </span>
                       <span

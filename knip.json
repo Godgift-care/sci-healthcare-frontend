@@ -1,0 +1,21 @@
+{
+  "entry": [
+    "src/app/**/{page,layout,route,template,loading,error,not-found,opengraph-image,icon}.{ts,tsx}",
+    "scripts/*.mjs",
+    "tests/**/*.spec.ts",
+    ".storybook/**/*.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "tests/**/*.ts",
+    ".storybook/**/*.ts",
+    "scripts/**/*.mjs"
+  ],
+  "ignoreIssues": {
+    "src/lib/contracts/generated/**": ["exports", "types"],
+    "src/lib/stellar.ts": ["exports"]
+  },
+  "ignoreDependencies": ["tailwindcss", "@storybook/react"],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": false
+}

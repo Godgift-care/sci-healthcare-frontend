@@ -39,10 +39,15 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('checks the patient locally before the clinic claims', async ({ page, context }) => {
+test('checks the patient locally before the clinic claims', async ({
+  page,
+  context,
+}) => {
   const requests: string[] = [];
   page.on('request', (request) => {
-    requests.push(`${request.method()} ${request.url()} ${request.postData() ?? ''}`);
+    requests.push(
+      `${request.method()} ${request.url()} ${request.postData() ?? ''}`,
+    );
   });
 
   await page.goto('/clinic');
@@ -50,7 +55,9 @@ test('checks the patient locally before the clinic claims', async ({ page, conte
 
   const claim = page.getByRole('button', { name: 'Mark patient seen' });
   await expect(claim).toBeDisabled();
-  await expect(page.getByText(/requires a patient check before claiming/)).toBeVisible();
+  await expect(
+    page.getByText(/requires a patient check before claiming/),
+  ).toBeVisible();
 
   // The check is optional to open, and explains both sides of what it means.
   await page.getByRole('button', { name: 'Verify patient' }).click();
@@ -82,8 +89,12 @@ test('checks the patient locally before the clinic claims', async ({ page, conte
   // Nothing typed was stored, cooked into a cookie, or sent anywhere.
   expect(await storageSnapshot(page)).toEqual(storageBefore);
   expect(await context.cookies()).toEqual(cookiesBefore);
-  expect(JSON.stringify(await storageSnapshot(page))).not.toContain(PATIENT_KEY);
-  expect(JSON.stringify(await storageSnapshot(page))).not.toContain(PATIENT_IDENTIFIER);
+  expect(JSON.stringify(await storageSnapshot(page))).not.toContain(
+    PATIENT_KEY,
+  );
+  expect(JSON.stringify(await storageSnapshot(page))).not.toContain(
+    PATIENT_IDENTIFIER,
+  );
   expect(page.url()).not.toContain(PATIENT_IDENTIFIER);
   const sent = requests.join('\n');
   expect(sent).not.toContain(PATIENT_KEY);

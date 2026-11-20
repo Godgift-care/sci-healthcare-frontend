@@ -43,25 +43,42 @@ describe('localIdentity encryption', () => {
     const patientKey = 'p'.repeat(43);
     localStorage.setItem(
       'sci:saved-patients',
-      JSON.stringify([{ nickname: 'Mum', identifier: 'patient-001', key: patientKey }]),
+      JSON.stringify([
+        { nickname: 'Mum', identifier: 'patient-001', key: patientKey },
+      ]),
     );
     localStorage.setItem('sci:selected-patient', 'Mum');
 
-    await expect(localIdentity.enableEncryption('correct horse battery')).resolves.toBe(true);
+    await expect(
+      localIdentity.enableEncryption('correct horse battery'),
+    ).resolves.toBe(true);
     const encryptedValue = localStorage.getItem('sci:saved-patients') ?? '';
     expect(encryptedValue).not.toContain(patientKey);
     expect(encryptedValue).not.toContain('patient-001');
     expect(encryptedValue).not.toContain('Mum');
     expect(localStorage.getItem('sci:selected-patient')).toBeNull();
-    expect(localIdentity.load()).toMatchObject({ encrypted: true, locked: false });
+    expect(localIdentity.load()).toMatchObject({
+      encrypted: true,
+      locked: false,
+    });
 
     localIdentity.lock();
-    expect(localIdentity.load()).toMatchObject({ patients: [], encrypted: true, locked: true });
+    expect(localIdentity.load()).toMatchObject({
+      patients: [],
+      encrypted: true,
+      locked: true,
+    });
     await expect(localIdentity.unlock('wrong passphrase')).resolves.toBe(false);
     expect(localStorage.getItem('sci:saved-patients')).toBe(encryptedValue);
-    expect(localIdentity.load()).toMatchObject({ patients: [], encrypted: true, locked: true });
+    expect(localIdentity.load()).toMatchObject({
+      patients: [],
+      encrypted: true,
+      locked: true,
+    });
 
-    await expect(localIdentity.unlock('correct horse battery')).resolves.toBe(true);
+    await expect(localIdentity.unlock('correct horse battery')).resolves.toBe(
+      true,
+    );
     expect(localIdentity.load().patients).toEqual([
       { nickname: 'Mum', identifier: 'patient-001', key: patientKey },
     ]);
@@ -72,16 +89,24 @@ describe('localIdentity encryption', () => {
     localStorage.setItem('sci:beneficiary-id', 'legacy-patient');
     localStorage.setItem('sci:beneficiary-key', patientKey);
 
-    await expect(localIdentity.enableEncryption('a strong passphrase')).resolves.toBe(true);
+    await expect(
+      localIdentity.enableEncryption('a strong passphrase'),
+    ).resolves.toBe(true);
     expect(localStorage.getItem('sci:beneficiary-id')).toBeNull();
     expect(localStorage.getItem('sci:beneficiary-key')).toBeNull();
     const encryptedValue = localStorage.getItem('sci:saved-patients') ?? '';
     expect(encryptedValue).not.toContain(patientKey);
 
     localIdentity.lock();
-    await expect(localIdentity.unlock('a strong passphrase')).resolves.toBe(true);
+    await expect(localIdentity.unlock('a strong passphrase')).resolves.toBe(
+      true,
+    );
     expect(localIdentity.load().patients).toEqual([
-      { nickname: 'Saved patient', identifier: 'legacy-patient', key: patientKey },
+      {
+        nickname: 'Saved patient',
+        identifier: 'legacy-patient',
+        key: patientKey,
+      },
     ]);
   });
 });
@@ -111,7 +136,9 @@ describe('beneficiaryRef', () => {
   });
 
   it('rejects an empty identifier and a short key', async () => {
-    await expect(beneficiaryRef('   ', KEY)).rejects.toThrow(/patient reference/i);
+    await expect(beneficiaryRef('   ', KEY)).rejects.toThrow(
+      /patient reference/i,
+    );
     await expect(beneficiaryRef('patient-001', 'too-short')).rejects.toThrow(
       /32 characters/i,
     );
@@ -119,33 +146,44 @@ describe('beneficiaryRef', () => {
 });
 
 describe('matchesBeneficiaryRef', () => {
-  const REF = '13833777cd997fe9b416748083856e2deaf0f8fb979a40553214d4fe15318560';
+  const REF =
+    '13833777cd997fe9b416748083856e2deaf0f8fb979a40553214d4fe15318560';
 
   it('matches the right identifier and key, ignoring case and whitespace', async () => {
-    await expect(matchesBeneficiaryRef(REF, 'patient-001', KEY)).resolves.toBe(true);
-    await expect(matchesBeneficiaryRef(` ${REF.toUpperCase()} `, 'PATIENT-001 ', KEY)).resolves.toBe(
+    await expect(matchesBeneficiaryRef(REF, 'patient-001', KEY)).resolves.toBe(
       true,
     );
+    await expect(
+      matchesBeneficiaryRef(` ${REF.toUpperCase()} `, 'PATIENT-001 ', KEY),
+    ).resolves.toBe(true);
   });
 
   it('does not match a different identifier or key', async () => {
-    await expect(matchesBeneficiaryRef(REF, 'patient-002', KEY)).resolves.toBe(false);
+    await expect(matchesBeneficiaryRef(REF, 'patient-002', KEY)).resolves.toBe(
+      false,
+    );
     await expect(
-      matchesBeneficiaryRef(REF, 'patient-001', 'a-different-secret-key-0123456789'),
+      matchesBeneficiaryRef(
+        REF,
+        'patient-001',
+        'a-different-secret-key-0123456789',
+      ),
     ).resolves.toBe(false);
   });
 
   it('treats a malformed voucher reference as no match without leaking input', async () => {
-    await expect(matchesBeneficiaryRef('not-a-reference', 'patient-001', KEY)).resolves.toBe(
-      false,
-    );
+    await expect(
+      matchesBeneficiaryRef('not-a-reference', 'patient-001', KEY),
+    ).resolves.toBe(false);
   });
 
   it('rejects input the panel must explain instead', async () => {
-    await expect(matchesBeneficiaryRef(REF, '   ', KEY)).rejects.toThrow(/patient reference/i);
-    await expect(matchesBeneficiaryRef(REF, 'patient-001', 'short')).rejects.toThrow(
-      /32 characters/i,
+    await expect(matchesBeneficiaryRef(REF, '   ', KEY)).rejects.toThrow(
+      /patient reference/i,
     );
+    await expect(
+      matchesBeneficiaryRef(REF, 'patient-001', 'short'),
+    ).rejects.toThrow(/32 characters/i);
   });
 });
 
@@ -205,26 +243,36 @@ describe('parsePatientBackup', () => {
   });
 
   it('lists a backup without a nickname under its patient reference', async () => {
-    const patient = await parsePatientBackup('card-881 | 0123456789abcdef0123456789abcdef');
+    const patient = await parsePatientBackup(
+      'card-881 | 0123456789abcdef0123456789abcdef',
+    );
     expect(patient.nickname).toBe('card-881');
   });
 
   it('rejects a corrupted backup with a clear error', async () => {
     await expect(
-      parsePatientBackup(JSON.stringify({ identifier: 'patient-123', key: 'too-short' })),
+      parsePatientBackup(
+        JSON.stringify({ identifier: 'patient-123', key: 'too-short' }),
+      ),
     ).rejects.toThrow('at least 32 characters');
   });
 });
 
 describe('serialisePatientBackup', () => {
   it('round-trips through the importer with nickname, reference and key', async () => {
-    const original = { nickname: 'Mum', identifier: 'card-881', key: '0123456789abcdef0123456789abcdef' };
-    await expect(parsePatientBackup(serialisePatientBackup(original))).resolves.toEqual(original);
+    const original = {
+      nickname: 'Mum',
+      identifier: 'card-881',
+      key: '0123456789abcdef0123456789abcdef',
+    };
+    await expect(
+      parsePatientBackup(serialisePatientBackup(original)),
+    ).resolves.toEqual(original);
   });
 
   it('refuses to back up a key that is too short to restore', () => {
-    expect(() => serialisePatientBackup({ identifier: 'card-881', key: 'short' })).toThrow(
-      'at least 32 characters',
-    );
+    expect(() =>
+      serialisePatientBackup({ identifier: 'card-881', key: 'short' }),
+    ).toThrow('at least 32 characters');
   });
 });

@@ -24,21 +24,15 @@ describe('sortRows', () => {
   ];
 
   it('sorts ascending and keeps missing values last', () => {
-    expect(sortRows(rows, (row) => row.value, 'ascending').map((row) => row.value)).toEqual([
-      1,
-      2,
-      3,
-      null,
-    ]);
+    expect(
+      sortRows(rows, (row) => row.value, 'ascending').map((row) => row.value),
+    ).toEqual([1, 2, 3, null]);
   });
 
   it('sorts descending and still keeps missing values last', () => {
-    expect(sortRows(rows, (row) => row.value, 'descending').map((row) => row.value)).toEqual([
-      3,
-      2,
-      1,
-      null,
-    ]);
+    expect(
+      sortRows(rows, (row) => row.value, 'descending').map((row) => row.value),
+    ).toEqual([3, 2, 1, null]);
   });
 
   it('does not mutate the input array', () => {
@@ -50,22 +44,31 @@ describe('sortRows', () => {
 
 describe('nextSortDirection', () => {
   it('starts a new column ascending', () => {
-    expect(nextSortDirection(null, 'date')).toEqual({ key: 'date', direction: 'ascending' });
+    expect(nextSortDirection(null, 'date')).toEqual({
+      key: 'date',
+      direction: 'ascending',
+    });
   });
 
   it('toggles the active column between ascending and descending', () => {
-    expect(nextSortDirection({ key: 'date', direction: 'ascending' }, 'date')).toEqual({
+    expect(
+      nextSortDirection({ key: 'date', direction: 'ascending' }, 'date'),
+    ).toEqual({
       key: 'date',
       direction: 'descending',
     });
-    expect(nextSortDirection({ key: 'date', direction: 'descending' }, 'date')).toEqual({
+    expect(
+      nextSortDirection({ key: 'date', direction: 'descending' }, 'date'),
+    ).toEqual({
       key: 'date',
       direction: 'ascending',
     });
   });
 
   it('resets to ascending when switching columns', () => {
-    expect(nextSortDirection({ key: 'date', direction: 'descending' }, 'count')).toEqual({
+    expect(
+      nextSortDirection({ key: 'date', direction: 'descending' }, 'count'),
+    ).toEqual({
       key: 'count',
       direction: 'ascending',
     });

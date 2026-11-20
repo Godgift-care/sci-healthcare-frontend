@@ -75,7 +75,9 @@ export function DemoTour() {
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
-            <h2 className="text-sm font-semibold">{t('components.demoTour.title')}</h2>
+            <h2 className="text-sm font-semibold">
+              {t('components.demoTour.title')}
+            </h2>
             <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
               {isTestnet
                 ? t('components.demoTour.introTestnet')
@@ -83,7 +85,9 @@ export function DemoTour() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setOpen(true)}>{t('components.demoTour.start')}</Button>
+            <Button onClick={() => setOpen(true)}>
+              {t('components.demoTour.start')}
+            </Button>
             <button
               type="button"
               onClick={finish}
@@ -113,7 +117,9 @@ export function DemoTour() {
               {t('components.demoTour.back')}
             </Button>
             {isLast ? (
-              <Button onClick={finish}>{t('components.demoTour.finish')}</Button>
+              <Button onClick={finish}>
+                {t('components.demoTour.finish')}
+              </Button>
             ) : (
               <Button onClick={() => setIndex((i) => i + 1)}>
                 {t('components.demoTour.next')}
@@ -137,7 +143,7 @@ export function DemoTour() {
           >
             {step.cta}{' '}
             {/* Points onwards, so it follows the reading direction (#131). */}
-            <span aria-hidden className="inline-block rtl-flip">
+            <span aria-hidden className="rtl-flip inline-block">
               →
             </span>
           </Link>

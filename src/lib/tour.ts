@@ -42,18 +42,6 @@ export function markTourDone(): void {
   emit();
 }
 
-/** Clears the remembered state. Used by tests and the empty state. */
-export function resetTour(): void {
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Nothing to clear.
-    }
-  }
-  emit();
-}
-
 function subscribe(onChange: () => void): () => void {
   listeners.add(onChange);
   window.addEventListener('storage', onChange);

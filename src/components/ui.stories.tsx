@@ -50,7 +50,8 @@ export const Alerts: StoryObj = {
       <Alert>Something went wrong.</Alert>
       <Alert kind="info">Heads up: the dispute window is still open.</Alert>
       <Alert kind="success">
-        Done. <ExplorerLink href="https://example.com">View transaction</ExplorerLink>
+        Done.{' '}
+        <ExplorerLink href="https://example.com">View transaction</ExplorerLink>
       </Alert>
     </div>
   ),
@@ -106,7 +107,7 @@ export const TooltipBasic: StoryObj = {
       <Tooltip content="The funder can dispute before the window closes. After it closes, anyone can release the payment.">
         <span
           tabIndex={0}
-          className="ms-1 inline-grid h-w-4 w-4 cursor-help place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] text-[10px]"
+          className="h-w-4 ms-1 inline-grid w-4 cursor-help place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] text-[10px]"
         >
           ?
         </span>

@@ -9,7 +9,9 @@ export const defaultLocale: Locale = 'en';
 
 /** Whether a value (a stored locale, a cookie) is one we support. */
 export function isLocale(value: unknown): value is Locale {
-  return typeof value === 'string' && (locales as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (locales as readonly string[]).includes(value)
+  );
 }
 
 export const messages: Record<Locale, typeof en> = {
@@ -28,13 +30,6 @@ export const localeLabels: Record<Locale, string> = {
 
 export const localeNumberFormats: Record<Locale, string> = {
   en: 'en-US',
-  fr: 'fr-FR',
-  sw: 'sw-KE',
-  yo: 'yo-NG',
-};
-
-export const localeDateFormats: Record<Locale, string> = {
-  en: 'en-GB',
   fr: 'fr-FR',
   sw: 'sw-KE',
   yo: 'yo-NG',

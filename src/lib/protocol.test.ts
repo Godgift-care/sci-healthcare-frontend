@@ -155,10 +155,18 @@ describe('protocol contract argument encoding', () => {
 
     let index = mocks.recorded.length;
     await voucher.create(createParams, SIGN);
-    expectBindingEncoding(index++, 'create_voucher', voucherBinding.spec, createBindingArgs, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'create_voucher',
+      voucherBinding.spec,
+      createBindingArgs,
+      'invoke',
+    );
 
     index = mocks.recorded.length;
-    await expect(voucher.estimateCreateFee(createParams)).resolves.toBe(100_000n);
+    await expect(voucher.estimateCreateFee(createParams)).resolves.toBe(
+      100_000n,
+    );
     expectBindingEncoding(
       index,
       'create_voucher',
@@ -168,7 +176,10 @@ describe('protocol contract argument encoding', () => {
     );
 
     index = mocks.recorded.length;
-    await voucher.createWithXlmSwap({ ...createParams, swapAmount: 10_000_000n }, SIGN);
+    await voucher.createWithXlmSwap(
+      { ...createParams, swapAmount: 10_000_000n },
+      SIGN,
+    );
     expectBindingEncoding(
       index++,
       'create_voucher',
@@ -179,10 +190,19 @@ describe('protocol contract argument encoding', () => {
 
     index = mocks.recorded.length;
     await voucher.createMany(
-      [createParams, { ...createParams, serviceCode: 102, amount: 50_000_000n }],
+      [
+        createParams,
+        { ...createParams, serviceCode: 102, amount: 50_000_000n },
+      ],
       SIGN,
     );
-    expectBindingEncoding(index++, 'create_voucher', voucherBinding.spec, createBindingArgs, 'batch');
+    expectBindingEncoding(
+      index++,
+      'create_voucher',
+      voucherBinding.spec,
+      createBindingArgs,
+      'batch',
+    );
     expectBindingEncoding(
       index++,
       'create_voucher',
@@ -193,11 +213,23 @@ describe('protocol contract argument encoding', () => {
 
     index = mocks.recorded.length;
     await voucher.claim(PROVIDER, '17', SIGN);
-    expectBindingEncoding(index++, 'claim', voucherBinding.spec, { provider: PROVIDER, voucher_id: 17n }, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'claim',
+      voucherBinding.spec,
+      { provider: PROVIDER, voucher_id: 17n },
+      'invoke',
+    );
 
     index = mocks.recorded.length;
     await voucher.attest(ATTESTER, '18', SIGN);
-    expectBindingEncoding(index++, 'attest', voucherBinding.spec, { attester: ATTESTER, voucher_id: 18n }, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'attest',
+      voucherBinding.spec,
+      { attester: ATTESTER, voucher_id: 18n },
+      'invoke',
+    );
 
     index = mocks.recorded.length;
     await voucher.dispute(FUNDER, '19', 3, SIGN);
@@ -211,15 +243,33 @@ describe('protocol contract argument encoding', () => {
 
     index = mocks.recorded.length;
     await voucher.settle(FUNDER, '20', SIGN);
-    expectBindingEncoding(index++, 'settle', voucherBinding.spec, { voucher_id: 20n }, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'settle',
+      voucherBinding.spec,
+      { voucher_id: 20n },
+      'invoke',
+    );
 
     index = mocks.recorded.length;
     await voucher.refund(FUNDER, '21', SIGN);
-    expectBindingEncoding(index++, 'refund', voucherBinding.spec, { voucher_id: 21n }, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'refund',
+      voucherBinding.spec,
+      { voucher_id: 21n },
+      'invoke',
+    );
 
     index = mocks.recorded.length;
     await voucher.quote(30_000_000n);
-    expectBindingEncoding(index++, 'quote', voucherBinding.spec, { amount: 30_000_000n }, 'read');
+    expectBindingEncoding(
+      index++,
+      'quote',
+      voucherBinding.spec,
+      { amount: 30_000_000n },
+      'read',
+    );
 
     index = mocks.recorded.length;
     await registry.registerProvider(PROVIDER, 'Clinic', 'NG', SIGN);
@@ -232,12 +282,23 @@ describe('protocol contract argument encoding', () => {
     );
 
     index = mocks.recorded.length;
-    await registry.upsertService(PROVIDER, 101, 'Consultation', 30_000_000n, SIGN);
+    await registry.upsertService(
+      PROVIDER,
+      101,
+      'Consultation',
+      30_000_000n,
+      SIGN,
+    );
     expectBindingEncoding(
       index++,
       'upsert_service',
       registryBinding.spec,
-      { provider_addr: PROVIDER, code: 101, label: 'Consultation', price: 30_000_000n },
+      {
+        provider_addr: PROVIDER,
+        code: 101,
+        label: 'Consultation',
+        price: 30_000_000n,
+      },
       'invoke',
     );
 
@@ -273,19 +334,43 @@ describe('protocol contract argument encoding', () => {
 
     index = mocks.recorded.length;
     await registry.isAttester(ATTESTER);
-    expectBindingEncoding(index++, 'is_attester', registryBinding.spec, { addr: ATTESTER }, 'read');
+    expectBindingEncoding(
+      index++,
+      'is_attester',
+      registryBinding.spec,
+      { addr: ATTESTER },
+      'read',
+    );
 
     index = mocks.recorded.length;
     await faucet.drip(FUNDER, SIGN);
-    expectBindingEncoding(index++, 'drip', faucetBinding.spec, { to: FUNDER }, 'invoke');
+    expectBindingEncoding(
+      index++,
+      'drip',
+      faucetBinding.spec,
+      { to: FUNDER },
+      'invoke',
+    );
 
     index = mocks.recorded.length;
     await faucet.nextDripAt(FUNDER);
-    expectBindingEncoding(index++, 'next_drip_at', faucetBinding.spec, { to: FUNDER }, 'read');
+    expectBindingEncoding(
+      index++,
+      'next_drip_at',
+      faucetBinding.spec,
+      { to: FUNDER },
+      'read',
+    );
 
     index = mocks.recorded.length;
     await faucet.amount();
-    expectBindingEncoding(index++, 'get_config', faucetBinding.spec, {}, 'read');
+    expectBindingEncoding(
+      index++,
+      'get_config',
+      faucetBinding.spec,
+      {},
+      'read',
+    );
 
     index = mocks.recorded.length;
     await usdc.balance(FUNDER);
@@ -293,7 +378,9 @@ describe('protocol contract argument encoding', () => {
     expect(balanceCall?.method).toBe('balance');
     expect(balanceCall?.kind).toBe('read');
     expect(encoded(balanceCall?.args as xdr.ScVal[])).toEqual([
-      Buffer.from(Address.fromString(FUNDER).toScVal().toXDR()).toString('base64'),
+      Buffer.from(Address.fromString(FUNDER).toScVal().toXDR()).toString(
+        'base64',
+      ),
     ]);
 
     expect(mocks.recorded).toHaveLength(index + 1);

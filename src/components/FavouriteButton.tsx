@@ -33,12 +33,14 @@ export function FavouriteButton({
         e.stopPropagation();
         toggleFavouriteClinic(address);
       }}
-      className={`inline-flex items-center justify-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-2 text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] max-sm:min-h-11 max-sm:min-w-11 ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-2 text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus:ring-2 focus:ring-[var(--color-brand)] focus:outline-none max-sm:min-h-11 max-sm:min-w-11 ${className}`}
     >
       <svg
         aria-hidden="true"
         className={`h-5 w-5 transition-colors ${
-          isFavourite ? 'fill-amber-400 text-amber-400' : 'fill-none text-current'
+          isFavourite
+            ? 'fill-amber-400 text-amber-400'
+            : 'fill-none text-current'
         }`}
         viewBox="0 0 24 24"
         stroke="currentColor"
