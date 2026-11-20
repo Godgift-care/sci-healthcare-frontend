@@ -7,6 +7,7 @@ import { use, useMemo } from 'react';
 
 import { ApiError, type ServiceCatalogueItem } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { useProviders, useService } from '@/lib/hooks';
 import { Alert, Button, Card, Empty } from '@/components/ui';
 import { SkeletonCard, SkeletonDetail } from '@/components/Skeleton';
@@ -129,6 +130,7 @@ export default function ServicePage({
                     </td>
                     <td className="px-4 py-3 mono text-right text-[var(--color-ink)]">
                       ${formatUsdc(c.price)}
+                      <LocalEstimate amount={c.price} className="block" />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <DetailLink

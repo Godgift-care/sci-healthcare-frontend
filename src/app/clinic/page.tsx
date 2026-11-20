@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { trackEvent } from '@/lib/analytics';
 import { settleableVouchers } from '@/lib/batch-settle';
 import type { VoucherStatus } from '@/lib/api';
@@ -567,7 +568,8 @@ export default function ClinicDeskPage() {
                   <div>
                     <div className="text-sm font-medium">{s.label}</div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
-                      {t('clinic.code', { code: s.code })} · <span className="mono">${formatUsdc(s.price, locale)}</span>
+                      {t('clinic.code', { code: s.code })} · <span className="mono">${formatUsdc(s.price, locale)}</span>{' '}
+                      <LocalEstimate amount={s.price} />
                     </div>
                   </div>
                   <div className="flex gap-2">

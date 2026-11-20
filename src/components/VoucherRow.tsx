@@ -6,6 +6,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'reac
 
 import { api, type Voucher } from '@/lib/api';
 import { formatDate, formatUsdc, timeUntil, timeSince, toAmountInput } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
@@ -260,6 +261,7 @@ export function VoucherRow({
           </div>
           <div className="text-end">
             <div className="mono text-lg font-semibold">${formatUsdc(v.amount)}</div>
+            <LocalEstimate amount={v.amount} className="block" />
             {v.status === 'Settled' && v.settledNet && (
               <div className="text-xs text-[var(--color-ink-soft)]">
                 clinic received ${formatUsdc(v.settledNet)}

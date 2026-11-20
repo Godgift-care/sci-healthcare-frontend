@@ -90,6 +90,13 @@ const WALLET_CONNECT = {
 const MAP_TILES = 'https://tile.openstreetmap.org';
 
 /**
+ * Exchange rates for the optional local-currency estimate (#132), requested
+ * at most once a day and only after a visitor picks a currency. Kept in sync
+ * with `FX_RATES_ORIGIN` in `local-currency.ts` (asserted in csp.test.ts).
+ */
+const FX_RATES = 'https://open.er-api.com';
+
+/**
  * Builds the policy string.
  *
  * `isDev` is passed rather than read from `process.env.NODE_ENV` so the
@@ -177,6 +184,7 @@ export function contentSecurityPolicy(
       WALLETS.xbull,
       plausible,
       sentry,
+      FX_RATES,
       walletConnectEnabled && WALLET_CONNECT.relay,
       walletConnectEnabled && WALLET_CONNECT.relaySocket,
       walletConnectEnabled && WALLET_CONNECT.verify,
