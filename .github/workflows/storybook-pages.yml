@@ -1,0 +1,56 @@
+name: Storybook
+
+# Builds Storybook from main and publishes it to GitHub Pages (#367), so a
+# designer, translator or reviewer can browse every component without cloning
+# the repository. The build is the same command CI runs (`build-storybook`),
+# and the output uses relative asset paths, so it works from the project page's
+# sub-path without extra configuration.
+#
+# One-time setup by a maintainer: Settings -> Pages -> Source: "GitHub Actions".
+#
+# A pull request cannot publish here: this workflow only runs on main (and by
+# hand), and the build job has read-only access to the repository. Publishing
+# needs `pages: write` and `id-token: write`, which only the deploy job gets.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storybook-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build-storybook
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: storybook-static
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -98,6 +98,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
+        // `role="status"` is what makes the region a live region to assistive
+        // technology; `aria-live` alone leaves some screen readers silent.
+        role="status"
         aria-live="polite"
         aria-atomic="false"
         aria-label="Notifications"

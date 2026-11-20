@@ -71,7 +71,21 @@
     "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
     "reportProblem": "Signaler un problème",
     "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
-    "reportProblemAction": "Signaler un problème"
+    "reportProblemAction": "Signaler un problème",
+    "redirect": {
+      "action": "Utiliser dans une autre clinique",
+      "title": "Déplacer le bon #{id}",
+      "intro": "Seules les cliniques actives proposant ce service au prix de {amount} ou moins sont listées.",
+      "empty": "Aucune autre clinique ne propose actuellement ce service au prix de {amount} ou moins.",
+      "loading": "Recherche des cliniques…",
+      "choose": "Choisir une clinique",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} recevra {price} et le bon conserve son dépôt de {amount}. Vérifiez la clinique et le prix avant de signer.",
+      "confirm": "Déplacer le bon",
+      "moving": "Déplacement…",
+      "error": "Impossible de déplacer le bon : {message}",
+      "success": "Bon déplacé vers {clinic}."
+    }
   },
   "clinic": {
     "title": "Bureau clinique",
@@ -111,9 +125,15 @@
     "earnings": "Revenus",
     "earningsNote": "Trésorerie de cette clinique : soins réglés, paiements en attente et frais de protocole payés.",
     "earningsSettled": "Réglé",
-    "earningsSettledDetail": "{count} bons · {net} net après frais",
+    "earningsSettledDetail": {
+      "one": "{count} bon · {net} net après frais",
+      "other": "{count} bons · {net} net après frais"
+    },
     "earningsPending": "Paiement en attente",
-    "earningsPendingDetail": "{count} réclamés, attestés ou contestés, avant frais",
+    "earningsPendingDetail": {
+      "one": "{count} bon réclamé, attesté ou contesté, avant frais",
+      "other": "{count} bons réclamés, attestés ou contestés, avant frais"
+    },
     "earningsFees": "Frais payés",
     "earningsFeesDetail": "Frais de protocole sur les soins réglés",
     "earningsMonthly": "Revenus mensuels",
@@ -128,7 +148,10 @@
     "allStatuses": "Tous",
     "searchVoucherNumber": "Numéro de bon",
     "searchVoucherPlaceholder": "ex. 21 ou #21",
-    "showingVouchers": "Affichage de {shown} bons sur {total}",
+    "showingVouchers": {
+      "one": "Affichage de {shown} sur {total} bon",
+      "other": "Affichage de {shown} bons sur {total}"
+    },
     "noMatchingVouchers": "Aucun bon ne correspond à cette recherche.",
     "clearFilters": "Effacer les filtres",
     "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau.",
@@ -161,6 +184,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Tout sélectionner sur cette page ({count})",
+    "selectVoucher": "Sélectionner le bon nº {id}",
+    "selectedCount": "{count} sélectionné(s)",
+    "exportSelected": "Télécharger le CSV sélectionné",
+    "refundSelected": "Rembourser la sélection ({count})",
+    "refundAll": "Tout rembourser ({count})",
+    "refundingCount": "Remboursement {current}/{total}…",
+    "refundProgress": "{current} sur {total}",
+    "refundingVoucher": "Remboursement du bon nº {id}…",
+    "refundedSummary": "{count} bon(s) remboursé(s) avec succès :",
+    "refundFailedSummary": "Échec du remboursement de {count} bon(s) :"
+  },
   "scanner": {
     "title": "Scanner le QR du bon patient",
     "instructions": "Pointez la caméra vers le code QR du bon du patient pour l'ouvrir automatiquement.",
@@ -177,9 +213,66 @@
     "yo": "Yorùbá",
     "select": "Choisir la langue"
   },
+  "admin": {
+    "split": {
+      "button": "Partager le dépôt",
+      "amountLabel": "Montant attribué à la clinique (USDC)",
+      "amountHint": "Montant brut avant les frais du protocole, entre 0 et {amount}. Le reste revient au financeur.",
+      "invalid": "Saisissez un montant entre 0 et {amount}.",
+      "loading": "Calcul des frais…",
+      "error": "Impossible de calculer les frais : {message}",
+      "clinicReceives": "{clinic} reçoit {net} après {fee} de frais.",
+      "funderReceives": "Le financeur reçoit {amount}.",
+      "sum": "Le net de la clinique, les frais et le remboursement au financeur totalisent le dépôt de {amount}."
+    }
+  },
   "stats": {
     "downloadDaily": "Télécharger le CSV quotidien",
     "downloadClinics": "Télécharger le CSV des cliniques",
-    "downloadVouchers": "Télécharger le CSV des bons"
+    "downloadVouchers": "Télécharger le CSV des bons",
+    "escrowTitle": "Montant sous séquestre sur la chaîne",
+    "escrowNote": "Lu dans la comptabilité du contrat de bons, sans portefeuille.",
+    "escrowOpen": "Séquestre ouvert",
+    "escrowBalance": "Le contrat détient {amount}",
+    "escrowIndexed": "L'indexeur signale {amount} en séquestre ouvert.",
+    "escrowUnavailable": "Le chiffre de séquestre on-chain est indisponible pour le moment.",
+    "escrowIndexedUnavailable": "Le total de séquestre ouvert de l'indexeur est indisponible pour le moment.",
+    "escrowSolvencyMismatch": "La comptabilité du contrat ne correspond pas à son solde : {escrow} est enregistré comme séquestre ouvert alors que le contrat détient {balance}. Ne vous fiez pas aux totaux indexés tant que ce point n'est pas compris.",
+    "escrowIndexerMismatch": "La chaîne et l'indexeur ne sont pas d'accord sur le séquestre ouvert : le contrat indique {chain}, l'indexeur indique {indexed}."
+  },
+  "attest": {
+    "leftToday": "{count} attestations restantes aujourd'hui",
+    "capReached": "Vous avez atteint la limite d'attestations du jour. Confirmez à nouveau après {time} UTC.",
+    "leftUnavailable": "Le nombre d'attestations restantes est indisponible pour le moment."
+  },
+  "print": {
+    "verify": "Vérifier sur la chaîne",
+    "verifying": "Vérification…",
+    "verified": "Vérifié sur la chaîne",
+    "mismatch": "Ne correspond pas à la chaîne",
+    "mismatchShort": "Écart",
+    "error": "Lecture de la chaîne impossible",
+    "fieldMismatch": "{field} : affiché {displayed}, la chaîne indique {onChain}",
+    "field": {
+      "voucher": "Numéro de reçu",
+      "provider": "Clinique",
+      "service": "Service",
+      "amount": "Montant",
+      "settledAt": "Date"
+    }
+  },
+  "offlineQueue": {
+    "title": "En attente d'envoi",
+    "note": "Ces réclamations ont été signées sur cet appareil et seront envoyées automatiquement dès le retour de la connexion.",
+    "voucher": "Bon #{id}",
+    "queuedStatus": "En attente",
+    "submitting": "Envoi…",
+    "failed": "Non envoyé : {error}",
+    "validUntil": "Valable jusqu'au {time}",
+    "submitNow": "Envoyer maintenant",
+    "discard": "Supprimer",
+    "expiredTitle": "Bon en attente supprimé",
+    "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
+    "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
   }
 }

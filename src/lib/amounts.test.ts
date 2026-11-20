@@ -185,13 +185,17 @@ describe('timeUntil', () => {
   });
 
   it('picks the largest whole unit', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', now)).toBe('30m');
-    expect(timeUntil('2026-05-20T15:00:00.000Z', now)).toBe('5h');
-    expect(timeUntil('2026-05-23T10:00:00.000Z', now)).toBe('3d');
+    expect(timeUntil('2026-05-20T10:30:00.000Z', now)).toBe('in 30 minutes');
+    expect(timeUntil('2026-05-20T15:00:00.000Z', now)).toBe('in 5 hours');
+    expect(timeUntil('2026-05-23T10:00:00.000Z', now)).toBe('in 3 days');
+  });
+
+  it('follows the active locale (#278)', () => {
+    expect(timeUntil('2026-05-23T10:00:00.000Z', now, 'fr')).toBe('dans 3 jours');
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('30m');
+    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('in 30 minutes');
   });
 
   afterEach(() => {
@@ -201,8 +205,8 @@ describe('timeUntil', () => {
   it('falls back to the wall clock when now is 0 or null', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
-    expect(timeUntil('2026-05-20T11:00:00.000Z', 0)).toBe('1h');
-    expect(timeUntil('2026-05-20T11:00:00.000Z', null)).toBe('1h');
+    expect(timeUntil('2026-05-20T11:00:00.000Z', 0)).toBe('in 1 hour');
+    expect(timeUntil('2026-05-20T11:00:00.000Z', null)).toBe('in 1 hour');
   });
 });
 
@@ -213,19 +217,23 @@ describe('timeSince', () => {
     expect(timeSince(null)).toBe('—');
   });
 
-  it('returns "just now" for the present or future', () => {
-    expect(timeSince('2026-05-20T10:00:00.000Z', now)).toBe('just now');
-    expect(timeSince('2026-05-20T11:00:00.000Z', now)).toBe('just now');
+  it('returns "now" for the present or future', () => {
+    expect(timeSince('2026-05-20T10:00:00.000Z', now)).toBe('now');
+    expect(timeSince('2026-05-20T11:00:00.000Z', now)).toBe('now');
   });
 
   it('picks the largest whole unit', () => {
-    expect(timeSince('2026-05-20T09:30:00.000Z', now)).toBe('30m ago');
-    expect(timeSince('2026-05-20T05:00:00.000Z', now)).toBe('5h ago');
-    expect(timeSince('2026-05-17T10:00:00.000Z', now)).toBe('3d ago');
+    expect(timeSince('2026-05-20T09:30:00.000Z', now)).toBe('30 minutes ago');
+    expect(timeSince('2026-05-20T05:00:00.000Z', now)).toBe('5 hours ago');
+    expect(timeSince('2026-05-17T10:00:00.000Z', now)).toBe('3 days ago');
+  });
+
+  it('follows the active locale (#278)', () => {
+    expect(timeSince('2026-05-17T10:00:00.000Z', now, 'fr')).toBe('il y a 3 jours');
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30m ago');
+    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30 minutes ago');
   });
 
   afterEach(() => {
@@ -235,7 +243,7 @@ describe('timeSince', () => {
   it('falls back to the wall clock when now is 0 or null', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
-    expect(timeSince('2026-05-20T09:00:00.000Z', 0)).toBe('1h ago');
-    expect(timeSince('2026-05-20T09:00:00.000Z', null)).toBe('1h ago');
+    expect(timeSince('2026-05-20T09:00:00.000Z', 0)).toBe('1 hour ago');
+    expect(timeSince('2026-05-20T09:00:00.000Z', null)).toBe('1 hour ago');
   });
 });

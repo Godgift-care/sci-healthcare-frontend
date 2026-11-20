@@ -100,7 +100,14 @@ export function Alert({
     success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   }[kind];
   return (
-    <div className={`rounded-lg border px-4 py-3 text-sm ${styles}`}>{children}</div>
+    <div
+      // Failures interrupt (`alert`); information and confirmations wait for a
+      // pause (`status`), which is what a live region is for.
+      role={kind === 'error' ? 'alert' : 'status'}
+      className={`rounded-lg border px-4 py-3 text-sm ${styles}`}
+    >
+      {children}
+    </div>
   );
 }
 

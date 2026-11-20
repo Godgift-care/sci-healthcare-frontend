@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
@@ -16,6 +17,8 @@ import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
 
 import { LocaleProvider } from '@/i18n/LocaleContext';
+import { resolveLocale } from '@/i18n/detect';
+import { directionForLocale } from '@/i18n/direction';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 import './globals.css';
@@ -48,16 +51,28 @@ export const viewport: Viewport = {
   themeColor: '#0f766e',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language is resolved before the first byte (#277): an explicit
+  // choice from NEXT_LOCALE wins, otherwise the browser's Accept-Language.
+  // Passing it to LocaleProvider keeps the server render and hydration in
+  // agreement, so no English flashes before the switch.
+  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const initialLocale = resolveLocale(
+    cookieStore.get('NEXT_LOCALE')?.value,
+    headerList.get('accept-language'),
+  );
+
   // suppressHydrationWarning: the theme init script sets data-theme before
   // paint, which the server render cannot know (#10).
   //
-  // dir starts as `ltr` because the server renders English; LocaleProvider
-  // rewrites it from the stored locale (#131), the same way it rewrites
-  // `lang`. Every layout rule below is a logical utility, so the whole tree
-  // follows that one attribute.
+  // Every layout rule below is a logical utility, so the whole tree follows
+  // the `dir` attribute (#131).
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
+    <html
+      lang={initialLocale}
+      dir={directionForLocale(initialLocale)}
+      suppressHydrationWarning
+    >
       <head>
         {/* Theme before paint (#10): stored override, else the OS setting.
             A same-origin script in the server HTML rather than an inline
@@ -77,9 +92,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (#75). The setting is read once here so every page below sees
               the same behaviour. */}
           <SwrProvider>
-            {/* Language for translated text (#5); defaults to English and
-                remembers the visitor's choice. */}
-            <LocaleProvider>
+            {/* Language for translated text (#5); starts from the locale the
+                server resolved and remembers the visitor's choice. */}
+            <LocaleProvider initialLocale={initialLocale}>
             <SkipToContent />
             <div className="print:hidden">
               <TestnetNotice />

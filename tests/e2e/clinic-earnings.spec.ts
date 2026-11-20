@@ -126,7 +126,7 @@ test.describe('Clinic earnings summary (#34)', () => {
 
     const pendingCard = page.getByRole('group', { name: 'Pending payout' });
     await expect(pendingCard).toContainText('$40.00');
-    await expect(pendingCard).toContainText('2 claimed, attested or disputed');
+    await expect(pendingCard).toContainText('2 vouchers claimed, attested or disputed');
 
     const feesCard = page.getByRole('group', { name: 'Fees paid' });
     await expect(feesCard).toContainText('$0.70');
