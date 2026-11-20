@@ -152,7 +152,6 @@
     },
     "noMatchingVouchers": "Hakuna vocha inayolingana na utafutaji huu.",
     "clearFilters": "Ondoa vichujio",
-    "connectWallet": "Unganisha pochi ya kliniki ili kusimamia dawati hili.",
     "checklist": {
       "title": "Kufikia malipo yako ya kwanza",
       "note": "Hatua tano kuanzia kusajili hadi kupokea fedha. Kila hatua inageuka kijani ikikamilika.",
@@ -272,5 +271,42 @@
     "expiredTitle": "Dai lililosubiri limeondolewa",
     "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
     "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
+  },
+  "status": {
+    "title": "Hali",
+    "subtitle": "Orodha, salio na risiti zinasomwa kutoka API. Miamala inasainiwa kwenye pochi yako na kutumwa moja kwa moja kwenye mtandao wa Stellar, kwa hiyo haitegemei API kuwa nzuri.",
+    "checkAgain": "Angalia tena",
+    "checking": "Inaangalia…",
+    "notReported": "Haijaripotiwa",
+    "headline": {
+      "checking": "Inaangalia API…",
+      "operational": "Mifumo yote inafanya kazi",
+      "degraded": "Imedhoofika: API ipo lakini si nzuri kabisa",
+      "unreachable": "API haipatikani"
+    },
+    "unreachableBodyStart": "API katika",
+    "unreachableBodyEnd": "haijakubali. Kurasa zinazoonyesha kliniki au vocha hazitapakia hadi irudi; inaweza pia kuwa inaamka, ambapo inaweza kuchukua hadi dakika moja.",
+    "mismatchTitle": "Programu hii na API hazikubaliani kuhusu uenezaji",
+    "apiReadiness": "Uwezo wa API",
+    "readiness": "Uwezo",
+    "ready": "Tayari",
+    "degraded": "Imedhoofika",
+    "unreachable": "Haipatikani",
+    "database": "Hifadhidata",
+    "connected": "Imeunganishwa",
+    "indexerLag": "Kuchelewa kwa kielelezo",
+    "latestIndexedLedger": "Rejista ya mwisho iliyoindexiwa",
+    "ledgerHistory": "Historia ya rejista",
+    "complete": "Kamili",
+    "gapDetected": "Pengo limegunduliwa",
+    "network": "Mtandao",
+    "thisAppSignsFor": "Programu hii inasaini kwa",
+    "apiIndexes": "API inaindexi",
+    "versions": "Toleo",
+    "webApp": "Programu ya wavuti",
+    "api": "API",
+    "notAvailable": "Haipatikani",
+    "apiRunningSince": "API inaendesha tangu",
+    "unknown": "haijulikani"
   }
 }
