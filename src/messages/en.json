@@ -265,5 +265,22 @@
     "expiredTitle": "Queued claim discarded",
     "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
     "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  },
+  "social": {
+    "footer": "SCI Healthcare — care vouchers on Stellar",
+    "fallbackDetail": "Open the link for the details.",
+    "clinic": {
+      "eyebrow": "Clinic",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Clinic on SCI Healthcare",
+      "imageAlt": "Clinic preview card: name, country and registration status"
+    },
+    "voucher": {
+      "eyebrow": "Care voucher",
+      "detail": "Status: {status}",
+      "serviceFallback": "Service {code}",
+      "fallbackTitle": "Care voucher on SCI Healthcare",
+      "imageAlt": "Care voucher preview card: service and status"
+    }
   }
 }

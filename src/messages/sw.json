@@ -272,5 +272,22 @@
     "expiredTitle": "Dai lililosubiri limeondolewa",
     "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
     "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
+  },
+  "social": {
+    "footer": "SCI Healthcare — vocha za huduma kwenye Stellar",
+    "fallbackDetail": "Fungua kiungo ili kuona maelezo.",
+    "clinic": {
+      "eyebrow": "Kiliniki",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Kiliniki kwenye SCI Healthcare",
+      "imageAlt": "Kadi ya hakikisho ya kiliniki: jina, nchi na hali ya usajili"
+    },
+    "voucher": {
+      "eyebrow": "Vocha ya huduma",
+      "detail": "Hali: {status}",
+      "serviceFallback": "Huduma {code}",
+      "fallbackTitle": "Vocha ya huduma kwenye SCI Healthcare",
+      "imageAlt": "Kadi ya hakikisho ya vocha: huduma na hali"
+    }
   }
 }
