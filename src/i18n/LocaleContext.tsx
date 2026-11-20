@@ -72,10 +72,17 @@ interface LocaleContextValue {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
+/**
+ * Components rendered outside the provider — every Storybook story, and a
+ * component test that does not need a language — read the English catalogue
+ * rather than raw keys. English is the source catalogue, so that is the same
+ * text the app shows before a visitor chooses another language.
+ */
 const LocaleContext = createContext<LocaleContextValue>({
   locale: defaultLocale,
   setLocale: () => {},
-  t: (key: string) => key,
+  t: (key: string, params?: Record<string, string | number>) =>
+    translate(defaultLocale, key, params),
 });
 
 export function useLocaleContext() {

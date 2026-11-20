@@ -319,7 +319,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         <Card className="voucher-print-history space-y-4 p-5 print:space-y-2 print:p-3">
           <div className="print:hidden">
             <Field label={t('voucher.fundedBy')}>
-              <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
+              <CopyValue
+                value={v.funder}
+                name={names.get(v.funder)}
+                label={t('components.copyValue.labels.funderAddress')}
+              />
             </Field>
           </div>
           <Field label={t('voucher.expires')}>
@@ -362,7 +366,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               <CopyValue
                 value={v.beneficiaryRef}
                 display={`${v.beneficiaryRef.slice(0, 16)}…`}
-                label="patient reference"
+                label={t('components.copyValue.labels.patientReference')}
               />
             </Field>
             <p className="text-xs text-[var(--color-ink-soft)]">

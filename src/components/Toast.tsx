@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
+
 import {
   createContext,
   useCallback,
@@ -50,6 +52,7 @@ const STYLES: Record<ToastKind, string> = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useLocaleContext();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -103,19 +106,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         role="status"
         aria-live="polite"
         aria-atomic="false"
-        aria-label="Notifications"
+        aria-label={t('components.toast.notifications')}
         className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6"
       >
-        {toasts.map((t) => (
+        {toasts.map((toast) => (
           <div
-            key={t.id}
-            className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg ${STYLES[t.kind]}`}
+            key={toast.id}
+            className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg ${STYLES[toast.kind]}`}
           >
-            <div className="min-w-0 flex-1 break-words">{t.message}</div>
+            <div className="min-w-0 flex-1 break-words">{toast.message}</div>
             <button
               type="button"
-              onClick={() => dismiss(t.id)}
-              aria-label="Dismiss notification"
+              onClick={() => dismiss(toast.id)}
+              aria-label={t('components.toast.dismiss')}
               className="-me-1 -mt-1 flex-none rounded-md px-1.5 py-0.5 text-base leading-none opacity-60 transition hover:opacity-100"
             >
               ×
