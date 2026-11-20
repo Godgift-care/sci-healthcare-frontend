@@ -85,7 +85,14 @@
       "moving": "Déplacement…",
       "error": "Impossible de déplacer le bon : {message}",
       "success": "Bon déplacé vers {clinic}."
-    }
+    },
+    "staffNote": "Note du personnel",
+    "staffNoteNote": "Gardée uniquement sur cet appareil. Non partagée et non sauvegardée.",
+    "staffNoteAdd": "Ajouter une note",
+    "staffNoteEdit": "Modifier la note",
+    "staffNoteSave": "Enregistrer la note",
+    "staffNoteClear": "Supprimer la note",
+    "staffNotePlaceholder": "Le patient a appelé, mardi"
   },
   "clinic": {
     "title": "Bureau clinique",

@@ -82,7 +82,14 @@
       "moving": "Moving…",
       "error": "Could not move the voucher: {message}",
       "success": "Voucher moved to {clinic}."
-    }
+    },
+    "staffNote": "Àkíyèsí",
+    "staffNoteNote": "Wọ́n fi pamọ́ ní ẹ̀rọ yìí nìkan — kì í pín tàbí kí wọ́n pa mọ́.",
+    "staffNoteAdd": "Fi kún Àkíyèsí",
+    "staffNoteEdit": "Ṣàtúnṣe Àkíyèsí",
+    "staffNoteSave": "Gbà Àkíyèsí náà",
+    "staffNoteClear": "Gbé Àkíyèsí náà kúrò",
+    "staffNotePlaceholder": "Ẹni tí ó tọ́, Ọjọ́ Tuesday"
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",

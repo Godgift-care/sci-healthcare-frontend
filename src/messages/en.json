@@ -82,7 +82,14 @@
       "moving": "Moving…",
       "error": "Could not move the voucher: {message}",
       "success": "Voucher moved to {clinic}."
-    }
+    },
+    "staffNote": "Staff note",
+    "staffNoteNote": "Kept on this device only. Not shared or backed up.",
+    "staffNoteAdd": "Add note",
+    "staffNoteEdit": "Edit note",
+    "staffNoteSave": "Save note",
+    "staffNoteClear": "Clear note",
+    "staffNotePlaceholder": "Patient called, coming Tuesday"
   },
   "clinic": {
     "title": "Clinic desk",

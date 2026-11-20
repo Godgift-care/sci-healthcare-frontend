@@ -818,6 +818,7 @@ export default function ClinicDeskPage() {
               onDone={refreshAll}
               disabled={settleAllBusy}
               requirePatientMatch
+              staffNote
             />
           ))}
         </div>

@@ -178,6 +178,28 @@ test('claiming records a prop-less event', async ({ page }) => {
   }
 });
 
+test('staff notes never leave the device', async ({ page }) => {
+  await recordAnalytics(page);
+  await useMockWallet(page, PROVIDER);
+  await mockBackend(page, {
+    provider: CLINIC,
+    vouchers: [FUNDED_VOUCHER('21')],
+  });
+
+  await page.goto('/clinic');
+  await expect(page.getByText('This clinic is verified')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Add note' }).click();
+  await page.getByPlaceholder('Patient called, coming Tuesday').fill('Patient called, coming Tuesday');
+  await page.getByRole('button', { name: 'Save note' }).click();
+  await expect(page.getByText('Patient called, coming Tuesday')).toBeVisible();
+
+  // The note content itself must not reach analytics, nor any identifier.
+  const events = await analyticsEvents(page);
+  expect(JSON.stringify(events)).not.toContain('Patient called');
+  expectNoIdentifiers(events, [FUNDER, PROVIDER]);
+});
+
 test('core web vitals are reported once per page view', async ({ page }) => {
   await recordAnalytics(page);
   await useMockWallet(page, FUNDER);

@@ -15,6 +15,7 @@ import {
 } from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { buildReceiptCsvRows, buildVoucherCsvRows, downloadCsv } from '@/lib/csv';
+import { getStaffNotes } from '@/lib/staff-notes';
 import { invalidateVouchers, useLiveUpdates, useProviders, useReceipts, useVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
@@ -260,7 +261,7 @@ export default function MyPage() {
     if (selectedVouchers.length === 0) return;
     downloadCsv(
       'selected-vouchers.csv',
-      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin),
+      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin, getStaffNotes()),
     );
   }
 
@@ -302,7 +303,7 @@ export default function MyPage() {
       }
     }
 
-    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin));
+    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin, getStaffNotes()));
   }
 
   async function downloadCareHistoryCsv() {

@@ -86,7 +86,14 @@
       "moving": "Inahamisha…",
       "error": "Imeshindwa kuhamisha vocha: {message}",
       "success": "Vocha imehamishwa kwenda {clinic}."
-    }
+    },
+    "staffNote": "Kumbukumbu ya wafanyakazi",
+    "staffNoteNote": "Inabakwa kwa kifaa hiki pekee. Haichagawi wala kuhesabiwa.",
+    "staffNoteAdd": "Ongeza kumbukumbu",
+    "staffNoteEdit": "Hariri kumbukumbu",
+    "staffNoteSave": "Tahakia kumbukumbu",
+    "staffNoteClear": "Futa kumbukumbu",
+    "staffNotePlaceholder": "Mgonjwa alia, Jumanne"
   },
   "clinic": {
     "title": "Dawati la kliniki",

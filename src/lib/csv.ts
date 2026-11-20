@@ -25,9 +25,20 @@ export function buildVoucherCsvRows(
   vouchers: Voucher[],
   providerNames?: Map<string, string>,
   baseUrl = typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+  staffNotes?: Record<string, string>,
 ): Array<Array<string>> {
   const rows: Array<Array<string>> = [
-    ['id', 'clinic', 'service', 'amount', 'status', 'funded', 'settled or refunded date', 'transaction link'],
+    [
+      'id',
+      'clinic',
+      'service',
+      'amount',
+      'status',
+      'funded',
+      'settled or refunded date',
+      'transaction link',
+      'staff note',
+    ],
   ];
 
   for (const voucher of vouchers) {
@@ -41,6 +52,7 @@ export function buildVoucherCsvRows(
       formatDate(voucher.createdAt),
       formatDate(voucher.disputeResolvedAt ?? voucher.attestedAt ?? voucher.claimedAt ?? voucher.createdAt),
       new URL(`/vouchers/${voucher.id}`, baseUrl).toString(),
+      staffNotes?.[voucher.id] ?? '',
     ]);
   }
 
