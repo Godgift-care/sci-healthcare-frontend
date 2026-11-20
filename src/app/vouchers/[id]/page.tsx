@@ -358,13 +358,17 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             <Field label={t('voucher.careReceipt')}>{t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}</Field>
           )}
           <div className="space-y-4 print:hidden">
-            <Field label={t('voucher.patientReference')}>
-              <CopyValue
-                value={v.beneficiaryRef}
-                display={`${v.beneficiaryRef.slice(0, 16)}…`}
-                label="patient reference"
-              />
-            </Field>
+            {/* A restored offline answer has patient references stripped
+                (#302), so the field is absent rather than a broken copy. */}
+            {v.beneficiaryRef && (
+              <Field label={t('voucher.patientReference')}>
+                <CopyValue
+                  value={v.beneficiaryRef}
+                  display={`${v.beneficiaryRef.slice(0, 16)}…`}
+                  label="patient reference"
+                />
+              </Field>
+            )}
             <p className="text-xs text-[var(--color-ink-soft)]">
               {t('voucher.patientReferenceNote')}
             </p>

@@ -16,6 +16,7 @@ import {
   type VoucherStatus,
 } from '@sci-healthcare/client';
 
+import { trackedFetch } from './api-health';
 import { config } from './config';
 
 /**
@@ -167,7 +168,7 @@ export function isReadyStatus(body: unknown): body is ReadyStatus {
 }
 
 /** The shared client, pointed at the configured indexer. */
-const client = createClient({ baseUrl: config.apiUrl });
+const client = createClient({ baseUrl: config.apiUrl, fetch: trackedFetch });
 
 /**
  * A client whose reads carry a deadline.
@@ -182,7 +183,7 @@ function timedClient(signal?: AbortSignal | null) {
   if (!signal) return client;
   return createClient({
     baseUrl: config.apiUrl,
-    fetch: (input, init) => fetch(input, { ...init, signal }),
+    fetch: (input, init) => trackedFetch(input, { ...init, signal }),
   });
 }
 
@@ -206,7 +207,9 @@ export const api = {
     const base = config.apiUrl.replace(/\/+$/, '');
     let res: Response;
     try {
-      res = await fetch(`${base}/ready`, { headers: { accept: 'application/json' } });
+      res = await trackedFetch(`${base}/ready`, {
+        headers: { accept: 'application/json' },
+      });
     } catch (cause) {
       throw new ApiError(0, 'network_error', `Cannot reach the API at ${base}`, cause);
     }

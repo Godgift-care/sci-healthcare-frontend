@@ -11,6 +11,7 @@ import { clinicCountries, filterClinics, parseCountry } from '@/lib/clinic-filte
 import { useFavouriteClinics } from '@/lib/favourites';
 import { useLiveUpdates, useProviders, useStats } from '@/lib/hooks';
 import { useLowBandwidth } from '@/lib/low-bandwidth';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { DemoTour } from '@/components/DemoTour';
 import { Alert, Button, Card, Empty } from '@/components/ui';
 import { Skeleton, SkeletonCard } from '@/components/Skeleton';
@@ -88,6 +89,7 @@ function DeferredClinicMap({ providers }: { providers: Provider[] }) {
 type View = 'list' | 'map';
 
 export default function HomePage() {
+  const { t } = useLocaleContext();
   const [view, setView] = useState<View>('list');
   const lowBandwidth = useLowBandwidth();
   const favourites = useFavouriteClinics();
@@ -376,6 +378,15 @@ export default function HomePage() {
 
         {activeView === 'map' && visible.length > 0 && (
           <div className="space-y-3">
+            {located.length > 0 && (
+              <a
+                href="#map-clinic-list"
+                className="sr-only focus:not-sr-only focus:inline-block focus:rounded-md focus:bg-[var(--color-surface)] focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--color-ink)] focus:shadow"
+              >
+                {t('map.skip')}
+              </a>
+            )}
+
             {located.length > 0 ? (
               // A failing map (or its chunk) must not take the directory
               // down with it; the unlocated list below still renders.
@@ -384,6 +395,33 @@ export default function HomePage() {
               </WidgetBoundary>
             ) : (
               <Empty>No clinic has published a location yet.</Empty>
+            )}
+
+            {located.length > 0 && (
+              <div className="space-y-2">
+                <h3
+                  id="map-clinic-list"
+                  tabIndex={-1}
+                  className="text-sm font-medium"
+                >
+                  {t('map.onMap', { count: located.length })}
+                </h3>
+                <ul className="divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]">
+                  {located.map((p) => (
+                    <li key={p.address}>
+                      <DetailLink
+                        detail={{ kind: 'clinic', id: p.address }}
+                        className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-[var(--color-canvas)]"
+                      >
+                        <span>{p.name}</span>
+                        <span className="text-xs text-[var(--color-ink-soft)]">
+                          {p.country}
+                        </span>
+                      </DetailLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             {unlocated.length > 0 && (

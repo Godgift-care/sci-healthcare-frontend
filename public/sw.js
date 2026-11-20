@@ -15,13 +15,15 @@
  * the analytics beacon are all cross-origin, and cross-origin requests are
  * passed straight through. Patient references, beneficiary hashes, voucher
  * ids and wallet addresses live in the API's answers, never in the shell, so
- * none of that can end up in a cache on a shared clinic phone. Same-origin
+ * none of that can end up in *this* cache on a shared clinic phone. Same-origin
  * RSC payloads (Next's client-side navigation data, `?_rsc=`) are passed
  * through for the same reason: they carry whatever the page carries.
  *
- * A cached copy of an API answer would also be *wrong*, not just leaky: a
- * voucher's state comes from the chain, and showing yesterday's answer
- * while offline invites a funder to act on it.
+ * The app does keep a separate, deliberate read snapshot in IndexedDB (#302)
+ * so a saved clinic list can still be read offline. It strips beneficiary
+ * references, refuses patient-scoped keys and is deleted on wallet sign-out;
+ * the page labels that snapshot with its age and clears the label as soon as
+ * a live read arrives. This worker never silently replays an old answer.
  *
  * A newly installed worker waits until a user chooses to reload, so a deploy
  * cannot replace a page in the middle of a contract write. Writes are

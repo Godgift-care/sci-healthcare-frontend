@@ -213,6 +213,40 @@
     "yo": "Yorùbá",
     "select": "Choisir la langue"
   },
+  "textSize": {
+    "label": "Taille du texte",
+    "normal": "Normale",
+    "large": "Grande",
+    "largest": "Très grande",
+    "control": "Taille du texte : {current}. Passer à {next}.",
+    "hint": "Agrandir le texte. Le réglage est mémorisé sur cet appareil."
+  },
+  "map": {
+    "label": {
+      "one": "Carte de {count} clinique avec une adresse publiée",
+      "other": "Carte de {count} cliniques avec une adresse publiée"
+    },
+    "marker": "{name}, {country}",
+    "viewClinic": "Voir la clinique",
+    "skip": "Passer la carte et aller à la liste des cliniques",
+    "onMap": {
+      "one": "Clinique sur la carte",
+      "other": "Cliniques sur la carte"
+    },
+    "instructions": "Utilisez Tab pour passer d'une épingle à l'autre. Appuyez sur Entrée pour ouvrir les détails d'une clinique."
+  },
+  "api": {
+    "waking": "L'API ne répond pas encore. Elle est peut-être en train de démarrer ; cela peut prendre une minute.",
+    "down": "L'API est hors service : les listes et les soldes ne peuvent pas se charger.",
+    "outageDetail": "Les fonds sur la chaîne ne sont pas affectés et les actions de portefeuille fonctionnent toujours.",
+    "statusLink": "Voir la page d'état",
+    "statusWaking": "Elle est peut-être aussi en train de démarrer, ce qui peut prendre une minute.",
+    "statusOutage": "Elle est hors service, pas en démarrage. Les fonds sur la chaîne ne sont pas affectés et les actions de portefeuille fonctionnent toujours."
+  },
+  "offlineData": {
+    "showing": "Données enregistrées {age}.",
+    "note": "Certaines informations peuvent être périmées. Elles seront actualisées dès le retour de l'API."
+  },
   "admin": {
     "split": {
       "button": "Partager le dépôt",

@@ -11,6 +11,7 @@ import { useWallet } from '@/lib/wallet';
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
 import { NetworkBadge } from './NetworkBadge';
+import { TextSizeToggle } from './TextSizeToggle';
 import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
@@ -75,6 +76,7 @@ export function SiteHeader() {
 
         <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           <LowBandwidthToggle />
+          <TextSizeToggle />
           <ThemeToggle />
           <NetworkBadge />
           <ConnectButton />

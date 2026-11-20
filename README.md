@@ -165,16 +165,24 @@ can install it, and `public/sw.js` caches the shell — the `/` document, the
 manifest, the icons and the content-hashed build output — so it opens on a
 connection that is down and says plainly that it cannot reach the indexer.
 
-Nothing else is cached. The indexer API, Soroban RPC, Horizon, map tiles and
-analytics are cross-origin and pass straight through, and so do Next's
-same-origin RSC payloads, because those carry page content. A cached API answer
-would be a privacy leak on a shared clinic phone, and a wrong answer too: a
-voucher's state comes from the chain, not from yesterday's response.
+The worker itself caches nothing else. The indexer API, Soroban RPC, Horizon,
+map tiles and analytics are cross-origin and pass straight through, and so do
+Next's same-origin RSC payloads, because those carry page content.
+
+The app does keep a separate read snapshot in IndexedDB (#302), so a clinic on
+a bad link can still see the last public answers instead of only an error. It
+is deliberately labelled: while the API is unreachable, a banner says how old
+the data is, and it disappears as soon as a live read lands. Patient-derived
+references are stripped before anything is written, patient-scoped keys are
+never written at all, and signing out of the wallet deletes the store. A
+voucher's state still comes from the chain — the snapshot is for reading,
+never a reason to skip a live check before acting.
 
 Icons are generated rather than hand-drawn (`npm run icons`,
 `scripts/generate-icons.mjs`) and checked in so a deployment needs no asset
 step. `tests/e2e/offline-shell.spec.ts` covers the manifest, the icons and the
-offline reload; the other suites block service workers
+offline reload; `tests/e2e/offline-cache.spec.ts` covers the labelled snapshot
+and its privacy rules. The other suites block service workers
 (`playwright.config.ts`) so their network stays deterministic.
 
 ## Deploying

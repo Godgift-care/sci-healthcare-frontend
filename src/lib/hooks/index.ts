@@ -1,3 +1,4 @@
+export * from './useApiAvailability';
 export * from './useData';
 export * from './useLiveUpdates';
 export * from './useNames';

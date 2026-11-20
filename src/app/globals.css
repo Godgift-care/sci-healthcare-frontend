@@ -40,6 +40,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Three-step text size (#311). Scaling the root font size rather than
+ * individual components means every rem-based Tailwind utility — spacing,
+ * type, tap targets — grows together, so the layout keeps its proportions.
+ * The setting is applied by public/text-size-init.js before first paint.
+ */
+:root {
+  font-size: 100%;
+}
+
+:root[data-text-size='large'] {
+  font-size: 112.5%;
+}
+
+:root[data-text-size='largest'] {
+  font-size: 125%;
+}
+
 @page {
   size: A4;
   margin: 10mm;

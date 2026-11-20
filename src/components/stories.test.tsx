@@ -2,8 +2,26 @@
 import { render, cleanup } from '@testing-library/react';
 import { composeStories } from '@storybook/react';
 import axe from 'axe-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
+
+/**
+ * Stories render outside the Next router, but `DetailLink` (used by
+ * VoucherRow) calls `useRouter` for intent prefetching. A minimal router
+ * keeps the story surface honest without mounting a whole app.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    prefetch: () => {},
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+    forward: () => {},
+    refresh: () => {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 /**
  * Runs the stories (#350).
