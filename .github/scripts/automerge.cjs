@@ -52,7 +52,7 @@ async function rateLimitRemaining({ github }) {
  * RateLimitError so the caller can handle it gracefully instead of failing
  * the whole job.
  */
-async function withRateLimit({ github, fn, what }) {
+async function withRateLimit({ fn, what }) {
   try {
     return await fn();
   } catch (err) {
@@ -256,7 +256,6 @@ async function approvePendingRuns({ github, context, core, pulls }) {
   const seen = new Set();
   for (let i = 0; i < attempts; i++) {
     const pending = await withRateLimit({
-      github,
       fn: () =>
         paginate(github, github.rest.actions.listWorkflowRunsForRepo, {
           owner, repo, status: 'action_required',
@@ -269,7 +268,6 @@ async function approvePendingRuns({ github, context, core, pulls }) {
       seen.add(run.id);
       try {
         await withRateLimit({
-          github,
           fn: () =>
             github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve', {
               owner, repo, run_id: run.id,
@@ -285,7 +283,6 @@ async function approvePendingRuns({ github, context, core, pulls }) {
     if (justPushed && i < attempts - 1) {
       const sha = context.payload.pull_request.head.sha;
       const runs = await withRateLimit({
-        github,
         fn: () =>
           github.rest.actions.listWorkflowRunsForRepo({ owner, repo, head_sha: sha, per_page: 20 }),
         what: 'list workflow runs for head SHA',
@@ -512,7 +509,6 @@ async function run({ github, context, core }) {
   for (const pr of eligible) {
     try {
       const d = await withRateLimit({
-        github,
         fn: () => handle({ github, context, core, pr, patterns }),
         what: `PR #${pr.number}`,
       });
