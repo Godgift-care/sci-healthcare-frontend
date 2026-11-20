@@ -1,6 +1,7 @@
 'use client';
 
 import { StrKey } from '@stellar/stellar-sdk';
+import { BASE_FEE } from '@stellar/stellar-sdk';
 import { DetailLink } from '@/components/DetailLink';
 import { use, useEffect, useMemo, useState } from 'react';
 
@@ -34,6 +35,7 @@ import {
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
 import { quoteXlmForUsdc } from '@/lib/stellar';
+import { TransactionTimeoutError, RETRY_FEE_MULTIPLIER } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
@@ -475,6 +477,41 @@ export default function ClinicPage({
           }
           trackEvent('voucher_funded');
         } catch (err) {
+          // A timed-out transaction may still land on chain. If it has not,
+          // offer to resubmit with a higher fee using the same sequence
+          // number — only one transaction per sequence number can be
+          // included, so the first attempt cannot also succeed (#316).
+          if (err instanceof TransactionTimeoutError) {
+            const retryFee = BigInt(Number(BASE_FEE) * RETRY_FEE_MULTIPLIER);
+            try {
+              const retry = await voucher.create(
+                { ...request },
+                signTransaction,
+                false,
+                retryFee,
+              );
+              const balance = await usdc.balance(wallet).catch(() => null);
+              if (balance !== null) setWalletBalance(balance);
+              let newId: string | null = null;
+              if (typeof retry.returnValue === 'bigint' || typeof retry.returnValue === 'number') {
+                newId = String(retry.returnValue);
+                succeeded.push(newId);
+                successfulTxs.push({ hash: retry.hash, id: newId });
+                void invalidateVouchers(newId);
+              } else {
+                successfulTxs.push({ hash: retry.hash, id: null });
+                void invalidateVouchers();
+              }
+              trackEvent('voucher_funded');
+              continue;
+            } catch (retryErr) {
+              failed.push({
+                label: selectedServices[i].label,
+                error: humaniseError(retryErr, VOUCHER_ERRORS),
+              });
+            }
+          }
+
           failed.push({
             label: selectedServices[i].label,
             error: humaniseError(err, VOUCHER_ERRORS),
@@ -592,7 +629,7 @@ export default function ClinicPage({
                     <span
                       className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold ${
                         checked
-                          ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                          ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                           : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent'
                       }`}
                     >

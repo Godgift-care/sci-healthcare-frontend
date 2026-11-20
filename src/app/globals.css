@@ -19,6 +19,16 @@
  * stay light pills with dark text, which keeps their contrast in both
  * themes. Applied via `data-theme` before first paint, so no flash.
  */
+:root {
+  --color-brand-text: #ffffff;
+}
+
+/*
+ * Dark palette (#10). Every token-based component (cards, header, buttons,
+ * inputs) follows these automatically; the pastel status badges and alerts
+ * stay light pills with dark text, which keeps their contrast in both
+ * themes. Applied via `data-theme` before first paint, so no flash.
+ */
 :root[data-theme='dark'] {
   --color-ink: #e8eef4;
   --color-ink-soft: #9aa7b8;
@@ -31,6 +41,7 @@
   --color-danger: #f87171;
   --color-ok: #4ade80;
   color-scheme: dark;
+  --color-brand-text: #020617;
 }
 
 html,

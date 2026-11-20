@@ -2,8 +2,14 @@
 import { render, cleanup } from '@testing-library/react';
 import { composeStories } from '@storybook/react';
 import axe from 'axe-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ prefetch: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 /**
  * Runs the stories (#350).
