@@ -68,7 +68,21 @@
     "ledgerNote": "Vóṣà yìí dúró fún ìlérí tí a fi pamọ́ lórí ẹ̀wọ̀n Stellar. Kò ní àwọn àkọsílẹ̀ ìlera tàbí ìdánimọ̀ ara ẹni.",
     "reportProblem": "Jábọ̀ ìṣòro",
     "reportProblemIntro": "Olùdáwó nìkan ló lè ṣí àríyànjiyàn. Tí ìwọ ni aláìsàn, ẹbí, tàbí ẹnikẹ́ni mìíràn tó ṣàkíyèsí ìṣòro pẹ̀lú vóṣà yìí, ṣí ìjábọ̀. A ti fi nọ́mbà vóṣà tí gbogbo ènìyàn rí, ipò, iṣẹ́ àti kílíníkì kún un nìkan — kì í ṣe ìtọ́kasí aláìsàn rárá.",
-    "reportProblemAction": "Jábọ̀ ìṣòro"
+    "reportProblemAction": "Jábọ̀ ìṣòro",
+    "redirect": {
+      "action": "Lò ní kílíníkì mìíràn",
+      "title": "Gbé vóṣà #{id}",
+      "intro": "Àwọn kílíníkì tó ń ṣiṣẹ́ tí wọ́n ń pèsè iṣẹ́ yìí ní {amount} tàbí kéré ju bẹ́ẹ̀ ló wà lórí àkójọ.",
+      "empty": "Kò sí kílíníkì mìíràn tó ń pèsè iṣẹ́ yìí ní {amount} tàbí kéré ju bẹ́ẹ̀ ní báyìí.",
+      "loading": "Ń wá àwọn kílíníkì…",
+      "choose": "Yan kílíníkì",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} yóò gba {price} àti pé vóṣà náà yóò pa owó tí a fi pamọ́ mọ́ ní {amount}. Ṣàyẹ̀wò kílíníkì àti iye kí o tó fọwọ́ sí.",
+      "confirm": "Gbé vóṣà",
+      "moving": "Ń gbé…",
+      "error": "Kò lè gbé vóṣà náà: {message}",
+      "success": "A ti gbé vóṣà lọ sí {clinic}."
+    }
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",
@@ -104,9 +118,15 @@
     "earnings": "Èrè",
     "earningsNote": "Ìṣàn owó kílíníkì yìí: ìtọ́jú tí a ti san, owó tí ó ń dúró, àti àwọn owó ìsan àdéhùn tí a ti san.",
     "earningsSettled": "Ti san",
-    "earningsSettledDetail": "Vóṣà {count} · {net} lẹ́yìn owó ìsan",
+    "earningsSettledDetail": {
+      "one": "{count} vóṣà · {net} lẹ́yìn owó ìsan",
+      "other": "{count} vóṣà · {net} lẹ́yìn owó ìsan"
+    },
     "earningsPending": "Owó tó ń dúró",
-    "earningsPendingDetail": "{count} tí a gbà, jẹ́rìí tàbí ní àríyànjiyàn, kí a tó yọ owó ìsan",
+    "earningsPendingDetail": {
+      "one": "{count} vóṣà tí a gbà, tí a jẹ́rìí tàbí tí ó ní àríyànjiyàn, kí a tó yọ owó ìsan",
+      "other": "{count} vóṣà tí a gbà, tí a jẹ́rìí tàbí tí ó ní àríyànjiyàn, kí a tó yọ owó ìsan"
+    },
     "earningsFees": "Owó ìsan tí a san",
     "earningsFeesDetail": "Owó ìsan àdéhùn lórí ìtọ́jú tí a san",
     "earningsMonthly": "Èrè oṣooṣù",
@@ -119,7 +139,10 @@
     "allStatuses": "Gbogbo rẹ̀",
     "searchVoucherNumber": "Nọ́mbà vóṣà",
     "searchVoucherPlaceholder": "àpẹẹrẹ 21 tàbí #21",
-    "showingVouchers": "Ń fi {shown} nínú {total} vóṣà hàn",
+    "showingVouchers": {
+      "one": "Ń fi {shown} nínú {total} vóṣà hàn",
+      "other": "Ń fi {shown} nínú {total} vóṣà hàn"
+    },
     "noMatchingVouchers": "Kò sí vóṣà tó bá ìwádìí yìí mu.",
     "clearFilters": "Pa àwọn àlẹ̀ mọ́",
     "checklist": {
@@ -170,6 +193,76 @@
   "stats": {
     "downloadDaily": "Gba CSV ojoojúmọ́",
     "downloadClinics": "Gba CSV àwọn kílíníkì",
-    "downloadVouchers": "Gba CSV àwọn vóṣà"
+    "downloadVouchers": "Gba CSV àwọn vóṣà",
+    "escrowTitle": "Owó tí a fi pamọ́ lórí ẹ̀wọ̀n",
+    "escrowNote": "A kà á láti inú ìṣirò àdéhùn vóṣà fúnra rẹ̀, láìsí àpò.",
+    "escrowOpen": "Owó tí a ṣí sílẹ̀",
+    "escrowBalance": "Àdéhùn ní {amount}",
+    "escrowIndexed": "Atọ́ka sọ pé {amount} wà ní ṣíṣí nínú owó tí a fi pamọ́.",
+    "escrowUnavailable": "Iye owó tí a fi pamọ́ lórí ẹ̀wọ̀n kò sí ní báyìí.",
+    "escrowIndexedUnavailable": "Àpapọ̀ owó tí a fi pamọ́ tí atọ́ka ń fi hàn kò sí ní báyìí.",
+    "escrowSolvencyMismatch": "Ìwé àdéhùn kò bá iye tí ó ní mu: {escrow} ni a kọ sílẹ̀ gẹ́gẹ́ bí owó tí a ṣí sílẹ̀ ṣùgbọ́n àdéhùn ní {balance}. Má gbẹ́kẹ̀ lé àpapọ̀ atọ́ka títí a ó fi yé wa.",
+    "escrowIndexerMismatch": "Ẹ̀wọ̀n àti atọ́ka kò fọwọ́ sí i lórí owó tí a ṣí sílẹ̀: àdéhùn sọ {chain}, atọ́ka sọ {indexed}."
+  },
+  "my": {
+    "selectAllVisible": "Yan gbogbo rẹ̀ ní ojú-ìwé yìí ({count})",
+    "selectVoucher": "Yan vóṣà #{id}",
+    "selectedCount": "{count} ti a yàn",
+    "exportSelected": "Gba CSV àwọn tí a yàn",
+    "refundSelected": "San àwọn tí a yàn padà ({count})",
+    "refundAll": "San gbogbo rẹ̀ padà ({count})",
+    "refundingCount": "Ń san padà {current}/{total}…",
+    "refundProgress": "{current} nínú {total}",
+    "refundingVoucher": "Ń san vóṣà #{id} padà…",
+    "refundedSummary": "A ti san {count} vóṣà padà lékè:",
+    "refundFailedSummary": "Kò lè san {count} vóṣà padà:"
+  },
+  "admin": {
+    "split": {
+      "button": "Pín owó tí a fi pamọ́",
+      "amountLabel": "Iye tí a fún kílíníkì (USDC)",
+      "amountHint": "Iye lapapọ̀ kí owó ìsan àdéhùn tó yọ, láàárín 0 àti {amount}. Ìyókù yóò padà sọ́dọ̀ olùdáwó.",
+      "invalid": "Tẹ iye kan láàárín 0 àti {amount}.",
+      "loading": "Ń ṣírò owó ìsan…",
+      "error": "Kò lè ṣírò owó ìsan: {message}",
+      "clinicReceives": "{clinic} gba {net} lẹ́yìn owó ìsan {fee}.",
+      "funderReceives": "Olùdáwó gba {amount}.",
+      "sum": "Owó kílíníkì, owó ìsan àti ìpadà olùdáwó jẹ́ {amount} ní àpapọ̀."
+    }
+  },
+  "attest": {
+    "leftToday": "{count} ìjẹ́rìí tó kù lónìí",
+    "capReached": "O ti dé ààlà ìjẹ́rìí rẹ lónìí. Jẹ́rìí ìtọ́jú lẹ́ẹ̀kan síi lẹ́yìn {time} UTC.",
+    "leftUnavailable": "A kò lè ka àwọn ìjẹ́rìí tó kù ní báyìí."
+  },
+  "print": {
+    "verify": "Ṣàyẹ̀wò lórí ẹ̀wọ̀n",
+    "verifying": "Ń ṣàyẹ̀wò…",
+    "verified": "Ti ṣàyẹ̀wò lórí ẹ̀wọ̀n",
+    "mismatch": "Kò bá ẹ̀wọ̀n mu",
+    "mismatchShort": "Kò bá mu",
+    "error": "Kò lè ka ẹ̀wọ̀n",
+    "fieldMismatch": "{field}: a fi {displayed} hàn, ẹ̀wọ̀n sọ {onChain}",
+    "field": {
+      "voucher": "Nọ́mbà rísíìtì",
+      "provider": "Kílíníkì",
+      "service": "Iṣẹ́",
+      "amount": "Iye",
+      "settledAt": "Ọjọ́"
+    }
+  },
+  "offlineQueue": {
+    "title": "Ń dúró láti fi ránṣẹ́",
+    "note": "A fọwọ́ sí àwọn ìgbà yìí lórí ẹ̀rọ yìí, a ó sì rán wọn ní àdáṣe nígbà tí ìsopọ̀ bá padà.",
+    "voucher": "Vóṣà #{id}",
+    "queuedStatus": "Nínú ìlà",
+    "submitting": "Ń ránṣẹ́…",
+    "failed": "A kò ránṣẹ́: {error}",
+    "validUntil": "Wà títí dé {time}",
+    "submitNow": "Fi ránṣẹ́ báyìí",
+    "discard": "Sọ nù",
+    "expiredTitle": "A sọ ìgbà tó wà nínú ìlà nù",
+    "expired": "Ìgbà kan tó wà nínú ìlà parí kí a tó lè fi ránṣẹ́, nítorí náà a sọ ọ́ nù. A kò rán ohunkóhun sí kílíníkì; gbà vóṣà náà lẹ́ẹ̀kan síi tí aláìsàn bá ṣì wà ní tábìlì.",
+    "queuedToast": "A ti fi pamọ́ lórí ẹ̀rọ yìí. A ó fi ìgbà náà ránṣẹ́ nígbà tí ìsopọ̀ bá padà."
   }
 }

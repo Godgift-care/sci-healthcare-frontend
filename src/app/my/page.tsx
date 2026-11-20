@@ -29,6 +29,7 @@ import {
   sortVouchers,
   type VoucherSort,
 } from '@/lib/voucher-filters';
+import { groupVouchersByPatient } from '@/lib/voucher-groups';
 import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
@@ -74,6 +75,40 @@ export default function MyPage() {
   const [secretDraft, setSecret] = useState<string | null>(null);
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
+
+  // The saved identity is HMAC'd locally so a voucher's beneficiaryRef can be
+  // matched to it without asking the API who the patient is. Null means there
+  // is nothing usable saved, and the list stays flat.
+  const [savedMatch, setSavedMatch] = useState<{
+    identifier: string;
+    key: string;
+    ref: string;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const identifier = saved.identifier.trim();
+    const key = saved.key;
+    if (!identifier || key.length < 32) return;
+    beneficiaryRef(identifier, key)
+      .then((ref) => {
+        if (!cancelled) setSavedMatch({ identifier, key, ref });
+      })
+      .catch(() => {
+        // Malformed saved values: the flat list is a fine fallback, and the
+        // history form reports the problem when the user asks for it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [saved.identifier, saved.key]);
+  // A result from a previous identity is ignored rather than cleared in the
+  // effect, which would be a synchronous setState during render.
+  const savedRef =
+    savedMatch &&
+    savedMatch.identifier === saved.identifier.trim() &&
+    savedMatch.key === saved.key
+      ? savedMatch.ref
+      : null;
 
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +187,11 @@ export default function MyPage() {
     filterVouchers(funded, { status: statusFilter, clinic: clinicFilter }),
     sort,
   );
+  // Group by the patient saved on this device. Without one, every row would
+  // sit under "Unknown patients", so the flat list is clearer.
+  const groups = savedRef
+    ? groupVouchersByPatient(visible, [{ name: saved.identifier, ref: savedRef }])
+    : null;
   const filtered = statusFilter !== null || Boolean(clinicFilter);
   const isDefaultView = !filtered && sort === DEFAULT_SORT;
 
@@ -488,6 +528,30 @@ export default function MyPage() {
 
   const historyError = error || receiptsError || refVouchersError;
 
+  // Batch selection wraps every row, whether the list is grouped by patient or
+  // flat, so the two renderings cannot drift apart.
+  const renderVoucherRow = (v: (typeof visible)[number]) => (
+    <div key={v.id} className="flex items-start gap-3">
+      <label className="inline-flex min-h-11 shrink-0 items-center">
+        <input
+          type="checkbox"
+          checked={selectedIds.has(v.id)}
+          disabled={batchRefunding}
+          onChange={(event) => toggleVoucherSelection(v.id, event.target.checked)}
+          aria-label={t('my.selectVoucher', { id: v.id })}
+          className="h-4 w-4 rounded border-[var(--color-line)]"
+        />
+      </label>
+      <div className="min-w-0 flex-1">
+        <VoucherRow
+          v={v}
+          actions={['dispute', 'refund', 'settle']}
+          onDone={() => void mutateFunded()}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       <TestUsdc />
@@ -693,29 +757,24 @@ export default function MyPage() {
               <span>{t('my.selectAllVisible', { count: visible.length })}</span>
             </label>
           )}
-          {visible.map((v) => (
-            <div key={v.id} className="flex items-start gap-3">
-              <label className="inline-flex min-h-11 shrink-0 items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(v.id)}
-                  disabled={batchRefunding}
-                  onChange={(event) =>
-                    toggleVoucherSelection(v.id, event.target.checked)
-                  }
-                  aria-label={t('my.selectVoucher', { id: v.id })}
-                  className="h-4 w-4 rounded border-[var(--color-line)]"
-                />
-              </label>
-              <div className="min-w-0 flex-1">
-                <VoucherRow
-                  v={v}
-                  actions={['dispute', 'refund', 'settle']}
-                  onDone={() => void mutateFunded()}
-                />
-              </div>
-            </div>
-          ))}
+          {groups ? (
+            groups.map((group) => (
+              <section key={group.ref ?? 'unknown'} className="space-y-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-medium">
+                    {group.name ?? 'Unknown patients'}
+                  </h3>
+                  <span className="text-xs text-[var(--color-ink-soft)]">
+                    {group.vouchers.length} voucher
+                    {group.vouchers.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                {group.vouchers.map(renderVoucherRow)}
+              </section>
+            ))
+          ) : (
+            <div className="space-y-3">{visible.map(renderVoucherRow)}</div>
+          )}
         </div>
       </section>
 
