@@ -175,5 +175,10 @@
     "fr": "Français",
     "sw": "Kiswahili",
     "select": "Choisir la langue"
+  },
+  "stats": {
+    "downloadDaily": "Télécharger le CSV quotidien",
+    "downloadClinics": "Télécharger le CSV des cliniques",
+    "downloadVouchers": "Télécharger le CSV des bons"
   }
 }

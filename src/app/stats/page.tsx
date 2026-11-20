@@ -3,8 +3,15 @@
 import { useMemo, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
+import {
+  buildClinicCountryCsvRows,
+  buildCountryVoucherCsvRows,
+  buildDailyStatsCsvRows,
+  downloadCsv,
+} from '@/lib/csv';
 import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
-import { Card, Empty } from '@/components/ui';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+import { Button, Card, Empty } from '@/components/ui';
 import { DataTable } from '@/components/DataTable';
 import { SkeletonCard } from '@/components/Skeleton';
 import { WidgetBoundary } from '@/components/WidgetBoundary';
@@ -129,6 +136,7 @@ function ActivityChart({
 }
 
 export default function StatsPage() {
+  const { t } = useLocaleContext();
   const [days, setDays] = useState<TimeRange>(30);
   const [showTables, setShowTables] = useState<boolean>(false);
 
@@ -199,6 +207,37 @@ export default function StatsPage() {
   const totalSettledVolume = useMemo(() => {
     return series.reduce((acc, s) => acc + BigInt(s.settled.amount || '0'), 0n).toString();
   }, [series]);
+
+  function downloadDailyActivityCsv() {
+    downloadCsv(`daily-activity-${days}d.csv`, buildDailyStatsCsvRows(series));
+  }
+
+  function downloadClinicsByCountryCsv() {
+    downloadCsv(
+      'clinics-by-country.csv',
+      buildClinicCountryCsvRows(
+        countryCounts.map(([country, count]) => ({
+          country,
+          registered: count.count,
+          active: count.active,
+        })),
+      ),
+    );
+  }
+
+  function downloadCountryVouchersCsv() {
+    downloadCsv(
+      'voucher-activity-by-country.csv',
+      buildCountryVoucherCsvRows(
+        countryVouchers.map(([country, activity]) => ({
+          country,
+          funded: activity.funded,
+          settled: activity.settled,
+          settledValue: activity.settledValue,
+        })),
+      ),
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -278,13 +317,22 @@ export default function StatsPage() {
       {/* View Mode Toggle for Accessibility */}
       <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
         <h2 className="text-base font-semibold">Daily activity ({days} days)</h2>
-        <button
-          type="button"
-          onClick={() => setShowTables(!showTables)}
-          className="text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
-        >
-          {showTables ? 'Hide data tables' : 'Show accessible data tables'}
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={downloadDailyActivityCsv}
+            disabled={series.length === 0}
+          >
+            {t('stats.downloadDaily')}
+          </Button>
+          <button
+            type="button"
+            onClick={() => setShowTables(!showTables)}
+            className="text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
+          >
+            {showTables ? 'Hide data tables' : 'Show accessible data tables'}
+          </button>
+        </div>
       </div>
 
       {dailyLoading && (
@@ -404,7 +452,16 @@ export default function StatsPage() {
 
       {/* Country Breakdown Table */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Clinics by country</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Clinics by country</h2>
+          <Button
+            variant="ghost"
+            onClick={downloadClinicsByCountryCsv}
+            disabled={countryCounts.length === 0}
+          >
+            {t('stats.downloadClinics')}
+          </Button>
+        </div>
         <Card className="overflow-x-auto p-4">
           <table className="block w-full text-start text-sm sm:table">
             <caption className="sr-only">Registered clinics grouped by country</caption>
@@ -448,7 +505,16 @@ export default function StatsPage() {
 
       {/* Vouchers by country */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Voucher activity by country</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Voucher activity by country</h2>
+          <Button
+            variant="ghost"
+            onClick={downloadCountryVouchersCsv}
+            disabled={countryVouchers.length === 0}
+          >
+            {t('stats.downloadVouchers')}
+          </Button>
+        </div>
         <Card className="overflow-x-auto p-4">
           <table className="block w-full text-left text-sm sm:table">
             <caption className="sr-only">

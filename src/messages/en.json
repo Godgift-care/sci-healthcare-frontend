@@ -166,5 +166,10 @@
     "fr": "Français",
     "sw": "Kiswahili",
     "select": "Select language"
+  },
+  "stats": {
+    "downloadDaily": "Download daily CSV",
+    "downloadClinics": "Download clinics CSV",
+    "downloadVouchers": "Download vouchers CSV"
   }
 }

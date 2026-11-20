@@ -173,5 +173,10 @@
     "fr": "Français",
     "sw": "Kiswahili",
     "select": "Chagua lugha"
+  },
+  "stats": {
+    "downloadDaily": "Pakua CSV ya kila siku",
+    "downloadClinics": "Pakua CSV ya kliniki",
+    "downloadVouchers": "Pakua CSV ya vocha"
   }
 }
