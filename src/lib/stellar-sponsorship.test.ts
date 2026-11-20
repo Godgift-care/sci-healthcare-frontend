@@ -51,9 +51,14 @@ afterEach(() => vi.unstubAllGlobals());
 
 it('simulates before signing, submits the fee bump and polls its hash for the voucher ID', async () => {
   await expect(invoke()).resolves.toEqual({ hash: 'ab'.repeat(32), returnValue: 7n });
-  expect(rpcMock.simulateTransaction.mock.invocationCallOrder[0]).toBeLessThan(sign.mock.invocationCallOrder[0]);
-  expect(rpcMock.sendTransaction.mock.calls[0][0].feeSource).toBe(sponsor.publicKey());
-  expect(rpcMock.sendTransaction.mock.calls[0][0].innerTransaction.fee).toBe('600');
+  const simOrder = rpcMock.simulateTransaction.mock.invocationCallOrder[0];
+  const signOrder = sign.mock.invocationCallOrder[0];
+  if (simOrder === undefined || signOrder === undefined) throw new Error('Expected invocation call order');
+  expect(simOrder).toBeLessThan(signOrder);
+  const call0 = rpcMock.sendTransaction.mock.calls[0];
+  if (!call0 || !call0[0]) throw new Error('Expected sendTransaction call');
+  expect(call0[0].feeSource).toBe(sponsor.publicKey());
+  expect(call0[0].innerTransaction.fee).toBe('600');
   expect(rpcMock.getTransaction).toHaveBeenCalledWith('ab'.repeat(32));
 });
 it('includes simulated Soroban resource fees in the cap before signing', async () => {
@@ -67,7 +72,9 @@ it('includes simulated Soroban resource fees in the cap before signing', async (
 it('keeps ordinary funding on the direct path', async () => {
   await invoke(false);
   expect(fetch).not.toHaveBeenCalled();
-  expect(rpcMock.sendTransaction.mock.calls[0][0]).toBeInstanceOf(Transaction);
+  const directCall = rpcMock.sendTransaction.mock.calls[0];
+  if (!directCall || !directCall[0]) throw new Error('Expected sendTransaction call');
+  expect(directCall[0]).toBeInstanceOf(Transaction);
 });
 it('never prompts the wallet after a failed simulation', async () => {
   rpcMock.simulateTransaction.mockResolvedValue({ error: 'contract rejected' });

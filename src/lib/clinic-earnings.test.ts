@@ -190,7 +190,7 @@ describe('monthlyEarnings', () => {
     ]);
 
     expect(months).toHaveLength(1);
-    expect(months[0].month).toBe('2026-05');
-    expect(months[0].settled).toBe('30000000');
+    expect(months[0]?.month).toBe('2026-05');
+    expect(months[0]?.settled).toBe('30000000');
   });
 });

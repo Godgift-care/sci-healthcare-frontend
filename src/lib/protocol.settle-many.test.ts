@@ -190,7 +190,7 @@ describe('settleMany', () => {
     expect(state.invokes).toEqual(['settle', 'settle', 'settle']);
     expect(result.settled).toEqual(['61', '63']);
     expect(result.failed).toHaveLength(1);
-    expect(result.failed[0].id).toBe('62');
+    expect(result.failed[0]?.id).toBe('62');
     expect(progress).toEqual(['61', '63']);
   });
 

@@ -273,7 +273,7 @@ export interface Client {
 
 }
 export class Client extends ContractClient {
-  static async deploy<T = Client>(
+  static override async deploy<T = Client>(
     /** Options for initializing a Client as well as for calling a method, with extras specific to deploying. */
     options: MethodOptions &
       Omit<ContractClientOptions, "contractId"> & {
@@ -287,7 +287,7 @@ export class Client extends ContractClient {
   ): Promise<AssembledTransaction<T>> {
     return ContractClient.deploy(null, options)
   }
-  constructor(public readonly options: ContractClientOptions) {
+  constructor(public override readonly options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAAAAALRQcm92aWRlciBtYXJrcyB0aGUgcGF0aWVudCBhcyBwcmVzZW50ZWQgYW5kIHRoZSBzZXJ2aWNlIGFzIGJlZ3VuLgoKQSBwcm92aWRlciBzdXNwZW5kZWQgYWZ0ZXIgdGhlIHZvdWNoZXIgd2FzIGZ1bmRlZCBjYW5ub3QgY2xhaW0gaXQ7CnRoZSB2b3VjaGVyIHNpbXBseSBydW5zIHRvIGV4cGlyeSBhbmQgcmVmdW5kcy4AAAAFY2xhaW0AAAAAAAACAAAAAAAAAAhwcm92aWRlcgAAABMAAAAAAAAACnZvdWNoZXJfaWQAAAAAAAYAAAABAAAD6QAAAAIAAAfQAAAADFZvdWNoZXJFcnJvcg==",
         "AAAAAAAAAHRGZWUgYW5kIG5ldCBwYXlvdXQgZm9yIGFuIGFtb3VudCwgd2l0aG91dCBtdXRhdGluZyBhbnl0aGluZy4KTGV0cyBhIGNsaWVudCBzaG93IHRoZSBwcm92aWRlciBleGFjdGx5IHdoYXQgd2lsbCBsYW5kLgAAAAVxdW90ZQAAAAAAAAEAAAAAAAAABmFtb3VudAAAAAAACwAAAAEAAAPpAAAD7QAAAAIAAAALAAAACwAAB9AAAAAMVm91Y2hlckVycm9y",

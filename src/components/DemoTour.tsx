@@ -60,13 +60,15 @@ export function DemoTour() {
     },
   ];
 
-  const step = steps[index];
+  const step = steps[index] ?? steps[0];
   const isLast = index === steps.length - 1;
 
   function finish() {
     setOpen(false);
     markTourDone();
   }
+
+  if (!step) return null;
 
   return (
     <>

@@ -80,8 +80,10 @@ describe('fee sponsorship', () => {
     const bump = await sponsorTransaction(prepared, sign);
     expect(bump.feeSource).toBe(sponsor.publicKey());
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(fetchMock.mock.calls[0][0]).toBe('https://api.example.test/sponsorship/fee-bump');
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'omit', redirect: 'error', cache: 'no-store' });
+    const call0 = fetchMock.mock.calls[0];
+    if (!call0) throw new Error('Expected fetchMock call');
+    expect(call0[0]).toBe('https://api.example.test/sponsorship/fee-bump');
+    expect(call0[1]).toMatchObject({ credentials: 'omit', redirect: 'error', cache: 'no-store' });
   });
 
   it('rejects excessive simulated fees before asking the wallet', async () => {

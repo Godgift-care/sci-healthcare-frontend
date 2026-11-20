@@ -99,10 +99,14 @@ export const SERVICE_CATALOGUE = [
   },
 ];
 
+const service101 = SERVICE_CATALOGUE[0];
+const service102 = SERVICE_CATALOGUE[1];
+if (!service101 || !service102) throw new Error('Missing service catalogue fixtures');
+
 /** `GET /services/:code` lookup keyed by code string. */
 export const SERVICE_BY_CODE: Record<string, (typeof SERVICE_CATALOGUE)[number]> = {
-  '101': SERVICE_CATALOGUE[0],
-  '102': SERVICE_CATALOGUE[1],
+  '101': service101,
+  '102': service102,
 };
 
 export const CLINIC = {

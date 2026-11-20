@@ -596,7 +596,9 @@ async function invoke(
     if (contractId !== config.contracts.voucher || method !== 'create_voucher' || args.length !== 6) {
       throw new Error('Only voucher funding can use sponsored fees.');
     }
-    const amount: unknown = scValToNative(args[4]);
+    const arg4 = args[4];
+    if (!arg4) throw new Error('Invalid sponsored voucher arguments.');
+    const amount: unknown = scValToNative(arg4);
     if (typeof amount !== 'bigint') throw new Error('Invalid sponsored voucher amount.');
     sponsor.requireSponsorship(amount);
   }
@@ -1007,7 +1009,8 @@ async function mockReadResult<T>(
       return '' as T;
     case 'quote': {
       const { scValToNative } = await loadSdk();
-      const amount = scValToNative(args[0]) as bigint;
+      const firstArg = args[0];
+      const amount = (firstArg ? scValToNative(firstArg) : 0n) as bigint;
       return [0n, amount] as unknown as T;
     }
     case 'get_provider':
