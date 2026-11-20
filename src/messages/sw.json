@@ -211,6 +211,40 @@
     "yo": "Yorùbá",
     "select": "Chagua lugha"
   },
+  "textSize": {
+    "label": "Ukubwa wa maandishi",
+    "normal": "Kawaida",
+    "large": "Kubwa",
+    "largest": "Kubwa zaidi",
+    "control": "Ukubwa wa maandishi: {current}. Badilisha hadi {next}.",
+    "hint": "Kuza maandishi. Mpangilio huu unakumbukwa kwenye kifaa hiki."
+  },
+  "map": {
+    "label": {
+      "one": "Ramani ya kliniki {count} iliyo na mahali palipochapishwa",
+      "other": "Ramani ya kliniki {count} zilizo na mahali palipochapishwa"
+    },
+    "marker": "{name}, {country}",
+    "viewClinic": "Tazama kliniki",
+    "skip": "Ruka ramani uende kwenye orodha ya kliniki",
+    "onMap": {
+      "one": "Kliniki kwenye ramani",
+      "other": "Kliniki zilizo kwenye ramani"
+    },
+    "instructions": "Tumia Tab kuhama kati ya pini za kliniki. Bonyeza Enter kufungua maelezo ya kliniki."
+  },
+  "api": {
+    "waking": "API haijajibu bado. Huenda inaamka; hii inaweza kuchukua hadi dakika moja.",
+    "down": "API imeanguka, kwa hiyo orodha na salio haziwezi kupakiwa.",
+    "outageDetail": "Fedha zilizo kwenye mnyororo haziathiriki, na vitendo vya pochi bado vinafanya kazi.",
+    "statusLink": "Angalia ukurasa wa hali",
+    "statusWaking": "Huenda pia inaamka, jambo ambalo linaweza kuchukua hadi dakika moja.",
+    "statusOutage": "Imeanguka, haianzi. Fedha zilizo kwenye mnyororo haziathiriki, na vitendo vya pochi bado vinafanya kazi."
+  },
+  "offlineData": {
+    "showing": "Inaonyesha data iliyohifadhiwa {age}.",
+    "note": "Baadhi ya taarifa zinaweza kuwa za zamani. Zitasasishwa API itakapopatikana."
+  },
   "admin": {
     "split": {
       "button": "Gawanya fedha",

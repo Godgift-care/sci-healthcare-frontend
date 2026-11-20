@@ -12,6 +12,7 @@ import {
 
 import { config } from './config';
 import { mockSignRejects, mockWalletAddress } from './e2e-seam';
+import { clearOfflineCache } from './offline-cache';
 import {
   PASSKEY_WALLET_ID,
   PasskeyModule,
@@ -379,6 +380,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } catch {
         // Ignore storage failures
       }
+      // The offline cache (#302) holds read answers that may name this
+      // wallet's vouchers; signing out must not leave them on a shared phone.
+      await clearOfflineCache();
     } finally {
       setAddress(null);
       setWalletName(null);

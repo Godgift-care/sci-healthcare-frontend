@@ -204,6 +204,40 @@
     "yo": "Yorùbá",
     "select": "Select language"
   },
+  "textSize": {
+    "label": "Text size",
+    "normal": "Normal",
+    "large": "Large",
+    "largest": "Largest",
+    "control": "Text size: {current}. Switch to {next}.",
+    "hint": "Make text larger. The setting is remembered on this device."
+  },
+  "map": {
+    "label": {
+      "one": "Map of {count} clinic with published locations",
+      "other": "Map of {count} clinics with published locations"
+    },
+    "marker": "{name}, {country}",
+    "viewClinic": "View clinic",
+    "skip": "Skip past the map to the clinic list",
+    "onMap": {
+      "one": "Clinic on the map",
+      "other": "Clinics on the map"
+    },
+    "instructions": "Use Tab to move between clinic pins. Press Enter to open a clinic's details."
+  },
+  "api": {
+    "waking": "The API is not answering yet. It may be waking up; this can take up to a minute.",
+    "down": "The API is down, so lists and balances cannot load.",
+    "outageDetail": "Funds on chain are unaffected, and wallet actions still work.",
+    "statusLink": "Check the status page",
+    "statusWaking": "It may also be waking up, which can take up to a minute.",
+    "statusOutage": "It is down, not starting. Funds on chain are unaffected, and wallet actions still work."
+  },
+  "offlineData": {
+    "showing": "Showing data saved {age}.",
+    "note": "Some information may be out of date. It will refresh when the API returns."
+  },
   "admin": {
     "split": {
       "button": "Split escrow",

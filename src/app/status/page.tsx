@@ -4,7 +4,8 @@ import type { ReactNode } from 'react';
 
 import { formatDate } from '@/lib/amounts';
 import { config } from '@/lib/config';
-import { useReady, useVersion } from '@/lib/hooks';
+import { useApiAvailability, useReady, useVersion } from '@/lib/hooks';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import {
   deploymentMismatches,
   describeLag,
@@ -52,6 +53,10 @@ function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: stri
  * here comes from `GET /ready` and `GET /version`; nothing is inferred.
  */
 export default function StatusPage() {
+  const { t } = useLocaleContext();
+  // After the retry budget the copy stops calling a real outage "waking up"
+  // (#313). The same state machine drives the notice on every other page.
+  const apiPhase = useApiAvailability();
   const {
     ready,
     error: readyError,
@@ -94,8 +99,10 @@ export default function StatusPage() {
           {overall === 'unreachable' && (
             <p className="mt-1">
               The API at <span className="mono break-all">{config.apiUrl}</span> did
-              not answer. Pages that list clinics or vouchers will not load until it
-              is back; it may also be waking up, which can take up to a minute.
+              not answer.{' '}
+              {apiPhase === 'outage'
+                ? t('api.statusOutage')
+                : t('api.statusWaking')}
             </p>
           )}
           {problems.length > 0 && (

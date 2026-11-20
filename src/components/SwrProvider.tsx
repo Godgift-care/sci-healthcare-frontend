@@ -3,6 +3,7 @@
 import { SWRConfig } from 'swr';
 
 import { useLowBandwidth } from '@/lib/low-bandwidth';
+import { offlineCacheMiddleware } from '@/lib/offline-cache';
 
 /**
  * Application-wide SWR defaults (#75).
@@ -25,12 +26,16 @@ const NORMAL = {
   revalidateOnFocus: true,
   revalidateOnReconnect: true,
   dedupingInterval: 2_000,
+  // Keep the last successful answers for an offline load (#302). The
+  // middleware strips patient references before anything is stored.
+  use: [offlineCacheMiddleware],
 };
 
 const LOW_BANDWIDTH = {
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
   dedupingInterval: 60_000,
+  use: [offlineCacheMiddleware],
 };
 
 export function SwrProvider({ children }: { children: React.ReactNode }) {

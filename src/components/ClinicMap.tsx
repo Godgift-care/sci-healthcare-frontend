@@ -2,9 +2,10 @@
 
 import 'leaflet/dist/leaflet.css';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { useRouter } from 'next/navigation';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { prefetchDetail } from '@/lib/detail-prefetch';
 
 import { providerLocation, type Provider, type ProviderLocation } from '@/lib/api';
@@ -16,6 +17,11 @@ import { providerLocation, type Provider, type ProviderLocation } from '@/lib/ap
  * initial bundle: Leaflet is imported on demand inside the effect and this
  * whole module is loaded lazily (see the home page), so read-only visits
  * that never open the map never download it.
+ *
+ * Accessibility (#310): the map has an accessible name and each clinic pin
+ * is a focusable button with the clinic's name. The same clinics are also
+ * listed as links beside the map (the home page), so a keyboard or
+ * screen-reader user never has to find a pin in the SVG to reach a clinic.
  *
  * Markers are `circleMarker`s rather than the default icon, which would need
  * Leaflet's bundled image assets rewritten for the Next asset pipeline.
@@ -41,6 +47,8 @@ type Located = { provider: Provider; location: ProviderLocation };
 
 export function ClinicMap({ providers }: { providers: Provider[] }) {
   const router = useRouter();
+  const { t } = useLocaleContext();
+  const instructionsId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   // Leaflet loads and draws inside an async effect, where a throw would be
@@ -71,7 +79,7 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
         popup.innerHTML = `<strong>${escapeHtml(provider.name)}</strong><br>${escapeHtml(provider.country)}<br>`;
         const link = document.createElement('a');
         link.href = `/clinics/${encodeURIComponent(provider.address)}`;
-        link.textContent = 'View clinic';
+        link.textContent = t('map.viewClinic');
         const warm = () => prefetchDetail({ kind: 'clinic', id: provider.address }, (href) => router.prefetch(href));
         link.addEventListener('mouseenter', warm);
         link.addEventListener('focus', warm);
@@ -81,7 +89,8 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
           router.push(link.getAttribute('href')!);
         });
         popup.append(link);
-        L.circleMarker([location.lat, location.lng], {
+
+        const marker = L.circleMarker([location.lat, location.lng], {
           radius: 8,
           color: '#0f766e',
           weight: 2,
@@ -90,6 +99,31 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
         })
           .addTo(map)
           .bindPopup(popup);
+
+        // Leaflet's `keyboard` option only applies to image markers, so the
+        // SVG path needs the focus and role set explicitly. A pin without a
+        // name is the same as no pin to a screen reader. `addTo` only queues
+        // the layer while the map has no view yet, so decorate the path once
+        // the map is ready rather than assuming it exists here.
+        map.whenReady(() => {
+          const element = marker.getElement();
+          if (!element) return;
+          element.setAttribute('tabindex', '0');
+          element.setAttribute('role', 'button');
+          element.setAttribute(
+            'aria-label',
+            t('map.marker', { name: provider.name, country: provider.country }),
+          );
+          element.addEventListener('keydown', (event) => {
+            const { key } = event as KeyboardEvent;
+            if (key === 'Enter' || key === ' ') {
+              event.preventDefault();
+              marker.openPopup();
+            } else if (key === 'Escape') {
+              marker.closePopup();
+            }
+          });
+        });
       }
 
       if (located.length > 0) {
@@ -104,18 +138,22 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
       map?.remove();
       mapRef.current = null;
     };
-  }, [providers, router]);
+  }, [providers, router, t]);
 
   if (failure) throw failure;
 
   return (
-    <div
-      ref={containerRef}
-      role="img"
-      aria-label={`Map of ${providers.length} clinic${
-        providers.length === 1 ? '' : 's'
-      } with published locations`}
-      className="relative z-0 h-80 w-full overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)]"
-    />
+    <div>
+      <p id={instructionsId} className="sr-only">
+        {t('map.instructions')}
+      </p>
+      <div
+        ref={containerRef}
+        role="region"
+        aria-label={t('map.label', { count: providers.length })}
+        aria-describedby={instructionsId}
+        className="relative z-0 h-80 w-full overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)]"
+      />
+    </div>
   );
 }

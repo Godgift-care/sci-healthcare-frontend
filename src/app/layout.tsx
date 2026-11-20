@@ -4,7 +4,9 @@ import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
+import { ApiStatusNotice } from '@/components/ApiStatusNotice';
 import { CommandPalette } from '@/components/CommandPalette';
+import { OfflineDataNotice } from '@/components/OfflineDataNotice';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
@@ -82,6 +84,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- runs before
             paint on purpose; deferring it would flash the wrong theme */}
         <script src="/theme-init.js" />
+        {/* Text size before paint (#311), same static-file approach as the
+            theme so the choice never flashes at the default size. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- runs before
+            paint on purpose; deferring it would flash the wrong text size */}
+        <script src="/text-size-init.js" />
       </head>
       <body>
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
@@ -98,6 +105,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SkipToContent />
             <div className="print:hidden">
               <TestnetNotice />
+              <ApiStatusNotice />
+              <OfflineDataNotice />
             </div>
             <SiteHeader />
             <CommandPalette />

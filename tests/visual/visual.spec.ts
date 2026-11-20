@@ -27,6 +27,9 @@ test.beforeEach(async ({ page }) => {
   await blockRpc(page);
   await blockAnalytics(page);
   await mockApi(page);
+  // Map imagery is third-party and changes with the tile version; the pins,
+  // list and labels (#310) are what the snapshot is about.
+  await page.route('**tile.openstreetmap.org/**', (route) => route.abort());
 });
 
 test('home — verified clinic directory', async ({ page }) => {
@@ -35,6 +38,29 @@ test('home — verified clinic directory', async ({ page }) => {
   await expect(page.getByText('Ikeja General Clinic')).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('home.png');
+});
+
+test('home — map view with clinic list', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Verified clinics')).toBeVisible();
+  await page.getByRole('button', { name: 'Map' }).click();
+  await expect(
+    page.getByRole('region', {
+      name: 'Map of 1 clinic with published locations',
+    }),
+  ).toBeVisible();
+  await expect(page.getByText('Clinic on the map')).toBeVisible();
+  await settle(page);
+  await expect(page).toHaveScreenshot('home-map.png');
+});
+
+test('home — largest text size', async ({ page }) => {
+  await page.addInitScript(`window.localStorage.setItem('sci-text-size', 'largest');`);
+  await page.goto('/');
+  await expect(page.getByText('Verified clinics')).toBeVisible();
+  await expect(page.getByText('Ikeja General Clinic')).toBeVisible();
+  await settle(page);
+  await expect(page).toHaveScreenshot('home-largest-text.png');
 });
 
 test('clinic detail — fund a voucher', async ({ page }) => {
