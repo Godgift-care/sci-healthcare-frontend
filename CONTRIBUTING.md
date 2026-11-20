@@ -17,7 +17,9 @@ npm run dev
 ```
 
 You also need the backend running on `http://localhost:8080` and contract ids
-from a deployment. See `sci-healthcare-contracts/README.md`.
+from a deployment. See `sci-healthcare-contracts/README.md`. For the whole
+stack — backend, contract ids and `.env.local` — follow
+[`docs/running-locally.md`](docs/running-locally.md).
 
 ```bash
 npm run typecheck
@@ -96,6 +98,26 @@ push, or run `gh repo fork --remote` and push to the new `origin`.
 
 A codespace cannot push changes to `.github/workflows/`: its token has no
 workflow permission. Make those changes from a local clone.
+
+**The API URL in a codespace.** The dev container runs
+`node scripts/codespace-env.mjs` after `npm ci`, which writes `.env.local`
+with `NEXT_PUBLIC_API_URL` pointing at the deployed testnet API
+(`https://sci-healthcare-api.onrender.com`). That address is reachable from
+your browser, unlike the container's `localhost:8080`, and the CSP follows the
+same variable, so no other change is needed. Restart `npm run dev` after the
+script runs, since Next reads `.env.local` once at start-up.
+
+To use a backend running in *another* codespace instead, forward its port
+publicly (**Ports** tab → the 8080 port → *Public*) and run:
+
+```bash
+SCI_BACKEND_CODESPACE=<that-codespace-name> node scripts/codespace-env.mjs --force
+```
+
+which writes `https://<that-codespace-name>-8080.app.github.dev`. Any other
+absolute URL works too: `SCI_API_URL=https://api.example.com node
+scripts/codespace-env.mjs --force`. A value you set by hand is left alone on
+later runs unless it is still `localhost`.
 
 Never commit a `.env` file, and never commit files you did not write. If
 `git status` shows changes you do not recognise (an `init` file, edited

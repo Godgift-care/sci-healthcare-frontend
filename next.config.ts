@@ -230,6 +230,9 @@ if (process.env.NODE_ENV === 'production') {
 const APP_VERSION = (
   JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as { version: string }
 ).version;
+// A distinct worker URL makes each deployment discoverable to already-open tabs.
+const APP_BUILD_ID =
+  process.env.VERCEL_GIT_COMMIT_SHA || `${APP_VERSION}-${Date.now()}`;
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -242,6 +245,7 @@ const config: NextConfig = {
     // Shown on /status (#168) so a support question can name the build.
     APP_VERSION: APP_VERSION,
     APP_COMMIT: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
+    APP_BUILD_ID,
   },
   async headers() {
     return [

@@ -21,18 +21,23 @@ export function SavedPatientControls({
   const [editingNickname, setEditingNickname] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [passphrase, setPassphrase] = useState('');
+  const [confirmPassphrase, setConfirmPassphrase] = useState('');
   const closeManager = useCallback(() => setManaging(false), []);
   const nickname = saveName ?? saved.selectedPatient?.nickname ?? '';
 
-  function selectPatient(nicknameValue: string) {
+  async function selectPatient(nicknameValue: string) {
     const patient = saved.patients.find((item) => item.nickname === nicknameValue) ?? null;
     setMessage(null);
+    if (!(await localIdentity.select(patient?.nickname ?? ''))) {
+      setMessage('Could not select this patient.');
+      return;
+    }
     setSaveName(patient?.nickname ?? '');
-    localIdentity.select(patient?.nickname ?? '');
     onSelect(patient);
   }
 
-  function savePatient() {
+  async function savePatient() {
     setMessage(null);
     if (!nickname.trim()) {
       setMessage('Enter a nickname for this patient.');
@@ -42,14 +47,14 @@ export function SavedPatientControls({
       setMessage('Enter a patient reference and a key of at least 32 characters.');
       return;
     }
-    if (!localIdentity.save(nickname, identifier, keyValue)) {
+    if (!(await localIdentity.save(nickname, identifier, keyValue))) {
       setMessage('Could not save in this browser. Check that browser storage is available.');
       return;
     }
     setSaveName(nickname.trim());
   }
 
-  function renamePatient(patient: SavedPatient) {
+  async function renamePatient(patient: SavedPatient) {
     const nextNickname = renameDraft.trim();
     setMessage(null);
     if (!nextNickname) {
@@ -65,7 +70,7 @@ export function SavedPatientControls({
       setMessage('That nickname is already in use.');
       return;
     }
-    if (!localIdentity.rename(patient.nickname, nextNickname)) {
+    if (!(await localIdentity.rename(patient.nickname, nextNickname))) {
       setMessage('Could not rename this patient. Check that browser storage is available.');
       return;
     }
@@ -76,9 +81,9 @@ export function SavedPatientControls({
     setEditingNickname(null);
   }
 
-  function deletePatient(patient: SavedPatient) {
+  async function deletePatient(patient: SavedPatient) {
     setMessage(null);
-    if (!localIdentity.remove(patient.nickname)) {
+    if (!(await localIdentity.remove(patient.nickname))) {
       setMessage('Could not delete this patient. Check that browser storage is available.');
       return;
     }
@@ -91,8 +96,36 @@ export function SavedPatientControls({
     if (editingNickname === patient.nickname) setEditingNickname(null);
   }
 
+  async function protectSavedPatients() {
+    setMessage(null);
+    if (passphrase.length < 12) {
+      setMessage('Use a passphrase with at least 12 characters.');
+      return;
+    }
+    if (passphrase !== confirmPassphrase) {
+      setMessage('The passphrases do not match.');
+      return;
+    }
+    if (!(await localIdentity.enableEncryption(passphrase))) {
+      setMessage('Could not protect saved patients in this browser.');
+      return;
+    }
+    setPassphrase('');
+    setConfirmPassphrase('');
+  }
+
+  async function unlockSavedPatients() {
+    setMessage(null);
+    if (!(await localIdentity.unlock(passphrase))) {
+      setMessage('Could not unlock saved patients. Check your passphrase and try again.');
+      return;
+    }
+    setPassphrase('');
+  }
+
   return (
     <div className="space-y-3 border-b border-[var(--color-line)] pb-4">
+      {!saved.locked && <>
       <div className="flex flex-col gap-2 sm:flex-row">
         <label className="block min-w-0 flex-1">
           <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
@@ -145,9 +178,30 @@ export function SavedPatientControls({
         Saved references and keys stay in this browser only and are never sent to the
         service. Anyone with access to this browser profile can use them.
       </p>
+      </>}
+
+      {saved.locked && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Saved patient keys are protected.</p>
+          <label className="block">
+            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              Passphrase
+            </span>
+            <input
+              aria-label="Passphrase"
+              type="password"
+              autoComplete="current-password"
+              value={passphrase}
+              onChange={(event) => setPassphrase(event.target.value)}
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+            />
+          </label>
+          <Button onClick={unlockSavedPatients}>Unlock saved patients</Button>
+        </div>
+      )}
       {message && <Alert>{message}</Alert>}
 
-      <Modal
+      {!saved.locked && <Modal
         open={managing}
         onClose={closeManager}
         title="Manage saved patients"
@@ -157,6 +211,57 @@ export function SavedPatientControls({
           </Button>
         }
       >
+        {saved.encrypted ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-4">
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              Saved patient keys are encrypted on this device.
+            </p>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                localIdentity.lock();
+                onSelect(null);
+                setSaveName('');
+                setManaging(false);
+              }}
+            >
+              Lock saved patients
+            </Button>
+          </div>
+        ) : (
+          <div className="mb-4 space-y-2 border-b border-[var(--color-line)] pb-4">
+            <p className="text-sm font-medium">Protect saved keys with a passphrase</p>
+            <label className="block">
+              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                New passphrase (12 characters minimum)
+              </span>
+              <input
+                aria-label="New passphrase"
+                type="password"
+                autoComplete="new-password"
+                value={passphrase}
+                onChange={(event) => setPassphrase(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                Confirm passphrase
+              </span>
+              <input
+                aria-label="Confirm passphrase"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassphrase}
+                onChange={(event) => setConfirmPassphrase(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+            <Button variant="ghost" onClick={protectSavedPatients}>
+              Protect saved keys
+            </Button>
+          </div>
+        )}
         <p className="mb-3 text-xs text-[var(--color-ink-soft)]">
           Patient references and keys are not shown here.
         </p>
@@ -216,7 +321,7 @@ export function SavedPatientControls({
             ))}
           </ul>
         )}
-      </Modal>
+      </Modal>}
     </div>
   );
 }

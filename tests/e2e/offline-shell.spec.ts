@@ -150,6 +150,41 @@ test('the shell loads offline, and the app still asks the indexer', async ({
   expect(apiRequests.length).toBeGreaterThan(whileOnline);
 });
 
+test('a waiting second worker prompts the user to reload', async ({ page }) => {
+  await page.goto('/');
+  await waitForController(page);
+
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/sw.js?build=e2e-second-version', {
+      scope: '/',
+    });
+  });
+
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.getRegistration('/');
+        return registration?.waiting?.state;
+      }),
+    )
+    .toBe('installed');
+
+  await expect(page.getByRole('button', { name: 'Reload to update' })).toBeVisible({
+    timeout: 15_000,
+  });
+  expect(
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      return registration?.waiting?.state;
+    }),
+  ).toBe('installed');
+
+  const navigation = page.waitForNavigation();
+  await page.getByRole('button', { name: 'Reload to update' }).click();
+  await navigation;
+  await waitForController(page);
+});
+
 test('indexer data is never cached, however patient-shaped it is', async ({ page }) => {
   await useMockWallet(page, FUNDER);
   await mockBackend(page, {

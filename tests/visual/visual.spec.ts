@@ -10,6 +10,7 @@ import {
   mockApi,
   settle,
   VOUCHER_ID,
+  voucherDetail,
 } from './fixtures';
 
 /**
@@ -49,6 +50,36 @@ test('my vouchers — disconnected', async ({ page }) => {
   await expect(page.getByText('Vouchers I funded')).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('my.png');
+});
+
+test('my vouchers — selected refundable vouchers', async ({ page }) => {
+  await page.addInitScript(
+    `window.__SCI_MOCK_WALLET__ = { address: '${FUNDER}' };
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [] };`,
+  );
+  const vouchers = ['1', '2'].map((id) => ({
+    ...voucherDetail,
+    id,
+    funder: FUNDER,
+    status: 'Funded',
+    isRefundable: true,
+  }));
+  await page.route(/^http:\/\/localhost:8080\/vouchers(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ total: vouchers.length, vouchers }),
+    }),
+  );
+
+  await page.goto('/my');
+  const selectAll = page.getByRole('checkbox', {
+    name: 'Select all on this page (2)',
+  });
+  await expect(selectAll).toBeVisible();
+  await selectAll.check();
+  await settle(page);
+  await expect(page).toHaveScreenshot('my-selected-vouchers.png');
 });
 
 test('clinic desk — disconnected', async ({ page }) => {

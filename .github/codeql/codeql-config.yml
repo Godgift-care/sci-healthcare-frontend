@@ -1,0 +1,10 @@
+name: sci-healthcare-frontend
+
+# Generated code is not reviewed here, so CodeQL findings in it are not
+# actionable: fix them upstream in the protocol definitions or the generator.
+paths-ignore:
+  - src/lib/contracts/generated
+  - vendor/sci-healthcare-client
+  - storybook-static
+  - coverage
+  - .next
