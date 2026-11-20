@@ -131,3 +131,32 @@ test.describe('Language switching persists (#153)', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 });
+
+/**
+ * Browser language on the first visit (#277). There is no stored choice yet,
+ * so a French browser must receive `lang="fr"` in the server HTML — not an
+ * English document that is relabelled after hydration.
+ */
+test.describe('browser language detection (#277)', () => {
+  test.use({ locale: 'fr-FR' });
+
+  test('server-renders French for a French browser', async ({ page }) => {
+    const response = await page.request.get(`/vouchers/${VOUCHER_ID}`, {
+      headers: { 'accept-language': 'fr-FR,fr;q=0.9,en;q=0.8' },
+    });
+    const html = await response.text();
+    expect(html).toContain('lang="fr"');
+    expect(html).toContain('dir="ltr"');
+  });
+
+  test('first load is French with no English flash', async ({ page }) => {
+    const errors = hydrationErrors(page);
+
+    await page.goto(`/vouchers/${VOUCHER_ID}`);
+    await expect(page.getByText(`Bon #${VOUCHER_ID}`)).toBeVisible();
+    await expect(languageSwitcher(page)).toHaveValue('fr');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+
+    expect(errors).toEqual([]);
+  });
+});

@@ -68,7 +68,21 @@
     "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records.",
     "reportProblem": "Report a problem",
     "reportProblemIntro": "Only the funder can open a dispute. If you are the patient, a relative, or anyone else who has noticed a problem with this voucher, open a report. It is prefilled with the public voucher number, status, service and clinic only — never the patient reference.",
-    "reportProblemAction": "Report a problem"
+    "reportProblemAction": "Report a problem",
+    "redirect": {
+      "action": "Use at a different clinic",
+      "title": "Move voucher #{id}",
+      "intro": "Only active clinics that offer this service at or below {amount} are listed.",
+      "empty": "No other clinic currently offers this service at or below {amount}.",
+      "loading": "Finding clinics…",
+      "choose": "Choose a clinic",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} will receive {price} and the voucher keeps its escrow of {amount}. Check the clinic and price before signing.",
+      "confirm": "Move voucher",
+      "moving": "Moving…",
+      "error": "Could not move the voucher: {message}",
+      "success": "Voucher moved to {clinic}."
+    }
   },
   "clinic": {
     "title": "Clinic desk",
@@ -104,9 +118,15 @@
     "earnings": "Earnings",
     "earningsNote": "Cash flow for this clinic: settled care, payouts still in flight, and the protocol fees paid.",
     "earningsSettled": "Settled",
-    "earningsSettledDetail": "{count} vouchers · {net} net after fees",
+    "earningsSettledDetail": {
+      "one": "{count} voucher · {net} net after fees",
+      "other": "{count} vouchers · {net} net after fees"
+    },
     "earningsPending": "Pending payout",
-    "earningsPendingDetail": "{count} claimed, attested or disputed, before fees",
+    "earningsPendingDetail": {
+      "one": "{count} voucher claimed, attested or disputed, before fees",
+      "other": "{count} vouchers claimed, attested or disputed, before fees"
+    },
     "earningsFees": "Fees paid",
     "earningsFeesDetail": "Protocol fee on settled care",
     "earningsMonthly": "Monthly earnings",
@@ -119,7 +139,10 @@
     "allStatuses": "All",
     "searchVoucherNumber": "Voucher number",
     "searchVoucherPlaceholder": "e.g. 21 or #21",
-    "showingVouchers": "Showing {shown} of {total} vouchers",
+    "showingVouchers": {
+      "one": "Showing {shown} of {total} voucher",
+      "other": "Showing {shown} of {total} vouchers"
+    },
     "noMatchingVouchers": "No vouchers match this search.",
     "clearFilters": "Clear filters",
     "connectWallet": "Connect the clinic's wallet to manage this desk.",
@@ -166,6 +189,19 @@
     "fr": "Français",
     "sw": "Kiswahili",
     "select": "Select language"
+  },
+  "admin": {
+    "split": {
+      "button": "Split escrow",
+      "amountLabel": "Amount awarded to the clinic (USDC)",
+      "amountHint": "Gross amount before the protocol fee, between 0 and {amount}. The rest returns to the funder.",
+      "invalid": "Enter an amount between 0 and {amount}.",
+      "loading": "Calculating the fee…",
+      "error": "Could not calculate the fee: {message}",
+      "clinicReceives": "{clinic} receives {net} after the {fee} fee.",
+      "funderReceives": "The funder receives {amount}.",
+      "sum": "The clinic net, the fee and the funder refund add up to the escrow of {amount}."
+    }
   },
   "stats": {
     "downloadDaily": "Download daily CSV",

@@ -780,6 +780,7 @@ export default function ClinicDeskPage() {
                 {t('clinic.showingVouchers', {
                   shown: visibleVouchers.length,
                   total: vouchers.length,
+                  count: vouchers.length,
                 })}
               </span>
               {filtering && (

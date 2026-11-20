@@ -362,6 +362,61 @@ export const voucher = {
       sign,
     );
   },
+
+  /**
+   * resolve_split(admin, voucher_id, to_provider) (#289).
+   *
+   * `toProvider` is the gross part of the escrow awarded to the clinic;
+   * the rest returns to the funder and the fee is taken from the clinic's
+   * part. The deployed bindings predate this method, so its arguments are
+   * encoded directly instead of through the generated spec.
+   */
+  async resolveSplit(
+    admin: string,
+    voucherId: string,
+    toProvider: bigint,
+    sign: SignFn,
+  ) {
+    const args = [
+      await arg.address(admin),
+      await arg.u64(BigInt(voucherId)),
+      await arg.i128(toProvider),
+    ];
+    return invokeContract(
+      config.contracts.voucher,
+      'resolve_split',
+      args,
+      admin,
+      sign,
+    );
+  },
+
+  /**
+   * redirect(funder, voucher_id, new_provider) (#287).
+   *
+   * Moves an unclaimed `Funded` voucher to another active clinic that lists
+   * the same service at or below the escrowed amount. Encoded directly for
+   * the same reason as `resolveSplit`: the vendored bindings predate it.
+   */
+  async redirect(
+    funder: string,
+    voucherId: string,
+    newProvider: string,
+    sign: SignFn,
+  ) {
+    const args = [
+      await arg.address(funder),
+      await arg.u64(BigInt(voucherId)),
+      await arg.address(newProvider),
+    ];
+    return invokeContract(
+      config.contracts.voucher,
+      'redirect',
+      args,
+      funder,
+      sign,
+    );
+  },
 };
 
 /**
