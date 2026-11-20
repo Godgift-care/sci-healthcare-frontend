@@ -19,6 +19,8 @@
     "loading": "Chargement…",
     "confirmed": "Confirmé",
     "confirming": "Confirmation…",
+    "signing": "Signature…",
+    "submitting": "Envoi…",
     "copied": "Copié !",
     "copy": "Copier",
     "usdc": "USDC",

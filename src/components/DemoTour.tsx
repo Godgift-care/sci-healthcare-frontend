@@ -88,7 +88,7 @@ export function DemoTour() {
               type="button"
               onClick={finish}
               aria-label={t('components.demoTour.dismiss')}
-              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] transition motion-reduce:transition-none hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
             >
               ×
             </button>

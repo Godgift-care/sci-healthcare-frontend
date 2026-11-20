@@ -51,7 +51,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={` inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed ${styles} ${className}`}
+      className={` inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition motion-reduce:transition-none disabled:cursor-not-allowed ${styles} ${className}`}
     >
       {children}
     </button>
@@ -245,7 +245,7 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-black/40"
+        className="fixed inset-0 bg-black/40 transition-opacity motion-reduce:transition-none"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -255,7 +255,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative w-full max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-xl outline-none"
+        className="relative w-full max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-xl outline-none motion-reduce:transition-none"
       >
         <div className="flex items-start justify-between gap-3">
           <h2 id={titleId} className="text-base font-semibold tracking-tight">

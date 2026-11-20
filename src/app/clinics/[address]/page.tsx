@@ -44,6 +44,7 @@ import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
+import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { FavouriteButton } from '@/components/FavouriteButton';
@@ -170,6 +171,7 @@ export default function ClinicPage({
     failed: { label: string; error: string }[];
   } | null>(null);
   const toast = useToast();
+  const txStatus = useTransactionStatus();
 
   // The wallet's USDC trustline (#1): checked on connect, before the fund
   // button is offered, so funding never dies at signing with a raw token
@@ -437,6 +439,13 @@ export default function ClinicPage({
       const ref = await beneficiaryRef(identifier, secret);
       await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
+      const wrappedSign = async (xdr: string) => {
+        setTransactionStatus('signing');
+        const signed = await signTransaction(xdr);
+        setTransactionStatus('submitting');
+        return signed;
+      };
+
       for (let i = 0; i < requests.length; i++) {
         const request = { ...requests[i], beneficiaryRef: ref };
         setBatchProgress({
@@ -456,14 +465,16 @@ export default function ClinicPage({
           if (useSponsor && missingUsdc > 0n) {
             throw new Error('Sponsored funding requires enough USDC; XLM swaps are not sponsored.');
           }
+          setTransactionStatus('signing');
           const res =
             missingUsdc > 0n
               ? await voucher.createWithXlmSwap(
                   { ...request, swapAmount: missingUsdc },
-                  signTransaction,
+                  wrappedSign,
                   100,
                 )
-              : await voucher.create(request, signTransaction, useSponsor);
+              : await voucher.create(request, wrappedSign, useSponsor);
+          setTransactionStatus('confirming');
           const balance = await usdc.balance(wallet).catch(() => null);
           if (balance !== null) setWalletBalance(balance);
 
@@ -527,6 +538,7 @@ export default function ClinicPage({
         }
       }
 
+      setReviewing(false);
       setBatchProgress(null);
       setBatchSummary({ succeeded, failed });
       const firstId = succeeded[0];
@@ -554,6 +566,7 @@ export default function ClinicPage({
       toast.error(message);
     } finally {
       setBusy(false);
+      setTransactionStatus('idle');
     }
   }
 
@@ -956,7 +969,11 @@ export default function ClinicPage({
                 className="w-full"
               >
                 {busy
-                  ? 'Confirming…'
+                  ? txStatus === 'signing'
+                    ? t('common.signing')
+                    : txStatus === 'submitting'
+                      ? t('common.submitting')
+                      : t('common.confirming')
                   : wallet
                     ? xlmSwapQuote && selectedServices.length === 1
                       ? 'Swap XLM & fund voucher'
@@ -1079,7 +1096,13 @@ export default function ClinicPage({
                 onClick={() => void fund()}
                 disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
               >
-                {busy ? 'Confirming…' : 'Confirm'}
+                {busy
+                  ? txStatus === 'signing'
+                    ? t('common.signing')
+                    : txStatus === 'submitting'
+                      ? t('common.submitting')
+                      : t('common.confirming')
+                  : 'Confirm'}
               </Button>
             </div>
           </div>

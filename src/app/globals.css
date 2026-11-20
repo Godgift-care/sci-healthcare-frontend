@@ -127,3 +127,21 @@ body {
 [dir='rtl'] .rtl-flip {
   transform: scaleX(-1);
 }
+
+/*
+ * Respect reduced-motion preferences (#306).
+ *
+ * Motion triggers nausea and vestibular symptoms for sensitive users.
+ * When prefers-reduced-motion: reduce is requested, animations and transitions
+ * are disabled or shortened to an imperceptible fade (<= 0.01ms).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

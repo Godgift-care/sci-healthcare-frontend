@@ -19,6 +19,8 @@
     "loading": "Loading…",
     "confirmed": "Confirmed",
     "confirming": "Confirming…",
+    "signing": "Signing…",
+    "submitting": "Submitting…",
     "copied": "Copied!",
     "copy": "Copy",
     "usdc": "USDC",

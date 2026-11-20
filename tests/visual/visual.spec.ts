@@ -17,10 +17,12 @@ import {
  * Visual regression snapshots for the six routes that make up the app.
  *
  * Each test runs once per project (desktop 1280px, mobile 390px) with the
- * backend mocked, so no testnet, indexer or wallet is needed. If a snapshot
- * fails after an intentional style change, run
+ * backend mocked and reduced motion enabled (#306), so no testnet, indexer or
+ * wallet is needed. If a snapshot fails after an intentional style change, run
  * `npm run test:visual:update`, inspect the diff, and commit the new files.
  */
+
+test.use({ reducedMotion: 'reduce' });
 
 test.beforeEach(async ({ page }) => {
   await freezeClock(page);
@@ -154,4 +156,24 @@ test('voucher detail — history and receipt', async ({ page }) => {
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('voucher.png');
+});
+
+test('reduced motion disables long animations (#306)', async ({ page }) => {
+  await page.goto('/');
+  const matches = await page.evaluate(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  expect(matches).toBe(true);
+
+  const duration = await page.evaluate(() => {
+    const el = document.createElement('div');
+    el.className = 'animate-pulse';
+    document.body.appendChild(el);
+    const computed = window.getComputedStyle(el);
+    const animDuration = parseFloat(computed.animationDuration) || 0;
+    const animName = computed.animationName;
+    document.body.removeChild(el);
+    return { animDuration, animName };
+  });
+  expect(duration.animDuration <= 0.01 || duration.animName === 'none').toBe(true);
 });
