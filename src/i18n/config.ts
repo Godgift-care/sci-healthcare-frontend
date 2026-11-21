@@ -1,9 +1,10 @@
 import en from '@/messages/en.json';
 import fr from '@/messages/fr.json';
+import ha from '@/messages/ha.json';
 import sw from '@/messages/sw.json';
 import yo from '@/messages/yo.json';
 
-export const locales = ['en', 'fr', 'sw', 'yo'] as const;
+export const locales = ['en', 'fr', 'sw', 'yo', 'ha'] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = 'en';
 
@@ -17,6 +18,7 @@ export const messages: Record<Locale, typeof en> = {
   fr,
   sw,
   yo,
+  ha,
 };
 
 export const localeLabels: Record<Locale, string> = {
@@ -24,6 +26,7 @@ export const localeLabels: Record<Locale, string> = {
   fr: 'Français',
   sw: 'Kiswahili',
   yo: 'Yorùbá',
+  ha: 'Hausa',
 };
 
 export const localeNumberFormats: Record<Locale, string> = {
@@ -31,6 +34,7 @@ export const localeNumberFormats: Record<Locale, string> = {
   fr: 'fr-FR',
   sw: 'sw-KE',
   yo: 'yo-NG',
+  ha: 'ha-NG',
 };
 
 export const localeDateFormats: Record<Locale, string> = {
@@ -38,4 +42,5 @@ export const localeDateFormats: Record<Locale, string> = {
   fr: 'fr-FR',
   sw: 'sw-KE',
   yo: 'yo-NG',
+  ha: 'ha-NG',
 };
