@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { getStorageItem, removeStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
 
 /**
  * Whether the guided demo tour has been completed or dismissed.
@@ -11,7 +12,7 @@ import { useSyncExternalStore } from 'react';
  * agree and there is no hydration mismatch.
  */
 
-const STORAGE_KEY = 'sci:demo-tour-done';
+const STORAGE_KEY = STORAGE_KEYS.TOUR_DISMISSED;
 
 const listeners = new Set<() => void>();
 
@@ -22,22 +23,12 @@ function emit(): void {
 /** True once the tour is done or dismissed; false when it should be offered. */
 export function isTourDone(): boolean {
   if (typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    // Storage is blocked, so completion could never be remembered. Hide the
-    // prompt rather than nag on every visit.
-    return true;
-  }
+  return getStorageItem(STORAGE_KEY) === '1';
 }
 
 export function markTourDone(): void {
   if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      // Private browsing/blocked storage: the tour simply reappears next time.
-    }
+    setStorageItem(STORAGE_KEY, '1');
   }
   emit();
 }
@@ -45,11 +36,7 @@ export function markTourDone(): void {
 /** Clears the remembered state. Used by tests and the empty state. */
 export function resetTour(): void {
   if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Nothing to clear.
-    }
+    removeStorageItem(STORAGE_KEY);
   }
   emit();
 }

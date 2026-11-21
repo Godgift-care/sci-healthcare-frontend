@@ -50,6 +50,9 @@
     "noClinicsActionLink": "/clinic"
   },
   "voucher": {
+    "chainDataBannerTitle": "Affichage des données directes de la chaîne",
+    "chainDataBadge": "Registre Stellar",
+    "chainDataBannerText": "L'API de l'indexeur est actuellement indisponible. Les détails du bon, de la clinique et les actions sont chargés directement depuis la blockchain Stellar.",
     "voucherNumber": "Bon #{id}",
     "recentlyViewed": "Consultés récemment",
     "at": "chez",

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
 
 /**
  * Whether this browser wants cookieless usage analytics (#143).
@@ -19,7 +20,7 @@ import { useSyncExternalStore } from 'react';
  * while the app is deciding.
  */
 
-export const ANALYTICS_PREFERENCE_KEY = 'sci-analytics';
+export const ANALYTICS_PREFERENCE_KEY = STORAGE_KEYS.ANALYTICS;
 const CHANGE_EVENT = 'sci-analytics-change';
 
 /** `'1'` = explicitly opted out, `'0'` = explicitly opted in, absent = unset. */
@@ -27,14 +28,10 @@ type StoredChoice = 'opted-out' | 'opted-in' | null;
 
 function storedChoice(): StoredChoice {
   if (typeof window === 'undefined') return null;
-  try {
-    const value = window.localStorage.getItem(ANALYTICS_PREFERENCE_KEY);
-    if (value === '1') return 'opted-out';
-    if (value === '0') return 'opted-in';
-    return null;
-  } catch {
-    return null;
-  }
+  const value = getStorageItem(ANALYTICS_PREFERENCE_KEY);
+  if (value === '1') return 'opted-out';
+  if (value === '0') return 'opted-in';
+  return null;
 }
 
 /**
@@ -149,13 +146,8 @@ export function reportCoreWebVitals(
 /** Store an explicit choice and tell every subscriber in this tab. */
 export function setAnalyticsOptOut(optedOut: boolean): void {
   if (typeof window === 'undefined') return;
-  try {
-    // '1' means "do not track me"; an absent key means "follow the browser".
-    window.localStorage.setItem(ANALYTICS_PREFERENCE_KEY, optedOut ? '1' : '0');
-  } catch {
-    // Storage can be unavailable (private mode, blocked storage); the
-    // setting then applies to this page via the change event below.
-  }
+  // '1' means "do not track me"; an absent key means "follow the browser".
+  setStorageItem(ANALYTICS_PREFERENCE_KEY, optedOut ? '1' : '0');
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 

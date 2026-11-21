@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { getStorageItem, removeStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
 
 /**
  * Light/dark theme (#10).
@@ -14,7 +15,7 @@ import { useSyncExternalStore } from 'react';
  * is no flash of the wrong theme.
  */
 
-const STORAGE_KEY = 'sci-theme';
+const STORAGE_KEY = STORAGE_KEYS.THEME;
 const CHANGE_EVENT = 'sci-theme-change';
 
 export type StoredTheme = 'light' | 'dark';
@@ -30,12 +31,8 @@ function systemDark(): boolean {
 /** The stored override, or null when following the system. */
 export function getStoredTheme(): StoredTheme | null {
   if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw === 'light' || raw === 'dark' ? raw : null;
-  } catch {
-    return null;
-  }
+  const raw = getStorageItem(STORAGE_KEY);
+  return raw === 'light' || raw === 'dark' ? raw : null;
 }
 
 /** The effective theme: stored override, else the OS setting. */
@@ -51,14 +48,10 @@ function apply(theme: 'light' | 'dark'): void {
 /** Persist the override (or clear it to follow the system) and apply it. */
 export function setTheme(theme: StoredTheme | null): void {
   if (typeof window === 'undefined') return;
-  try {
-    if (theme) {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // Storage unavailable; the setting applies to this page only.
+  if (theme) {
+    setStorageItem(STORAGE_KEY, theme);
+  } else {
+    removeStorageItem(STORAGE_KEY);
   }
   apply(theme ?? (systemDark() ? 'dark' : 'light'));
   window.dispatchEvent(new Event(CHANGE_EVENT));

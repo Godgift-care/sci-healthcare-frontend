@@ -1,8 +1,10 @@
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
 import { Card } from '@/components/ui';
+import { STORAGE_REGISTRY } from '@/lib/storage';
 
 export const metadata: Metadata = {
   title: 'Privacy — SCI Healthcare',
@@ -52,7 +54,12 @@ export default function PrivacyPage() {
           required for financial escrow and delivery confirmation:
         </p>
 
-        <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="On-chain voucher fields"
+          className="overflow-x-auto rounded-xl border border-[var(--color-line)] focus:outline-none"
+        >
           <table className="w-full text-start text-sm">
             <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>
@@ -155,6 +162,51 @@ export default function PrivacyPage() {
             <code className="rounded bg-[var(--color-canvas)] px-1 py-0.5 font-mono text-xs text-[var(--color-ink)]">localStorage</code>; clearing site data removes both those and the cached shell.
           </li>
         </ul>
+
+        <h3 className="mt-6 text-base font-semibold tracking-tight">
+          Browser storage audit
+        </h3>
+        <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
+          Every client-side key persisted on your device is strictly audited and routed through a single typed storage registry:
+        </p>
+
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Browser storage audit table"
+          className="overflow-x-auto rounded-xl border border-[var(--color-line)] focus:outline-none"
+        >
+          <table className="w-full text-start text-sm">
+            <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
+              <tr>
+                <th className="px-4 py-3">Key</th>
+                <th className="px-4 py-3">Purpose</th>
+                <th className="px-4 py-3">Duration</th>
+                <th className="px-4 py-3">Sensitive</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-line)] text-xs sm:text-sm">
+              {STORAGE_REGISTRY.map((item) => (
+                <tr key={item.key}>
+                  <td className="px-4 py-3 font-mono font-medium text-[var(--color-ink)]">
+                    {item.key}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--color-ink-soft)]">{item.purpose}</td>
+                  <td className="px-4 py-3 text-[var(--color-ink-soft)]">{item.duration}</td>
+                  <td className="px-4 py-3">
+                    {item.sensitive ? (
+                      <span className="rounded bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
+                        Sensitive
+                      </span>
+                    ) : (
+                      <span className="text-[var(--color-ink-soft)]">No</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="space-y-4">

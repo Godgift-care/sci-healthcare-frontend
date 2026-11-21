@@ -47,6 +47,9 @@
     "noClinics": "Kò ì tíì sí kílíníkì tí a forúkọsílẹ̀."
   },
   "voucher": {
+    "chainDataBannerTitle": "Fífihan àkọsílẹ̀ orí-ẹ̀wọ̀n tààrà",
+    "chainDataBadge": "Lẹ́jà Stellar",
+    "chainDataBannerText": "API atọ́ka kò sí lọ́wọ́lọ́wọ́. Ipò vóṣà, kúlẹ̀kúlẹ̀ kílíníkì àti àwọn ìgbésẹ̀ ni a ń gbé wá tààrà láti orí blockchain Stellar.",
     "voucherNumber": "Vóṣà #{id}",
     "recentlyViewed": "Àwọn tí a ṣẹ̀ṣẹ̀ wò",
     "at": "ní",

@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script src="/theme-init.js" />
       </head>
       <body>
-        {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
+        {config.flags.analytics ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
         <WalletProvider>

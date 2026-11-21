@@ -1,7 +1,5 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
-
 /**
  * Favourite clinics (#issue-favourite-clinics).
  *
@@ -14,7 +12,10 @@ import { useSyncExternalStore } from 'react';
  * in private mode, restricted environments, or server rendering).
  */
 
-export const FAVOURITES_STORAGE_KEY = 'sci-favourite-clinics';
+import { useSyncExternalStore } from 'react';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
+
+export const FAVOURITES_STORAGE_KEY = STORAGE_KEYS.FAVOURITES;
 const CHANGE_EVENT = 'sci-favourite-clinics-change';
 
 let memoryFallback: string[] | null = null;
@@ -24,7 +25,7 @@ let cachedList: string[] = [];
 function readStorage(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(FAVOURITES_STORAGE_KEY);
+    const raw = getStorageItem(FAVOURITES_STORAGE_KEY);
     if (raw === cachedRaw) {
       return cachedList;
     }
@@ -77,12 +78,12 @@ export function toggleFavouriteClinic(address: string): boolean {
     const exists = current.includes(address);
     const next = exists ? current.filter((a) => a !== address) : [...current, address];
 
-    try {
-      window.localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
+    const ok = setStorageItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
+    if (ok) {
       memoryFallback = null;
       cachedRaw = JSON.stringify(next);
       cachedList = next;
-    } catch {
+    } else {
       // Storage might be disabled/quota exceeded. Keep in-memory cache updated for this session.
       memoryFallback = next;
       cachedRaw = null;
@@ -106,12 +107,12 @@ export function setClinicFavourite(address: string, favourite: boolean): boolean
     if (exists === favourite) return favourite;
 
     const next = favourite ? [...current, address] : current.filter((a) => a !== address);
-    try {
-      window.localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
+    const ok = setStorageItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
+    if (ok) {
       memoryFallback = null;
       cachedRaw = JSON.stringify(next);
       cachedList = next;
-    } catch {
+    } else {
       // Storage might be disabled/quota exceeded.
       memoryFallback = next;
       cachedRaw = null;
