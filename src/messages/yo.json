@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Ìgbékalẹ̀ Testnet. Kò sí owó gidi, àti pé kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
-    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan."
+    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
+    "build": "Ẹ̀yà {commit}"
   },
   "common": {
     "loading": "Ń gbé wọlé…",

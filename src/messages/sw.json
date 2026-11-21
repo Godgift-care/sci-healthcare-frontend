@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Usambazi wa Testnet. Hakuna pesa halisi, na hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee.",
-    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee."
+    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee.",
+    "build": "Toleo {commit}"
   },
   "common": {
     "loading": "Inapakia…",

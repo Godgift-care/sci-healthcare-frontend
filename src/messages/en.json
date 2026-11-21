@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
-    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only."
+    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
+    "build": "Build {commit}"
   },
   "common": {
     "loading": "Loading…",
