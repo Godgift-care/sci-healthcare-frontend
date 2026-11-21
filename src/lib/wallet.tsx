@@ -25,6 +25,12 @@ import {
   getAccountSpendableBalance,
   type RestoreFootprintSignContext,
 } from './stellar';
+import {
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+} from './storage';
 import { defaultLocale, isLocale } from '@/i18n/config';
 import { translate } from '@/i18n/translate';
 import {
@@ -410,13 +416,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const savedWalletId = (() => {
-        try {
-          return window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
-        } catch {
-          return null;
-        }
-      })();
+      const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
 
       if (savedWalletId === PASSKEY_WALLET_ID || address.startsWith('C')) {
         return signWithPasskey(xdr);

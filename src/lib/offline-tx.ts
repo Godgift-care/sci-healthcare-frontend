@@ -11,6 +11,8 @@
  * queued claim may be made on one page and submitted from another.
  */
 
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
+
 export type QueuedTxStatus = 'queued' | 'submitting' | 'failed';
 
 export type QueuedTx = {
@@ -27,7 +29,7 @@ export type QueuedTx = {
   error?: string | null;
 };
 
-const STORAGE_KEY = 'sci-offline-tx-v1';
+const STORAGE_KEY = STORAGE_KEYS.OFFLINE_TX;
 
 type Listener = (transactions: QueuedTx[]) => void;
 const listeners = new Set<Listener>();
@@ -35,7 +37,7 @@ const listeners = new Set<Listener>();
 function read(): QueuedTx[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = getStorageItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -56,12 +58,7 @@ function read(): QueuedTx[] {
 
 function write(transactions: QueuedTx[]): void {
   if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-  } catch {
-    // Storage full or disabled: the caller still sees the queue in memory
-    // for this page, and a reload drops it rather than lying about it.
-  }
+  setStorageItem(STORAGE_KEY, JSON.stringify(transactions));
   for (const listener of listeners) listener(transactions);
 }
 

@@ -11,6 +11,13 @@
  * data cannot enumerate patients, because HMAC without the key is not
  * searchable.
  */
+import {
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+} from './storage';
+
 export async function beneficiaryRef(identifier: string, key: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
   if (!id) throw new Error('Enter a patient reference');
@@ -356,15 +363,15 @@ async function persist(store: SavedPatientStore): Promise<boolean> {
         store.selectedNickname,
         unlockedKey,
       );
-      const existing = parseEncryptedPatients(localStorage.getItem(PATIENTS_STORAGE));
+      const existing = parseEncryptedPatients(getStorageItem(PATIENTS_STORAGE));
       if (!existing) return false;
       envelope.salt = existing.salt;
-      localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(envelope));
-      localStorage.removeItem(SELECTED_STORAGE);
+      setStorageItem(PATIENTS_STORAGE, JSON.stringify(envelope));
+      removeStorageItem(SELECTED_STORAGE);
       unlockedPatients = store.patients;
       unlockedSelectedNickname = store.selectedNickname;
     } else {
-      localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(store.patients));
+      setStorageItem(PATIENTS_STORAGE, JSON.stringify(store.patients));
     }
     if (store.selectedNickname) {
       setStorageItem(SELECTED_STORAGE, store.selectedNickname);
@@ -385,7 +392,7 @@ export const localIdentity = {
       return { patients: [], selectedNickname: '', encrypted: false, locked: false };
     }
     try {
-      const stored = localStorage.getItem(PATIENTS_STORAGE);
+      const stored = getStorageItem(PATIENTS_STORAGE);
       const encrypted = parseEncryptedPatients(stored);
       if (encrypted) {
         const patients = unlockedKey && unlockedPatients ? unlockedPatients : [];
@@ -424,18 +431,18 @@ export const localIdentity = {
   async enableEncryption(passphrase: string): Promise<boolean> {
     if (typeof window === 'undefined' || passphrase.length < 12) return false;
     try {
-      const stored = localStorage.getItem(PATIENTS_STORAGE);
+      const stored = getStorageItem(PATIENTS_STORAGE);
       if (parseEncryptedPatients(stored)) return false;
       const { patients } = this.load();
-      const selectedNickname = localStorage.getItem(SELECTED_STORAGE) ?? '';
+      const selectedNickname = getStorageItem(SELECTED_STORAGE) ?? '';
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const storageKey = await deriveStorageKey(passphrase, salt, PBKDF2_ITERATIONS);
       const envelope = await encryptPatients(patients, selectedNickname, storageKey);
       envelope.salt = encodeBytes(salt);
-      localStorage.setItem(PATIENTS_STORAGE, JSON.stringify(envelope));
-      localStorage.removeItem(SELECTED_STORAGE);
-      localStorage.removeItem(LEGACY_ID_STORAGE);
-      localStorage.removeItem(LEGACY_KEY_STORAGE);
+      setStorageItem(PATIENTS_STORAGE, JSON.stringify(envelope));
+      removeStorageItem(SELECTED_STORAGE);
+      removeStorageItem(LEGACY_ID_STORAGE);
+      removeStorageItem(LEGACY_KEY_STORAGE);
       unlockedKey = storageKey;
       unlockedPatients = patients;
       unlockedSelectedNickname = selectedNickname;
@@ -448,7 +455,7 @@ export const localIdentity = {
   async unlock(passphrase: string): Promise<boolean> {
     if (typeof window === 'undefined') return false;
     try {
-      const envelope = parseEncryptedPatients(localStorage.getItem(PATIENTS_STORAGE));
+      const envelope = parseEncryptedPatients(getStorageItem(PATIENTS_STORAGE));
       if (!envelope) return false;
       const result = await decryptPatients(envelope, passphrase);
       unlockedKey = result.key;

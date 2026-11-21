@@ -12,6 +12,7 @@ import { defaultLocale, isLocale, type Locale } from './config';
 import { bestLocale } from './detect';
 import { directionForLocale } from './direction';
 import { translate } from './translate';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 
 export const LOCALE_STORAGE_KEY = STORAGE_KEYS.LOCALE;
 

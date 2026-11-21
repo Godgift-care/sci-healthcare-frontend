@@ -25,6 +25,8 @@ export const STORAGE_KEYS = {
   THEME: 'sci-theme',
   ANALYTICS: 'sci-analytics',
   FAVOURITES: 'sci-favourite-clinics',
+  OFFLINE_TX: 'sci-offline-tx-v1',
+  STAFF_NOTES: 'sci:staff-notes',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -139,10 +141,32 @@ export const STORAGE_REGISTRY: readonly StorageEntry[] = [
     duration: 'Persistent',
     sensitive: false,
   },
+  {
+    key: STORAGE_KEYS.OFFLINE_TX,
+    purpose: 'Signed transaction envelopes queued locally during network outages.',
+    duration: 'Persistent',
+    sensitive: false,
+  },
+  {
+    key: STORAGE_KEYS.STAFF_NOTES,
+    purpose: 'Local clinic staff annotations and triage notes per voucher.',
+    duration: 'Persistent',
+    sensitive: false,
+  },
 ] as const;
 
-function isStorageAvailable(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+function getStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof localStorage !== 'undefined') {
+      return localStorage;
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /**
@@ -150,9 +174,10 @@ function isStorageAvailable(): boolean {
  * Returns null if storage is unavailable or access is restricted.
  */
 export function getStorageItem(key: StorageKey): string | null {
-  if (!isStorageAvailable()) return null;
+  const storage = getStorage();
+  if (!storage) return null;
   try {
-    return window.localStorage.getItem(key);
+    return storage.getItem(key);
   } catch {
     return null;
   }
@@ -162,9 +187,10 @@ export function getStorageItem(key: StorageKey): string | null {
  * Writes a value to browser local storage. Fails silently if storage is blocked.
  */
 export function setStorageItem(key: StorageKey, value: string): boolean {
-  if (!isStorageAvailable()) return false;
+  const storage = getStorage();
+  if (!storage) return false;
   try {
-    window.localStorage.setItem(key, value);
+    storage.setItem(key, value);
     return true;
   } catch {
     return false;
@@ -175,9 +201,10 @@ export function setStorageItem(key: StorageKey, value: string): boolean {
  * Removes a key from browser local storage.
  */
 export function removeStorageItem(key: StorageKey): boolean {
-  if (!isStorageAvailable()) return false;
+  const storage = getStorage();
+  if (!storage) return false;
   try {
-    window.localStorage.removeItem(key);
+    storage.removeItem(key);
     return true;
   } catch {
     return false;
@@ -188,10 +215,11 @@ export function removeStorageItem(key: StorageKey): boolean {
  * Clears all registered keys managed by this application.
  */
 export function clearAppStorage(): void {
-  if (!isStorageAvailable()) return;
+  const storage = getStorage();
+  if (!storage) return;
   try {
     for (const entry of STORAGE_REGISTRY) {
-      window.localStorage.removeItem(entry.key);
+      storage.removeItem(entry.key);
     }
   } catch {
     // Ignore restricted access

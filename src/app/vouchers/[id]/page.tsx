@@ -92,7 +92,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
+  const { voucher: v, isChainFallback, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   // Only fetched once the funder opens the move dialog (#287).
   const { providers: redirectProviders, isLoading: redirectLoading } = useProviders(
     redirectOpen ? { status: 'Active' } : null,
