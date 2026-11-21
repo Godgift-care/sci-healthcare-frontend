@@ -41,7 +41,9 @@ describe('detail prefetch', () => {
     expect(routePrefetch).toHaveBeenCalledWith('/clinics/prefetched-clinic');
     const urls = fetchMock.mock.calls.map(([url]) => new URL(String(url)));
     expect(urls.map(url => url.pathname)).toEqual(['/providers/prefetched-clinic', '/vouchers']);
-    expect(Object.fromEntries(urls[1].searchParams)).toEqual({ provider: 'prefetched-clinic', status: 'Settled', limit: '1' });
+    const url1 = urls[1];
+    if (!url1) throw new Error('Expected url 1');
+    expect(Object.fromEntries(url1.searchParams)).toEqual({ provider: 'prefetched-clinic', status: 'Settled', limit: '1' });
     const { result } = renderHook(() => useProvider('prefetched-clinic'));
     await waitFor(() => expect(result.current.provider?.address).toBe('prefetched-clinic'));
     expect(fetchMock).toHaveBeenCalledTimes(2);

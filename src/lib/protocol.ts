@@ -379,6 +379,7 @@ export const voucher = {
 
     for (let i = 0; i < total; i++) {
       const id = voucherIds[i];
+      if (!id) continue;
       onProgress?.(i + 1, total, id);
       try {
         await this.refund(caller, id, sign);

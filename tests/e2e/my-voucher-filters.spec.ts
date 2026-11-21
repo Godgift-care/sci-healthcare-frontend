@@ -193,9 +193,11 @@ test('selects accessible rows and refunds only selected refundable vouchers', as
   ]);
   const encodedArgs = await mockInvokeArgs(page);
   expect(
-    encodedArgs.map((args) =>
-      Number(scValToNative(xdr.ScVal.fromXDR(args[0], 'base64'))),
-    ),
+    encodedArgs.map((args) => {
+      const arg0 = args[0];
+      if (!arg0) throw new Error('Expected arg0');
+      return Number(scValToNative(xdr.ScVal.fromXDR(arg0, 'base64')));
+    }),
   ).toEqual([401, 403]);
 });
 

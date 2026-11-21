@@ -557,6 +557,7 @@ export default function ClinicPage({
           }
           trackEvent('voucher_funded');
         } catch (err) {
+          const errDetail = humaniseError(err, VOUCHER_ERRORS);
           // A timed-out transaction may still land on chain. If it has not,
           // offer to resubmit with a higher fee using the same sequence
           // number — only one transaction per sequence number can be
@@ -594,7 +595,7 @@ export default function ClinicPage({
 
           failed.push({
             label: service.label,
-            error: humaniseError(err, VOUCHER_ERRORS),
+            error: errDetail,
           });
           setBatchProgress(null);
           setBatchSummary({ succeeded, failed });

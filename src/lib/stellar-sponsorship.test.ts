@@ -107,15 +107,18 @@ it('restores archived footprint data before signing and submitting the invocatio
   await expect(invoke(false)).resolves.toEqual({ hash: 'ab'.repeat(32), returnValue: 7n });
 
   expect(sign).toHaveBeenCalledTimes(2);
-  expect(sign.mock.calls[0][1]).toEqual({
+  const call0 = sign.mock.calls[0];
+  const call1 = sign.mock.calls[1];
+  if (!call0 || !call1) throw new Error('Expected 2 sign calls');
+  expect(call0[1]).toEqual({
     kind: 'restore-footprint',
     restoreFee: 600n,
     transactionFee: 600n,
   });
   expect(rpcMock.simulateTransaction).toHaveBeenCalledTimes(3);
   expect(rpcMock.sendTransaction).toHaveBeenCalledTimes(2);
-  const restore = TransactionBuilder.fromXDR(sign.mock.calls[0][0], Networks.TESTNET) as Transaction;
-  const invocation = TransactionBuilder.fromXDR(sign.mock.calls[1][0], Networks.TESTNET) as Transaction;
+  const restore = TransactionBuilder.fromXDR(call0[0], Networks.TESTNET) as Transaction;
+  const invocation = TransactionBuilder.fromXDR(call1[0], Networks.TESTNET) as Transaction;
   expect(restore.operations[0]?.type).toBe('restoreFootprint');
   expect(invocation.operations[0]?.type).toBe('invokeHostFunction');
 });
