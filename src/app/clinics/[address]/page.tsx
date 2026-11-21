@@ -27,8 +27,9 @@ import {
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import {
   saveCheckoutDraft,
+  loadCheckoutDraft,
   clearCheckoutDraft,
-  useCheckoutDraft,
+  type CheckoutDraft,
 } from '@/lib/checkout-draft';
 import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
@@ -131,20 +132,25 @@ export default function ClinicPage({
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
 
-  const savedDraft = useCheckoutDraft(address);
+  const [existingDraftOnMount] = useState<CheckoutDraft | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return loadCheckoutDraft(address);
+  });
   const [draftDismissed, setDraftDismissed] = useState(false);
   const isDraftVisible = Boolean(
-    savedDraft && savedDraft.selectedCodes.length > 0 && !draftDismissed,
+    existingDraftOnMount &&
+      existingDraftOnMount.selectedCodes.length > 0 &&
+      !draftDismissed,
   );
 
   const restoreDraft = () => {
-    if (!savedDraft) return;
-    setSelectedCodesOverride(savedDraft.selectedCodes);
-    setAmountOverride(savedDraft.amountOverride);
-    setExpiryChoice(savedDraft.expiryChoice);
-    setCustomExpiry(savedDraft.customExpiry);
-    if (savedDraft.patientNickname) {
-      void localIdentity.select(savedDraft.patientNickname);
+    if (!existingDraftOnMount) return;
+    setSelectedCodesOverride(existingDraftOnMount.selectedCodes);
+    setAmountOverride(existingDraftOnMount.amountOverride);
+    setExpiryChoice(existingDraftOnMount.expiryChoice);
+    setCustomExpiry(existingDraftOnMount.customExpiry);
+    if (existingDraftOnMount.patientNickname) {
+      void localIdentity.select(existingDraftOnMount.patientNickname);
     }
     setDraftDismissed(true);
     toast.success(t('checkoutDraft.restoredMessage'));
@@ -752,7 +758,7 @@ export default function ClinicPage({
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
 
-        {isDraftVisible && savedDraft && (
+        {isDraftVisible && existingDraftOnMount && (
           <div
             data-testid="checkout-draft-banner"
             className="rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand-soft)]/20 p-3 text-sm space-y-2"
@@ -762,7 +768,7 @@ export default function ClinicPage({
             </div>
             <p className="text-xs text-[var(--color-ink-soft)]">
               {t('checkoutDraft.foundDescription', {
-                count: savedDraft.selectedCodes.length,
+                count: existingDraftOnMount.selectedCodes.length,
               })}
             </p>
             <div className="flex items-center gap-2 pt-1">

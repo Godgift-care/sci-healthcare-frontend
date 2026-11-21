@@ -265,9 +265,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               SMS
             </a>
           </div>
-          <p className="mt-1 text-xs text-[var(--color-ink-soft)]" data-testid="voucher-status-explanation">
+          <span className="sr-only" data-testid="voucher-status-explanation">
             {statusExplanation}
-          </p>
+          </span>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">
             {v.serviceLabel ?? `Service ${v.serviceCode}`}
           </h1>

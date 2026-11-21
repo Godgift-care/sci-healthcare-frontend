@@ -71,30 +71,20 @@ const STATUS_STYLES: Record<VoucherStatus, string> = {
 export function StatusBadge({
   status,
   role = 'patient',
-  showTooltip = true,
 }: {
   status: VoucherStatus;
   role?: VoucherRole;
-  showTooltip?: boolean;
 }) {
   const { t } = useLocaleContext();
   const explanation = t(getStatusExplanationKey(status, role));
 
-  const badge = (
+  return (
     <span
       title={explanation}
       className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_STYLES[status]}`}
     >
       {status}
     </span>
-  );
-
-  if (!showTooltip) return badge;
-
-  return (
-    <Tooltip content={explanation} ariaLabel={`${status}: ${explanation}`}>
-      {badge}
-    </Tooltip>
   );
 }
 
