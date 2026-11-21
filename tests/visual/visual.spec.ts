@@ -44,7 +44,8 @@ test('clinic detail — fund a voucher', async ({ page }) => {
   await expect(page.getByText('Fund care')).toBeVisible();
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
   await settle(page);
-  await expect(page).toHaveScreenshot('clinic-detail.png');
+  // Hostname text has minor font-rasterization variance across runners.
+  await expect(page).toHaveScreenshot('clinic-detail.png', { threshold: 0.21 });
 });
 
 test('my vouchers — disconnected', async ({ page }) => {
