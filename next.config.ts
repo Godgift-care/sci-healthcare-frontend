@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { NextConfig } from 'next';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants';
 import bundleAnalyzer from '@next/bundle-analyzer';
-import { parseSep24Anchors } from './src/lib/sep24-config';
+import { validatePublicConfig } from './src/lib/public-config';
 
 import { contentSecurityPolicy, contentSecurityPolicyHeaderName } from './src/lib/csp';
 
@@ -32,118 +32,9 @@ const withBundleAnalyzer = bundleAnalyzer({
  * five builds.
  * ---------------------------------------------------------------------- */
 
-type RequiredVar = {
-  name: string;
-  /** What the app does with it, and what breaks without it. */
-  why: string;
-};
-
-// NEXT_PUBLIC_FAUCET_CONTRACT_ID and NEXT_PUBLIC_USDC_ISSUER are
-// deliberately absent: they only enable testnet conveniences (the demo
-// faucet and its trustline instructions), and a build without them is a
-// valid deployment. This list is the set without which the app cannot work
-// at all. Their *shape* is still checked below when they are present.
-const REQUIRED_BUILD_VARS: RequiredVar[] = [
-  {
-    name: 'NEXT_PUBLIC_API_URL',
-    why: 'the indexer the directory, vouchers and receipts are read from',
-  },
-  {
-    name: 'NEXT_PUBLIC_STELLAR_NETWORK',
-    why: 'which network is signed for, and whether the testnet UI shows',
-  },
-  {
-    name: 'NEXT_PUBLIC_SOROBAN_RPC_URL',
-    why: 'where transactions are simulated, submitted and confirmed',
-  },
-  {
-    name: 'NEXT_PUBLIC_NETWORK_PASSPHRASE',
-    why: 'the passphrase transactions are signed with',
-  },
-  {
-    name: 'NEXT_PUBLIC_REGISTRY_CONTRACT_ID',
-    why: 'clinic and attester registration',
-  },
-  {
-    name: 'NEXT_PUBLIC_VOUCHER_CONTRACT_ID',
-    why: 'every voucher read and write, including funding',
-  },
-  {
-    name: 'NEXT_PUBLIC_RECEIPT_CONTRACT_ID',
-    why: 'receipts and the printable care summary',
-  },
-  {
-    name: 'NEXT_PUBLIC_USDC_CONTRACT_ID',
-    why: 'the token that is escrowed, quoted and settled',
-  },
-];
-
-/** Soroban contract ids are `C` plus 55 base32 characters. */
-const CONTRACT_ID_SHAPE = /^C[A-Z2-7]{55}$/;
-
-function isAbsoluteUrl(value: string): boolean {
-  try {
-    const { protocol } = new URL(value);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 /** Everything wrong with the build environment, in one list. */
-function configProblems(env: NodeJS.ProcessEnv): string[] {
-  const problems: string[] = [];
-
-  for (const { name, why } of REQUIRED_BUILD_VARS) {
-    if (!env[name]?.trim()) {
-      problems.push(`${name} is not set — ${why}.`);
-    }
-  }
-
-  const apiUrl = env.NEXT_PUBLIC_API_URL?.trim();
-  if (apiUrl && !isAbsoluteUrl(apiUrl)) {
-    problems.push(
-      `NEXT_PUBLIC_API_URL is not an absolute http(s) URL ("${apiUrl}") — the ` +
-        'browser would resolve it against the page instead.',
-    );
-  }
-
-  const rpcUrl = env.NEXT_PUBLIC_SOROBAN_RPC_URL?.trim();
-  if (rpcUrl && !isAbsoluteUrl(rpcUrl)) {
-    problems.push(
-      `NEXT_PUBLIC_SOROBAN_RPC_URL is not an absolute http(s) URL ("${rpcUrl}").`,
-    );
-  }
-
-  for (const name of [
-    'NEXT_PUBLIC_REGISTRY_CONTRACT_ID',
-    'NEXT_PUBLIC_VOUCHER_CONTRACT_ID',
-    'NEXT_PUBLIC_RECEIPT_CONTRACT_ID',
-    'NEXT_PUBLIC_USDC_CONTRACT_ID',
-    'NEXT_PUBLIC_FAUCET_CONTRACT_ID',
-  ]) {
-    const value = env[name]?.trim();
-    if (value && !CONTRACT_ID_SHAPE.test(value)) {
-      problems.push(
-        `${name} is not a contract id ("${value}") — it must be C followed by ` +
-          '55 base32 characters, as printed by the deployment script.',
-      );
-    }
-  }
-
-  if (env.NEXT_PUBLIC_SEP24_ANCHORS?.trim()) {
-    try {
-      parseSep24Anchors(env.NEXT_PUBLIC_SEP24_ANCHORS);
-    } catch (error) {
-      problems.push(
-        error instanceof Error
-          ? error.message
-          : 'NEXT_PUBLIC_SEP24_ANCHORS is invalid.',
-      );
-    }
-  }
-
-  return problems;
+export function configProblems(env: NodeJS.ProcessEnv): string[] {
+  return validatePublicConfig(env);
 }
 
 function assertBuildConfig(phase: string): void {
