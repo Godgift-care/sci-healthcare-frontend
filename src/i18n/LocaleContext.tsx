@@ -8,8 +8,10 @@ import React, {
   useMemo,
   useSyncExternalStore,
 } from 'react';
-import { defaultLocale, isLocale, messages, type Locale } from './config';
+import { defaultLocale, isLocale, type Locale } from './config';
+import { bestLocale } from './detect';
 import { directionForLocale } from './direction';
+import { translate } from './translate';
 
 export const LOCALE_STORAGE_KEY = 'sci-locale';
 
@@ -34,13 +36,13 @@ function readLocale(): Locale {
     document.cookie,
   )?.[1];
   if (isLocale(cookie)) return cookie;
-  const navLang = window.navigator.language.slice(0, 2).toLowerCase();
-  return isLocale(navLang) ? navLang : defaultLocale;
-}
-
-/** The server has no storage to read, so it renders English. */
-function serverLocale(): Locale {
-  return defaultLocale;
+  // `navigator.languages` is ordered by preference; a visitor asking for
+  // `fr-CA` then `fr` then `en` gets French (#277).
+  const languages =
+    window.navigator.languages && window.navigator.languages.length > 0
+      ? window.navigator.languages
+      : [window.navigator.language];
+  return bestLocale(languages);
 }
 
 /**
@@ -70,18 +72,37 @@ interface LocaleContextValue {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
+/**
+ * Components rendered outside the provider — every Storybook story, and a
+ * component test that does not need a language — read the English catalogue
+ * rather than raw keys. English is the source catalogue, so that is the same
+ * text the app shows before a visitor chooses another language.
+ */
 const LocaleContext = createContext<LocaleContextValue>({
   locale: defaultLocale,
   setLocale: () => {},
-  t: (key: string) => key,
+  t: (key: string, params?: Record<string, string | number>) =>
+    translate(defaultLocale, key, params),
 });
 
 export function useLocaleContext() {
   return useContext(LocaleContext);
 }
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const locale = useSyncExternalStore(subscribe, readLocale, serverLocale);
+export function LocaleProvider({
+  children,
+  initialLocale = defaultLocale,
+}: {
+  children: React.ReactNode;
+  /**
+   * The locale resolved on the server from the cookie and Accept-Language
+   * (#277). Used as the server/hydration snapshot so the first paint is in
+   * the visitor's language and matches the server HTML exactly.
+   */
+  initialLocale?: Locale;
+}) {
+  const getServerLocale = useCallback(() => initialLocale, [initialLocale]);
+  const locale = useSyncExternalStore(subscribe, readLocale, getServerLocale);
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!isLocale(newLocale)) return;
@@ -113,47 +134,11 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     root.dir = directionForLocale(locale);
   }, [locale]);
 
+  // Plural forms and interpolation live in `translate`, which is unit
+  // tested per plural category (#278).
   const t = useCallback(
-    (path: string, params?: Record<string, string | number>): string => {
-      const keys = path.split('.');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let current: any = messages[locale] ?? messages[defaultLocale];
-
-      for (const key of keys) {
-        if (current && typeof current === 'object' && key in current) {
-          current = current[key];
-        } else {
-          // Fallback to English
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let fallbackCurrent: any = messages[defaultLocale];
-          for (const fbKey of keys) {
-            if (
-              fallbackCurrent &&
-              typeof fallbackCurrent === 'object' &&
-              fbKey in fallbackCurrent
-            ) {
-              fallbackCurrent = fallbackCurrent[fbKey];
-            } else {
-              return path;
-            }
-          }
-          current = fallbackCurrent;
-          break;
-        }
-      }
-
-      if (typeof current !== 'string') {
-        return path;
-      }
-
-      if (!params) {
-        return current;
-      }
-
-      return current.replace(/{(\w+)}/g, (_, match) => {
-        return params[match] !== undefined ? String(params[match]) : `{${match}}`;
-      });
-    },
+    (path: string, params?: Record<string, string | number>): string =>
+      translate(locale, path, params),
     [locale],
   );
 

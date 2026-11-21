@@ -3,15 +3,23 @@
 import { useMemo, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
+import { compareEscrow } from '@/lib/escrow';
 import {
   buildClinicCountryCsvRows,
   buildCountryVoucherCsvRows,
   buildDailyStatsCsvRows,
   downloadCsv,
 } from '@/lib/csv';
-import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
+import {
+  useDailyStats,
+  useEscrowSummary,
+  useOpenEscrowTotal,
+  useProviders,
+  useStats,
+  useVouchers,
+} from '@/lib/hooks';
 import { useLocaleContext } from '@/i18n/LocaleContext';
-import { Button, Card, Empty } from '@/components/ui';
+import { Alert, Button, Card, Empty } from '@/components/ui';
 import { DataTable } from '@/components/DataTable';
 import { SkeletonCard } from '@/components/Skeleton';
 import { WidgetBoundary } from '@/components/WidgetBoundary';
@@ -136,7 +144,7 @@ function ActivityChart({
 }
 
 export default function StatsPage() {
-  const { t } = useLocaleContext();
+  const { t, locale } = useLocaleContext();
   const [days, setDays] = useState<TimeRange>(30);
   const [showTables, setShowTables] = useState<boolean>(false);
 
@@ -144,6 +152,13 @@ export default function StatsPage() {
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
   const { providers } = useProviders();
   const { vouchers } = useVouchers({});
+  // The contract's own escrow accounting, read by simulation without a
+  // wallet, beside the indexer's total for the same money (#295).
+  const { escrow, error: escrowError, isLoading: escrowLoading } = useEscrowSummary();
+  const { indexedOpen, error: indexedError } = useOpenEscrowTotal();
+  const escrowComparison = escrow
+    ? compareEscrow(escrow[0], escrow[1], indexedOpen)
+    : null;
 
   // Aggregate country statistics
   const countryCounts = useMemo(() => {
@@ -259,7 +274,7 @@ export default function StatsPage() {
               onClick={() => setDays(r)}
               className={`rounded-md px-2.5 py-1 font-medium transition ${
                 days === r
-                  ? 'bg-[var(--color-brand)] text-white'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                   : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
               }`}
             >
@@ -311,6 +326,75 @@ export default function StatsPage() {
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
             {stats ? `${stats.settledVouchers} vouchers paid` : '…'}
           </div>
+        </Card>
+      </section>
+
+      {/* On-chain escrow (#295) */}
+      <section aria-label={t('stats.escrowTitle')}>
+        <Card className="space-y-3 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">{t('stats.escrowTitle')}</h2>
+              <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                {t('stats.escrowNote')}
+              </p>
+            </div>
+            <div className="text-end">
+              <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                {t('stats.escrowOpen')}
+              </div>
+              <div className="mt-1 text-2xl font-bold">
+                {escrowLoading
+                  ? '…'
+                  : escrow
+                    ? `$${formatUsdc(escrow[0], locale)}`
+                    : '—'}
+              </div>
+              {escrow && (
+                <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                  {t('stats.escrowBalance', {
+                    amount: `$${formatUsdc(escrow[1], locale)}`,
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {indexedOpen !== null && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowIndexed', {
+                amount: `$${formatUsdc(indexedOpen, locale)}`,
+              })}
+            </p>
+          )}
+
+          {escrowError && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowUnavailable')}
+            </p>
+          )}
+          {indexedError && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowIndexedUnavailable')}
+            </p>
+          )}
+
+          {escrowComparison?.solvencyDiffers && (
+            <Alert>
+              {t('stats.escrowSolvencyMismatch', {
+                escrow: `$${formatUsdc(escrowComparison.openEscrow, locale)}`,
+                balance: `$${formatUsdc(escrowComparison.tokenBalance, locale)}`,
+              })}
+            </Alert>
+          )}
+          {escrowComparison?.indexerDiffers && (
+            <Alert kind="info">
+              {t('stats.escrowIndexerMismatch', {
+                chain: `$${formatUsdc(escrowComparison.openEscrow, locale)}`,
+                indexed: `$${formatUsdc(escrowComparison.indexedOpen ?? 0n, locale)}`,
+              })}
+            </Alert>
+          )}
         </Card>
       </section>
 
@@ -492,7 +576,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {stats.count} registered
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       {stats.active} active
                     </td>
                   </tr>
@@ -550,7 +634,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
                       {activity.funded} funded
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
                       {activity.settled} settled
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">

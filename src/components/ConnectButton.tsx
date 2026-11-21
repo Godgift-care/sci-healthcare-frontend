@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { shortAddress } from '@/lib/amounts';
 import { config, explorerAccount, friendbotUrl } from '@/lib/config';
 import { useWallet } from '@/lib/wallet';
@@ -9,6 +10,7 @@ import { useWallet } from '@/lib/wallet';
 import { Button } from './ui';
 
 export function ConnectButton() {
+  const { t } = useLocaleContext();
   const {
     address,
     walletName,
@@ -68,7 +70,9 @@ export function ConnectButton() {
   if (!address) {
     return (
       <Button onClick={() => void connect()} disabled={connecting}>
-        {connecting ? 'Connecting…' : 'Connect wallet'}
+        {connecting
+          ? t('components.connectButton.connecting')
+          : t('components.connectButton.connect')}
       </Button>
     );
   }
@@ -108,10 +112,10 @@ export function ConnectButton() {
           <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-soft)]">
-                Wallet
+                {t('components.connectButton.wallet')}
               </div>
               <div className="mt-0.5 text-sm font-semibold text-[var(--color-ink)]">
-                {walletName ?? 'Stellar Wallet'}
+                {walletName ?? t('components.connectButton.fallbackWallet')}
               </div>
             </div>
             <span
@@ -123,14 +127,18 @@ export function ConnectButton() {
                     : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
               }`}
             >
-              {isUnfunded ? 'Unfunded' : isLowXlm ? 'Low XLM' : 'Active'}
+              {isUnfunded
+                ? t('components.connectButton.statusUnfunded')
+                : isLowXlm
+                  ? t('components.connectButton.statusLowXlm')
+                  : t('components.connectButton.statusActive')}
             </span>
           </div>
 
           {/* Full Address Copy */}
           <div className="border-b border-[var(--color-line)] py-3">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-soft)]">
-              Account Address
+              {t('components.connectButton.accountAddress')}
             </div>
             <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-[var(--color-canvas)] p-2">
               <span
@@ -145,7 +153,7 @@ export function ConnectButton() {
                 onClick={() => void handleCopy()}
                 className="shrink-0 rounded px-2 py-1 text-xs font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-surface)]"
               >
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('common.copied') : t('common.copy')}
               </button>
             </div>
           </div>
@@ -153,10 +161,9 @@ export function ConnectButton() {
           {/* Unfunded Account Alert (#60) */}
           {isUnfunded && (
             <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">Account not funded on Stellar</p>
+              <p className="font-semibold">{t('components.connectButton.unfundedTitle')}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
-                This account has no XLM balance. Any contract transaction will fail
-                with &ldquo;account not found&rdquo; until it receives minimum reserve funds.
+                {t('components.connectButton.unfundedBody')}
               </p>
               {config.network === 'testnet' && (
                 <div className="mt-2">
@@ -167,7 +174,7 @@ export function ConnectButton() {
                     role="menuitem"
                     className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
                   >
-                    <span>Fund with Friendbot</span>
+                    <span>{t('components.connectButton.fundWithFriendbot')}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
@@ -178,13 +185,15 @@ export function ConnectButton() {
           {/* Low XLM for Network Fees Alert (#61) */}
           {!isUnfunded && isLowXlm && (
             <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">Spendable XLM is low for fees</p>
+              <p className="font-semibold">{t('components.connectButton.lowXlmTitle')}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
-                Spendable balance is{' '}
+                {t('components.connectButton.lowXlmBodyBeforeAmount')}{' '}
                 <span className="font-semibold">
-                  {spendableXlm !== null ? `${spendableXlm.toFixed(2)} XLM` : '< 1.00 XLM'}
+                  {spendableXlm !== null
+                    ? `${spendableXlm.toFixed(2)} XLM`
+                    : t('components.connectButton.lowXlmUnknown')}
                 </span>
-                . In addition to the base account reserve, transactions require spendable XLM to pay network fees.
+                {t('components.connectButton.lowXlmBodyAfterAmount')}
               </p>
               {config.network === 'testnet' && (
                 <div className="mt-2">
@@ -195,7 +204,7 @@ export function ConnectButton() {
                     role="menuitem"
                     className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
                   >
-                    <span>Top up with Friendbot</span>
+                    <span>{t('components.connectButton.topUpWithFriendbot')}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
@@ -212,7 +221,7 @@ export function ConnectButton() {
               role="menuitem"
               className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-brand)]"
             >
-              <span>View on Stellar Expert</span>
+              <span>{t('components.connectButton.viewOnExplorer')}</span>
               <span aria-hidden="true">&rarr;</span>
             </a>
           </div>
@@ -228,7 +237,7 @@ export function ConnectButton() {
               }}
               className="w-full rounded-lg px-2 py-1.5 text-start text-xs font-medium text-[var(--color-danger)] transition hover:bg-red-50"
             >
-              Disconnect wallet
+              {t('components.connectButton.disconnect')}
             </button>
           </div>
         </div>

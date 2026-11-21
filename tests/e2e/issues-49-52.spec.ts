@@ -47,11 +47,11 @@ test.describe('Live countdowns on voucher page (#49)', () => {
     await page.goto('/my');
     const disputeText = page.getByText(/Dispute window closes in/);
     await expect(disputeText).toBeVisible();
-    await expect(disputeText).toContainText('2h');
+    await expect(disputeText).toContainText('in 2 hours');
 
     // Fast forward 66 minutes using fake timers: 125m - 66m = 59m (or 58m if page navigation took milliseconds)
     await page.clock.fastForward(66 * 60 * 1000);
-    await expect(disputeText).toContainText(/5[89]m/);
+    await expect(disputeText).toContainText(/in 5[89] minutes/);
 
     // Also check on the voucher detail page
     await page.goto('/vouchers/49');

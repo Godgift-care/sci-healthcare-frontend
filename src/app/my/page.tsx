@@ -15,6 +15,7 @@ import {
 } from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { buildReceiptCsvRows, buildVoucherCsvRows, downloadCsv } from '@/lib/csv';
+import { getStaffNotes } from '@/lib/staff-notes';
 import { invalidateVouchers, useLiveUpdates, useProviders, useReceipts, useVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
@@ -30,6 +31,7 @@ import {
   type VoucherSort,
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { RecentVouchers } from '@/components/RecentVouchers';
 import { TestUsdc } from '@/components/TestUsdc';
@@ -38,6 +40,7 @@ import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 
 export default function MyPage() {
   const { address, signTransaction, connect } = useWallet();
+  const { t } = useLocaleContext();
   useLiveUpdates();
 
   // The filter choices are view state, so they live in the URL — but they are
@@ -97,6 +100,8 @@ export default function MyPage() {
     succeeded: string[];
     failed: { id: string; error: string }[];
   } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectVisibleRef = useRef<HTMLInputElement>(null);
 
   // SWR cached reads (#63)
   const {
@@ -181,42 +186,90 @@ export default function MyPage() {
   }
 
   const refundable = funded.filter((v) => v.isRefundable);
+  const selectedVouchers = funded.filter((v) => selectedIds.has(v.id));
+  const selectedRefundable = selectedVouchers.filter((v) => v.isRefundable);
+  const allVisibleSelected =
+    visible.length > 0 && visible.every((v) => selectedIds.has(v.id));
+  const someVisibleSelected = visible.some((v) => selectedIds.has(v.id));
 
-  async function handleRefundAll() {
+  useEffect(() => {
+    if (selectVisibleRef.current) {
+      selectVisibleRef.current.indeterminate =
+        someVisibleSelected && !allVisibleSelected;
+    }
+  }, [allVisibleSelected, someVisibleSelected]);
+
+  function toggleVoucherSelection(id: string, checked: boolean) {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleVisibleSelection(checked: boolean) {
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      for (const voucher of visible) {
+        if (checked) next.add(voucher.id);
+        else next.delete(voucher.id);
+      }
+      return next;
+    });
+  }
+
+  async function handleRefund(vouchersToRefund: typeof funded) {
     if (!address) return void connect();
-    const toRefund = funded.filter((v) => v.isRefundable);
+    const toRefund = vouchersToRefund.filter((v) => v.isRefundable);
     if (toRefund.length === 0) return;
 
     setBatchRefunding(true);
     setBatchSummary(null);
-    const succeeded: string[] = [];
-    const failed: { id: string; error: string }[] = [];
-
-    for (let i = 0; i < toRefund.length; i++) {
-      const v = toRefund[i];
-      if (!v) continue;
-      setBatchProgress({ current: i + 1, total: toRefund.length, currentId: v.id });
-      try {
-        await protocol.refund(address, v.id, signTransaction);
-        succeeded.push(v.id);
+    try {
+      const result = await protocol.refundMany(
+        address,
+        toRefund.map((v) => v.id),
+        signTransaction,
+        (current, total, currentId) => {
+          setBatchProgress({ current, total, currentId });
+        },
+      );
+      for (const id of result.refunded) {
         trackEvent('voucher_refunded');
-        void invalidateVouchers(v.id);
-      } catch (err) {
-        failed.push({ id: v.id, error: humaniseError(err) });
+        void invalidateVouchers(id);
       }
+      const succeeded = result.refunded;
+      const failed = result.failed.map(({ id, error }) => ({
+        id,
+        error: humaniseError(error),
+      }));
+      setBatchSummary({ succeeded, failed });
+      setSelectedIds((previous) => {
+        const next = new Set(previous);
+        for (const id of succeeded) next.delete(id);
+        return next;
+      });
+    } finally {
+      setBatchProgress(null);
+      setBatchRefunding(false);
+      void mutateFunded();
     }
+  }
 
-    setBatchProgress(null);
-    setBatchRefunding(false);
-    setBatchSummary({ succeeded, failed });
-    void mutateFunded();
+  function downloadSelectedVouchersCsv() {
+    if (selectedVouchers.length === 0) return;
+    downloadCsv(
+      'selected-vouchers.csv',
+      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin, getStaffNotes()),
+    );
   }
 
   async function loadHistory() {
     setError(null);
     try {
       const ref = await beneficiaryRef(identifier, secret);
-      localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
+      await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
       setActiveRef(ref);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load history');
@@ -250,7 +303,7 @@ export default function MyPage() {
       }
     }
 
-    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin));
+    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin, getStaffNotes()));
   }
 
   async function downloadCareHistoryCsv() {
@@ -284,10 +337,10 @@ export default function MyPage() {
       const patient = await parsePatientBackup(input);
       // Saved into the same store as every other saved patient, and
       // selected, so it appears in the patient picker straight away.
-      if (!localIdentity.save(patient.nickname, patient.identifier, patient.key)) {
+      if (!(await localIdentity.save(patient.nickname, patient.identifier, patient.key))) {
         throw new Error('This device could not save the patient. Is storage blocked?');
       }
-      localIdentity.select(patient.nickname);
+      await localIdentity.select(patient.nickname);
       setIdentifier(patient.identifier);
       setSecret(patient.key);
       setError(null);
@@ -448,7 +501,7 @@ export default function MyPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/my/transactions"
-              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
             >
               Transaction history
             </Link>
@@ -457,25 +510,61 @@ export default function MyPage() {
                 Download CSV
               </Button>
             )}
+            {selectedVouchers.length > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  disabled={batchRefunding}
+                  onClick={downloadSelectedVouchersCsv}
+                >
+                  {t('my.exportSelected')}
+                </Button>
+                {selectedRefundable.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    disabled={batchRefunding}
+                    onClick={() => void handleRefund(selectedRefundable)}
+                  >
+                    {batchRefunding
+                      ? t('my.refundingCount', {
+                          current: batchProgress?.current ?? 0,
+                          total: batchProgress?.total ?? selectedRefundable.length,
+                        })
+                      : t('my.refundSelected', { count: selectedRefundable.length })}
+                  </Button>
+                )}
+              </>
+            )}
             {refundable.length > 0 && (
               <Button
                 variant="ghost"
                 disabled={batchRefunding}
-                onClick={() => void handleRefundAll()}
+                onClick={() => void handleRefund(refundable)}
               >
                 {batchRefunding
-                  ? `Refunding ${batchProgress?.current ?? 0}/${batchProgress?.total ?? refundable.length}…`
-                  : `Refund all (${refundable.length})`}
+                  ? t('my.refundingCount', {
+                      current: batchProgress?.current ?? 0,
+                      total: batchProgress?.total ?? refundable.length,
+                    })
+                  : t('my.refundAll', { count: refundable.length })}
               </Button>
             )}
           </div>
         </div>
+        {selectedVouchers.length > 0 && (
+          <p aria-live="polite" className="text-xs text-[var(--color-ink-soft)]">
+            {t('my.selectedCount', { count: selectedVouchers.length })}
+          </p>
+        )}
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
             <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">
-              <span>Refunding voucher #{batchProgress.currentId}…</span>
+              <span>{t('my.refundingVoucher', { id: batchProgress.currentId })}</span>
               <span className="mono font-medium">
-                {batchProgress.current} of {batchProgress.total}
+                {t('my.refundProgress', {
+                  current: batchProgress.current,
+                  total: batchProgress.total,
+                })}
               </span>
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line)]">
@@ -490,15 +579,13 @@ export default function MyPage() {
           <div className="space-y-2">
             {batchSummary.succeeded.length > 0 && (
               <Alert kind="success">
-                Refunded {batchSummary.succeeded.length} voucher
-                {batchSummary.succeeded.length === 1 ? '' : 's'} successfully (
-                {batchSummary.succeeded.map((id) => `#${id}`).join(', ')}).
+                {t('my.refundedSummary', { count: batchSummary.succeeded.length })}{' '}
+                {batchSummary.succeeded.map((id) => `#${id}`).join(', ')}.
               </Alert>
             )}
             {batchSummary.failed.length > 0 && (
               <Alert>
-                Failed to refund {batchSummary.failed.length} voucher
-                {batchSummary.failed.length === 1 ? '' : 's'}:{' '}
+                {t('my.refundFailedSummary', { count: batchSummary.failed.length })}{' '}
                 {batchSummary.failed.map((f) => `#${f.id} (${f.error})`).join(', ')}.
               </Alert>
             )}
@@ -595,13 +682,41 @@ export default function MyPage() {
           </Empty>
         )}
         <div className="space-y-3">
+          {visible.length > 0 && (
+            <label className="inline-flex min-h-11 items-center gap-3 text-sm">
+              <input
+                ref={selectVisibleRef}
+                type="checkbox"
+                checked={allVisibleSelected}
+                disabled={batchRefunding}
+                onChange={(event) => toggleVisibleSelection(event.target.checked)}
+                className="h-4 w-4 rounded border-[var(--color-line)]"
+              />
+              <span>{t('my.selectAllVisible', { count: visible.length })}</span>
+            </label>
+          )}
           {visible.map((v) => (
-            <VoucherRow
-              key={v.id}
-              v={v}
-              actions={['dispute', 'refund', 'settle']}
-              onDone={() => void mutateFunded()}
-            />
+            <div key={v.id} className="flex items-start gap-3">
+              <label className="inline-flex min-h-11 shrink-0 items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(v.id)}
+                  disabled={batchRefunding}
+                  onChange={(event) =>
+                    toggleVoucherSelection(v.id, event.target.checked)
+                  }
+                  aria-label={t('my.selectVoucher', { id: v.id })}
+                  className="h-4 w-4 rounded border-[var(--color-line)]"
+                />
+              </label>
+              <div className="min-w-0 flex-1">
+                <VoucherRow
+                  v={v}
+                  actions={['dispute', 'refund', 'settle']}
+                  onDone={() => void mutateFunded()}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -781,7 +896,7 @@ export default function MyPage() {
                 </Button>
                 <Link
                   href="/my/print"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
                 >
                   <svg
                     aria-hidden="true"
