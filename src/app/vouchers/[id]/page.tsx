@@ -20,7 +20,7 @@ import { voucher as voucherContract } from '@/lib/protocol';
 import { eligibleRedirects } from '@/lib/redirect';
 import { problemReportUrl } from '@/lib/report-problem';
 import { rememberRecentVoucherId } from '@/lib/recent-vouchers';
-import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
+import { stepTxHashes, voucherTimeline, getStatusExplanationKey, type StepState, type VoucherRole } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
 import { SkeletonDetail } from '@/components/Skeleton';
@@ -198,6 +198,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const shareMessage = voucherShareMessage();
   const encodedShareMessage = encodeURIComponent(shareMessage);
 
+  const role: VoucherRole =
+    address && address === v.funder
+      ? 'funder'
+      : address && address === v.provider.address
+        ? 'clinic'
+        : 'patient';
+  const statusExplanation = t(getStatusExplanationKey(v.status, role));
+
   return (
     <div className="voucher-print-page space-y-6 print:space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
@@ -206,7 +214,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             <span className="mono text-xs text-[var(--color-ink-soft)]">
               {t('voucher.voucherNumber', { id: v.id })}
             </span>
-            <StatusBadge status={v.status} />
+            <StatusBadge status={v.status} role={role} />
             <button
               type="button"
               onClick={() => void copyLink()}
@@ -257,6 +265,9 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               SMS
             </a>
           </div>
+          <span className="sr-only" data-testid="voucher-status-explanation">
+            {statusExplanation}
+          </span>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">
             {v.serviceLabel ?? `Service ${v.serviceCode}`}
           </h1>
@@ -319,7 +330,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         <Card className="voucher-print-history space-y-4 p-5 print:space-y-2 print:p-3">
           <div className="print:hidden">
             <Field label={t('voucher.fundedBy')}>
-              <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
+              <CopyValue
+                value={v.funder}
+                name={names.get(v.funder)}
+                label={t('components.copyValue.labels.funderAddress')}
+              />
             </Field>
           </div>
           <Field label={t('voucher.expires')}>
@@ -362,7 +377,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               <CopyValue
                 value={v.beneficiaryRef}
                 display={`${v.beneficiaryRef.slice(0, 16)}…`}
-                label="patient reference"
+                label={t('components.copyValue.labels.patientReference')}
               />
             </Field>
             <p className="text-xs text-[var(--color-ink-soft)]">

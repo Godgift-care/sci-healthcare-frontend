@@ -13,14 +13,17 @@ import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
+import { clearStaffNote, saveStaffNote, STAFF_NOTE_MAX_LENGTH, useStaffNote } from '@/lib/staff-notes';
 import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
 import { Button, Card, ExplorerLink, InfoTip, Modal, StatusBadge } from './ui';
 import { AddressName } from './AddressName';
 import { useToast } from './Toast';
+import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
+import type { RestoreFootprintSignContext } from '@/lib/stellar';
 
 /** Funnel step per contract write. Names only — never any properties. */
 const ACTION_EVENTS = {
@@ -55,6 +58,7 @@ export function VoucherRow({
   disabled = false,
   ref,
   requirePatientMatch = false,
+  staffNote = false,
 }: {
   v: Voucher;
   actions: Action[];
@@ -75,6 +79,11 @@ export function VoucherRow({
    * can claim without it. Point-of-care desks pass `true`.
    */
   requirePatientMatch?: boolean;
+  /**
+   * True for clinic desks (#322): they may keep a staff note on the
+   * voucher. The note is stored on this device and never shared or backed up.
+   */
+  staffNote?: boolean;
 }) {
   const { address, signTransaction, connect } = useWallet();
   const { t } = useLocaleContext();
@@ -82,6 +91,7 @@ export function VoucherRow({
   const now = nowProp ?? nowInternal;
   const { locale } = useLocaleContext();
   const toast = useToast();
+  const txStatus = useTransactionStatus();
   const [busy, setBusy] = useState<Action | null>(null);
   // After a write the chain has moved but the indexer lags (#9): while
   // polling, the row shows a pending state instead of the stale status.
@@ -103,19 +113,34 @@ export function VoucherRow({
   const [verifiedFor, setVerifiedFor] = useState<string | null>(null);
   const verificationKey = `${v.id}:${v.beneficiaryRef}`;
   const patientVerified = verifiedFor === verificationKey;
+  // Staff note (#322): kept on this device, never shared or backed up.
+  const note = useStaffNote(v.id);
+  const [draft, setDraft] = useState('');
+  const [editingNote, setEditingNote] = useState(false);
 
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
+    setTransactionStatus('signing');
     try {
+      const wrappedSign = async (
+        xdr: string,
+        context?: RestoreFootprintSignContext,
+      ) => {
+        setTransactionStatus('signing');
+        const signed = await signTransaction(xdr, context);
+        setTransactionStatus('submitting');
+        return signed;
+      };
       const fns: Record<Action, () => Promise<{ hash: string; queued?: boolean }>> = {
-        claim: () => protocol.claim(address, v.id, signTransaction),
-        attest: () => protocol.attest(address, v.id, signTransaction),
-        settle: () => protocol.settle(address, v.id, signTransaction),
-        refund: () => protocol.refund(address, v.id, signTransaction),
-        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
+        claim: () => protocol.claim(address, v.id, wrappedSign),
+        attest: () => protocol.attest(address, v.id, wrappedSign),
+        settle: () => protocol.settle(address, v.id, wrappedSign),
+        refund: () => protocol.refund(address, v.id, wrappedSign),
+        dispute: () => protocol.dispute(address, v.id, reason, wrappedSign),
       };
       const res = await fns[action]();
+      setTransactionStatus('confirming');
       setDisputing(false);
       setAttesting(false);
       // A claim made without a connection is signed and queued (#301). It
@@ -123,6 +148,7 @@ export function VoucherRow({
       // to catch up to; the queue on the desk reports it instead.
       if (res.queued) {
         setBusy(null);
+        setTransactionStatus('idle');
         onDone?.();
         toast.success(t('offlineQueue.queuedToast'));
         return;
@@ -161,7 +187,28 @@ export function VoucherRow({
       toast.error(humaniseError(err));
     } finally {
       if (mounted.current) setBusy(null);
+      setTransactionStatus('idle');
     }
+  }
+
+  function startEditNote() {
+    setDraft(note);
+    setEditingNote(true);
+  }
+
+  function cancelNote() {
+    setEditingNote(false);
+  }
+
+  function saveNote() {
+    const clean = draft.trim().slice(0, STAFF_NOTE_MAX_LENGTH);
+    saveStaffNote(v.id, clean);
+    setEditingNote(false);
+  }
+
+  function clearNote() {
+    clearStaffNote(v.id);
+    setEditingNote(false);
   }
 
   // Only offer an action the contract will actually accept right now
@@ -275,6 +322,65 @@ export function VoucherRow({
         </p>
       )}
 
+      {staffNote && (
+        <div className="mt-3 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-medium">{t('voucher.staffNote')}</h4>
+              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                {t('voucher.staffNoteNote')}
+              </p>
+            </div>
+          </div>
+
+          {editingNote ? (
+            <div className="mt-3 space-y-2">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('voucher.staffNote')}
+                </span>
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder={t('voucher.staffNotePlaceholder')}
+                  rows={3}
+                  maxLength={STAFF_NOTE_MAX_LENGTH}
+                  className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" onClick={saveNote}>
+                  {t('voucher.staffNoteSave')}
+                </Button>
+                <Button variant="ghost" onClick={cancelNote}>
+                  {t('common.cancel')}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              {note ? (
+                <>
+                  <p className="text-sm">{note}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="ghost" onClick={startEditNote}>
+                      {t('voucher.staffNoteEdit')}
+                    </Button>
+                    <Button variant="ghost" onClick={clearNote}>
+                      {t('voucher.staffNoteClear')}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button variant="ghost" onClick={startEditNote}>
+                  {t('voucher.staffNoteAdd')}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {available.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {available.map((a) => (
@@ -293,7 +399,15 @@ export function VoucherRow({
                 else void run(a);
               }}
             >
-              {busy === a ? 'Confirming…' : reconciling === a ? 'Updating…' : LABELS[a]}
+              {busy === a
+                ? txStatus === 'signing'
+                  ? t('common.signing')
+                  : txStatus === 'submitting'
+                    ? t('common.submitting')
+                    : t('common.confirming')
+                : reconciling === a
+                  ? 'Updating…'
+                  : LABELS[a]}
             </Button>
           ))}
         </div>
@@ -367,7 +481,13 @@ export function VoucherRow({
               disabled={disabled || busy !== null}
               onClick={() => void run('dispute')}
             >
-              {busy === 'dispute' ? 'Confirming…' : 'Open dispute'}
+              {busy === 'dispute'
+                ? txStatus === 'signing'
+                  ? t('common.signing')
+                  : txStatus === 'submitting'
+                    ? t('common.submitting')
+                    : t('common.confirming')
+                : 'Open dispute'}
             </Button>
             <Button
               variant="ghost"
@@ -416,7 +536,13 @@ export function VoucherRow({
               disabled={disabled || busy !== null}
               onClick={() => void run('attest')}
             >
-              {busy === 'attest' ? 'Confirming…' : 'Confirm'}
+              {busy === 'attest'
+                ? txStatus === 'signing'
+                  ? t('common.signing')
+                  : txStatus === 'submitting'
+                    ? t('common.submitting')
+                    : t('common.confirming')
+                : 'Confirm'}
             </Button>
             <Button
               variant="ghost"

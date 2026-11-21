@@ -178,8 +178,11 @@ export default function AttestPage() {
 
       {clinics.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm text-[var(--color-ink-soft)]">Filter by clinic:</label>
+          <label htmlFor="clinic-filter" className="text-sm text-[var(--color-ink-soft)]">
+            Filter by clinic:
+          </label>
           <select
+            id="clinic-filter"
             value={clinicFilter}
             onChange={(e) => setClinicFilter(e.target.value)}
             className="h-10 w-full max-w-xs rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm"

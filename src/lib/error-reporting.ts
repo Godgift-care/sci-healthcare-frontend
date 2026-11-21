@@ -56,8 +56,10 @@ function normalizeUrl(raw: string): string {
 }
 
 export function scrubSentryEvent(event: ErrorEvent): ErrorEvent | null {
+  const commit = process.env.APP_COMMIT;
   const normalized: ErrorEvent = {
     ...event,
+    ...(commit ? { tags: { ...event.tags, app_commit: commit } } : {}),
     request:
       typeof event.request?.url === 'string'
         ? { ...event.request, url: normalizeUrl(event.request.url) }

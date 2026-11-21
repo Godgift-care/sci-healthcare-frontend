@@ -15,6 +15,7 @@ import {
 } from '@/lib/beneficiary';
 import { humaniseError } from '@/lib/errors';
 import { buildReceiptCsvRows, buildVoucherCsvRows, downloadCsv } from '@/lib/csv';
+import { getStaffNotes } from '@/lib/staff-notes';
 import { invalidateVouchers, useLiveUpdates, useProviders, useReceipts, useVouchers } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
@@ -269,7 +270,7 @@ export default function MyPage() {
     if (selectedVouchers.length === 0) return;
     downloadCsv(
       'selected-vouchers.csv',
-      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin),
+      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin, getStaffNotes()),
     );
   }
 
@@ -311,7 +312,7 @@ export default function MyPage() {
       }
     }
 
-    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin));
+    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin, getStaffNotes()));
   }
 
   async function downloadCareHistoryCsv() {
@@ -508,7 +509,7 @@ export default function MyPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/my/transactions"
-              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
             >
               Transaction history
             </Link>
@@ -921,7 +922,7 @@ export default function MyPage() {
                 </Button>
                 <Link
                   href="/my/print"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
                 >
                   <svg
                     aria-hidden="true"
