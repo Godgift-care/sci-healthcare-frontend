@@ -1,6 +1,7 @@
 import { batchSettleMethod } from './batch-settle';
 import type { xdr } from '@stellar/stellar-sdk';
 
+import { claimOrQueue } from './claim-queue';
 import { config, isTestnet } from './config';
 import {
   FaucetClient,
@@ -96,7 +97,7 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false) {
+  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false, fee?: bigint) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
@@ -104,6 +105,7 @@ export const voucher = {
       params.funder,
       sign,
       sponsored,
+      fee,
     );
   },
 
@@ -220,14 +222,35 @@ export const voucher = {
     return results;
   },
 
-  /** claim(provider, voucher_id) */
+  /**
+   * claim(provider, voucher_id)
+   *
+   * Goes through the offline queue (#301): the call is prepared and signed
+   * first, then submitted. If the browser is offline, or submission fails
+   * for want of a network, the signed envelope is kept locally and submitted
+   * when the connection returns. See src/lib/claim-queue.ts.
+   */
   async claim(provider: string, voucherId: string, sign: SignFn) {
-    const client = getVoucherClient();
-    const args = client.spec.funcArgsToScVals('claim', {
-      provider,
-      voucher_id: BigInt(voucherId),
-    });
-    return invokeContract(config.contracts.voucher, 'claim', args, provider, sign);
+    return claimOrQueue(provider, voucherId, sign);
+  },
+
+  /** attestations_left(attester) -> u32, remaining today (UTC). */
+  async attestationsLeft(attester: string): Promise<number> {
+    return Number(
+      await readContract<bigint>(config.contracts.voucher, 'attestations_left', [
+        await arg.address(attester),
+      ]),
+    );
+  },
+
+  /** escrow_summary() -> (open_escrow, token_balance), both in base units. */
+  async escrowSummary(): Promise<[bigint, bigint]> {
+    const [openEscrow, tokenBalance] = await readContract<[bigint, bigint]>(
+      config.contracts.voucher,
+      'escrow_summary',
+      [],
+    );
+    return [BigInt(openEscrow), BigInt(tokenBalance)];
   },
 
   /** attest(attester, voucher_id) */
@@ -334,6 +357,35 @@ export const voucher = {
     return invokeContract(config.contracts.voucher, 'refund', args, caller, sign);
   },
 
+  /**
+   * Refunds selected vouchers one per transaction. Keeping each write to one
+   * contract invocation stays within Soroban transaction resource limits,
+   * while collecting failures lets later vouchers continue.
+   */
+  async refundMany(
+    caller: string,
+    voucherIds: string[],
+    sign: SignFn,
+    onProgress?: (current: number, total: number, id: string) => void,
+  ): Promise<{ refunded: string[]; failed: Array<{ id: string; error: unknown }> }> {
+    const refunded: string[] = [];
+    const failed: Array<{ id: string; error: unknown }> = [];
+    const total = voucherIds.length;
+
+    for (let i = 0; i < total; i++) {
+      const id = voucherIds[i];
+      onProgress?.(i + 1, total, id);
+      try {
+        await this.refund(caller, id, sign);
+        refunded.push(id);
+      } catch (error) {
+        failed.push({ id, error });
+      }
+    }
+
+    return { refunded, failed };
+  },
+
   /** quote(amount) -> (fee, net) */
   async quote(amount: bigint): Promise<[bigint, bigint]> {
     const client = getVoucherClient();
@@ -359,6 +411,61 @@ export const voucher = {
       'resolve_dispute',
       args,
       admin,
+      sign,
+    );
+  },
+
+  /**
+   * resolve_split(admin, voucher_id, to_provider) (#289).
+   *
+   * `toProvider` is the gross part of the escrow awarded to the clinic;
+   * the rest returns to the funder and the fee is taken from the clinic's
+   * part. The deployed bindings predate this method, so its arguments are
+   * encoded directly instead of through the generated spec.
+   */
+  async resolveSplit(
+    admin: string,
+    voucherId: string,
+    toProvider: bigint,
+    sign: SignFn,
+  ) {
+    const args = [
+      await arg.address(admin),
+      await arg.u64(BigInt(voucherId)),
+      await arg.i128(toProvider),
+    ];
+    return invokeContract(
+      config.contracts.voucher,
+      'resolve_split',
+      args,
+      admin,
+      sign,
+    );
+  },
+
+  /**
+   * redirect(funder, voucher_id, new_provider) (#287).
+   *
+   * Moves an unclaimed `Funded` voucher to another active clinic that lists
+   * the same service at or below the escrowed amount. Encoded directly for
+   * the same reason as `resolveSplit`: the vendored bindings predate it.
+   */
+  async redirect(
+    funder: string,
+    voucherId: string,
+    newProvider: string,
+    sign: SignFn,
+  ) {
+    const args = [
+      await arg.address(funder),
+      await arg.u64(BigInt(voucherId)),
+      await arg.address(newProvider),
+    ];
+    return invokeContract(
+      config.contracts.voucher,
+      'redirect',
+      args,
+      funder,
       sign,
     );
   },
@@ -572,6 +679,35 @@ export const faucet = {
     const args = client.spec.funcArgsToScVals('get_config', {});
     const c = await readContract<{ amount: bigint }>(config.contracts.faucet, 'get_config', args);
     return BigInt(c.amount);
+  },
+};
+
+/**
+ * The care-receipt contract (issue #294).
+ *
+ * Reads are simulations with a dummy source account, so verification works
+ * without a connected wallet. `get_receipt` returns the struct minted on
+ * settlement; the beneficiary reference it carries is never displayed or
+ * logged, only the fields already shown on the receipt.
+ */
+export type ChainReceipt = {
+  voucher_id: bigint | number | string;
+  beneficiary_ref?: unknown;
+  provider: string;
+  service_code: bigint | number | string;
+  amount: bigint | number | string;
+  settled_at: bigint | number | string;
+};
+
+export const receipt = {
+  /** get_receipt(voucher_id) -> Receipt */
+  async get(voucherId: string): Promise<ChainReceipt> {
+    if (!config.contracts.receipt) {
+      throw new Error('This deployment has no receipt contract configured.');
+    }
+    return readContract<ChainReceipt>(config.contracts.receipt, 'get_receipt', [
+      await arg.u64(BigInt(voucherId)),
+    ]);
   },
 };
 

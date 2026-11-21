@@ -273,7 +273,13 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
         if (v) return json(v);
         return json({ message: 'Not found' }, 404);
       }
-      return json({ total: state.vouchers?.length ?? 0, vouchers: state.vouchers ?? [] });
+      const statusFilter = url.searchParams.get('status');
+      const vouchers = statusFilter
+        ? (state.vouchers ?? []).filter(
+            (v) => String((v as { status?: unknown }).status ?? '') === statusFilter,
+          )
+        : state.vouchers ?? [];
+      return json({ total: vouchers.length, vouchers });
     }
 
     return route.continue();

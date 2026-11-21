@@ -1,5 +1,7 @@
 import type { xdr } from '@stellar/stellar-sdk';
 
+import { defaultLocale, isLocale } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 import { toBaseUnits } from './amounts';
 import { config } from './config';
 import {
@@ -53,10 +55,62 @@ async function getHorizonServer(): Promise<HorizonServer> {
   return cachedHorizonServer;
 }
 
-export type SignFn = (xdrString: string) => Promise<string>;
+export type RestoreFootprintSignContext = {
+  kind: 'restore-footprint';
+  restoreFee: bigint;
+  transactionFee: bigint;
+};
+
+export type SignFn = (
+  xdrString: string,
+  context?: RestoreFootprintSignContext,
+) => Promise<string>;
+
+function restoreMessage(
+  key:
+    | 'wallet.restoreRequired'
+    | 'wallet.restoreStillRequired'
+    | 'wallet.restorePreparationError'
+    | 'wallet.restoreRejected',
+  params?: Record<string, string | number>,
+): string {
+  const locale =
+    typeof document !== 'undefined' && isLocale(document.documentElement.lang)
+      ? document.documentElement.lang
+      : defaultLocale;
+  return translate(locale, key, params);
+}
 
 export const MIN_FEE_BUFFER_XLM = 1.0;
 export const PATH_PAYMENT_SLIPPAGE_BPS = 100;
+
+/**
+ * Multiplier applied to the base fee when resubmitting a timed-out
+ * transaction (#316). A higher fee makes the replacement transaction more
+ * attractive to validators so it gets included before the original can.
+ */
+export const RETRY_FEE_MULTIPLIER = 3;
+
+/**
+ * Thrown when a submitted transaction does not confirm within
+ * `CONFIRM_TIMEOUT_MS` and a final on-chain check shows it has not landed.
+ * The transaction is still pending on the network and may be resubmitted
+ * with a higher fee using the same sequence number — only one transaction
+ * per sequence number can be included, so the first attempt cannot also
+ * succeed once a replacement is submitted.
+ */
+export class TransactionTimeoutError extends Error {
+  readonly hash: string;
+  constructor(hash: string) {
+    super(
+      `Transaction ${hash} did not confirm within ${CONFIRM_TIMEOUT_MS / 1000}s. ` +
+        'It may still succeed — check the explorer before retrying. ' +
+        'You can resubmit with a higher fee using the same sequence number.',
+    );
+    this.name = 'TransactionTimeoutError';
+    this.hash = hash;
+  }
+}
 
 export interface SpendableXlmInfo {
   rawBalance: number;
@@ -513,13 +567,14 @@ export async function invokeContract(
   walletAddress: string,
   sign: SignFn,
   sponsored = false,
+  fee?: bigint,
 ): Promise<{ hash: string; returnValue: unknown }> {
   // The whole round trip counts as pending: while it runs, the app warns
   // before the tab is closed or reloaded (see pending-tx.ts and
   // PendingTransactionGuard).
   const finish = beginPendingTransaction();
   try {
-    return await invoke(contractId, method, args, walletAddress, sign, sponsored);
+    return await invoke(contractId, method, args, walletAddress, sign, sponsored, fee);
   } finally {
     finish();
   }
@@ -580,6 +635,74 @@ export async function invokeContractBatch(
   return results;
 }
 
+/**
+ * Resubmits a timed-out transaction with a higher fee, reusing the same
+ * sequence number (#316).
+ *
+ * Checks the original transaction's outcome on chain before resubmitting.
+ * If it has not landed, rebuilds the invocation with `RETRY_FEE_MULTIPLIER`
+ * times the base fee, has the wallet sign it, and submits it. Because only
+ * one transaction per sequence number can be included on the ledger,
+ * submitting a replacement with the same sequence number means the original
+ * attempt cannot also succeed.
+ *
+ * Throws `TransactionTimeoutError` if the original transaction still has not
+ * landed and the resubmission itself also times out.
+ */
+export async function resubmitWithHigherFee(
+  hash: string,
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  walletAddress: string,
+  sign: SignFn,
+): Promise<{ hash: string; returnValue: unknown }> {
+  const { rpc, scValToNative } = await loadSdk();
+  const server = await getServer();
+
+  // Check the original outcome before resubmitting.
+  const original = await server.getTransaction(hash).catch(() => null);
+  if (original?.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+    return {
+      hash,
+      returnValue: original.returnValue ? scValToNative(original.returnValue) : null,
+    };
+  }
+  if (original?.status === rpc.Api.GetTransactionStatus.FAILED) {
+    throw new Error(
+      `Original transaction ${hash} failed on chain: ${JSON.stringify(original.resultXdr?.toXDR('base64') ?? '')}`,
+    );
+  }
+
+  // The original hasn't landed. Rebuild with the same sequence number but a
+  // higher fee, then sign and submit.
+  const { BASE_FEE } = await loadSdk();
+  const prepared = await prepareInvocation(
+    contractId,
+    method,
+    args,
+    walletAddress,
+    false,
+    180,
+    BigInt(BASE_FEE) * BigInt(RETRY_FEE_MULTIPLIER),
+  );
+
+  const { TransactionBuilder } = await loadSdk();
+  const signed = TransactionBuilder.fromXDR(await sign(prepared.xdr), config.networkPassphrase);
+
+  const sent = await server.sendTransaction(signed);
+  if (sent.status === 'ERROR') {
+    throw new Error(
+      `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,
+    );
+  }
+  const result = await waitForTransaction(sent.hash);
+  return {
+    hash: sent.hash,
+    returnValue: result.returnValue ? scValToNative(result.returnValue) : null,
+  };
+}
+
 async function invoke(
   contractId: string,
   method: string,
@@ -587,6 +710,7 @@ async function invoke(
   walletAddress: string,
   sign: SignFn,
   sponsored = false,
+  fee?: bigint,
 ): Promise<{ hash: string; returnValue: unknown }> {
   const { TransactionBuilder, scValToNative } = await loadSdk();
   let sponsor: typeof import('./sponsorship') | undefined;
@@ -612,6 +736,9 @@ async function invoke(
     args,
     walletAddress,
     !sponsored,
+    180,
+    fee,
+    sign,
   );
   if (isMockRpc() && !sponsored) {
     const delay = mockRpcDelayMs();
@@ -673,8 +800,79 @@ export async function prepareContractInvocation(
   method: string,
   args: xdr.ScVal[],
   source: string,
+  timeoutSeconds = 180,
 ): Promise<PreparedInvocation> {
-  return prepareInvocation(contractId, method, args, source, true);
+  return prepareInvocation(contractId, method, args, source, true, timeoutSeconds);
+}
+
+/**
+ * Builds, simulates and signs a contract invocation without submitting it.
+ *
+ * Used by the offline claim queue (#301): the signed envelope can be handed
+ * to the network later, as long as it reaches the ledger before `maxTime`.
+ * A signed transaction holds no secret key, so it can be kept in local
+ * storage. The time bound is read from the envelope itself rather than
+ * assumed, because that is the only thing the network will enforce.
+ */
+export async function prepareSignedContractInvocation(
+  contractId: string,
+  method: string,
+  args: xdr.ScVal[],
+  source: string,
+  sign: SignFn,
+  timeoutSeconds = 180,
+): Promise<{ xdr: string; maxTime: number }> {
+  const prepared = await prepareContractInvocation(
+    contractId,
+    method,
+    args,
+    source,
+    timeoutSeconds,
+  );
+  const signedXdr = await sign(prepared.xdr);
+
+  // The mock envelope is not a real transaction, so its bound is the value
+  // that was asked for. In production the envelope is authoritative.
+  let maxTime = Math.floor(Date.now() / 1000) + timeoutSeconds;
+  if (!isMockRpc()) {
+    const { TransactionBuilder } = await loadSdk();
+    const tx = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+    const bounds = 'timeBounds' in tx ? tx.timeBounds : tx.innerTransaction.timeBounds;
+    if (bounds?.maxTime) maxTime = Number(bounds.maxTime);
+  }
+  return { xdr: signedXdr, maxTime };
+}
+
+/**
+ * Submits an already signed contract invocation and waits for finality.
+ * The other half of the offline queue: nothing here builds or signs, so it
+ * is safe to call with an envelope signed minutes or hours earlier.
+ */
+export async function submitSignedContractInvocation(
+  signedXdr: string,
+  meta: { contractId: string; method: string },
+): Promise<{ hash: string; returnValue: unknown }> {
+  if (isMockRpc()) {
+    recordMockCall({ kind: 'invoke', contractId: meta.contractId, method: meta.method });
+    const delay = mockRpcDelayMs();
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+    return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(meta.method) };
+  }
+
+  const { TransactionBuilder } = await loadSdk();
+  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  const server = await getServer();
+  const sent = await server.sendTransaction(signed);
+  if (sent.status === 'ERROR') {
+    throw new Error(
+      `Transaction rejected: ${JSON.stringify(sent.errorResult ?? sent.status)}`,
+    );
+  }
+  const result = await waitForTransaction(sent.hash);
+  return {
+    hash: sent.hash,
+    returnValue: result.returnValue ? result.returnValue : null,
+  };
 }
 
 /** Sponsored calls must exercise real preparation even in the browser test seam. */
@@ -684,6 +882,10 @@ async function prepareInvocation(
   args: xdr.ScVal[],
   source: string,
   allowMock: boolean,
+  timeoutSeconds = 180,
+  fee?: bigint,
+  signForRestore?: SignFn,
+  restoreAttempted = false,
 ): Promise<PreparedInvocation> {
   if (allowMock && isMockRpc()) {
     recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
@@ -699,23 +901,83 @@ async function prepareInvocation(
     };
   }
 
-  const { BASE_FEE, Contract, rpc, TransactionBuilder } = await loadSdk();
+  const { BASE_FEE, Contract, Operation, rpc, TransactionBuilder } = await loadSdk();
   const server = await getServer();
 
   const account = await server.getAccount(source);
   const contract = new Contract(contractId);
 
   const built = new TransactionBuilder(account, {
-    fee: BASE_FEE,
+    fee: String(fee ?? BASE_FEE),
     networkPassphrase: config.networkPassphrase,
   })
     .addOperation(contract.call(method, ...args))
-    .setTimeout(180)
+    .setTimeout(timeoutSeconds)
     .build();
 
   const sim = await server.simulateTransaction(built);
   if (rpc.Api.isSimulationError(sim)) {
     throw new Error(sim.error);
+  }
+
+  if (rpc.Api.isSimulationRestore(sim)) {
+    if (!signForRestore) {
+      throw new Error(
+        restoreMessage(
+          restoreAttempted ? 'wallet.restoreStillRequired' : 'wallet.restoreRequired',
+        ),
+      );
+    }
+
+    const restoreTx = new TransactionBuilder(account, {
+      fee: String(fee ?? BASE_FEE),
+      networkPassphrase: config.networkPassphrase,
+    })
+      .setSorobanData(sim.restorePreamble.transactionData.build())
+      .addOperation(Operation.restoreFootprint({}))
+      .setTimeout(timeoutSeconds)
+      .build();
+    const restoreSim = await server.simulateTransaction(restoreTx);
+    if (rpc.Api.isSimulationError(restoreSim) || rpc.Api.isSimulationRestore(restoreSim)) {
+      throw new Error(
+        restoreMessage('wallet.restorePreparationError', {
+          error: rpc.Api.isSimulationError(restoreSim)
+            ? restoreSim.error
+            : restoreMessage('wallet.restoreStillRequired'),
+        }),
+      );
+    }
+
+    const restorePrepared = rpc.assembleTransaction(restoreTx, restoreSim).build();
+    const signedRestore = TransactionBuilder.fromXDR(
+      await signForRestore(restorePrepared.toXDR(), {
+        kind: 'restore-footprint',
+        restoreFee: BigInt(restorePrepared.fee),
+        transactionFee: BigInt(built.fee) + BigInt(sim.minResourceFee),
+      }),
+      config.networkPassphrase,
+    );
+    const restoreSent = await server.sendTransaction(signedRestore);
+    if (restoreSent.status === 'ERROR') {
+      throw new Error(
+        restoreMessage('wallet.restoreRejected', {
+          error: JSON.stringify(restoreSent.errorResult ?? restoreSent.status),
+        }),
+      );
+    }
+    await waitForTransaction(restoreSent.hash);
+
+    return prepareInvocation(
+      contractId,
+      method,
+      args,
+      source,
+      false,
+      timeoutSeconds,
+      fee,
+      undefined,
+      true,
+    );
   }
 
   // assembleTransaction folds in the simulated footprint, resource fees and
@@ -853,10 +1115,21 @@ async function waitForTransaction(
     }
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
   }
-  throw new Error(
-    `Transaction ${hash} did not confirm within ${CONFIRM_TIMEOUT_MS / 1000}s. ` +
-      'It may still succeed — check the explorer before retrying.',
-  );
+
+  // The deadline passed without finality. Check once more on chain: the
+  // transaction may have landed between the last poll and the deadline.
+  const final = await server.getTransaction(hash).catch(() => null);
+  if (final?.status === rpc.Api.GetTransactionStatus.SUCCESS) return final;
+  if (final?.status === rpc.Api.GetTransactionStatus.FAILED) {
+    throw new Error(
+      `Transaction failed on chain: ${JSON.stringify(final.resultXdr?.toXDR('base64') ?? '')}`,
+    );
+  }
+  // Still pending or unknown: the transaction has not landed. It is safe to
+  // resubmit with a higher fee using the same sequence number — only one
+  // transaction per sequence number can be included, so the first attempt
+  // cannot also succeed once a replacement is submitted.
+  throw new TransactionTimeoutError(hash);
 }
 
 /** Reads a view function via simulation. Costs nothing and needs no signature. */
@@ -969,6 +1242,10 @@ async function mockReadResult<T>(
       return { amount: 500000000n } as unknown as T;
     case 'balance':
       return 100000000n as unknown as T;
+    case 'attestations_left':
+      return 100 as unknown as T;
+    case 'escrow_summary':
+      return [0n, 0n] as unknown as T;
     default:
       throw new Error(`E2E mock has no canned read for ${method}`);
   }

@@ -24,6 +24,8 @@ export type Provider = {
     location?: ProviderLocation | null;
     metadata?: {
         location?: ProviderLocation | null;
+        website?: string | null;
+        contact?: string | null;
     } | null;
 };
 export type ServicePriceChange = {

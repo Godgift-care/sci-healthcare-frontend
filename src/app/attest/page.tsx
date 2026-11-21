@@ -2,11 +2,29 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useIsAttester, useLiveUpdates, useVouchers } from '@/lib/hooks';
+import {
+  useAttestationsLeft,
+  useIsAttester,
+  useLiveUpdates,
+  useVouchers,
+} from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
 import { VoucherRow, type VoucherRowHandle } from '@/components/VoucherRow';
 import { Alert, Empty, Button } from '@/components/ui';
 import { useNow } from '@/lib/hooks';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+
+/** The next UTC midnight, which is when the contract's daily counter resets. */
+function nextUtcMidnight(now = Date.now()): string {
+  const date = new Date(now);
+  date.setUTCHours(24, 0, 0, 0);
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+}
 
 /** Keys typed into these belong to the control, not to the shortcuts. */
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -26,15 +44,22 @@ function isTypingTarget(target: EventTarget | null): boolean {
  */
 export default function AttestPage() {
   const { address } = useWallet();
+  const { t } = useLocaleContext();
   useLiveUpdates();
   const now = useNow();
 
   const { isAttester: authorised } = useIsAttester(address);
   const {
+    left: attestationsLeft,
+    error: attestationsError,
+    mutate: mutateAttestationsLeft,
+  } = useAttestationsLeft(address);
+  const {
     vouchers: claimedRaw,
     error,
     mutate,
   } = useVouchers(address ? { status: 'Claimed' } : null);
+  const capReached = attestationsLeft === 0;
 
   // Sort by refundableAt ascending (most urgent first)
   const claimedSorted = useMemo(() => {
@@ -125,6 +150,25 @@ export default function AttestPage() {
       </div>
 
       {error && <Alert>{error}</Alert>}
+      {attestationsLeft !== null && (
+        <p
+          role="status"
+          className={
+            capReached
+              ? 'text-sm font-semibold text-[var(--color-danger)]'
+              : 'text-sm text-[var(--color-ink-soft)]'
+          }
+        >
+          {capReached
+            ? t('attest.capReached', { time: nextUtcMidnight(now) })
+            : t('attest.leftToday', { count: attestationsLeft })}
+        </p>
+      )}
+      {attestationsError && (
+        <p className="text-xs text-[var(--color-ink-soft)]">
+          {t('attest.leftUnavailable')}
+        </p>
+      )}
       {authorised === false && (
         <Alert kind="info">
           This wallet is not an authorised attester, so confirmations will be
@@ -134,8 +178,11 @@ export default function AttestPage() {
 
       {clinics.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm text-[var(--color-ink-soft)]">Filter by clinic:</label>
+          <label htmlFor="clinic-filter" className="text-sm text-[var(--color-ink-soft)]">
+            Filter by clinic:
+          </label>
           <select
+            id="clinic-filter"
             value={clinicFilter}
             onChange={(e) => setClinicFilter(e.target.value)}
             className="h-10 w-full max-w-xs rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm"
@@ -184,8 +231,12 @@ export default function AttestPage() {
               }}
               v={v}
               actions={['attest']}
-              onDone={() => void mutate()}
+              onDone={() => {
+                void mutate();
+                void mutateAttestationsLeft();
+              }}
               now={now}
+              disabled={capReached}
             />
           </div>
         ))}
