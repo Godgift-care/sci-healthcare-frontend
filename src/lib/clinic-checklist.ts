@@ -9,7 +9,7 @@
  */
 
 /** The registry standing, plus the "no entry" case the desk shows. */
-export type ClinicStatus = 'Unregistered' | 'Pending' | 'Active' | 'Suspended';
+export type ClinicStatus = 'Unregistered' | 'Pending' | 'Active' | 'Suspended' | 'Retired';
 
 export const CHECKLIST_STEP_IDS = [
   'register',

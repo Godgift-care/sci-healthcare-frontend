@@ -69,6 +69,10 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
     label: 'Suspended',
     className: 'bg-red-50 text-red-700 ring-red-200',
   },
+  Retired: {
+    label: 'Retired',
+    className: 'bg-slate-50 text-slate-700 ring-slate-200',
+  },
 };
 const UNKNOWN_STATUS = {
   label: 'Status unknown',

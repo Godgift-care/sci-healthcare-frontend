@@ -1,7 +1,7 @@
 import type { VoucherStatus } from './api';
 
 /** Actions the UI can offer on a voucher row. */
-export type VoucherAction = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute';
+export type VoucherAction = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute' | 'reduce';
 
 /**
  * Which of the requested actions the contract will actually accept right
@@ -29,6 +29,8 @@ export function availableActions(
         return flags.isRefundable;
       case 'dispute':
         return status === 'Claimed' || status === 'Attested';
+      case 'reduce':
+        return status === 'Funded';
       default:
         return false;
     }

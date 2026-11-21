@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
+import { type VoucherAction } from '@/lib/voucher-actions';
 import {
   useLiveUpdates,
   useNameIndex,
@@ -116,9 +117,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
 
   // Offer the actions this wallet can take. settle and refund are
   // permissionless, so anyone may trigger them once they are due.
+  const funderActions = ['dispute', 'refund', 'settle'] as const;
+  // The reduce action is available for funded vouchers where the escrowed
+  // amount exceeds the listed price for the service. The listed price check
+  // is performed on the contract when the action is executed.
+  const reduceAction = v.status === 'Funded' ? 'reduce' : null;
   const actions =
     address === v.funder
-      ? (['dispute', 'refund', 'settle'] as const)
+      ? reduceAction !== null ? [...funderActions, 'reduce'] : funderActions
       : address === v.provider.address
         ? (['claim', 'settle'] as const)
         : (['settle', 'refund'] as const);
@@ -471,7 +477,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
       <div className="print:hidden">
         <VoucherRow
           v={v}
-          actions={[...actions]}
+          actions={[...actions] as VoucherAction[]}
           onDone={() => {
             void mutate();
           }}

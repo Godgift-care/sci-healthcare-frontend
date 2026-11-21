@@ -16,6 +16,7 @@ describe('EXPECTED_STATUS', () => {
       settle: 'Settled',
       refund: 'Refunded',
       dispute: 'Disputed',
+      reduce: 'Funded',
     });
   });
 });
