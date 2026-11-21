@@ -33,6 +33,14 @@
     "updateAvailable": "A new version is ready.",
     "reloadToUpdate": "Reload to update"
   },
+  "wallet": {
+    "restoreFootprintConfirm": "Some archived contract data must be restored before this transaction can run. You will be asked to sign two transactions: restore the data (estimated network fee: {restoreFee} XLM), then complete your transaction (estimated network fee: {transactionFee} XLM). Estimated total network fees: {totalFee} XLM. Continue?",
+    "restoreFootprintCancelled": "Restore cancelled. No transaction was submitted.",
+    "restoreRequired": "This transaction needs archived contract data restored. Use the connected wallet to continue.",
+    "restoreStillRequired": "The contract still requires archived data after restoration. Nothing else was submitted. Please try again later.",
+    "restorePreparationError": "Could not prepare the archived-data restore transaction: {error}",
+    "restoreRejected": "The archived-data restore transaction was rejected: {error}"
+  },
   "home": {
     "verifiedClinics": "Verified clinics",
     "noClinics": "No clinics registered yet."

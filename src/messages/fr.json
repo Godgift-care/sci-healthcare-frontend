@@ -33,6 +33,14 @@
     "updateAvailable": "Une nouvelle version est prête.",
     "reloadToUpdate": "Recharger pour mettre à jour"
   },
+  "wallet": {
+    "restoreFootprintConfirm": "Certaines données archivées du contrat doivent être restaurées avant l'exécution de cette transaction. Vous devrez signer deux transactions : restaurer les données (frais réseau estimés : {restoreFee} XLM), puis effectuer votre transaction (frais réseau estimés : {transactionFee} XLM). Total estimé des frais réseau : {totalFee} XLM. Continuer ?",
+    "restoreFootprintCancelled": "Restauration annulée. Aucune transaction n'a été envoyée.",
+    "restoreRequired": "Cette transaction nécessite la restauration de données archivées du contrat. Utilisez le portefeuille connecté pour continuer.",
+    "restoreStillRequired": "Le contrat nécessite toujours des données archivées après la restauration. Rien d'autre n'a été envoyé. Réessayez plus tard.",
+    "restorePreparationError": "Impossible de préparer la restauration des données archivées du contrat : {error}",
+    "restoreRejected": "La transaction de restauration des données archivées a été rejetée : {error}"
+  },
   "home": {
     "verifiedClinics": "Cliniques vérifiées",
     "noClinics": "Aucune clinique enregistrée pour le moment.",

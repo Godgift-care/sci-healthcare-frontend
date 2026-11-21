@@ -1,5 +1,7 @@
 import type { xdr } from '@stellar/stellar-sdk';
 
+import { defaultLocale, isLocale } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 import { toBaseUnits } from './amounts';
 import { config } from './config';
 import {
@@ -53,7 +55,31 @@ async function getHorizonServer(): Promise<HorizonServer> {
   return cachedHorizonServer;
 }
 
-export type SignFn = (xdrString: string) => Promise<string>;
+export type RestoreFootprintSignContext = {
+  kind: 'restore-footprint';
+  restoreFee: bigint;
+  transactionFee: bigint;
+};
+
+export type SignFn = (
+  xdrString: string,
+  context?: RestoreFootprintSignContext,
+) => Promise<string>;
+
+function restoreMessage(
+  key:
+    | 'wallet.restoreRequired'
+    | 'wallet.restoreStillRequired'
+    | 'wallet.restorePreparationError'
+    | 'wallet.restoreRejected',
+  params?: Record<string, string | number>,
+): string {
+  const locale =
+    typeof document !== 'undefined' && isLocale(document.documentElement.lang)
+      ? document.documentElement.lang
+      : defaultLocale;
+  return translate(locale, key, params);
+}
 
 export const MIN_FEE_BUFFER_XLM = 1.0;
 export const PATH_PAYMENT_SLIPPAGE_BPS = 100;
@@ -712,6 +738,7 @@ async function invoke(
     !sponsored,
     180,
     fee,
+    sign,
   );
   if (isMockRpc() && !sponsored) {
     const delay = mockRpcDelayMs();
@@ -857,6 +884,8 @@ async function prepareInvocation(
   allowMock: boolean,
   timeoutSeconds = 180,
   fee?: bigint,
+  signForRestore?: SignFn,
+  restoreAttempted = false,
 ): Promise<PreparedInvocation> {
   if (allowMock && isMockRpc()) {
     recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));
@@ -872,7 +901,7 @@ async function prepareInvocation(
     };
   }
 
-  const { BASE_FEE, Contract, rpc, TransactionBuilder } = await loadSdk();
+  const { BASE_FEE, Contract, Operation, rpc, TransactionBuilder } = await loadSdk();
   const server = await getServer();
 
   const account = await server.getAccount(source);
@@ -889,6 +918,66 @@ async function prepareInvocation(
   const sim = await server.simulateTransaction(built);
   if (rpc.Api.isSimulationError(sim)) {
     throw new Error(sim.error);
+  }
+
+  if (rpc.Api.isSimulationRestore(sim)) {
+    if (!signForRestore) {
+      throw new Error(
+        restoreMessage(
+          restoreAttempted ? 'wallet.restoreStillRequired' : 'wallet.restoreRequired',
+        ),
+      );
+    }
+
+    const restoreTx = new TransactionBuilder(account, {
+      fee: String(fee ?? BASE_FEE),
+      networkPassphrase: config.networkPassphrase,
+    })
+      .setSorobanData(sim.restorePreamble.transactionData.build())
+      .addOperation(Operation.restoreFootprint({}))
+      .setTimeout(timeoutSeconds)
+      .build();
+    const restoreSim = await server.simulateTransaction(restoreTx);
+    if (rpc.Api.isSimulationError(restoreSim) || rpc.Api.isSimulationRestore(restoreSim)) {
+      throw new Error(
+        restoreMessage('wallet.restorePreparationError', {
+          error: rpc.Api.isSimulationError(restoreSim)
+            ? restoreSim.error
+            : restoreMessage('wallet.restoreStillRequired'),
+        }),
+      );
+    }
+
+    const restorePrepared = rpc.assembleTransaction(restoreTx, restoreSim).build();
+    const signedRestore = TransactionBuilder.fromXDR(
+      await signForRestore(restorePrepared.toXDR(), {
+        kind: 'restore-footprint',
+        restoreFee: BigInt(restorePrepared.fee),
+        transactionFee: BigInt(built.fee) + BigInt(sim.minResourceFee),
+      }),
+      config.networkPassphrase,
+    );
+    const restoreSent = await server.sendTransaction(signedRestore);
+    if (restoreSent.status === 'ERROR') {
+      throw new Error(
+        restoreMessage('wallet.restoreRejected', {
+          error: JSON.stringify(restoreSent.errorResult ?? restoreSent.status),
+        }),
+      );
+    }
+    await waitForTransaction(restoreSent.hash);
+
+    return prepareInvocation(
+      contractId,
+      method,
+      args,
+      source,
+      false,
+      timeoutSeconds,
+      fee,
+      undefined,
+      true,
+    );
   }
 
   // assembleTransaction folds in the simulated footprint, resource fees and

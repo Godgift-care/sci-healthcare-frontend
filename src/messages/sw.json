@@ -33,6 +33,14 @@
     "updateAvailable": "Toleo jipya liko tayari.",
     "reloadToUpdate": "Pakia upya ili kusasisha"
   },
+  "wallet": {
+    "restoreFootprintConfirm": "Baadhi ya data ya mkataba iliyowekwa kwenye kumbukumbu lazima irejeshwe kabla muamala huu haujaendelea. Utaombwa kusaini miamala miwili: kurejesha data (ada ya mtandao inayokadiriwa: {restoreFee} XLM), kisha kukamilisha muamala wako (ada ya mtandao inayokadiriwa: {transactionFee} XLM). Jumla ya ada ya mtandao inayokadiriwa: {totalFee} XLM. Endelea?",
+    "restoreFootprintCancelled": "Urejeshaji umeghairiwa. Hakuna muamala uliowasilishwa.",
+    "restoreRequired": "Muamala huu unahitaji data ya mkataba iliyohifadhiwa kurejeshwa. Tumia pochi iliyounganishwa ili kuendelea.",
+    "restoreStillRequired": "Mkataba bado unahitaji data iliyohifadhiwa baada ya urejeshaji. Hakuna kitu kingine kilichowasilishwa. Jaribu tena baadaye.",
+    "restorePreparationError": "Haikuweza kuandaa muamala wa kurejesha data ya mkataba iliyohifadhiwa: {error}",
+    "restoreRejected": "Muamala wa kurejesha data ya mkataba iliyohifadhiwa umekataliwa: {error}"
+  },
   "home": {
     "verifiedClinics": "Kliniki zilizothibitishwa",
     "noClinics": "Bado hakuna kliniki zilizosajiliwa.",

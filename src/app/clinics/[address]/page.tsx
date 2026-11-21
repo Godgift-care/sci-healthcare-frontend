@@ -34,7 +34,7 @@ import {
   type ExpiryChoice,
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
-import { quoteXlmForUsdc } from '@/lib/stellar';
+import { quoteXlmForUsdc, type RestoreFootprintSignContext } from '@/lib/stellar';
 import { TransactionTimeoutError, RETRY_FEE_MULTIPLIER } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
@@ -439,9 +439,12 @@ export default function ClinicPage({
       const ref = await beneficiaryRef(identifier, secret);
       await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
-      const wrappedSign = async (xdr: string) => {
+      const wrappedSign = async (
+        xdr: string,
+        context?: RestoreFootprintSignContext,
+      ) => {
         setTransactionStatus('signing');
-        const signed = await signTransaction(xdr);
+        const signed = await signTransaction(xdr, context);
         setTransactionStatus('submitting');
         return signed;
       };

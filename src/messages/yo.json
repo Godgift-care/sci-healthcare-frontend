@@ -33,6 +33,14 @@
     "updateAvailable": "Ẹ̀yà tuntun ti ṣetán.",
     "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe"
   },
+  "wallet": {
+    "restoreFootprintConfirm": "A gbọ́dọ̀ mú àwọn dátà àdéhùn tí a fi pamọ́ padà kí ìdúnàádúrà yìí tó lè ṣiṣẹ́. A ó ní kí o fọwọ́ sí ìdúnàádúrà méjì: mímú dátà náà padà (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {restoreFee} XLM), lẹ́yìn náà parí ìdúnàádúrà rẹ (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {transactionFee} XLM). Àpapọ̀ owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {totalFee} XLM. Ṣé o fẹ́ tẹ̀síwájú?",
+    "restoreFootprintCancelled": "A fagilé ìmúpadàbọ̀sípò. A kò fi ìdúnàádúrà ránṣẹ́.",
+    "restoreRequired": "Ìdúnàádúrà yìí nílò kí a mú dátà àdéhùn tí a fi pamọ́ padà. Lo àpò tí a so pọ̀ láti tẹ̀síwájú.",
+    "restoreStillRequired": "Àdéhùn náà ṣì nílò dátà tí a fi pamọ́ lẹ́yìn ìmúpadàbọ̀sípò. A kò fi nǹkan mìíràn ránṣẹ́. Jọ̀wọ́ tún gbìyànjú lẹ́yìn náà.",
+    "restorePreparationError": "A kò lè pèsè ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}",
+    "restoreRejected": "A kọ ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}"
+  },
   "home": {
     "verifiedClinics": "Àwọn kílíníkì tí a ti jẹ́rìí",
     "noClinics": "Kò ì tíì sí kílíníkì tí a forúkọsílẹ̀."
