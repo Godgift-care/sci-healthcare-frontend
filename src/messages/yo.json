@@ -459,5 +459,13 @@
     "expiredTitle": "A sọ ẹ̀tọ́ tó wà ní ìtò nù",
     "expired": "Ẹ̀tọ́ tó wà ní ìtò parí kí a tó lè fi ránṣẹ́, nítorí náà a sọ ọ́ nù. A kò fi ohunkóhun ránṣẹ́ sí kílíníkì; gbà vóṣà náà lẹ́ẹ̀kan sí i tí aláìsàn bá ṣì wà ní tábìlì.",
     "queuedToast": "A ti fipamọ́ sórí ẹ̀rọ yìí. A ó fi ẹ̀tọ́ náà ránṣẹ́ nígbà tí ìsopọ̀ bá padà."
+  },
+  "localCurrency": {
+    "select": "Ìṣirò owó ìbílẹ̀",
+    "off": "Owó ìbílẹ̀: pa á",
+    "estimate": "≈ {amount} (ìṣirò)",
+    "estimateRange": "≈ {min}–{max} (ìṣirò)",
+    "tooltip": "Ìṣirò ní òṣùwọ̀n pàṣípààrọ̀ ti {date}. Iye USDC ni o máa san tí kílíníkì sì máa gbà.",
+    "help": "Fi iye owó ìbílẹ̀ tí ó súnmọ́ hàn lẹ́gbẹ̀ẹ́ USDC. USDC ṣì ni iye tí a ń gbà."
   }
 }

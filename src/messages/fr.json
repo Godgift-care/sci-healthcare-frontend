@@ -468,5 +468,13 @@
       "closeDialog": "Fermer la boîte de dialogue",
       "moreInformation": "Plus d'informations"
     }
+  },
+  "localCurrency": {
+    "select": "Estimation en monnaie locale",
+    "off": "Monnaie locale : désactivée",
+    "estimate": "≈ {amount} env.",
+    "estimateRange": "≈ {min}–{max} env.",
+    "tooltip": "Estimation au taux de change du {date}. Vous payez et la clinique reçoit le montant en USDC.",
+    "help": "Afficher un montant approximatif en monnaie locale à côté de l'USDC. Le montant facturé reste celui en USDC."
   }
 }

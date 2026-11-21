@@ -466,5 +466,13 @@
       "closeDialog": "Funga kidirisha",
       "moreInformation": "Maelezo zaidi"
     }
+  },
+  "localCurrency": {
+    "select": "Makadirio kwa sarafu ya ndani",
+    "off": "Sarafu ya ndani: imezimwa",
+    "estimate": "≈ {amount} takriban",
+    "estimateRange": "≈ {min}–{max} takriban",
+    "tooltip": "Makadirio kwa kiwango cha ubadilishaji cha {date}. Unalipa, na kliniki inapokea, kiasi cha USDC.",
+    "help": "Onyesha kiasi cha takriban kwa sarafu ya ndani karibu na USDC. Kiasi kinachotozwa bado ni USDC."
   }
 }

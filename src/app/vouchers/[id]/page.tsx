@@ -6,6 +6,7 @@ import { use, useEffect, useState } from 'react';
 
 import { ApiError } from '@/lib/api';
 import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { config, explorerContract, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
@@ -271,6 +272,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         <div className="text-end">
           <div className="mono text-2xl font-semibold">${formatUsdc(v.amount, locale)}</div>
           <div className="text-xs text-[var(--color-ink-soft)]">{t('common.usdc')}</div>
+          <LocalEstimate amount={v.amount} className="block" />
         </div>
       </div>
 
