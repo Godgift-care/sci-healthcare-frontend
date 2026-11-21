@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
