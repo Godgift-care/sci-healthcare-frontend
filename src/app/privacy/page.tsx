@@ -53,7 +53,12 @@ export default function PrivacyPage() {
           required for financial escrow and delivery confirmation:
         </p>
 
-        <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="On-chain voucher fields"
+          className="overflow-x-auto rounded-xl border border-[var(--color-line)] focus:outline-none"
+        >
           <table className="w-full text-start text-sm">
             <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>
@@ -164,7 +169,12 @@ export default function PrivacyPage() {
           Every client-side key persisted on your device is strictly audited and routed through a single typed storage registry:
         </p>
 
-        <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Browser storage audit table"
+          className="overflow-x-auto rounded-xl border border-[var(--color-line)] focus:outline-none"
+        >
           <table className="w-full text-start text-sm">
             <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>

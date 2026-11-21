@@ -66,7 +66,12 @@ function ActivityChart({
 
       <p className="sr-only">{summary}</p>
 
-      <div className="w-full overflow-x-auto">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label={`${title} chart scroll area`}
+        className="w-full overflow-x-auto focus:outline-none"
+      >
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           className="h-44 w-full min-w-[320px]"
