@@ -288,10 +288,12 @@ export function Modal({
 export function Tooltip({
   content,
   children,
+  ariaLabel,
   side = 'top',
 }: {
   content: ReactNode;
   children: ReactNode;
+  ariaLabel?: string;
   side?: 'top' | 'bottom';
 }) {
   const [visible, setVisible] = useState(false);
@@ -310,8 +312,9 @@ export function Tooltip({
 
   return (
     <span className="relative inline-flex items-center">
-      <span
-        className="inline-flex items-center"
+      <button
+        type="button"
+        aria-label={ariaLabel}
         aria-describedby={visible ? id : undefined}
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
@@ -320,9 +323,10 @@ export function Tooltip({
         onKeyDown={(e) => {
           if (e.key === 'Escape') setVisible(false);
         }}
+        className="inline-flex items-center border-0 bg-transparent p-0 text-inherit focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)]"
       >
         {children}
-      </span>
+      </button>
       {visible && (
         <span
           role="tooltip"
@@ -340,12 +344,8 @@ export function Tooltip({
 export function InfoTip({ content }: { content: ReactNode }) {
   const { t } = useLocaleContext();
   return (
-    <Tooltip content={content}>
-      <span
-        tabIndex={0}
-        aria-label={t('components.ui.moreInformation')}
-        className="ms-1 inline-grid h-4 w-4 cursor-help place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] text-[10px] leading-none text-[var(--color-ink-soft)]"
-      >
+    <Tooltip content={content} ariaLabel={t('components.ui.moreInformation')}>
+      <span className="ms-1 inline-grid h-4 w-4 cursor-help place-items-center rounded-full border border-[var(--color-line)] bg-[var(--color-canvas)] text-[10px] leading-none text-[var(--color-ink-soft)]">
         ?
       </span>
     </Tooltip>
