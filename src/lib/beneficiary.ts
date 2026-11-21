@@ -12,6 +12,12 @@
  * searchable.
  */
 import { isTransactionPending, subscribePendingTransactions } from './pending-tx';
+import {
+  STORAGE_KEYS,
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+} from './storage';
 
 export async function beneficiaryRef(identifier: string, key: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
