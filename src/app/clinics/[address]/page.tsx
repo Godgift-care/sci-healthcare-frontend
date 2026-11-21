@@ -48,6 +48,8 @@ import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { FavouriteButton } from '@/components/FavouriteButton';
+import { ClinicMetadataLink } from '@/components/ClinicMetadataLink';
+import { clinicMetadataUrl } from '@/lib/clinic-metadata';
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -582,6 +584,8 @@ export default function ClinicPage({
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;
+  const websiteUrl = clinicMetadataUrl(provider.metadata?.website);
+  const contactUrl = clinicMetadataUrl(provider.metadata?.contact);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -628,6 +632,19 @@ export default function ClinicPage({
                 </div>
               )}
             </dl>
+          )}
+
+          {(websiteUrl || contactUrl) && (
+            <div className="mt-4 grid gap-2 border-t border-[var(--color-line)] pt-4 sm:grid-cols-2">
+              <ClinicMetadataLink
+                label={t('clinic.website')}
+                destination={websiteUrl}
+              />
+              <ClinicMetadataLink
+                label={t('clinic.contact')}
+                destination={contactUrl}
+              />
+            </div>
           )}
         </Card>
 

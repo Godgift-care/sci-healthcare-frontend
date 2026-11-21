@@ -64,6 +64,10 @@ export const providersList = {
       registeredAt: '2026-04-01T00:00:00.000Z',
       // Published coordinates (contracts #10 metadata): appears on the map.
       location: { lat: 6.6018, lng: 3.3515 },
+      metadata: {
+        website: 'https://ikeja-clinic.example',
+        contact: 'https://contact.ikeja-clinic.example',
+      },
       services,
     },
     {

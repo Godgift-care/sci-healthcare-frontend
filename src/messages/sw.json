@@ -99,6 +99,9 @@
   },
   "clinic": {
     "title": "Dawati la kliniki",
+    "website": "Tovuti",
+    "contact": "Mawasiliano",
+    "externalLinkConfirm": "Unaondoka SCI Healthcare kwenda {host}. Ungependa kuendelea?",
     "checking": "Inakagua usajili…",
     "scanVoucherQr": "Changanua QR ya vocha",
     "registerTitle": "Sajili kliniki hii",

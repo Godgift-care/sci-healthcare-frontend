@@ -98,6 +98,9 @@
   },
   "clinic": {
     "title": "Bureau clinique",
+    "website": "Site web",
+    "contact": "Contact",
+    "externalLinkConfirm": "Vous quittez SCI Healthcare pour visiter {host}. Continuer ?",
     "checking": "Vérification de l'enregistrement…",
     "scanVoucherQr": "Scanner le QR du bon",
     "registerTitle": "Enregistrer cette clinique",

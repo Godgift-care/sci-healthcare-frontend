@@ -95,6 +95,9 @@
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",
+    "website": "Ojú-òpó wẹ́ẹ̀bù",
+    "contact": "Ìbánisọ̀rọ̀",
+    "externalLinkConfirm": "O ń kúrò ní SCI Healthcare láti ṣàbẹ̀wò sí {host}. Ṣé o fẹ́ tẹ̀síwájú?",
     "checking": "Ń ṣàyẹ̀wò ìforúkọsílẹ̀…",
     "scanVoucherQr": "Yẹ̀wò QR vóṣà",
     "registerTitle": "Forúkọ kílíníkì yìí sílẹ̀",

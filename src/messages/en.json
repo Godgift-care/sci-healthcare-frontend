@@ -95,6 +95,9 @@
   },
   "clinic": {
     "title": "Clinic desk",
+    "website": "Website",
+    "contact": "Contact",
+    "externalLinkConfirm": "You are leaving SCI Healthcare to visit {host}. Continue?",
     "checking": "Checking registration…",
     "scanVoucherQr": "Scan voucher QR",
     "registerTitle": "Register this clinic",
