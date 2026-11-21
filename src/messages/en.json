@@ -100,7 +100,39 @@
     "staffNoteEdit": "Edit note",
     "staffNoteSave": "Save note",
     "staffNoteClear": "Clear note",
-    "staffNotePlaceholder": "Patient called, coming Tuesday"
+    "staffNotePlaceholder": "Patient called, coming Tuesday",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Payment is held safely in escrow until care is provided.",
+        "clinic": "Funds are reserved in escrow. Deliver care and submit a claim to receive payment.",
+        "patient": "Care is covered and waiting. Show this voucher at the clinic to receive care."
+      },
+      "Claimed": {
+        "funder": "The clinic has confirmed care was provided and is awaiting review.",
+        "clinic": "Claim submitted. Awaiting attestation by a trusted reviewer.",
+        "patient": "Care has been received at the clinic and is being processed."
+      },
+      "Attested": {
+        "funder": "Care was verified by an independent reviewer and is ready to settle.",
+        "clinic": "Service verified. Funds can now be released to the clinic.",
+        "patient": "Care has been verified and completed."
+      },
+      "Settled": {
+        "funder": "Payment has been released to the clinic.",
+        "clinic": "Payment has been released to your wallet.",
+        "patient": "Care completed and payment settled."
+      },
+      "Disputed": {
+        "funder": "A dispute has been opened and payment is paused pending resolution.",
+        "clinic": "A dispute was opened for this voucher. Payment is on hold pending resolution.",
+        "patient": "This voucher has an open inquiry and is paused."
+      },
+      "Refunded": {
+        "funder": "Escrowed funds have been returned to your wallet.",
+        "clinic": "This voucher was cancelled or refunded to the funder.",
+        "patient": "This voucher was cancelled or refunded."
+      }
+    }
   },
   "clinic": {
     "title": "Clinic desk",
@@ -293,6 +325,13 @@
     "expiredTitle": "Queued claim discarded",
     "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
     "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restore previous checkout?",
+    "foundDescription": "You have a saved draft with {count} selected service(s) from a previous session.",
+    "restore": "Restore draft",
+    "discard": "Discard",
+    "restoredMessage": "Checkout draft restored."
   },
   "components": {
     "connectButton": {

@@ -11,6 +11,8 @@
  * data cannot enumerate patients, because HMAC without the key is not
  * searchable.
  */
+import { isTransactionPending, subscribePendingTransactions } from './pending-tx';
+
 export async function beneficiaryRef(identifier: string, key: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
   if (!id) throw new Error('Enter a patient reference');
@@ -221,6 +223,75 @@ const LEGACY_KEY_STORAGE = 'sci:beneficiary-key';
 const LEGACY_ID_STORAGE = 'sci:beneficiary-id';
 const PATIENTS_CHANGED = 'sci:saved-patients-changed';
 const PBKDF2_ITERATIONS = 310_000;
+
+export const DEFAULT_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+let currentIdleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let lockDeferredUntilTxFinishes = false;
+let pendingTxUnsubscribe: (() => void) | null = null;
+let activityListenersRegistered = false;
+
+function attemptAutoLock(): void {
+  if (!unlockedKey) return;
+
+  if (isTransactionPending()) {
+    lockDeferredUntilTxFinishes = true;
+    if (!pendingTxUnsubscribe) {
+      pendingTxUnsubscribe = subscribePendingTransactions((pending) => {
+        if (!pending && lockDeferredUntilTxFinishes) {
+          lockDeferredUntilTxFinishes = false;
+          if (pendingTxUnsubscribe) {
+            pendingTxUnsubscribe();
+            pendingTxUnsubscribe = null;
+          }
+          attemptAutoLock();
+        }
+      });
+    }
+    return;
+  }
+
+  localIdentity.lock();
+}
+
+function resetIdleTimer(): void {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+  if (!unlockedKey || currentIdleTimeoutMs <= 0) return;
+  idleTimer = setTimeout(() => {
+    attemptAutoLock();
+  }, currentIdleTimeoutMs);
+}
+
+function handleVisibilityChange(): void {
+  if (typeof document === 'undefined') return;
+  if (document.visibilityState === 'hidden') {
+    attemptAutoLock();
+  } else if (document.visibilityState === 'visible') {
+    resetIdleTimer();
+  }
+}
+
+function ensureActivityListeners(): void {
+  if (
+    activityListenersRegistered ||
+    typeof window === 'undefined' ||
+    typeof window.addEventListener !== 'function'
+  ) {
+    return;
+  }
+  activityListenersRegistered = true;
+  const events = ['pointerdown', 'keydown', 'touchstart', 'scroll'] as const;
+  for (const event of events) {
+    window.addEventListener(event, resetIdleTimer, { passive: true });
+  }
+  if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+}
 
 let unlockedKey: CryptoKey | null = null;
 let unlockedPatients: SavedPatient[] | null = null;
@@ -439,6 +510,8 @@ export const localIdentity = {
       unlockedKey = storageKey;
       unlockedPatients = patients;
       unlockedSelectedNickname = selectedNickname;
+      ensureActivityListeners();
+      resetIdleTimer();
       announcePatientsChanged();
       return true;
     } catch {
@@ -454,6 +527,8 @@ export const localIdentity = {
       unlockedKey = result.key;
       unlockedPatients = result.patients;
       unlockedSelectedNickname = result.selectedNickname;
+      ensureActivityListeners();
+      resetIdleTimer();
       announcePatientsChanged();
       return true;
     } catch {
@@ -465,6 +540,15 @@ export const localIdentity = {
     unlockedKey = null;
     unlockedPatients = null;
     unlockedSelectedNickname = '';
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+    lockDeferredUntilTxFinishes = false;
+    if (pendingTxUnsubscribe) {
+      pendingTxUnsubscribe();
+      pendingTxUnsubscribe = null;
+    }
     if (typeof window !== 'undefined') announcePatientsChanged();
   },
   async save(nickname: string, identifier: string, key: string): Promise<boolean> {
@@ -522,6 +606,35 @@ export const localIdentity = {
     const next = patients.filter((patient) => patient.nickname !== nickname);
     if (next.length === patients.length) return false;
     const nextSelected = selectedNickname === nickname ? next.at(-1)?.nickname ?? '' : selectedNickname;
+    resetIdleTimer();
     return persist({ ...store, patients: next, selectedNickname: nextSelected });
+  },
+  setIdleTimeout(ms: number): void {
+    currentIdleTimeoutMs = Math.max(0, ms);
+    if (unlockedKey) {
+      resetIdleTimer();
+    }
+  },
+  getIdleTimeout(): number {
+    return currentIdleTimeoutMs;
+  },
+  touchActivity(): void {
+    resetIdleTimer();
+  },
+  isLocked(): boolean {
+    return !unlockedKey;
+  },
+  _resetAutoLockForTesting(): void {
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+    lockDeferredUntilTxFinishes = false;
+    if (pendingTxUnsubscribe) {
+      pendingTxUnsubscribe();
+      pendingTxUnsubscribe = null;
+    }
+    activityListenersRegistered = false;
+    currentIdleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
   },
 };
