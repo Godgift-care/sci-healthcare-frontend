@@ -91,6 +91,70 @@ test('clinic desk — disconnected', async ({ page }) => {
   await expect(page).toHaveScreenshot('clinic-desk.png');
 });
 
+test('clinic desk — daily summary', async ({ page }) => {
+  await page.addInitScript(
+    `window.__SCI_MOCK_WALLET__ = { address: '${CLINIC_ADDRESS}' };
+     window.__SCI_MOCK_RPC__ = { calls: [], args: [] };`,
+  );
+  const vouchers = [
+    {
+      ...voucherDetail,
+      id: '1',
+      status: 'Settled',
+      claimedAt: '2026-06-15T09:00:00.000Z',
+      attestedAt: '2026-06-15T10:00:00.000Z',
+      settledNet: '29400000',
+      settledFee: '600000',
+    },
+    {
+      ...voucherDetail,
+      id: '2',
+      status: 'Claimed',
+      amount: '20000000',
+      claimedAt: '2026-06-15T11:00:00.000Z',
+      attestedAt: null,
+    },
+  ];
+  await page.route(/^http:\/\/localhost:8080\/vouchers(?:\?.*)?$/, async (route) => {
+    if (!new URL(route.request().url()).searchParams.has('provider')) {
+      return route.fallback();
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ total: vouchers.length, vouchers }),
+    });
+  });
+  await page.route(/^http:\/\/localhost:8080\/receipts(?:\?.*)?$/, async (route) => {
+    if (!new URL(route.request().url()).searchParams.has('provider')) {
+      return route.fallback();
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        total: 1,
+        receipts: [
+          {
+            voucherId: '1',
+            providerAddress: CLINIC_ADDRESS,
+            amount: '30000000',
+            amountDisplay: '3.00',
+            settledAt: '2026-06-15T11:30:00.000Z',
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto('/clinic');
+  const summary = page.getByRole('region', { name: "Today's front-desk summary" });
+  await expect(summary).toContainText('$2.94');
+  await expect(summary).toContainText('UTC');
+  await settle(page);
+  await expect(summary).toHaveScreenshot('clinic-daily-summary.png');
+});
+
 test('clinic desk — SEP-24 cash-out handoff', async ({ page }) => {
   await page.addInitScript(
     `window.__SCI_MOCK_WALLET__ = { address: '${CLINIC_ADDRESS}' };

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  dayKey,
   monthKey,
   monthlyEarnings,
+  summariseDailyEarnings,
   summariseEarnings,
   type EarningsVoucher,
 } from './clinic-earnings';
@@ -119,6 +121,69 @@ describe('monthKey', () => {
 
   it('ignores an unparseable date', () => {
     expect(monthKey('not a date')).toBeNull();
+  });
+});
+
+describe('dayKey', () => {
+  it('buckets a timestamp by the supplied time zone across a day boundary', () => {
+    const timestamp = '2026-03-01T00:30:00.000Z';
+
+    expect(dayKey(timestamp, 'America/New_York')).toBe('2026-02-28');
+    expect(dayKey(timestamp, 'Africa/Nairobi')).toBe('2026-03-01');
+  });
+});
+
+describe('summariseDailyEarnings', () => {
+  it('counts claim, attestation and settlement dates in the clinic time zone', () => {
+    const summary = summariseDailyEarnings(
+      [
+        {
+          ...voucher({
+            amount: '30000000',
+            status: 'Settled',
+            settledNet: '29400000',
+            settledFee: '600000',
+          }),
+          id: '1',
+          claimedAt: '2026-10-10T23:30:00.000Z',
+          attestedAt: '2026-10-11T00:30:00.000Z',
+        },
+        {
+          ...voucher({
+            amount: '20000000',
+            status: 'Claimed',
+          }),
+          id: '2',
+          claimedAt: '2026-10-11T15:00:00.000Z',
+        },
+      ],
+      [
+        {
+          voucherId: '1',
+          amount: '30000000',
+          settledAt: '2026-10-11T01:00:00.000Z',
+        },
+        {
+          voucherId: '1',
+          amount: '30000000',
+          settledAt: '2026-10-11T01:00:00.000Z',
+        },
+        {
+          voucherId: '2',
+          amount: '20000000',
+          settledAt: '2026-10-12T01:00:00.000Z',
+        },
+      ],
+      new Date('2026-10-11T12:00:00.000Z'),
+      'Africa/Nairobi',
+    );
+
+    expect(summary).toEqual({
+      claimedCount: 2,
+      attestedCount: 1,
+      settledCount: 1,
+      netReceived: '29400000',
+    });
   });
 });
 
