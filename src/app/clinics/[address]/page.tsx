@@ -25,6 +25,11 @@ import {
   useVouchers,
 } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import {
+  saveCheckoutDraft,
+  clearCheckoutDraft,
+  useCheckoutDraft,
+} from '@/lib/checkout-draft';
 import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
@@ -125,6 +130,30 @@ export default function ClinicPage({
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
+
+  const savedDraft = useCheckoutDraft(address);
+  const [draftDismissed, setDraftDismissed] = useState(false);
+  const isDraftVisible = Boolean(
+    savedDraft && savedDraft.selectedCodes.length > 0 && !draftDismissed,
+  );
+
+  const restoreDraft = () => {
+    if (!savedDraft) return;
+    setSelectedCodesOverride(savedDraft.selectedCodes);
+    setAmountOverride(savedDraft.amountOverride);
+    setExpiryChoice(savedDraft.expiryChoice);
+    setCustomExpiry(savedDraft.customExpiry);
+    if (savedDraft.patientNickname) {
+      void localIdentity.select(savedDraft.patientNickname);
+    }
+    setDraftDismissed(true);
+    toast.success(t('checkoutDraft.restoredMessage'));
+  };
+
+  const discardDraft = () => {
+    setDraftDismissed(true);
+    clearCheckoutDraft(address);
+  };
   const selectionTotal = useMemo(
     () =>
       selectedServices.reduce(
@@ -181,6 +210,29 @@ export default function ClinicPage({
   const trustline = useUsdcTrustline();
 
   useEffect(() => {
+    if (!address) return;
+    if (isDraftVisible) return;
+
+    if (selectedCodes.length > 0) {
+      saveCheckoutDraft(address, {
+        selectedCodes,
+        amountOverride,
+        expiryChoice,
+        customExpiry,
+        patientNickname: saved.selectedNickname,
+      });
+    }
+  }, [
+    address,
+    selectedCodes,
+    amountOverride,
+    expiryChoice,
+    customExpiry,
+    saved.selectedNickname,
+    isDraftVisible,
+  ]);
+
+  useEffect(() => {
     if (!wallet) return;
     let ignore = false;
     (async () => {
@@ -219,7 +271,7 @@ export default function ClinicPage({
     } catch {
       return null;
     }
-  }, [amount]);
+  }, [amount, selectedServices.length, selectionTotal]);
 
   function toggleService(service: Service) {
     setSelectedCodes((current) => {
@@ -546,6 +598,10 @@ export default function ClinicPage({
       setReviewing(false);
       setBatchProgress(null);
       setBatchSummary({ succeeded, failed });
+      if (succeeded.length > 0) {
+        clearCheckoutDraft(address);
+        setDraftDismissed(true);
+      }
       const firstId = succeeded[0];
       const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
@@ -695,6 +751,30 @@ export default function ClinicPage({
 
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
+
+        {isDraftVisible && savedDraft && (
+          <div
+            data-testid="checkout-draft-banner"
+            className="rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand-soft)]/20 p-3 text-sm space-y-2"
+          >
+            <div className="font-medium text-xs text-[var(--color-ink)]">
+              {t('checkoutDraft.foundTitle')}
+            </div>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('checkoutDraft.foundDescription', {
+                count: savedDraft.selectedCodes.length,
+              })}
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <Button onClick={restoreDraft}>
+                {t('checkoutDraft.restore')}
+              </Button>
+              <Button variant="ghost" onClick={discardDraft}>
+                {t('checkoutDraft.discard')}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
