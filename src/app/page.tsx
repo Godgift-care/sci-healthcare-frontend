@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
@@ -29,6 +30,60 @@ const ClinicMap = dynamic(
     ),
   },
 );
+
+/**
+ * Mounts the map only once its panel is close to the viewport (#339).
+ *
+ * Switching to the map view used to start the Leaflet chunk and the first
+ * tiles immediately, even when the panel sat below the fold, so on a slow
+ * connection they competed with the list the visitor came for. The panel now
+ * renders a placeholder of the map's own height and the observer swaps in the
+ * real map 200px before it scrolls into view, which keeps the layout stable
+ * and makes scrolling — not the toggle — the thing that triggers the load.
+ *
+ * Low-data mode never reaches this component: the page forces the list view
+ * below, so there is no tap-to-load path to add here.
+ */
+function DeferredClinicMap({ providers }: { providers: Provider[] }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || nearViewport) return;
+    // Without IntersectionObserver, load on the next tick rather than never.
+    // Deferred so the fallback is not a synchronous state write in an effect,
+    // which React renders twice.
+    if (typeof IntersectionObserver === 'undefined') {
+      const timer = setTimeout(() => setNearViewport(true), 0);
+      return () => clearTimeout(timer);
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting))
+          setNearViewport(true);
+      },
+      { rootMargin: '200px 0px' },
+    );
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [nearViewport]);
+
+  return (
+    <div ref={panelRef}>
+      {nearViewport ? (
+        <ClinicMap providers={providers} />
+      ) : (
+        <div
+          className="relative flex h-80 w-full items-center justify-center overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] text-sm text-[var(--color-ink-soft)]"
+          role="status"
+        >
+          The map loads as you scroll to it.
+        </div>
+      )}
+    </div>
+  );
+}
 
 type View = 'list' | 'map';
 
@@ -150,19 +205,19 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href="#directory"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
           >
             Browse clinics &darr;
           </a>
           <Link
             href="/how-it-works"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             How it works &rarr;
           </Link>
           <Link
             href="/clinic"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             Clinic desk
           </Link>
@@ -325,7 +380,7 @@ export default function HomePage() {
               // A failing map (or its chunk) must not take the directory
               // down with it; the unlocated list below still renders.
               <WidgetBoundary label="The map">
-                <ClinicMap providers={located} />
+                <DeferredClinicMap providers={located} />
               </WidgetBoundary>
             ) : (
               <Empty>No clinic has published a location yet.</Empty>
@@ -339,15 +394,15 @@ export default function HomePage() {
                 <ul className="divide-y divide-[var(--color-line)] rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]">
                   {unlocated.map((p) => (
                     <li key={p.address}>
-                      <Link
-                        href={`/clinics/${p.address}`}
+                      <DetailLink
+                        detail={{ kind: 'clinic', id: p.address }}
                         className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-[var(--color-canvas)]"
                       >
                         <span>{p.name}</span>
                         <span className="text-xs text-[var(--color-ink-soft)]">
                           {p.country}
                         </span>
-                      </Link>
+                      </DetailLink>
                     </li>
                   ))}
                 </ul>
@@ -382,7 +437,7 @@ function ViewToggle({
       title={disabled ? disabledReason : undefined}
       className={`rounded-md px-3 py-1 text-sm font-medium transition max-sm:min-h-11 max-sm:px-4 ${
         active
-          ? 'bg-[var(--color-brand)] text-white'
+          ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
           : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
       } disabled:cursor-not-allowed disabled:opacity-40`}
     >
@@ -393,7 +448,7 @@ function ViewToggle({
 
 function ClinicCard({ provider: p }: { provider: Provider }) {
   return (
-    <Link href={`/clinics/${p.address}`}>
+    <DetailLink detail={{ kind: 'clinic', id: p.address }}>
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -421,7 +476,7 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
           )}
         </ul>
       </Card>
-    </Link>
+    </DetailLink>
   );
 }
 

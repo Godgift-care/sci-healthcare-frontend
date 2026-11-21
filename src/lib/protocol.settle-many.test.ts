@@ -100,6 +100,42 @@ describe('settleMany', () => {
     ]);
   });
 
+  describe('refundMany', () => {
+    it('writes one voucher per transaction and reports progress', async () => {
+      const progress: Array<[number, number, string]> = [];
+      const result = await voucher.refundMany(CALLER, ['71', '72', '73'], sign, (current, total, id) =>
+        progress.push([current, total, id]),
+      );
+
+      expect(state.invokes).toEqual(['refund', 'refund', 'refund']);
+      expect(state.encoded.map(({ args }) => args)).toEqual([
+        { voucher_id: 71n },
+        { voucher_id: 72n },
+        { voucher_id: 73n },
+      ]);
+      expect(result).toEqual({ refunded: ['71', '72', '73'], failed: [] });
+      expect(progress).toEqual([
+        [1, 3, '71'],
+        [2, 3, '72'],
+        [3, 3, '73'],
+      ]);
+    });
+
+    it('continues after one refund fails and handles an empty selection', async () => {
+      state.failNth = { method: 'refund', nth: 2 };
+
+      const result = await voucher.refundMany(CALLER, ['81', '82', '83'], sign);
+
+      expect(state.invokes).toEqual(['refund', 'refund', 'refund']);
+      expect(result.refunded).toEqual(['81', '83']);
+      expect(result.failed).toEqual([{ id: '82', error: new Error('refund failed') }]);
+      await expect(voucher.refundMany(CALLER, [], sign)).resolves.toEqual({
+        refunded: [],
+        failed: [],
+      });
+    });
+  });
+
   it('uses the contract batch method when its spec exposes one', async () => {
     state.functions = ['settle', 'settle_many'];
 
