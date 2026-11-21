@@ -107,7 +107,39 @@
     "staffNoteEdit": "Hariri kumbukumbu",
     "staffNoteSave": "Tahakia kumbukumbu",
     "staffNoteClear": "Futa kumbukumbu",
-    "staffNotePlaceholder": "Mgonjwa alia, Jumanne"
+    "staffNotePlaceholder": "Mgonjwa alia, Jumanne",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Malipo yanashikiliwa kwa usalama hadi huduma itolewe.",
+        "clinic": "Fedha zimetengwa. Toa huduma kisha uwasilishe dai ili upokee malipo.",
+        "patient": "Huduma imelipiwa na inasubiri. Onyesha vocha hii kiliniki ili kupata huduma."
+      },
+      "Claimed": {
+        "funder": "Kiliniki imethibitisha kuwa huduma ilitolewa na inasubiri uhakiki.",
+        "clinic": "Dai limewasilishwa. Inasubiri uthibitisho kutoka kwa mhakiki anayeaminika.",
+        "patient": "Huduma imepokelewa kiliniki na inashughulikiwa."
+      },
+      "Attested": {
+        "funder": "Huduma imethibitishwa na mhakiki huru na iko tayari kulipwa.",
+        "clinic": "Huduma imethibitishwa. Fedha sasa zinaweza kutolewa kwa kiliniki.",
+        "patient": "Huduma imethibitishwa na kukamilika."
+      },
+      "Settled": {
+        "funder": "Malipo yametolewa kwa kiliniki.",
+        "clinic": "Malipo yametolewa kwenye pochi yako.",
+        "patient": "Huduma imekamilika na malipo yamelipwa."
+      },
+      "Disputed": {
+        "funder": "Mgogoro umefunguliwa na malipo yamesitishwa hadi utatuzi upatikane.",
+        "clinic": "Mgogoro umefunguliwa kwa vocha hii. Malipo yamesitishwa hadi utatuzi.",
+        "patient": "Vocha hii ina mgogoro unaochunguzwa na imesitishwa."
+      },
+      "Refunded": {
+        "funder": "Fedha zilizohifadhiwa zimerejeshwa kwenye pochi yako.",
+        "clinic": "Vocha hii ilighairiwa au kurejeshwa kwa mfadhili.",
+        "patient": "Vocha hii ilighairiwa au kurejeshwa."
+      }
+    }
   },
   "clinic": {
     "title": "Dawati la kliniki",
@@ -303,6 +335,13 @@
     "expiredTitle": "Dai lililosubiri limeondolewa",
     "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
     "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Rejesha malipo ya awali?",
+    "foundDescription": "Una rasimu iliyohifadhiwa yenye huduma {count} zilizochaguliwa kutoka kipindi cha awali.",
+    "restore": "Rejesha rasimu",
+    "discard": "Tupa",
+    "restoredMessage": "Rasimu ya malipo imerejeshwa."
   },
   "components": {
     "connectButton": {

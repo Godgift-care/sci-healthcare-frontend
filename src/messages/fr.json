@@ -106,7 +106,39 @@
     "staffNoteEdit": "Modifier la note",
     "staffNoteSave": "Enregistrer la note",
     "staffNoteClear": "Supprimer la note",
-    "staffNotePlaceholder": "Le patient a appelé, mardi"
+    "staffNotePlaceholder": "Le patient a appelé, mardi",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Le paiement est conservé en toute sécurité sous séquestre jusqu'à la prestation des soins.",
+        "clinic": "Les fonds sont réservés sous séquestre. Dispensez les soins et soumettez une réclamation pour être payé.",
+        "patient": "Les soins sont couverts et disponibles. Présentez ce bon à la clinique pour recevoir les soins."
+      },
+      "Claimed": {
+        "funder": "La clinique a confirmé la prestation des soins, en attente de vérification.",
+        "clinic": "Réclamation soumise. En attente d'attestation par un vérificateur de confiance.",
+        "patient": "Les soins ont été reçus à la clinique et sont en cours de traitement."
+      },
+      "Attested": {
+        "funder": "Les soins ont été vérifiés par un tiers indépendant et sont prêts à être réglés.",
+        "clinic": "Service vérifié. Les fonds peuvent maintenant être versés à la clinique.",
+        "patient": "Les soins ont été vérifiés et validés."
+      },
+      "Settled": {
+        "funder": "Le paiement a été versé à la clinique.",
+        "clinic": "Le paiement a été versé sur votre portefeuille.",
+        "patient": "Soins terminés et paiement réglé."
+      },
+      "Disputed": {
+        "funder": "Un litige a été ouvert et le paiement est suspendu en attendant sa résolution.",
+        "clinic": "Un litige a été ouvert pour ce bon. Le paiement est bloqué jusqu'à résolution.",
+        "patient": "Ce bon fait l'objet d'un litige et est suspendu."
+      },
+      "Refunded": {
+        "funder": "Les fonds sous séquestre ont été reversés sur votre portefeuille.",
+        "clinic": "Ce bon a été annulé ou remboursé au financeur.",
+        "patient": "Ce bon a été annulé ou remboursé."
+      }
+    }
   },
   "clinic": {
     "title": "Bureau clinique",
@@ -305,6 +337,13 @@
     "expiredTitle": "Bon en attente supprimé",
     "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
     "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restaurer le paiement précédent ?",
+    "foundDescription": "Vous avez un brouillon enregistré avec {count} service(s) sélectionné(s) d'une session précédente.",
+    "restore": "Restaurer le brouillon",
+    "discard": "Ignorer",
+    "restoredMessage": "Brouillon de paiement restauré."
   },
   "components": {
     "connectButton": {
