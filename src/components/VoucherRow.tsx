@@ -23,6 +23,7 @@ import { useToast } from './Toast';
 import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
+import type { RestoreFootprintSignContext } from '@/lib/stellar';
 
 /** Funnel step per contract write. Names only — never any properties. */
 const ACTION_EVENTS = {
@@ -122,9 +123,12 @@ export function VoucherRow({
     setBusy(action);
     setTransactionStatus('signing');
     try {
-      const wrappedSign = async (xdr: string) => {
+      const wrappedSign = async (
+        xdr: string,
+        context?: RestoreFootprintSignContext,
+      ) => {
         setTransactionStatus('signing');
-        const signed = await signTransaction(xdr);
+        const signed = await signTransaction(xdr, context);
         setTransactionStatus('submitting');
         return signed;
       };

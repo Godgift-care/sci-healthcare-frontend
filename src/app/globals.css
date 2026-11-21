@@ -76,6 +76,21 @@ body {
     font-size: 10pt;
   }
 
+  .clinic-desk-page {
+    gap: 0 !important;
+  }
+
+  .clinic-desk-page > :not(.clinic-daily-summary) {
+    display: none !important;
+  }
+
+  .clinic-daily-summary {
+    break-inside: avoid-page;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
   .voucher-print-document,
   .voucher-print-history {
     break-inside: avoid-page;

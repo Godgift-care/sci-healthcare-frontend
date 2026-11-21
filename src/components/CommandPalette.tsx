@@ -217,22 +217,25 @@ export function CommandPalette() {
         placeholder={t('components.commandPalette.search')}
         className="h-12 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-base text-[var(--color-ink)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20"
       />
-      <ul
+      <div
         id="command-results"
         role="listbox"
         aria-label={t('components.commandPalette.results')}
         className="mt-2 max-h-[min(55vh,24rem)] overflow-y-auto"
       >
         {results.map((command, index) => (
-          <li
+          <button
             key={command.id}
+            type="button"
             id={`command-option-${index}`}
             role="option"
             aria-selected={index === activeIndex}
+            tabIndex={index === activeIndex ? 0 : -1}
+            onFocus={() => setActiveIndex(index)}
             onMouseDown={(event) => event.preventDefault()}
             onMouseEnter={() => setActiveIndex(index)}
             onClick={() => navigate(command)}
-            className={`flex min-h-12 cursor-pointer flex-col justify-center rounded-md px-3 py-2 ${
+            className={`flex min-h-12 w-full cursor-pointer flex-col justify-center rounded-md border-0 bg-transparent px-3 py-2 text-start ${
               index === activeIndex
                 ? 'bg-[var(--color-canvas)] text-[var(--color-ink)]'
                 : 'text-[var(--color-ink-soft)]'
@@ -240,14 +243,14 @@ export function CommandPalette() {
           >
             <span className="font-medium text-[var(--color-ink)]">{command.label}</span>
             <span className="text-xs">{command.description}</span>
-          </li>
+          </button>
         ))}
-        {results.length === 0 && (
-          <li role="option" aria-selected="false" className="px-3 py-4 text-sm text-[var(--color-ink-soft)]">
-            {t('components.commandPalette.noResults')}
-          </li>
-        )}
-      </ul>
+      </div>
+      {results.length === 0 && (
+        <p aria-live="polite" className="px-3 py-4 text-sm text-[var(--color-ink-soft)]">
+          {t('components.commandPalette.noResults')}
+        </p>
+      )}
       <p className="sr-only" aria-live="polite">
         {t('components.commandPalette.resultCount', { count: results.length })}
       </p>

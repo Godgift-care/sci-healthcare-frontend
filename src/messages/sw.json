@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Usambazi wa Testnet. Hakuna pesa halisi, na hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee.",
-    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee."
+    "mainnetDisclaimer": "Hakuna taarifa za afya ya mgonjwa zilizohifadhiwa kwenye mtandao — vocha zinarejelea kategoria ya huduma na rejeleo lisilo la mnufaika pekee.",
+    "build": "Toleo {commit}"
   },
   "common": {
     "loading": "Inapakia…",
@@ -32,6 +33,14 @@
     "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia.",
     "updateAvailable": "Toleo jipya liko tayari.",
     "reloadToUpdate": "Pakia upya ili kusasisha"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "Baadhi ya data ya mkataba iliyowekwa kwenye kumbukumbu lazima irejeshwe kabla muamala huu haujaendelea. Utaombwa kusaini miamala miwili: kurejesha data (ada ya mtandao inayokadiriwa: {restoreFee} XLM), kisha kukamilisha muamala wako (ada ya mtandao inayokadiriwa: {transactionFee} XLM). Jumla ya ada ya mtandao inayokadiriwa: {totalFee} XLM. Endelea?",
+    "restoreFootprintCancelled": "Urejeshaji umeghairiwa. Hakuna muamala uliowasilishwa.",
+    "restoreRequired": "Muamala huu unahitaji data ya mkataba iliyohifadhiwa kurejeshwa. Tumia pochi iliyounganishwa ili kuendelea.",
+    "restoreStillRequired": "Mkataba bado unahitaji data iliyohifadhiwa baada ya urejeshaji. Hakuna kitu kingine kilichowasilishwa. Jaribu tena baadaye.",
+    "restorePreparationError": "Haikuweza kuandaa muamala wa kurejesha data ya mkataba iliyohifadhiwa: {error}",
+    "restoreRejected": "Muamala wa kurejesha data ya mkataba iliyohifadhiwa umekataliwa: {error}"
   },
   "home": {
     "verifiedClinics": "Kliniki zilizothibitishwa",
@@ -95,10 +104,45 @@
     "staffNoteEdit": "Hariri kumbukumbu",
     "staffNoteSave": "Tahakia kumbukumbu",
     "staffNoteClear": "Futa kumbukumbu",
-    "staffNotePlaceholder": "Mgonjwa alia, Jumanne"
+    "staffNotePlaceholder": "Mgonjwa alia, Jumanne",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Malipo yanashikiliwa kwa usalama hadi huduma itolewe.",
+        "clinic": "Fedha zimetengwa. Toa huduma kisha uwasilishe dai ili upokee malipo.",
+        "patient": "Huduma imelipiwa na inasubiri. Onyesha vocha hii kiliniki ili kupata huduma."
+      },
+      "Claimed": {
+        "funder": "Kiliniki imethibitisha kuwa huduma ilitolewa na inasubiri uhakiki.",
+        "clinic": "Dai limewasilishwa. Inasubiri uthibitisho kutoka kwa mhakiki anayeaminika.",
+        "patient": "Huduma imepokelewa kiliniki na inashughulikiwa."
+      },
+      "Attested": {
+        "funder": "Huduma imethibitishwa na mhakiki huru na iko tayari kulipwa.",
+        "clinic": "Huduma imethibitishwa. Fedha sasa zinaweza kutolewa kwa kiliniki.",
+        "patient": "Huduma imethibitishwa na kukamilika."
+      },
+      "Settled": {
+        "funder": "Malipo yametolewa kwa kiliniki.",
+        "clinic": "Malipo yametolewa kwenye pochi yako.",
+        "patient": "Huduma imekamilika na malipo yamelipwa."
+      },
+      "Disputed": {
+        "funder": "Mgogoro umefunguliwa na malipo yamesitishwa hadi utatuzi upatikane.",
+        "clinic": "Mgogoro umefunguliwa kwa vocha hii. Malipo yamesitishwa hadi utatuzi.",
+        "patient": "Vocha hii ina mgogoro unaochunguzwa na imesitishwa."
+      },
+      "Refunded": {
+        "funder": "Fedha zilizohifadhiwa zimerejeshwa kwenye pochi yako.",
+        "clinic": "Vocha hii ilighairiwa au kurejeshwa kwa mfadhili.",
+        "patient": "Vocha hii ilighairiwa au kurejeshwa."
+      }
+    }
   },
   "clinic": {
     "title": "Dawati la kliniki",
+    "website": "Tovuti",
+    "contact": "Mawasiliano",
+    "externalLinkConfirm": "Unaondoka SCI Healthcare kwenda {host}. Ungependa kuendelea?",
     "checking": "Inakagua usajili…",
     "scanVoucherQr": "Changanua QR ya vocha",
     "registerTitle": "Sajili kliniki hii",
@@ -131,6 +175,14 @@
     "settleFailedSummary": "Haikulipwa:",
     "noIncomingHint": "Vocha mpya itakapoelekezwa kwenye kliniki yako itaonekana hapa. Hakuna cha kufanya kwa sasa.",
     "earnings": "Mapato",
+    "dailySummary": "Muhtasari wa kila siku wa dawati",
+    "dailySummaryNote": "Vocha zilizodaiwa, kuthibitishwa na malipo yaliyokamilika katika siku hii.",
+    "dailyTimeZone": "Saa za eneo la kliniki: {timeZone}",
+    "dailyClaimed": "Zilizodaiwa",
+    "dailyAttested": "Zilizothibitishwa",
+    "dailySettled": "Zilizolipwa",
+    "dailyReceived": "Kiasi kilichopokelewa",
+    "dailyPrint": "Chapisha muhtasari wa kila siku",
     "earningsNote": "Mtiririko wa fedha wa kliniki hii: huduma zilizolipwa, malipo yanayosubiri, na ada za itifaki zilizolipwa.",
     "earningsSettled": "Imelipwa",
     "earningsSettledDetail": {
@@ -280,6 +332,13 @@
     "expiredTitle": "Dai lililosubiri limeondolewa",
     "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
     "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Rejesha malipo ya awali?",
+    "foundDescription": "Una rasimu iliyohifadhiwa yenye huduma {count} zilizochaguliwa kutoka kipindi cha awali.",
+    "restore": "Rejesha rasimu",
+    "discard": "Tupa",
+    "restoredMessage": "Rasimu ya malipo imerejeshwa."
   },
   "components": {
     "connectButton": {

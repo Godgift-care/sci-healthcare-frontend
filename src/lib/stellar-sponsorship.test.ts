@@ -2,7 +2,7 @@ import { Account, Keypair, Networks, SorobanDataBuilder, Transaction, Transactio
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { config } from './config';
-import { invokeContract } from './stellar';
+import { invokeContract, type SignFn } from './stellar';
 import { isTransactionPending } from './pending-tx';
 
 const rpcMock = vi.hoisted(() => ({
@@ -24,7 +24,7 @@ const wallet = Keypair.random();
 const sponsor = Keypair.random();
 const args = [nativeToScVal(wallet.publicKey()), nativeToScVal('opaque'), nativeToScVal('provider'),
   nativeToScVal(1), nativeToScVal(30_0000000n, { type: 'i128' }), nativeToScVal(100)];
-const sign = vi.fn(async (xdr: string) => {
+const sign = vi.fn<SignFn>(async (xdr) => {
   const tx = TransactionBuilder.fromXDR(xdr, Networks.TESTNET); tx.sign(wallet); return tx.toXDR();
 });
 function invoke(sponsored = true, method = 'create_voucher', callArgs = args) {
@@ -68,6 +68,49 @@ it('keeps ordinary funding on the direct path', async () => {
   await invoke(false);
   expect(fetch).not.toHaveBeenCalled();
   expect(rpcMock.sendTransaction.mock.calls[0][0]).toBeInstanceOf(Transaction);
+});
+it('restores archived footprint data before signing and submitting the invocation', async () => {
+  rpcMock.getAccount.mockImplementation(async () =>
+    new Account(wallet.publicKey(), String(rpcMock.getAccount.mock.calls.length)),
+  );
+  rpcMock.simulateTransaction
+    .mockResolvedValueOnce({
+      _parsed: true, id: '1', latestLedger: 1, minResourceFee: '500',
+      transactionData: new SorobanDataBuilder().setResourceFee('500'),
+      result: { auth: [], retval: nativeToScVal(7n) }, events: [],
+      restorePreamble: {
+        minResourceFee: '500',
+        transactionData: new SorobanDataBuilder().setResourceFee('500'),
+      },
+    })
+    .mockResolvedValueOnce({
+      _parsed: true, id: '2', latestLedger: 1, minResourceFee: '500',
+      transactionData: new SorobanDataBuilder().setResourceFee('500'),
+      result: { auth: [], retval: nativeToScVal(null) }, events: [],
+    })
+    .mockResolvedValueOnce({
+      _parsed: true, id: '3', latestLedger: 1, minResourceFee: '500',
+      transactionData: new SorobanDataBuilder().setResourceFee('500'),
+      result: { auth: [], retval: nativeToScVal(7n) }, events: [],
+    });
+  rpcMock.sendTransaction
+    .mockResolvedValueOnce({ status: 'PENDING', hash: 'cd'.repeat(32) })
+    .mockResolvedValueOnce({ status: 'PENDING', hash: 'ab'.repeat(32) });
+
+  await expect(invoke(false)).resolves.toEqual({ hash: 'ab'.repeat(32), returnValue: 7n });
+
+  expect(sign).toHaveBeenCalledTimes(2);
+  expect(sign.mock.calls[0][1]).toEqual({
+    kind: 'restore-footprint',
+    restoreFee: 600n,
+    transactionFee: 600n,
+  });
+  expect(rpcMock.simulateTransaction).toHaveBeenCalledTimes(3);
+  expect(rpcMock.sendTransaction).toHaveBeenCalledTimes(2);
+  const restore = TransactionBuilder.fromXDR(sign.mock.calls[0][0], Networks.TESTNET) as Transaction;
+  const invocation = TransactionBuilder.fromXDR(sign.mock.calls[1][0], Networks.TESTNET) as Transaction;
+  expect(restore.operations[0]?.type).toBe('restoreFootprint');
+  expect(invocation.operations[0]?.type).toBe('invokeHostFunction');
 });
 it('never prompts the wallet after a failed simulation', async () => {
   rpcMock.simulateTransaction.mockResolvedValue({ error: 'contract rejected' });

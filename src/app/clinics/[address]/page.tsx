@@ -25,6 +25,12 @@ import {
   useVouchers,
 } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import {
+  saveCheckoutDraft,
+  loadCheckoutDraft,
+  clearCheckoutDraft,
+  type CheckoutDraft,
+} from '@/lib/checkout-draft';
 import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
@@ -34,7 +40,7 @@ import {
   type ExpiryChoice,
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
-import { quoteXlmForUsdc } from '@/lib/stellar';
+import { quoteXlmForUsdc, type RestoreFootprintSignContext } from '@/lib/stellar';
 import { TransactionTimeoutError, RETRY_FEE_MULTIPLIER } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
@@ -48,6 +54,8 @@ import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { FavouriteButton } from '@/components/FavouriteButton';
+import { ClinicMetadataLink } from '@/components/ClinicMetadataLink';
+import { clinicMetadataUrl } from '@/lib/clinic-metadata';
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -123,6 +131,35 @@ export default function ClinicPage({
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
+
+  const [existingDraftOnMount] = useState<CheckoutDraft | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return loadCheckoutDraft(address);
+  });
+  const [draftDismissed, setDraftDismissed] = useState(false);
+  const isDraftVisible = Boolean(
+    existingDraftOnMount &&
+      existingDraftOnMount.selectedCodes.length > 0 &&
+      !draftDismissed,
+  );
+
+  const restoreDraft = () => {
+    if (!existingDraftOnMount) return;
+    setSelectedCodesOverride(existingDraftOnMount.selectedCodes);
+    setAmountOverride(existingDraftOnMount.amountOverride);
+    setExpiryChoice(existingDraftOnMount.expiryChoice);
+    setCustomExpiry(existingDraftOnMount.customExpiry);
+    if (existingDraftOnMount.patientNickname) {
+      void localIdentity.select(existingDraftOnMount.patientNickname);
+    }
+    setDraftDismissed(true);
+    toast.success(t('checkoutDraft.restoredMessage'));
+  };
+
+  const discardDraft = () => {
+    setDraftDismissed(true);
+    clearCheckoutDraft(address);
+  };
   const selectionTotal = useMemo(
     () =>
       selectedServices.reduce(
@@ -179,6 +216,29 @@ export default function ClinicPage({
   const trustline = useUsdcTrustline();
 
   useEffect(() => {
+    if (!address) return;
+    if (isDraftVisible) return;
+
+    if (selectedCodes.length > 0) {
+      saveCheckoutDraft(address, {
+        selectedCodes,
+        amountOverride,
+        expiryChoice,
+        customExpiry,
+        patientNickname: saved.selectedNickname,
+      });
+    }
+  }, [
+    address,
+    selectedCodes,
+    amountOverride,
+    expiryChoice,
+    customExpiry,
+    saved.selectedNickname,
+    isDraftVisible,
+  ]);
+
+  useEffect(() => {
     if (!wallet) return;
     let ignore = false;
     (async () => {
@@ -217,7 +277,7 @@ export default function ClinicPage({
     } catch {
       return null;
     }
-  }, [amount]);
+  }, [amount, selectedServices.length, selectionTotal]);
 
   function toggleService(service: Service) {
     setSelectedCodes((current) => {
@@ -439,9 +499,12 @@ export default function ClinicPage({
       const ref = await beneficiaryRef(identifier, secret);
       await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
-      const wrappedSign = async (xdr: string) => {
+      const wrappedSign = async (
+        xdr: string,
+        context?: RestoreFootprintSignContext,
+      ) => {
         setTransactionStatus('signing');
-        const signed = await signTransaction(xdr);
+        const signed = await signTransaction(xdr, context);
         setTransactionStatus('submitting');
         return signed;
       };
@@ -541,6 +604,10 @@ export default function ClinicPage({
       setReviewing(false);
       setBatchProgress(null);
       setBatchSummary({ succeeded, failed });
+      if (succeeded.length > 0) {
+        clearCheckoutDraft(address);
+        setDraftDismissed(true);
+      }
       const firstId = succeeded[0];
       const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
@@ -582,6 +649,8 @@ export default function ClinicPage({
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;
+  const websiteUrl = clinicMetadataUrl(provider.metadata?.website);
+  const contactUrl = clinicMetadataUrl(provider.metadata?.contact);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -629,6 +698,19 @@ export default function ClinicPage({
               )}
             </dl>
           )}
+
+          {(websiteUrl || contactUrl) && (
+            <div className="mt-4 grid gap-2 border-t border-[var(--color-line)] pt-4 sm:grid-cols-2">
+              <ClinicMetadataLink
+                label={t('clinic.website')}
+                destination={websiteUrl}
+              />
+              <ClinicMetadataLink
+                label={t('clinic.contact')}
+                destination={contactUrl}
+              />
+            </div>
+          )}
         </Card>
 
         <Card className="divide-y divide-[var(--color-line)]">
@@ -675,6 +757,30 @@ export default function ClinicPage({
 
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
+
+        {isDraftVisible && existingDraftOnMount && (
+          <div
+            data-testid="checkout-draft-banner"
+            className="rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand-soft)]/20 p-3 text-sm space-y-2"
+          >
+            <div className="font-medium text-xs text-[var(--color-ink)]">
+              {t('checkoutDraft.foundTitle')}
+            </div>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('checkoutDraft.foundDescription', {
+                count: existingDraftOnMount.selectedCodes.length,
+              })}
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <Button onClick={restoreDraft}>
+                {t('checkoutDraft.restore')}
+              </Button>
+              <Button variant="ghost" onClick={discardDraft}>
+                {t('checkoutDraft.discard')}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">

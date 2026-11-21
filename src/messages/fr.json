@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
-    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque."
+    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
+    "build": "Version {commit}"
   },
   "common": {
     "loading": "Chargement…",
@@ -32,6 +33,14 @@
     "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard.",
     "updateAvailable": "Une nouvelle version est prête.",
     "reloadToUpdate": "Recharger pour mettre à jour"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "Certaines données archivées du contrat doivent être restaurées avant l'exécution de cette transaction. Vous devrez signer deux transactions : restaurer les données (frais réseau estimés : {restoreFee} XLM), puis effectuer votre transaction (frais réseau estimés : {transactionFee} XLM). Total estimé des frais réseau : {totalFee} XLM. Continuer ?",
+    "restoreFootprintCancelled": "Restauration annulée. Aucune transaction n'a été envoyée.",
+    "restoreRequired": "Cette transaction nécessite la restauration de données archivées du contrat. Utilisez le portefeuille connecté pour continuer.",
+    "restoreStillRequired": "Le contrat nécessite toujours des données archivées après la restauration. Rien d'autre n'a été envoyé. Réessayez plus tard.",
+    "restorePreparationError": "Impossible de préparer la restauration des données archivées du contrat : {error}",
+    "restoreRejected": "La transaction de restauration des données archivées a été rejetée : {error}"
   },
   "home": {
     "verifiedClinics": "Cliniques vérifiées",
@@ -94,10 +103,45 @@
     "staffNoteEdit": "Modifier la note",
     "staffNoteSave": "Enregistrer la note",
     "staffNoteClear": "Supprimer la note",
-    "staffNotePlaceholder": "Le patient a appelé, mardi"
+    "staffNotePlaceholder": "Le patient a appelé, mardi",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Le paiement est conservé en toute sécurité sous séquestre jusqu'à la prestation des soins.",
+        "clinic": "Les fonds sont réservés sous séquestre. Dispensez les soins et soumettez une réclamation pour être payé.",
+        "patient": "Les soins sont couverts et disponibles. Présentez ce bon à la clinique pour recevoir les soins."
+      },
+      "Claimed": {
+        "funder": "La clinique a confirmé la prestation des soins, en attente de vérification.",
+        "clinic": "Réclamation soumise. En attente d'attestation par un vérificateur de confiance.",
+        "patient": "Les soins ont été reçus à la clinique et sont en cours de traitement."
+      },
+      "Attested": {
+        "funder": "Les soins ont été vérifiés par un tiers indépendant et sont prêts à être réglés.",
+        "clinic": "Service vérifié. Les fonds peuvent maintenant être versés à la clinique.",
+        "patient": "Les soins ont été vérifiés et validés."
+      },
+      "Settled": {
+        "funder": "Le paiement a été versé à la clinique.",
+        "clinic": "Le paiement a été versé sur votre portefeuille.",
+        "patient": "Soins terminés et paiement réglé."
+      },
+      "Disputed": {
+        "funder": "Un litige a été ouvert et le paiement est suspendu en attendant sa résolution.",
+        "clinic": "Un litige a été ouvert pour ce bon. Le paiement est bloqué jusqu'à résolution.",
+        "patient": "Ce bon fait l'objet d'un litige et est suspendu."
+      },
+      "Refunded": {
+        "funder": "Les fonds sous séquestre ont été reversés sur votre portefeuille.",
+        "clinic": "Ce bon a été annulé ou remboursé au financeur.",
+        "patient": "Ce bon a été annulé ou remboursé."
+      }
+    }
   },
   "clinic": {
     "title": "Bureau clinique",
+    "website": "Site web",
+    "contact": "Contact",
+    "externalLinkConfirm": "Vous quittez SCI Healthcare pour visiter {host}. Continuer ?",
     "checking": "Vérification de l'enregistrement…",
     "scanVoucherQr": "Scanner le QR du bon",
     "registerTitle": "Enregistrer cette clinique",
@@ -132,6 +176,14 @@
     "noIncomingHint": "Les bons apparaîtront ici dès que des bailleurs financent un service. Partagez votre lien de clinique avec les patients pour qu'ils présentent leur bon à l'accueil.",
     "noIncomingAction": "Lister un service",
     "earnings": "Revenus",
+    "dailySummary": "Résumé quotidien de l'accueil",
+    "dailySummaryNote": "Réclamations, attestations et paiements effectués ce jour calendaire.",
+    "dailyTimeZone": "Fuseau horaire de la clinique : {timeZone}",
+    "dailyClaimed": "Réclamés",
+    "dailyAttested": "Attestés",
+    "dailySettled": "Réglés",
+    "dailyReceived": "Montant reçu",
+    "dailyPrint": "Imprimer le résumé quotidien",
     "earningsNote": "Trésorerie de cette clinique : soins réglés, paiements en attente et frais de protocole payés.",
     "earningsSettled": "Réglé",
     "earningsSettledDetail": {
@@ -282,6 +334,13 @@
     "expiredTitle": "Bon en attente supprimé",
     "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
     "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restaurer le paiement précédent ?",
+    "foundDescription": "Vous avez un brouillon enregistré avec {count} service(s) sélectionné(s) d'une session précédente.",
+    "restore": "Restaurer le brouillon",
+    "discard": "Ignorer",
+    "restoredMessage": "Brouillon de paiement restauré."
   },
   "components": {
     "connectButton": {

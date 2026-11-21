@@ -13,7 +13,8 @@
   },
   "footer": {
     "testnetDisclaimer": "Ìgbékalẹ̀ Testnet. Kò sí owó gidi, àti pé kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
-    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan."
+    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
+    "build": "Ẹ̀yà {commit}"
   },
   "common": {
     "loading": "Ń gbé wọlé…",
@@ -32,6 +33,14 @@
     "indexerCatchUp": "Àwọn àkójọ yóò ṣe àtúnṣe ní kété tí atọ́ka bá bá a.",
     "updateAvailable": "Ẹ̀yà tuntun ti ṣetán.",
     "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "A gbọ́dọ̀ mú àwọn dátà àdéhùn tí a fi pamọ́ padà kí ìdúnàádúrà yìí tó lè ṣiṣẹ́. A ó ní kí o fọwọ́ sí ìdúnàádúrà méjì: mímú dátà náà padà (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {restoreFee} XLM), lẹ́yìn náà parí ìdúnàádúrà rẹ (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {transactionFee} XLM). Àpapọ̀ owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {totalFee} XLM. Ṣé o fẹ́ tẹ̀síwájú?",
+    "restoreFootprintCancelled": "A fagilé ìmúpadàbọ̀sípò. A kò fi ìdúnàádúrà ránṣẹ́.",
+    "restoreRequired": "Ìdúnàádúrà yìí nílò kí a mú dátà àdéhùn tí a fi pamọ́ padà. Lo àpò tí a so pọ̀ láti tẹ̀síwájú.",
+    "restoreStillRequired": "Àdéhùn náà ṣì nílò dátà tí a fi pamọ́ lẹ́yìn ìmúpadàbọ̀sípò. A kò fi nǹkan mìíràn ránṣẹ́. Jọ̀wọ́ tún gbìyànjú lẹ́yìn náà.",
+    "restorePreparationError": "A kò lè pèsè ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}",
+    "restoreRejected": "A kọ ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}"
   },
   "home": {
     "verifiedClinics": "Àwọn kílíníkì tí a ti jẹ́rìí",
@@ -91,10 +100,45 @@
     "staffNoteEdit": "Ṣàtúnṣe Àkíyèsí",
     "staffNoteSave": "Gbà Àkíyèsí náà",
     "staffNoteClear": "Gbé Àkíyèsí náà kúrò",
-    "staffNotePlaceholder": "Ẹni tí ó tọ́, Ọjọ́ Tuesday"
+    "staffNotePlaceholder": "Ẹni tí ó tọ́, Ọjọ́ Tuesday",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "A di owó náà mú láìléwu títí tí a ó fi pèsè ìtọ́jú.",
+        "clinic": "A ti fi owó pamọ́. Pèsè ìtọ́jú kí o sì fi ẹ̀bẹ̀ ránṣẹ́ láti gba owó.",
+        "patient": "A ti sanwó fún ìtọ́jú. Fi vóṣà yìí hàn ní kílíníkì láti gba ìtọ́jú."
+      },
+      "Claimed": {
+        "funder": "Kílíníkì ti fi ìdí rẹ̀ múlẹ̀ pé a pèsè ìtọ́jú, ó ń dúró de àtúnyẹ̀wò.",
+        "clinic": "A ti fi ẹ̀bẹ̀ ránṣẹ́. Ó ń dúró de ẹ̀rí láti ọ̀dọ̀ olùyẹ̀wò tó ṣeé gbẹ́kẹ̀lé.",
+        "patient": "A ti gba ìtọ́jú ní kílíníkì, a sì ń ṣe àmójútó rẹ̀ lọ́wọ́."
+      },
+      "Attested": {
+        "funder": "Olùyẹ̀wò òmìnira kan ti fi ìdí ìtọ́jú múlẹ̀, ó sì ti ṣetán fún ìsanwó.",
+        "clinic": "A ti fi ìdí iṣẹ́ múlẹ̀. A lè san owó fún kílíníkì báyìí.",
+        "patient": "A ti fi ìdí ìtọ́jú múlẹ̀, ó sì ti parí."
+      },
+      "Settled": {
+        "funder": "A ti san owó náà fún kílíníkì.",
+        "clinic": "A ti san owó náà sínú àpò owó rẹ.",
+        "patient": "Ìtọ́jú ti parí, a sì ti san owó náà."
+      },
+      "Disputed": {
+        "funder": "A ti ṣí àríyànjiyàn sílẹ̀, a sì ti dá ìsanwó dúró títí a ó fi yanjú rẹ̀.",
+        "clinic": "A ṣí àríyànjiyàn fún vóṣà yìí. A ti dá ìsanwó dúró títí a ó fi yanjú rẹ̀.",
+        "patient": "Vóṣà yìí ní ìwádìí tó wà ní ṣíṣí, a sì ti dá a dúró."
+      },
+      "Refunded": {
+        "funder": "A ti da owó tí a fi pamọ́ padà sínú àpò owó rẹ.",
+        "clinic": "A ti fagilé vóṣà yìí tàbí da owó padà fún olùrànlọ́wọ́.",
+        "patient": "A ti fagilé vóṣà yìí tàbí da owó rẹ̀ padà."
+      }
+    }
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",
+    "website": "Ojú-òpó wẹ́ẹ̀bù",
+    "contact": "Ìbánisọ̀rọ̀",
+    "externalLinkConfirm": "O ń kúrò ní SCI Healthcare láti ṣàbẹ̀wò sí {host}. Ṣé o fẹ́ tẹ̀síwájú?",
     "checking": "Ń ṣàyẹ̀wò ìforúkọsílẹ̀…",
     "scanVoucherQr": "Yẹ̀wò QR vóṣà",
     "registerTitle": "Forúkọ kílíníkì yìí sílẹ̀",
@@ -125,6 +169,14 @@
     "settledSummary": "A ti tu owó fún",
     "settleFailedSummary": "A kò san:",
     "earnings": "Èrè",
+    "dailySummary": "Àkótán ojoojúmọ́ fún tábìlì ìtọ́jú",
+    "dailySummaryNote": "Àwọn vóṣà tí a gbà, tí a jẹ́rìí sí, àti àwọn ìsanwó tó parí lónìí.",
+    "dailyTimeZone": "Agbègbè àkókò kílíníkì: {timeZone}",
+    "dailyClaimed": "Tí a gbà",
+    "dailyAttested": "Tí a jẹ́rìí sí",
+    "dailySettled": "Tí a san",
+    "dailyReceived": "Iye tí a gbà",
+    "dailyPrint": "Tẹ àkótán ojoojúmọ́ jáde",
     "earningsNote": "Ìṣàn owó kílíníkì yìí: ìtọ́jú tí a ti san, owó tí ó ń dúró, àti àwọn owó ìsan àdéhùn tí a ti san.",
     "earningsSettled": "Ti san",
     "earningsSettledDetail": {
@@ -439,5 +491,12 @@
     "expiredTitle": "A sọ ẹ̀tọ́ tó wà ní ìtò nù",
     "expired": "Ẹ̀tọ́ tó wà ní ìtò parí kí a tó lè fi ránṣẹ́, nítorí náà a sọ ọ́ nù. A kò fi ohunkóhun ránṣẹ́ sí kílíníkì; gbà vóṣà náà lẹ́ẹ̀kan sí i tí aláìsàn bá ṣì wà ní tábìlì.",
     "queuedToast": "A ti fipamọ́ sórí ẹ̀rọ yìí. A ó fi ẹ̀tọ́ náà ránṣẹ́ nígbà tí ìsopọ̀ bá padà."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Ṣe àtúnṣe ìsanwó tẹ́lẹ̀?",
+    "foundDescription": "O ní àkọsílẹ̀ àkọ́kọ́ tí a fipamọ́ pẹ̀lú iṣẹ́ {count} tí a yàn láti ìgbà tẹ́lẹ̀.",
+    "restore": "Dá àkọsílẹ̀ padà",
+    "discard": "Pa á rẹ́",
+    "restoredMessage": "A ti dá àkọsílẹ̀ ìsanwó padà."
   }
 }

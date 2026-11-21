@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
+import { BuildVersion } from '@/components/BuildVersion';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
@@ -121,6 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   {isTestnet
                     ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
                     : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
+                  <BuildVersion />
                 </p>
                 {/* Language choice for translated text (#5). */}
                 <LanguageSwitcher />
