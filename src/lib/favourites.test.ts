@@ -116,4 +116,10 @@ describe('favourites storage helper', () => {
     setClinicFavourite('GAAA111', false);
     expect(isClinicFavourite('GAAA111')).toBe(false);
   });
+
+  it('returns empty array when window is undefined (SSR)', () => {
+    _resetFavouritesCache();
+    vi.unstubAllGlobals();
+    expect(getFavouriteClinics()).toEqual([]);
+  });
 });

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { formatDate, shortAddress } from '@/lib/amounts';
 import { explorerAccount } from '@/lib/config';
 import { useAttesters } from '@/lib/hooks';
@@ -10,6 +11,7 @@ import { Alert, Card, Empty, ExplorerLink } from '@/components/ui';
 import { SkeletonRow } from '@/components/Skeleton';
 
 export default function AttestersPage() {
+  const { t } = useLocaleContext();
   const [includeInactive, setIncludeInactive] = useState(false);
 
   const { attesters, total, isLoading, error } = useAttesters({
@@ -93,7 +95,11 @@ export default function AttestersPage() {
                         <ExplorerLink href={explorerAccount(a.address)}>
                           {shortAddress(a.address, 6)}
                         </ExplorerLink>
-                        <CopyValue value={a.address} buttonOnly label="attester address" />
+                        <CopyValue
+                          value={a.address}
+                          buttonOnly
+                          label={t('components.copyValue.labels.attesterAddress')}
+                        />
                       </span>
                     </td>
                     <td className="mt-3 flex items-center justify-between text-sm sm:mt-0 sm:table-cell sm:py-3.5 sm:text-end">

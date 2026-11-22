@@ -1,19 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import useSWR from 'swr';
 
 import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { settleableVouchers } from '@/lib/batch-settle';
 import type { VoucherStatus } from '@/lib/api';
-import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
+import {
+  monthlyEarnings,
+  summariseDailyEarnings,
+  summariseEarnings,
+} from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
 import {
   useLiveUpdates,
   useProvider,
+  useProviderReceipts,
   useProviderStats,
   useProviderVouchers,
   useVouchers,
@@ -36,9 +41,14 @@ import { Sep24Cashout } from '@/components/Sep24Cashout';
 import { Skeleton, SkeletonRow } from '@/components/Skeleton';
 
 import { useLocaleContext } from '@/i18n/LocaleContext';
+import { useNow } from '@/lib/hooks/useNow';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
 type Standing = ProviderStanding | 'Unregistered' | null;
+
+const subscribeToTimeZone = () => () => {};
+const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const getServerTimeZone = (): null => null;
 
 /**
  * One status tab. `aria-pressed` rather than a tablist: the list below is not
@@ -62,8 +72,8 @@ function StatusTab({
       onClick={onClick}
       className={`inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
         active
-          ? 'border-transparent bg-[var(--color-brand)] text-white'
-          : 'border-[var(--color-line)] bg-white text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
+          ? 'border-transparent bg-[var(--color-brand)] text-[var(--color-brand-text)]'
+          : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
       }`}
     >
       <span>{children}</span>
@@ -170,9 +180,28 @@ export default function ClinicDeskPage() {
     isLoading: earningsLoading,
     mutate: mutateEarningsVouchers,
   } = useProviderVouchers(earningsAddress);
+  const {
+    receipts: earningsReceipts,
+    error: receiptsError,
+    isLoading: receiptsLoading,
+    mutate: mutateEarningsReceipts,
+  } = useProviderReceipts(earningsAddress);
 
   const earnings = useMemo(() => summariseEarnings(earningsVouchers), [earningsVouchers]);
   const months = useMemo(() => monthlyEarnings(earningsVouchers), [earningsVouchers]);
+  const now = useNow();
+  const timeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getBrowserTimeZone,
+    getServerTimeZone,
+  );
+  const dailyEarnings = useMemo(
+    () =>
+      timeZone
+        ? summariseDailyEarnings(earningsVouchers, earningsReceipts, new Date(now), timeZone)
+        : null,
+    [earningsVouchers, earningsReceipts, now, timeZone],
+  );
   // Distinguish "nothing earned yet" from "the vouchers could not be read":
   // the first is worth showing as zero, the second is not.
   const earningsReady = !earningsLoading && !earningsError;
@@ -186,6 +215,7 @@ export default function ClinicDeskPage() {
     void mutateStatus();
     void mutateStats();
     void mutateEarningsVouchers();
+    void mutateEarningsReceipts();
   };
 
   const services = (provider?.services ?? []).filter((s) => s.active !== false);
@@ -280,7 +310,7 @@ export default function ClinicDeskPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="clinic-desk-page space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{t('clinic.title')}</h1>
@@ -333,6 +363,78 @@ export default function ClinicDeskPage() {
       )}
       <RecentVouchers />
       <OfflineClaimQueue />
+
+      {standing !== null && standing !== 'Unregistered' && (
+        <section
+          aria-labelledby="clinic-daily-summary"
+          className="clinic-daily-summary space-y-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-line)] pb-4">
+            <div>
+              <h2 id="clinic-daily-summary" className="text-lg font-semibold">
+                {t('clinic.dailySummary')}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+                {t('clinic.dailySummaryNote')}
+              </p>
+              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                {t('clinic.dailyTimeZone', { timeZone: timeZone ?? '—' })}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => window.print()}
+              disabled={!dailyEarnings || receiptsLoading || earningsLoading}
+              className="print:hidden"
+            >
+              {t('clinic.dailyPrint')}
+            </Button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
+            {[
+              ['dailyClaimed', dailyEarnings?.claimedCount],
+              ['dailyAttested', dailyEarnings?.attestedCount],
+              ['dailySettled', dailyEarnings?.settledCount],
+              [
+                'dailyReceived',
+                dailyEarnings ? `$${formatUsdc(dailyEarnings.netReceived, locale)}` : undefined,
+              ],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[var(--color-line)] p-4 print:break-inside-avoid"
+              >
+                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t(`clinic.${label}`)}
+                </div>
+                <div className="mt-1 text-2xl font-bold tabular-nums">
+                  {earningsLoading || receiptsLoading || !timeZone ? (
+                    '—'
+                  ) : earningsError || receiptsError ? (
+                    '—'
+                  ) : (
+                    value
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {(earningsError || receiptsError) && (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              {t('clinic.earningsUnavailable')}
+            </p>
+          )}
+          {timeZone && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {new Intl.DateTimeFormat(
+                locale === 'fr' ? 'fr-FR' : locale === 'sw' ? 'sw-KE' : 'en-GB',
+                { dateStyle: 'long', timeZone },
+              ).format(new Date(now))}
+            </p>
+          )}
+        </section>
+      )}
 
       {standing !== null && standing !== 'Unregistered' && (
         <section aria-labelledby="clinic-earnings" className="space-y-5">
@@ -818,6 +920,7 @@ export default function ClinicDeskPage() {
               onDone={refreshAll}
               disabled={settleAllBusy}
               requirePatientMatch
+              staffNote
             />
           ))}
         </div>

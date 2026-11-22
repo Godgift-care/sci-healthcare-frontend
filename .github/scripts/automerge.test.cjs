@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { evaluate, parsePatterns, approvedByWriter, isWorkflowPermissionError } = require('./automerge.cjs');
+const { evaluate, parsePatterns, approvedByWriter, isWorkflowPermissionError, RateLimitError, withRateLimit } = require('./automerge.cjs');
 
 const SHA = 'a'.repeat(40);
 const patterns = parsePatterns(`
@@ -169,4 +169,74 @@ test('a re-run check replaces the run it repeats', () => {
   assert.equal(evaluate(base({ checkRuns: runs })).action, 'merge');
   const worse = checks(['test', 'completed', 'success', 1], ['test', 'completed', 'failure', 2]);
   assert.equal(evaluate(base({ checkRuns: worse })).action, 'skip');
+});
+
+test('RateLimitError carries name and reset', () => {
+  const reset = Date.now() + 60_000;
+  const err = new RateLimitError('rate limited on test', reset);
+  assert.equal(err.name, 'RateLimitError');
+  assert.equal(err.message, 'rate limited on test');
+  assert.equal(err.reset, reset);
+});
+
+test('withRateLimit passes through successful calls', async () => {
+  const result = await withRateLimit({
+    github: {},
+    fn: async () => 42,
+    what: 'test',
+  });
+  assert.equal(result, 42);
+});
+
+test('withRateLimit wraps rate-limit 403 with 0 remaining in RateLimitError', async () => {
+  await assert.rejects(
+    withRateLimit({
+      github: {},
+      fn: async () => {
+        const err = new Error('rate limited');
+        err.status = 403;
+        err.headers = { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '9999999999' };
+        throw err;
+      },
+      what: 'test',
+    }),
+    RateLimitError,
+  );
+});
+
+test('withRateLimit passes through non-rate-limit 403 errors', async () => {
+  await assert.rejects(
+    withRateLimit({
+      github: {},
+      fn: async () => {
+        const err = new Error('forbidden');
+        err.status = 403;
+        err.headers = { 'x-ratelimit-remaining': '5' };
+        throw err;
+      },
+      what: 'test',
+    }),
+    {
+      name: 'Error',
+      message: 'forbidden',
+    },
+  );
+});
+
+test('withRateLimit passes through other errors unchanged', async () => {
+  await assert.rejects(
+    withRateLimit({
+      github: {},
+      fn: async () => {
+        const err = new Error('not found');
+        err.status = 404;
+        throw err;
+      },
+      what: 'test',
+    }),
+    {
+      name: 'Error',
+      message: 'not found',
+    },
+  );
 });
