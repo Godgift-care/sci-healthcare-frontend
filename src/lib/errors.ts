@@ -90,6 +90,25 @@ export const VOUCHER_ERRORS_I18N: Record<string, Record<number, string>> = {
     16: 'Hesabu imezidi uwezo.',
     17: 'Hakuna makabidhiano ya usimamizi yanayosubiriwa.',
   },
+  yo: {
+    1: 'A ti ṣètò àdéhùn yìí tẹ́lẹ̀.',
+    2: 'A kò ì tíì ṣètò àdéhùn yìí.',
+    3: 'O kò ní àṣẹ láti ṣe bẹ́ẹ̀.',
+    4: 'Vóṣà yẹn kò sí.',
+    5: 'Kílíníkì yìí kò ṣiṣẹ́ báyìí.',
+    6: 'Kílíníkì yìí kò pèsè iṣẹ́ yẹn.',
+    7: 'Iye náà kéré ju iye tí a tò fún iṣẹ́ yìí.',
+    8: 'Iye náà gbọ́dọ̀ ju òdo.',
+    9: 'Ọjọ́ parí gbọ́dọ̀ wà ní ọjọ́ iwájú.',
+    10: 'Vóṣà yìí kò sí ní ipò tó yẹ fún ìgbésẹ̀ yẹn.',
+    11: 'Vóṣà yìí ti parí.',
+    12: 'A kò lè da owó vóṣà yìí padà báyìí.',
+    13: 'Àkókò àríyànjiyàn ṣì ṣí. Ìsanwó yóò ṣí ní kété tí ó bá parí.',
+    14: 'Àkókò àríyànjiyàn ti parí.',
+    15: 'A kò gba owó ìsan yẹn.',
+    16: 'Ìṣirò náà kọjá ààlà.',
+    17: 'Kò sí ìfipáṣẹ́ alábòójútó tó ń dúró.',
+  },
 };
 
 export const REGISTRY_ERRORS_I18N: Record<string, Record<number, string>> = {
@@ -120,6 +139,19 @@ export const REGISTRY_ERRORS_I18N: Record<string, Record<number, string>> = {
     10: 'Jina linahitajika.',
     11: 'Hakuna makabidhiano ya usimamizi yanayosubiriwa.',
   },
+  yo: {
+    1: 'A ti ṣètò ìforúkọsílẹ̀ yìí tẹ́lẹ̀.',
+    2: 'A kò ì tíì ṣètò ìforúkọsílẹ̀ yìí.',
+    3: 'O kò ní àṣẹ láti ṣe bẹ́ẹ̀.',
+    4: 'Kílíníkì yẹn kò forúkọsílẹ̀.',
+    5: 'Kílíníkì yẹn ti forúkọsílẹ̀ tẹ́lẹ̀.',
+    6: 'Kílíníkì yìí kò ì tíì ṣiṣẹ́.',
+    7: 'Iṣẹ́ yẹn kò wà lórí àkójọ.',
+    8: 'Iye gbọ́dọ̀ ju òdo.',
+    9: 'Kóòdù orílẹ̀-èdè gbọ́dọ̀ jẹ́ lẹ́tà méjì.',
+    10: 'Orúkọ ni a nílò.',
+    11: 'Kò sí ìfipáṣẹ́ alábòójútó tó ń dúró.',
+  },
 };
 
 export const FAUCET_ERRORS_I18N: Record<string, Record<number, string>> = {
@@ -137,6 +169,12 @@ export const FAUCET_ERRORS_I18N: Record<string, Record<number, string>> = {
     3: 'Huna mamlaka ya kufanya hivyo.',
     4: 'Kiasi cha bomba lazima kiwe zaidi ya sifuri.',
     5: 'Tayari umepokea USDC ya majaribio leo. Jaribu tena baadaye.',
+  },
+  yo: {
+    2: 'A kò ṣètò bọ́mbù USDC ìdánwò lórí nẹ́tíwọ́kì yìí.',
+    3: 'O kò ní àṣẹ láti ṣe bẹ́ẹ̀.',
+    4: 'Iye bọ́mbù gbọ́dọ̀ ju òdo.',
+    5: 'O ti gba USDC ìdánwò lónìí. Gbìyànjú lẹ́yìn.',
   },
 };
 
@@ -159,11 +197,13 @@ export function humaniseError(
   if (/trustline/i.test(message)) {
     if (locale === 'fr') return 'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.';
     if (locale === 'sw') return 'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.';
+    if (locale === 'yo') return 'Àpò rẹ nílò trustline USDC kí ó tó lè gba tàbí fi USDC ránṣẹ́.';
     return 'Your wallet needs a USDC trustline before it can hold or send USDC.';
   }
   if (/insufficient balance|balance is not sufficient|underflow/i.test(message)) {
     if (locale === 'fr') return 'Solde USDC insuffisant dans votre portefeuille.';
     if (locale === 'sw') return 'Huna USDC ya kutosha kwenye pochi yako kwa hili.';
+    if (locale === 'yo') return 'Kò sí USDC tó tó nínú àpò rẹ fún èyí.';
     return 'Not enough USDC in your wallet for this.';
   }
   const code = contractErrorCode(message);
@@ -180,16 +220,19 @@ export function humaniseError(
     if (mapped) return mapped;
     if (locale === 'fr') return `Le contrat a rejeté cette opération (erreur #${code}).`;
     if (locale === 'sw') return `Mkataba umekataa ombi hili (hitilafu #${code}).`;
+    if (locale === 'yo') return `Àdéhùn kọ̀ ọ́ (àṣìṣe #${code}).`;
     return `Contract rejected this (error #${code}).`;
   }
   if (/account not found/i.test(message)) {
     if (config.network === 'testnet') {
       if (locale === 'fr') return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord avec Friendbot.";
       if (locale === 'sw') return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwa Friendbot kwanza.';
+      if (locale === 'yo') return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ fi Friendbot gbé owó lé e.';
       return 'This account does not exist on the network yet. Fund it with Friendbot first.';
     }
     if (locale === 'fr') return "Ce compte n'existe pas encore sur le réseau. Approvisionnez-le d'abord.";
     if (locale === 'sw') return 'Akaunti hii haipo kwenye mtandao bado. Iwekee fedha kwanza.';
+    if (locale === 'yo') return 'Àkọ́ọ̀lù yìí kò ì tíì sí lórí nẹ́tíwọ́kì. Kọ́kọ́ gbé owó lé e.';
     return 'This account does not exist on the network yet. Fund it first.';
   }
   return message;

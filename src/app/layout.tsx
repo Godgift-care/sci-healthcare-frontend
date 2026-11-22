@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
 
 import { Analytics } from '@/components/Analytics';
 import { AnalyticsToggle } from '@/components/AnalyticsToggle';
+import { BuildVersion } from '@/components/BuildVersion';
 import { CommandPalette } from '@/components/CommandPalette';
 import { ErrorReporter } from '@/components/ErrorReporter';
 import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
@@ -11,10 +13,13 @@ import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
 import { ToastProvider } from '@/components/Toast';
 import { SiteHeader } from '@/components/SiteHeader';
+import { SkipToContent } from '@/components/SkipToContent';
 import { WalletProvider } from '@/lib/wallet';
 import { config, isTestnet } from '@/lib/config';
 
 import { LocaleProvider } from '@/i18n/LocaleContext';
+import { resolveLocale } from '@/i18n/detect';
+import { directionForLocale } from '@/i18n/direction';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 import './globals.css';
@@ -47,16 +52,28 @@ export const viewport: Viewport = {
   themeColor: '#0f766e',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language is resolved before the first byte (#277): an explicit
+  // choice from NEXT_LOCALE wins, otherwise the browser's Accept-Language.
+  // Passing it to LocaleProvider keeps the server render and hydration in
+  // agreement, so no English flashes before the switch.
+  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const initialLocale = resolveLocale(
+    cookieStore.get('NEXT_LOCALE')?.value,
+    headerList.get('accept-language'),
+  );
+
   // suppressHydrationWarning: the theme init script sets data-theme before
   // paint, which the server render cannot know (#10).
   //
-  // dir starts as `ltr` because the server renders English; LocaleProvider
-  // rewrites it from the stored locale (#131), the same way it rewrites
-  // `lang`. Every layout rule below is a logical utility, so the whole tree
-  // follows that one attribute.
+  // Every layout rule below is a logical utility, so the whole tree follows
+  // the `dir` attribute (#131).
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
+    <html
+      lang={initialLocale}
+      dir={directionForLocale(initialLocale)}
+      suppressHydrationWarning
+    >
       <head>
         {/* Theme before paint (#10): stored override, else the OS setting.
             A same-origin script in the server HTML rather than an inline
@@ -71,25 +88,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
-        <ServiceWorkerRegistration />
         <WalletProvider>
           {/* Application-wide SWR defaults, relaxed in low-bandwidth mode
               (#75). The setting is read once here so every page below sees
               the same behaviour. */}
           <SwrProvider>
-            {/* Language for translated text (#5); defaults to English and
-                remembers the visitor's choice. */}
-            <LocaleProvider>
+            {/* Language for translated text (#5); starts from the locale the
+                server resolved and remembers the visitor's choice. */}
+            <LocaleProvider initialLocale={initialLocale}>
+            <SkipToContent />
             <div className="print:hidden">
               <TestnetNotice />
             </div>
             <SiteHeader />
             <CommandPalette />
 
-            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0">
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0"
+            >
               {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
-              <ToastProvider>{children}</ToastProvider>
+              <ToastProvider>
+                <ServiceWorkerRegistration />
+                {children}
+              </ToastProvider>
             </main>
 
             <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">
@@ -98,6 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   {isTestnet
                     ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
                     : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
+                  <BuildVersion />
                 </p>
                 {/* Language choice for translated text (#5). */}
                 <LanguageSwitcher />

@@ -1,3 +1,5 @@
+import { formatRelativeFromNow } from '@/i18n/translate';
+
 /**
  * Amounts are i128 on chain and are carried as decimal strings in the UI.
  * Parsing one into a JS number loses precision above 2^53, so this module
@@ -38,7 +40,14 @@ export function formatUsdc(base: string | bigint, locale = 'en'): string {
   const whole = value / SCALE;
   const frac = (value % SCALE).toString().padStart(DECIMALS, '0');
   const trimmed = frac.replace(/0+$/, '').padEnd(2, '0');
-  const localeTag = locale === 'fr' ? 'fr-FR' : locale === 'sw' ? 'sw-KE' : 'en-US';
+  const localeTag =
+    locale === 'fr'
+      ? 'fr-FR'
+      : locale === 'sw'
+        ? 'sw-KE'
+        : locale === 'yo'
+          ? 'yo-NG'
+          : 'en-US';
   return `${whole.toLocaleString(localeTag)}.${trimmed}`;
 }
 
@@ -80,7 +89,14 @@ export function shortAddress(addr: string, chars = 4): string {
 export function formatDate(iso: string | Date | null, locale = 'en'): string {
   if (!iso) return '—';
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  const localeTag = locale === 'fr' ? 'fr-FR' : locale === 'sw' ? 'sw-KE' : 'en-GB';
+  const localeTag =
+    locale === 'fr'
+      ? 'fr-FR'
+      : locale === 'sw'
+        ? 'sw-KE'
+        : locale === 'yo'
+          ? 'yo-NG'
+          : 'en-GB';
   return d.toLocaleDateString(localeTag, {
     day: 'numeric',
     month: 'short',
@@ -88,42 +104,45 @@ export function formatDate(iso: string | Date | null, locale = 'en'): string {
   });
 }
 
-export function timeUntil(iso: string | Date | null, now?: number | Date | null): string {
-  if (!iso) return '—';
-  const d = typeof iso === 'string' ? new Date(iso) : iso;
-  const currentMs =
-    now != null && (typeof now !== 'number' || now > 0)
-      ? typeof now === 'number'
-        ? now
-        : now.getTime()
-      : Date.now();
-  const ms = d.getTime() - currentMs;
-  if (ms <= 0) return 'now';
-  const mins = Math.floor(ms / 60000);
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+function nowMs(now?: number | Date | null): number {
+  return now != null && (typeof now !== 'number' || now > 0)
+    ? typeof now === 'number'
+      ? now
+      : now.getTime()
+    : Date.now();
 }
 
 /**
- * Formats elapsed time since a timestamp (e.g., "2h ago", "3d ago").
- * Returns 'just now' for times less than a minute.
+ * Relative time to a future (or past) timestamp, in the active locale
+ * (#278). `Intl.RelativeTimeFormat` supplies the wording and the plural
+ * rules, so English reads "in 3 days" and French "dans 3 jours" without
+ * concatenating a number and a suffix.
  */
-export function timeSince(iso: string | Date | null, now?: number | Date | null): string {
+export function timeUntil(
+  iso: string | Date | null,
+  now?: number | Date | null,
+  locale = 'en',
+): string {
   if (!iso) return '—';
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  const currentMs =
-    now != null && (typeof now !== 'number' || now > 0)
-      ? typeof now === 'number'
-        ? now
-        : now.getTime()
-      : Date.now();
-  const ms = currentMs - d.getTime();
-  if (ms <= 0) return 'just now';
-  const mins = Math.floor(ms / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  const current = nowMs(now);
+  // A deadline that has already passed reads "now" rather than "3 days
+  // ago": the useful fact is that it is due, not how overdue it is.
+  return formatRelativeFromNow(Math.max(d.getTime(), current), current, locale);
+}
+
+/**
+ * Elapsed time since a timestamp, in the active locale ("2 hours ago").
+ * A difference under a minute reads "now".
+ */
+export function timeSince(
+  iso: string | Date | null,
+  now?: number | Date | null,
+  locale = 'en',
+): string {
+  if (!iso) return '—';
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const current = nowMs(now);
+  // Never report a future "claimed" time as being in the future.
+  return formatRelativeFromNow(Math.min(d.getTime(), current), current, locale);
 }

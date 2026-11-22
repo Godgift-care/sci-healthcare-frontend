@@ -13,20 +13,34 @@
   },
   "footer": {
     "testnetDisclaimer": "Déploiement Testnet. Aucun fonds réel, et aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
-    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque."
+    "mainnetDisclaimer": "Aucune information médicale sur le patient n'est stockée sur la chaîne — les bons font référence uniquement à une catégorie de service et à une référence de benéficiaire opaque.",
+    "build": "Version {commit}"
   },
   "common": {
     "loading": "Chargement…",
     "confirmed": "Confirmé",
     "confirming": "Confirmation…",
+    "signing": "Signature…",
+    "submitting": "Envoi…",
     "copied": "Copié !",
     "copy": "Copier",
     "usdc": "USDC",
     "cancel": "Annuler",
     "close": "Fermer",
+    "skipToContent": "Aller au contenu",
     "submitted": "Soumis.",
     "viewTransaction": "Voir la transaction",
-    "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard."
+    "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard.",
+    "updateAvailable": "Une nouvelle version est prête.",
+    "reloadToUpdate": "Recharger pour mettre à jour"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "Certaines données archivées du contrat doivent être restaurées avant l'exécution de cette transaction. Vous devrez signer deux transactions : restaurer les données (frais réseau estimés : {restoreFee} XLM), puis effectuer votre transaction (frais réseau estimés : {transactionFee} XLM). Total estimé des frais réseau : {totalFee} XLM. Continuer ?",
+    "restoreFootprintCancelled": "Restauration annulée. Aucune transaction n'a été envoyée.",
+    "restoreRequired": "Cette transaction nécessite la restauration de données archivées du contrat. Utilisez le portefeuille connecté pour continuer.",
+    "restoreStillRequired": "Le contrat nécessite toujours des données archivées après la restauration. Rien d'autre n'a été envoyé. Réessayez plus tard.",
+    "restorePreparationError": "Impossible de préparer la restauration des données archivées du contrat : {error}",
+    "restoreRejected": "La transaction de restauration des données archivées a été rejetée : {error}"
   },
   "home": {
     "verifiedClinics": "Cliniques vérifiées",
@@ -68,10 +82,66 @@
     "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
     "reportProblem": "Signaler un problème",
     "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
-    "reportProblemAction": "Signaler un problème"
+    "reportProblemAction": "Signaler un problème",
+    "redirect": {
+      "action": "Utiliser dans une autre clinique",
+      "title": "Déplacer le bon #{id}",
+      "intro": "Seules les cliniques actives proposant ce service au prix de {amount} ou moins sont listées.",
+      "empty": "Aucune autre clinique ne propose actuellement ce service au prix de {amount} ou moins.",
+      "loading": "Recherche des cliniques…",
+      "choose": "Choisir une clinique",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} recevra {price} et le bon conserve son dépôt de {amount}. Vérifiez la clinique et le prix avant de signer.",
+      "confirm": "Déplacer le bon",
+      "moving": "Déplacement…",
+      "error": "Impossible de déplacer le bon : {message}",
+      "success": "Bon déplacé vers {clinic}."
+    },
+    "staffNote": "Note du personnel",
+    "staffNoteNote": "Gardée uniquement sur cet appareil. Non partagée et non sauvegardée.",
+    "staffNoteAdd": "Ajouter une note",
+    "staffNoteEdit": "Modifier la note",
+    "staffNoteSave": "Enregistrer la note",
+    "staffNoteClear": "Supprimer la note",
+    "staffNotePlaceholder": "Le patient a appelé, mardi",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Le paiement est conservé en toute sécurité sous séquestre jusqu'à la prestation des soins.",
+        "clinic": "Les fonds sont réservés sous séquestre. Dispensez les soins et soumettez une réclamation pour être payé.",
+        "patient": "Les soins sont couverts et disponibles. Présentez ce bon à la clinique pour recevoir les soins."
+      },
+      "Claimed": {
+        "funder": "La clinique a confirmé la prestation des soins, en attente de vérification.",
+        "clinic": "Réclamation soumise. En attente d'attestation par un vérificateur de confiance.",
+        "patient": "Les soins ont été reçus à la clinique et sont en cours de traitement."
+      },
+      "Attested": {
+        "funder": "Les soins ont été vérifiés par un tiers indépendant et sont prêts à être réglés.",
+        "clinic": "Service vérifié. Les fonds peuvent maintenant être versés à la clinique.",
+        "patient": "Les soins ont été vérifiés et validés."
+      },
+      "Settled": {
+        "funder": "Le paiement a été versé à la clinique.",
+        "clinic": "Le paiement a été versé sur votre portefeuille.",
+        "patient": "Soins terminés et paiement réglé."
+      },
+      "Disputed": {
+        "funder": "Un litige a été ouvert et le paiement est suspendu en attendant sa résolution.",
+        "clinic": "Un litige a été ouvert pour ce bon. Le paiement est bloqué jusqu'à résolution.",
+        "patient": "Ce bon fait l'objet d'un litige et est suspendu."
+      },
+      "Refunded": {
+        "funder": "Les fonds sous séquestre ont été reversés sur votre portefeuille.",
+        "clinic": "Ce bon a été annulé ou remboursé au financeur.",
+        "patient": "Ce bon a été annulé ou remboursé."
+      }
+    }
   },
   "clinic": {
     "title": "Bureau clinique",
+    "website": "Site web",
+    "contact": "Contact",
+    "externalLinkConfirm": "Vous quittez SCI Healthcare pour visiter {host}. Continuer ?",
     "checking": "Vérification de l'enregistrement…",
     "scanVoucherQr": "Scanner le QR du bon",
     "registerTitle": "Enregistrer cette clinique",
@@ -106,11 +176,25 @@
     "noIncomingHint": "Les bons apparaîtront ici dès que des bailleurs financent un service. Partagez votre lien de clinique avec les patients pour qu'ils présentent leur bon à l'accueil.",
     "noIncomingAction": "Lister un service",
     "earnings": "Revenus",
+    "dailySummary": "Résumé quotidien de l'accueil",
+    "dailySummaryNote": "Réclamations, attestations et paiements effectués ce jour calendaire.",
+    "dailyTimeZone": "Fuseau horaire de la clinique : {timeZone}",
+    "dailyClaimed": "Réclamés",
+    "dailyAttested": "Attestés",
+    "dailySettled": "Réglés",
+    "dailyReceived": "Montant reçu",
+    "dailyPrint": "Imprimer le résumé quotidien",
     "earningsNote": "Trésorerie de cette clinique : soins réglés, paiements en attente et frais de protocole payés.",
     "earningsSettled": "Réglé",
-    "earningsSettledDetail": "{count} bons · {net} net après frais",
+    "earningsSettledDetail": {
+      "one": "{count} bon · {net} net après frais",
+      "other": "{count} bons · {net} net après frais"
+    },
     "earningsPending": "Paiement en attente",
-    "earningsPendingDetail": "{count} réclamés, attestés ou contestés, avant frais",
+    "earningsPendingDetail": {
+      "one": "{count} bon réclamé, attesté ou contesté, avant frais",
+      "other": "{count} bons réclamés, attestés ou contestés, avant frais"
+    },
     "earningsFees": "Frais payés",
     "earningsFeesDetail": "Frais de protocole sur les soins réglés",
     "earningsMonthly": "Revenus mensuels",
@@ -125,10 +209,12 @@
     "allStatuses": "Tous",
     "searchVoucherNumber": "Numéro de bon",
     "searchVoucherPlaceholder": "ex. 21 ou #21",
-    "showingVouchers": "Affichage de {shown} bons sur {total}",
+    "showingVouchers": {
+      "one": "Affichage de {shown} sur {total} bon",
+      "other": "Affichage de {shown} bons sur {total}"
+    },
     "noMatchingVouchers": "Aucun bon ne correspond à cette recherche.",
     "clearFilters": "Effacer les filtres",
-    "connectWallet": "Connectez le portefeuille de la clinique pour gérer ce bureau.",
     "checklist": {
       "title": "Jusqu'à votre premier paiement",
       "note": "Cinq étapes de l'inscription au versement. Chaque étape passe au vert une fois complétée.",
@@ -158,6 +244,19 @@
       }
     }
   },
+  "my": {
+    "selectAllVisible": "Tout sélectionner sur cette page ({count})",
+    "selectVoucher": "Sélectionner le bon nº {id}",
+    "selectedCount": "{count} sélectionné(s)",
+    "exportSelected": "Télécharger le CSV sélectionné",
+    "refundSelected": "Rembourser la sélection ({count})",
+    "refundAll": "Tout rembourser ({count})",
+    "refundingCount": "Remboursement {current}/{total}…",
+    "refundProgress": "{current} sur {total}",
+    "refundingVoucher": "Remboursement du bon nº {id}…",
+    "refundedSummary": "{count} bon(s) remboursé(s) avec succès :",
+    "refundFailedSummary": "Échec du remboursement de {count} bon(s) :"
+  },
   "scanner": {
     "title": "Scanner le QR du bon patient",
     "instructions": "Pointez la caméra vers le code QR du bon du patient pour l'ouvrir automatiquement.",
@@ -171,6 +270,242 @@
     "en": "English",
     "fr": "Français",
     "sw": "Kiswahili",
+    "yo": "Yorùbá",
     "select": "Choisir la langue"
+  },
+  "admin": {
+    "split": {
+      "button": "Partager le dépôt",
+      "amountLabel": "Montant attribué à la clinique (USDC)",
+      "amountHint": "Montant brut avant les frais du protocole, entre 0 et {amount}. Le reste revient au financeur.",
+      "invalid": "Saisissez un montant entre 0 et {amount}.",
+      "loading": "Calcul des frais…",
+      "error": "Impossible de calculer les frais : {message}",
+      "clinicReceives": "{clinic} reçoit {net} après {fee} de frais.",
+      "funderReceives": "Le financeur reçoit {amount}.",
+      "sum": "Le net de la clinique, les frais et le remboursement au financeur totalisent le dépôt de {amount}."
+    }
+  },
+  "stats": {
+    "downloadDaily": "Télécharger le CSV quotidien",
+    "downloadClinics": "Télécharger le CSV des cliniques",
+    "downloadVouchers": "Télécharger le CSV des bons",
+    "escrowTitle": "Montant sous séquestre sur la chaîne",
+    "escrowNote": "Lu dans la comptabilité du contrat de bons, sans portefeuille.",
+    "escrowOpen": "Séquestre ouvert",
+    "escrowBalance": "Le contrat détient {amount}",
+    "escrowIndexed": "L'indexeur signale {amount} en séquestre ouvert.",
+    "escrowUnavailable": "Le chiffre de séquestre on-chain est indisponible pour le moment.",
+    "escrowIndexedUnavailable": "Le total de séquestre ouvert de l'indexeur est indisponible pour le moment.",
+    "escrowSolvencyMismatch": "La comptabilité du contrat ne correspond pas à son solde : {escrow} est enregistré comme séquestre ouvert alors que le contrat détient {balance}. Ne vous fiez pas aux totaux indexés tant que ce point n'est pas compris.",
+    "escrowIndexerMismatch": "La chaîne et l'indexeur ne sont pas d'accord sur le séquestre ouvert : le contrat indique {chain}, l'indexeur indique {indexed}."
+  },
+  "attest": {
+    "leftToday": "{count} attestations restantes aujourd'hui",
+    "capReached": "Vous avez atteint la limite d'attestations du jour. Confirmez à nouveau après {time} UTC.",
+    "leftUnavailable": "Le nombre d'attestations restantes est indisponible pour le moment."
+  },
+  "print": {
+    "verify": "Vérifier sur la chaîne",
+    "verifying": "Vérification…",
+    "verified": "Vérifié sur la chaîne",
+    "mismatch": "Ne correspond pas à la chaîne",
+    "mismatchShort": "Écart",
+    "error": "Lecture de la chaîne impossible",
+    "fieldMismatch": "{field} : affiché {displayed}, la chaîne indique {onChain}",
+    "field": {
+      "voucher": "Numéro de reçu",
+      "provider": "Clinique",
+      "service": "Service",
+      "amount": "Montant",
+      "settledAt": "Date"
+    }
+  },
+  "offlineQueue": {
+    "title": "En attente d'envoi",
+    "note": "Ces réclamations ont été signées sur cet appareil et seront envoyées automatiquement dès le retour de la connexion.",
+    "voucher": "Bon #{id}",
+    "queuedStatus": "En attente",
+    "submitting": "Envoi…",
+    "failed": "Non envoyé : {error}",
+    "validUntil": "Valable jusqu'au {time}",
+    "submitNow": "Envoyer maintenant",
+    "discard": "Supprimer",
+    "expiredTitle": "Bon en attente supprimé",
+    "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
+    "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restaurer le paiement précédent ?",
+    "foundDescription": "Vous avez un brouillon enregistré avec {count} service(s) sélectionné(s) d'une session précédente.",
+    "restore": "Restaurer le brouillon",
+    "discard": "Ignorer",
+    "restoredMessage": "Brouillon de paiement restauré."
+  },
+  "components": {
+    "connectButton": {
+      "connecting": "Connexion…",
+      "connect": "Connecter le portefeuille",
+      "wallet": "Portefeuille",
+      "fallbackWallet": "Portefeuille Stellar",
+      "statusUnfunded": "Non financé",
+      "statusLowXlm": "XLM faible",
+      "statusActive": "Actif",
+      "accountAddress": "Adresse du compte",
+      "fundWithFriendbot": "Financer avec Friendbot",
+      "topUpWithFriendbot": "Recharger avec Friendbot",
+      "unfundedTitle": "Compte non financé sur Stellar",
+      "unfundedBody": "Ce compte n'a pas de solde en XLM. Toute transaction de contrat échouera avec « compte introuvable » tant qu'il n'aura pas reçu les fonds de réserve minimaux.",
+      "lowXlmTitle": "Le solde XLM disponible est faible pour les frais",
+      "lowXlmBodyBeforeAmount": "Le solde disponible est de",
+      "lowXlmBodyAfterAmount": ". En plus de la réserve de base du compte, les transactions exigent des XLM disponibles pour payer les frais de réseau.",
+      "lowXlmUnknown": "< 1,00 XLM",
+      "viewOnExplorer": "Voir sur Stellar Expert",
+      "disconnect": "Déconnecter le portefeuille"
+    },
+    "toast": {
+      "notifications": "Notifications",
+      "dismiss": "Fermer la notification"
+    },
+    "commandPalette": {
+      "title": "Aller à",
+      "search": "Rechercher des cliniques, des pages ou un numéro de bon",
+      "results": "Résultats de navigation",
+      "noResults": "Aucune destination correspondante",
+      "resultCount": {
+        "one": "{count} résultat",
+        "other": "{count} résultats"
+      },
+      "openVoucher": "Ouvrir le bon n° {id}",
+      "openVoucherDescription": "Aller au numéro de bon",
+      "clinicCountry": "Clinique en {country}",
+      "pages": {
+        "clinics": "Parcourir les cliniques vérifiées",
+        "howItWorks": "Découvrir les bons de soins",
+        "myVouchers": "Voir les bons financés",
+        "clinicDesk": "Gérer une clinique",
+        "attest": "Examiner les demandes de soins",
+        "attesters": "Voir les attestateurs de confiance",
+        "stats": "Voir les statistiques du protocole",
+        "faq": "Questions fréquentes",
+        "privacy": "Informations de confidentialité",
+        "adminLabel": "Admin",
+        "admin": "Administration"
+      }
+    },
+    "demoTour": {
+      "title": "Nouveau ici ? Faites la visite de démonstration",
+      "introTestnet": "Trois étapes pour découvrir tout le produit : obtenir des USDC de test, financer un bon, puis le suivre jusqu'au reçu.",
+      "introMainnet": "Trois étapes pour découvrir tout le produit : connecter un portefeuille, financer un bon, puis le suivre jusqu'au reçu.",
+      "start": "Faire la visite",
+      "dismiss": "Ignorer la visite de démonstration",
+      "stepTitle": "Visite de démonstration — étape {step} sur {total}",
+      "back": "Retour",
+      "next": "Suivant",
+      "finish": "Terminer",
+      "skip": "Passer",
+      "steps": {
+        "testUsdcTitle": "Obtenir des USDC de test",
+        "testUsdcBody": "Connectez un portefeuille de réseau de test et retirez des USDC de démonstration depuis le robinet — un rechargement par portefeuille et par jour.",
+        "testUsdcCta": "Ouvrir Mes bons",
+        "connectTitle": "Connecter votre portefeuille",
+        "connectBody": "Connectez un portefeuille Stellar contenant des USDC. L'application ne voit jamais votre clé secrète ; votre portefeuille signe chaque transaction.",
+        "connectCta": "Ouvrir Mes bons",
+        "fundTitle": "Financer des soins pour une clinique",
+        "fundBody": "Choisissez une clinique vérifiée et la prestation dont votre famille a besoin. L'argent est mis sous séquestre par le contrat, pas encore envoyé à la clinique.",
+        "fundCta": "Parcourir les cliniques",
+        "followTitle": "Suivre le bon",
+        "followBody": "Chaque bon a sa propre page avec son historique on-chain, son reçu et les actions possibles. Il peut être partagé par lien sans risque.",
+        "followCta": "Voir vos bons"
+      }
+    },
+    "copyValue": {
+      "defaultLabel": "valeur",
+      "copy": "Copier {label}",
+      "copied": "Copié : {label}",
+      "failed": "Impossible de copier {label}",
+      "labels": {
+        "clinicAddress": "l'adresse de la clinique",
+        "funderAddress": "l'adresse du financeur",
+        "attesterAddress": "l'adresse de l'attestateur",
+        "patientReference": "la référence du patient",
+        "contractId": "l'identifiant du contrat",
+        "paymentLink": "le lien de paiement SEP-7"
+      }
+    },
+    "savedPatientControls": {
+      "selectFailed": "Impossible de sélectionner ce patient.",
+      "nicknameRequired": "Saisissez un surnom pour ce patient.",
+      "identifierRequired": "Saisissez une référence patient et une clé d'au moins 32 caractères.",
+      "saveFailed": "Impossible d'enregistrer dans ce navigateur. Vérifiez que le stockage du navigateur est disponible.",
+      "nicknameEmpty": "Saisissez un surnom.",
+      "nicknameDuplicate": "Ce surnom est déjà utilisé.",
+      "renameFailed": "Impossible de renommer ce patient. Vérifiez que le stockage du navigateur est disponible.",
+      "deleteFailed": "Impossible de supprimer ce patient. Vérifiez que le stockage du navigateur est disponible.",
+      "passphraseTooShort": "Utilisez une phrase secrète d'au moins 12 caractères.",
+      "passphraseMismatch": "Les phrases secrètes ne correspondent pas.",
+      "protectFailed": "Impossible de protéger les patients enregistrés dans ce navigateur.",
+      "unlockFailed": "Impossible de déverrouiller les patients enregistrés. Vérifiez votre phrase secrète et réessayez.",
+      "savedPatients": "Patients enregistrés",
+      "choosePatient": "Choisir un patient enregistré",
+      "manage": "Gérer",
+      "saveAs": "Enregistrer le patient sous",
+      "patientNickname": "Surnom du patient",
+      "nicknamePlaceholder": "ex. Maman",
+      "savePatient": "Enregistrer le patient",
+      "storageNote": "Les références et clés enregistrées restent uniquement dans ce navigateur et ne sont jamais envoyées au service. Toute personne ayant accès à ce profil de navigateur peut les utiliser.",
+      "protected": "Les clés des patients enregistrés sont protégées.",
+      "passphrase": "Phrase secrète",
+      "unlock": "Déverrouiller les patients enregistrés",
+      "manageTitle": "Gérer les patients enregistrés",
+      "done": "Terminé",
+      "encryptedNote": "Les clés des patients enregistrés sont chiffrées sur cet appareil.",
+      "lock": "Verrouiller les patients enregistrés",
+      "protectTitle": "Protéger les clés enregistrées par une phrase secrète",
+      "newPassphraseLabel": "Nouvelle phrase secrète (12 caractères minimum)",
+      "newPassphrase": "Nouvelle phrase secrète",
+      "confirmPassphrase": "Confirmer la phrase secrète",
+      "protect": "Protéger les clés enregistrées",
+      "hiddenNote": "Les références et clés des patients ne sont pas affichées ici.",
+      "empty": "Aucun patient enregistré.",
+      "newNickname": "Nouveau surnom",
+      "saveName": "Enregistrer le nom",
+      "rename": "Renommer {nickname}",
+      "delete": "Supprimer {nickname}"
+    },
+    "sep24Cashout": {
+      "title": "Retrait local",
+      "invalidAmount": "Saisissez un montant supérieur à zéro avec au maximum 7 décimales.",
+      "limitsAccepted": "L'ancre accepte de {min} à {max} {asset}.",
+      "anyMinimum": "tout montant",
+      "anyMaximum": "tout montant",
+      "popupBlocked": "Autorisez les fenêtres pop-up pour ce site afin de continuer vers l'ancre.",
+      "noAnchor": "Aucune ancre de retrait configurée ne dessert actuellement {country}. Votre clinique reçoit des USDC on-chain ; le retrait en monnaie locale est un service distinct fourni par une ancre.",
+      "smartAccount": "Ce portefeuille est un compte de contrat intelligent. Les ancres configurées exigent une authentification SEP-10 avec une adresse de compte Stellar ; le retrait n'est donc pas disponible depuis ce portefeuille.",
+      "intro": "Le règlement du bon verse des USDC sur votre portefeuille Stellar. Le retrait est une opération hors chaîne distincte via une ancre, avec ses propres frais et délais de traitement.",
+      "issuerUnsupported": "Une ancre est configurée pour {country}, mais aucune n'accepte l'émetteur USDC de ce déploiement. Demandez à l'opérateur de configurer une ancre pour le jeton exact avant de retirer.",
+      "anchor": "Ancre",
+      "selectAnchor": "Choisir une ancre",
+      "amount": "Montant en USDC",
+      "withdraw": "Retirer avec l'ancre",
+      "limits": "Limites de l'ancre : {min}–{max} {asset}.",
+      "noMinimum": "aucun minimum",
+      "noMaximum": "aucun maximum",
+      "disabled": "L'ancre a désactivé les retraits en {asset}.",
+      "requirements": "L'ancre peut exiger une vérification d'identité (KYC), des documents supplémentaires et l'acceptation de ses propres frais et conditions. SCI Healthcare n'effectue ni ne garantit le paiement en monnaie fiduciaire.",
+      "statusTitle": "Statut du retrait auprès de l'ancre",
+      "transaction": "Transaction de l'ancre : {id}",
+      "payout": "Montant versé selon l'ancre : {amount} {asset}",
+      "moreInfo": "Plus d'informations de l'ancre",
+      "statusFailed": "Échec de l'actualisation du statut : {error}. L'ancre peut toujours traiter ce retrait.",
+      "refresh": "Actualiser le statut",
+      "autoRefresh": "Actualisation automatique toutes les 12 secondes.",
+      "settlementNote": "Le retrait ne modifie pas le statut du bon ni le règlement on-chain.",
+      "viewAccount": "Voir votre compte Stellar"
+    },
+    "ui": {
+      "closeDialog": "Fermer la boîte de dialogue",
+      "moreInformation": "Plus d'informations"
+    }
   }
 }

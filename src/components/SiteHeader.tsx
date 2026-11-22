@@ -58,7 +58,7 @@ export function SiteHeader() {
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span
               aria-hidden
-              className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm text-white"
+              className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--color-brand)] text-sm text-[var(--color-brand-text)]"
             >
               ✚
             </span>

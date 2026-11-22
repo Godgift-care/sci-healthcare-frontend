@@ -19,6 +19,16 @@
  * stay light pills with dark text, which keeps their contrast in both
  * themes. Applied via `data-theme` before first paint, so no flash.
  */
+:root {
+  --color-brand-text: #ffffff;
+}
+
+/*
+ * Dark palette (#10). Every token-based component (cards, header, buttons,
+ * inputs) follows these automatically; the pastel status badges and alerts
+ * stay light pills with dark text, which keeps their contrast in both
+ * themes. Applied via `data-theme` before first paint, so no flash.
+ */
 :root[data-theme='dark'] {
   --color-ink: #e8eef4;
   --color-ink-soft: #9aa7b8;
@@ -31,6 +41,7 @@
   --color-danger: #f87171;
   --color-ok: #4ade80;
   color-scheme: dark;
+  --color-brand-text: #020617;
 }
 
 html,
@@ -63,6 +74,21 @@ body {
 
   body {
     font-size: 10pt;
+  }
+
+  .clinic-desk-page {
+    gap: 0 !important;
+  }
+
+  .clinic-desk-page > :not(.clinic-daily-summary) {
+    display: none !important;
+  }
+
+  .clinic-daily-summary {
+    break-inside: avoid-page;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
   }
 
   .voucher-print-document,
@@ -115,4 +141,22 @@ body {
  */
 [dir='rtl'] .rtl-flip {
   transform: scaleX(-1);
+}
+
+/*
+ * Respect reduced-motion preferences (#306).
+ *
+ * Motion triggers nausea and vestibular symptoms for sensitive users.
+ * When prefers-reduced-motion: reduce is requested, animations and transitions
+ * are disabled or shortened to an imperceptible fade (<= 0.01ms).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

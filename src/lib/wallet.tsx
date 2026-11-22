@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { config } from './config';
+import { formatXlm } from './amounts';
 import { mockSignRejects, mockWalletAddress } from './e2e-seam';
 import {
   PASSKEY_WALLET_ID,
@@ -19,7 +20,13 @@ import {
   getStoredPasskeyAddress,
   signWithPasskey,
 } from './passkey';
-import { checkAccountFunded, getAccountSpendableBalance } from './stellar';
+import {
+  checkAccountFunded,
+  getAccountSpendableBalance,
+  type RestoreFootprintSignContext,
+} from './stellar';
+import { defaultLocale, isLocale } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 import {
   WALLET_CONNECT_WALLET_ID,
   isWalletConnectConfigured,
@@ -54,7 +61,10 @@ export type WalletState = {
   networkMismatch: boolean;
   connect: (walletId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
-  signTransaction: (xdr: string) => Promise<string>;
+  signTransaction: (
+    xdr: string,
+    context?: RestoreFootprintSignContext,
+  ) => Promise<string>;
 };
 
 const WalletContext = createContext<WalletState | null>(null);
@@ -391,7 +401,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signTransaction = useCallback(
-    async (xdr: string) => {
+    async (xdr: string, context?: RestoreFootprintSignContext) => {
       if (!address) throw new Error('Connect a wallet first');
       if (mockWalletAddress()) {
         // Test seam (#1): a test can make the mock wallet refuse to sign so
@@ -401,6 +411,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
       if (networkMismatch) throw new Error('Switch your wallet to the app network before signing');
       if (mockWalletAddress()) return xdr;
+
+      if (context?.kind === 'restore-footprint') {
+        const locale = isLocale(document.documentElement.lang)
+          ? document.documentElement.lang
+          : defaultLocale;
+        const confirmed = window.confirm(
+          translate(locale, 'wallet.restoreFootprintConfirm', {
+            restoreFee: formatXlm(context.restoreFee),
+            transactionFee: formatXlm(context.transactionFee),
+            totalFee: formatXlm(context.restoreFee + context.transactionFee),
+          }),
+        );
+        if (!confirmed) {
+          throw new Error(translate(locale, 'wallet.restoreFootprintCancelled'));
+        }
+      }
 
       const savedWalletId = (() => {
         try {

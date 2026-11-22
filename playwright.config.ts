@@ -69,6 +69,8 @@ export default defineConfig({
     timeout: 180 * 1000,
     env: {
       NEXT_PUBLIC_API_URL: 'http://localhost:8080',
+      // Keep the footer's build label stable across CI commits.
+      VERCEL_GIT_COMMIT_SHA: '0123456789abcdef0123456789abcdef01234567',
       // The visual-only command captures the default (flag-off) deployment.
       // E2E builds enable sponsorship to exercise the opt-in flow as well.
       NEXT_PUBLIC_SPONSORED_FEES: process.argv.includes('tests/visual') ? 'false' : 'true',
