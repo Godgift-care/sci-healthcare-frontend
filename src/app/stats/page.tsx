@@ -3,8 +3,23 @@
 import { useMemo, useState } from 'react';
 
 import { formatUsdc } from '@/lib/amounts';
-import { useDailyStats, useProviders, useStats, useVouchers } from '@/lib/hooks';
-import { Card, Empty } from '@/components/ui';
+import { compareEscrow } from '@/lib/escrow';
+import {
+  buildClinicCountryCsvRows,
+  buildCountryVoucherCsvRows,
+  buildDailyStatsCsvRows,
+  downloadCsv,
+} from '@/lib/csv';
+import {
+  useDailyStats,
+  useEscrowSummary,
+  useOpenEscrowTotal,
+  useProviders,
+  useStats,
+  useVouchers,
+} from '@/lib/hooks';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+import { Alert, Button, Card, Empty } from '@/components/ui';
 import { DataTable } from '@/components/DataTable';
 import { SkeletonCard } from '@/components/Skeleton';
 import { WidgetBoundary } from '@/components/WidgetBoundary';
@@ -129,6 +144,7 @@ function ActivityChart({
 }
 
 export default function StatsPage() {
+  const { t, locale } = useLocaleContext();
   const [days, setDays] = useState<TimeRange>(30);
   const [showTables, setShowTables] = useState<boolean>(false);
 
@@ -136,6 +152,13 @@ export default function StatsPage() {
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
   const { providers } = useProviders();
   const { vouchers } = useVouchers({});
+  // The contract's own escrow accounting, read by simulation without a
+  // wallet, beside the indexer's total for the same money (#295).
+  const { escrow, error: escrowError, isLoading: escrowLoading } = useEscrowSummary();
+  const { indexedOpen, error: indexedError } = useOpenEscrowTotal();
+  const escrowComparison = escrow
+    ? compareEscrow(escrow[0], escrow[1], indexedOpen)
+    : null;
 
   // Aggregate country statistics
   const countryCounts = useMemo(() => {
@@ -200,6 +223,37 @@ export default function StatsPage() {
     return series.reduce((acc, s) => acc + BigInt(s.settled.amount || '0'), 0n).toString();
   }, [series]);
 
+  function downloadDailyActivityCsv() {
+    downloadCsv(`daily-activity-${days}d.csv`, buildDailyStatsCsvRows(series));
+  }
+
+  function downloadClinicsByCountryCsv() {
+    downloadCsv(
+      'clinics-by-country.csv',
+      buildClinicCountryCsvRows(
+        countryCounts.map(([country, count]) => ({
+          country,
+          registered: count.count,
+          active: count.active,
+        })),
+      ),
+    );
+  }
+
+  function downloadCountryVouchersCsv() {
+    downloadCsv(
+      'voucher-activity-by-country.csv',
+      buildCountryVoucherCsvRows(
+        countryVouchers.map(([country, activity]) => ({
+          country,
+          funded: activity.funded,
+          settled: activity.settled,
+          settledValue: activity.settledValue,
+        })),
+      ),
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -220,7 +274,7 @@ export default function StatsPage() {
               onClick={() => setDays(r)}
               className={`rounded-md px-2.5 py-1 font-medium transition ${
                 days === r
-                  ? 'bg-[var(--color-brand)] text-white'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                   : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
               }`}
             >
@@ -275,16 +329,94 @@ export default function StatsPage() {
         </Card>
       </section>
 
+      {/* On-chain escrow (#295) */}
+      <section aria-label={t('stats.escrowTitle')}>
+        <Card className="space-y-3 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">{t('stats.escrowTitle')}</h2>
+              <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                {t('stats.escrowNote')}
+              </p>
+            </div>
+            <div className="text-end">
+              <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                {t('stats.escrowOpen')}
+              </div>
+              <div className="mt-1 text-2xl font-bold">
+                {escrowLoading
+                  ? '…'
+                  : escrow
+                    ? `$${formatUsdc(escrow[0], locale)}`
+                    : '—'}
+              </div>
+              {escrow && (
+                <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                  {t('stats.escrowBalance', {
+                    amount: `$${formatUsdc(escrow[1], locale)}`,
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {indexedOpen !== null && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowIndexed', {
+                amount: `$${formatUsdc(indexedOpen, locale)}`,
+              })}
+            </p>
+          )}
+
+          {escrowError && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowUnavailable')}
+            </p>
+          )}
+          {indexedError && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('stats.escrowIndexedUnavailable')}
+            </p>
+          )}
+
+          {escrowComparison?.solvencyDiffers && (
+            <Alert>
+              {t('stats.escrowSolvencyMismatch', {
+                escrow: `$${formatUsdc(escrowComparison.openEscrow, locale)}`,
+                balance: `$${formatUsdc(escrowComparison.tokenBalance, locale)}`,
+              })}
+            </Alert>
+          )}
+          {escrowComparison?.indexerDiffers && (
+            <Alert kind="info">
+              {t('stats.escrowIndexerMismatch', {
+                chain: `$${formatUsdc(escrowComparison.openEscrow, locale)}`,
+                indexed: `$${formatUsdc(escrowComparison.indexedOpen ?? 0n, locale)}`,
+              })}
+            </Alert>
+          )}
+        </Card>
+      </section>
+
       {/* View Mode Toggle for Accessibility */}
       <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
         <h2 className="text-base font-semibold">Daily activity ({days} days)</h2>
-        <button
-          type="button"
-          onClick={() => setShowTables(!showTables)}
-          className="text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
-        >
-          {showTables ? 'Hide data tables' : 'Show accessible data tables'}
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={downloadDailyActivityCsv}
+            disabled={series.length === 0}
+          >
+            {t('stats.downloadDaily')}
+          </Button>
+          <button
+            type="button"
+            onClick={() => setShowTables(!showTables)}
+            className="text-xs font-medium text-[var(--color-brand)] underline hover:opacity-80"
+          >
+            {showTables ? 'Hide data tables' : 'Show accessible data tables'}
+          </button>
+        </div>
       </div>
 
       {dailyLoading && (
@@ -404,7 +536,16 @@ export default function StatsPage() {
 
       {/* Country Breakdown Table */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Clinics by country</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Clinics by country</h2>
+          <Button
+            variant="ghost"
+            onClick={downloadClinicsByCountryCsv}
+            disabled={countryCounts.length === 0}
+          >
+            {t('stats.downloadClinics')}
+          </Button>
+        </div>
         <Card className="overflow-x-auto p-4">
           <table className="block w-full text-start text-sm sm:table">
             <caption className="sr-only">Registered clinics grouped by country</caption>
@@ -435,7 +576,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {stats.count} registered
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       {stats.active} active
                     </td>
                   </tr>
@@ -448,7 +589,16 @@ export default function StatsPage() {
 
       {/* Vouchers by country */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold">Voucher activity by country</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Voucher activity by country</h2>
+          <Button
+            variant="ghost"
+            onClick={downloadCountryVouchersCsv}
+            disabled={countryVouchers.length === 0}
+          >
+            {t('stats.downloadVouchers')}
+          </Button>
+        </div>
         <Card className="overflow-x-auto p-4">
           <table className="block w-full text-left text-sm sm:table">
             <caption className="sr-only">
@@ -484,7 +634,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
                       {activity.funded} funded
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
                       {activity.settled} settled
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">

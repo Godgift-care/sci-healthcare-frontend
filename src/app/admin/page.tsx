@@ -7,19 +7,22 @@ import useSWR from 'swr';
 import { useToast } from '@/components/Toast';
 import { Alert, Button, Card, Empty, ExplorerLink, Modal } from '@/components/ui';
 import { api, type Attester, type Provider, type Voucher } from '@/lib/api';
-import { formatCurrency } from '@/lib/amounts';
+import { formatCurrency, toAmountInput } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
 import { disputeReasonLabel } from '@/lib/disputes';
 import { humaniseError, REGISTRY_ERRORS, VOUCHER_ERRORS } from '@/lib/errors';
 import { invalidateProvider, invalidateVouchers, useAdminAccess } from '@/lib/hooks';
 import { registry, voucher as voucherContract, type ProviderStanding } from '@/lib/protocol';
+import { parseSplitAmount, splitBreakdown } from '@/lib/split';
 import { useWallet } from '@/lib/wallet';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 const PAGE_SIZE = 50;
 
 type AdminAction =
   | { kind: 'provider'; provider: Provider; status: ProviderStanding }
   | { kind: 'resolve'; voucher: Voucher; refundFunder: boolean }
+  | { kind: 'split'; voucher: Voucher }
   | { kind: 'remove-attester'; attester: Attester };
 
 function shortAddress(address: string): string {
@@ -30,6 +33,7 @@ export default function AdminPage() {
   const router = useRouter();
   const { address, signTransaction, connect } = useWallet();
   const { isAdmin, isLoading: checkingAdmin, error: accessError } = useAdminAccess(address);
+  const { t } = useLocaleContext();
   const toast = useToast();
   const [offsets, setOffsets] = useState({ providers: 0, vouchers: 0, attesters: 0 });
   const [action, setAction] = useState<AdminAction | null>(null);
@@ -38,6 +42,14 @@ export default function AdminPage() {
   const [quote, setQuote] = useState<{ voucherId: string; amounts: [bigint, bigint] } | null>(null);
   const [quoteError, setQuoteError] = useState<{ voucherId: string; message: string } | null>(null);
   const [quoteLoadingId, setQuoteLoadingId] = useState<string | null>(null);
+  const [splitInput, setSplitInput] = useState('');
+  const [splitQuote, setSplitQuote] = useState<{
+    voucherId: string;
+    gross: bigint;
+    fee: bigint;
+  } | null>(null);
+  const [splitQuoteError, setSplitQuoteError] = useState<string | null>(null);
+  const [splitQuoteLoading, setSplitQuoteLoading] = useState(false);
 
   useEffect(() => {
     if (address && !checkingAdmin && !isAdmin) router.replace('/');
@@ -84,6 +96,41 @@ export default function AdminPage() {
       });
   }
 
+  // The fee is a contract read on the gross award. The preview only counts
+  // when the quote matches the amount now in the field, so a slower earlier
+  // answer cannot overwrite the current one.
+  function requestSplitQuote(voucherId: string, gross: bigint) {
+    setSplitQuoteLoading(true);
+    setSplitQuoteError(null);
+    voucherContract
+      .quote(gross)
+      .then(([fee]) => setSplitQuote({ voucherId, gross, fee }))
+      .catch((err: unknown) => {
+        setSplitQuote(null);
+        setSplitQuoteError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => setSplitQuoteLoading(false));
+  }
+
+  function changeSplitAmount(value: string, voucher: Voucher) {
+    setSplitInput(value);
+    const gross = parseSplitAmount(value, BigInt(voucher.amount));
+    if (gross === null) {
+      setSplitQuote(null);
+      setSplitQuoteError(null);
+      setSplitQuoteLoading(false);
+      return;
+    }
+    requestSplitQuote(voucher.id, gross);
+  }
+
+  function openSplit(voucher: Voucher) {
+    setAction({ kind: 'split', voucher });
+    setSplitInput(toAmountInput(voucher.amount));
+    setSplitQuote(null);
+    requestSplitQuote(voucher.id, BigInt(voucher.amount));
+  }
+
   async function submitAction() {
     if (!address || !action) return;
     setBusy(true);
@@ -105,6 +152,16 @@ export default function AdminPage() {
           signTransaction,
         );
         await Promise.all([mutateVouchers(), invalidateVouchers(action.voucher.id)]);
+      } else if (action.kind === 'split') {
+        const gross = parseSplitAmount(splitInput, BigInt(action.voucher.amount));
+        if (gross === null) throw new Error('Enter an amount within the escrow.');
+        result = await voucherContract.resolveSplit(
+          address,
+          action.voucher.id,
+          gross,
+          signTransaction,
+        );
+        await Promise.all([mutateVouchers(), invalidateVouchers(action.voucher.id)]);
       } else {
         result = await registry.removeAttester(address, action.attester.address, signTransaction);
         await mutateAttesters();
@@ -120,7 +177,9 @@ export default function AdminPage() {
       toast.error(
         humaniseError(
           err,
-          action.kind === 'resolve' ? VOUCHER_ERRORS : REGISTRY_ERRORS,
+          action.kind === 'resolve' || action.kind === 'split'
+            ? VOUCHER_ERRORS
+            : REGISTRY_ERRORS,
         ),
       );
     } finally {
@@ -173,10 +232,30 @@ export default function AdminPage() {
   const currentAction = action;
   const isProviderAction = currentAction?.kind === 'provider';
   const isResolution = currentAction?.kind === 'resolve';
+  const isSplit = currentAction?.kind === 'split';
   const currentQuote = isResolution && quote?.voucherId === currentAction.voucher.id ? quote : null;
   const currentQuoteError = isResolution && quoteError?.voucherId === currentAction.voucher.id ? quoteError.message : null;
   const quoteLoading = isResolution && quoteLoadingId === currentAction.voucher.id;
-  const confirmDisabled = busy || quoteLoading || (!!isResolution && !currentAction.refundFunder && !currentQuote);
+
+  // The split preview only counts when the quote belongs to the amount now
+  // in the field, so a stale async answer cannot be confirmed.
+  const splitGross = isSplit
+    ? parseSplitAmount(splitInput, BigInt(currentAction.voucher.amount))
+    : null;
+  const currentSplit =
+    isSplit &&
+    splitGross !== null &&
+    splitQuote?.voucherId === currentAction.voucher.id &&
+    splitQuote.gross === splitGross
+      ? splitBreakdown(BigInt(currentAction.voucher.amount), splitGross, splitQuote.fee)
+      : null;
+
+  const confirmDisabled =
+    busy ||
+    quoteLoading ||
+    splitQuoteLoading ||
+    (!!isResolution && !currentAction.refundFunder && !currentQuote) ||
+    (isSplit && !currentSplit);
 
   return (
     <div className="space-y-8">
@@ -248,6 +327,9 @@ export default function AdminPage() {
                 <div className="flex flex-wrap gap-2">
                   <Button variant="danger" disabled={busy} onClick={() => openResolution(voucher, true)}>Refund funder</Button>
                   <Button disabled={busy} onClick={() => openResolution(voucher, false)}>Pay clinic</Button>
+                  <Button variant="ghost" disabled={busy} onClick={() => openSplit(voucher)}>
+                    {t('admin.split.button')}
+                  </Button>
                 </div>
               </div>
             ))}
@@ -310,7 +392,7 @@ export default function AdminPage() {
         title={
           isProviderAction
             ? `${currentAction.status === 'Active' ? 'Approve' : 'Suspend'} clinic`
-            : isResolution
+            : isResolution || isSplit
               ? `Resolve voucher #${currentAction.voucher.id}`
               : 'Remove attester'
         }
@@ -346,6 +428,62 @@ export default function AdminPage() {
                   <strong>{currentAction.voucher.provider.name}</strong> (<code className="break-all">{currentAction.voucher.provider.address}</code>) receives{' '}
                   <strong>{formatCurrency(currentQuote.amounts[1])}</strong>; the protocol fee is {formatCurrency(currentQuote.amounts[0])}. The funder receives nothing.
                 </p>
+              )}
+            </div>
+          )}
+          {isSplit && currentAction?.kind === 'split' && (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('admin.split.amountLabel')}
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={splitInput}
+                  onChange={(event) => changeSplitAmount(event.target.value, currentAction.voucher)}
+                  aria-label={t('admin.split.amountLabel')}
+                  className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                />
+              </label>
+              <p className="text-xs text-[var(--color-ink-soft)]">
+                {t('admin.split.amountHint', {
+                  amount: formatCurrency(currentAction.voucher.amount),
+                })}
+              </p>
+              {splitInput.trim() !== '' && splitGross === null && (
+                <Alert>
+                  {t('admin.split.invalid', {
+                    amount: formatCurrency(currentAction.voucher.amount),
+                  })}
+                </Alert>
+              )}
+              {splitQuoteLoading && <p role="status">{t('admin.split.loading')}</p>}
+              {splitQuoteError && (
+                <Alert>
+                  {t('admin.split.error', { message: splitQuoteError })}
+                </Alert>
+              )}
+              {currentSplit && (
+                <div className="space-y-1 text-sm">
+                  <p>
+                    {t('admin.split.clinicReceives', {
+                      clinic: currentAction.voucher.provider.name,
+                      net: formatCurrency(currentSplit.providerNet),
+                      fee: formatCurrency(currentSplit.fee),
+                    })}
+                  </p>
+                  <p>
+                    {t('admin.split.funderReceives', {
+                      amount: formatCurrency(currentSplit.toFunder),
+                    })}
+                  </p>
+                  <p className="text-xs text-[var(--color-ink-soft)]">
+                    {t('admin.split.sum', {
+                      amount: formatCurrency(currentSplit.escrow),
+                    })}
+                  </p>
+                </div>
               )}
             </div>
           )}

@@ -71,7 +71,7 @@ test.describe('Batch refund on My vouchers (#45)', () => {
     await refundAllBtn.click();
 
     // Verify completion summary alert
-    await expect(page.getByText(/Refunded 2 vouchers successfully/)).toBeVisible();
+    await expect(page.getByText(/Refunded 2 voucher\(s\) successfully/)).toBeVisible();
 
     // Verify smart contract calls
     const invokes = await mockInvokes(page);

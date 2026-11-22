@@ -23,8 +23,10 @@
  * voucher's state comes from the chain, and showing yesterday's answer
  * while offline invites a funder to act on it.
  *
- * Writes are untouched — they were never cacheable — and no request is ever
- * served from cache while the network answers.
+ * A newly installed worker waits until a user chooses to reload, so a deploy
+ * cannot replace a page in the middle of a contract write. Writes are
+ * untouched — they were never cacheable — and no request is ever served from
+ * cache while the network answers.
  */
 
 const CACHE = 'sci-healthcare-shell-v1';
@@ -50,9 +52,14 @@ self.addEventListener('install', (event) => {
           cache.add(new Request(url, { cache: 'reload' })).catch(() => undefined),
         ),
       );
-      await self.skipWaiting();
     })(),
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {

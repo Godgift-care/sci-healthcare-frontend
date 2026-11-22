@@ -1,22 +1,33 @@
 'use client';
 
-import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { notFound } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 
 import { ApiError } from '@/lib/api';
-import { formatDate, formatUsdc } from '@/lib/amounts';
+import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
-import { useLiveUpdates, useNameIndex, useNow, useVoucher, useVoucherEvents } from '@/lib/hooks';
+import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
+import {
+  useLiveUpdates,
+  useNameIndex,
+  useNow,
+  useProviders,
+  useVoucher,
+  useVoucherEvents,
+} from '@/lib/hooks';
+import { voucher as voucherContract } from '@/lib/protocol';
+import { eligibleRedirects } from '@/lib/redirect';
 import { problemReportUrl } from '@/lib/report-problem';
 import { rememberRecentVoucherId } from '@/lib/recent-vouchers';
-import { stepTxHashes, voucherTimeline, type StepState } from '@/lib/timeline';
+import { stepTxHashes, voucherTimeline, getStatusExplanationKey, type StepState, type VoucherRole } from '@/lib/timeline';
 import { useWallet } from '@/lib/wallet';
 import { CopyValue } from '@/components/CopyValue';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { VoucherQr } from '@/components/VoucherQr';
 import { VoucherRow } from '@/components/VoucherRow';
-import { Alert, Button, Card, ExplorerLink, Field, StatusBadge } from '@/components/ui';
+import { Alert, Button, Card, ExplorerLink, Field, Modal, StatusBadge } from '@/components/ui';
+import { useToast } from '@/components/Toast';
 import { buildVoucherExpiryIcs } from '@/lib/ics';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
@@ -38,11 +49,15 @@ function isValidVoucherId(id: string): boolean {
  */
 export default function VoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { address } = useWallet();
+  const { address, signTransaction } = useWallet();
   const { t, locale } = useLocaleContext();
+  const toast = useToast();
   const now = useNow();
   const names = useNameIndex();
   const [copied, setCopied] = useState(false);
+  const [redirectOpen, setRedirectOpen] = useState(false);
+  const [redirectTarget, setRedirectTarget] = useState<string | null>(null);
+  const [redirectBusy, setRedirectBusy] = useState(false);
 
   function voucherShareMessage() {
     const url = new URL(`/vouchers/${id}`, window.location.origin).toString();
@@ -78,6 +93,10 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   }
 
   const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
+  // Only fetched once the funder opens the move dialog (#287).
+  const { providers: redirectProviders, isLoading: redirectLoading } = useProviders(
+    redirectOpen ? { status: 'Active' } : null,
+  );
   const loadedVoucherId = v?.id;
   useEffect(() => {
     if (loadedVoucherId) rememberRecentVoucherId(loadedVoucherId);
@@ -105,6 +124,45 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         : (['settle', 'refund'] as const);
 
   const steps = voucherTimeline(v, v.receipt, now, stepTxHashes(events));
+
+  // The contract will only accept an active clinic that offers this service
+  // at or below the escrow (#287).
+  const redirectCandidates = eligibleRedirects(redirectProviders, {
+    serviceCode: v.serviceCode,
+    amount: BigInt(v.amount),
+    exclude: v.provider.address,
+  });
+  const redirectChosen =
+    redirectCandidates.find((candidate) => candidate.address === redirectTarget) ??
+    null;
+
+  async function confirmRedirect() {
+    if (!address || !redirectChosen || !v) return;
+    setRedirectBusy(true);
+    try {
+      const result = await voucherContract.redirect(
+        address,
+        v.id,
+        redirectChosen.address,
+        signTransaction,
+      );
+      await mutate();
+      toast.success(
+        <>
+          {t('voucher.redirect.success', { clinic: redirectChosen.name })}{' '}
+          <ExplorerLink href={explorerTx(result.hash)}>
+            {t('common.viewTransaction')}
+          </ExplorerLink>
+        </>,
+      );
+      setRedirectOpen(false);
+      setRedirectTarget(null);
+    } catch (err) {
+      toast.error(humaniseError(err, VOUCHER_ERRORS));
+    } finally {
+      setRedirectBusy(false);
+    }
+  }
 
   function addToCalendar() {
     if (!v || typeof window === 'undefined') return;
@@ -140,6 +198,14 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
   const shareMessage = voucherShareMessage();
   const encodedShareMessage = encodeURIComponent(shareMessage);
 
+  const role: VoucherRole =
+    address && address === v.funder
+      ? 'funder'
+      : address && address === v.provider.address
+        ? 'clinic'
+        : 'patient';
+  const statusExplanation = t(getStatusExplanationKey(v.status, role));
+
   return (
     <div className="voucher-print-page space-y-6 print:space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
@@ -148,7 +214,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
             <span className="mono text-xs text-[var(--color-ink-soft)]">
               {t('voucher.voucherNumber', { id: v.id })}
             </span>
-            <StatusBadge status={v.status} />
+            <StatusBadge status={v.status} role={role} />
             <button
               type="button"
               onClick={() => void copyLink()}
@@ -199,14 +265,17 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               SMS
             </a>
           </div>
+          <span className="sr-only" data-testid="voucher-status-explanation">
+            {statusExplanation}
+          </span>
           <h1 className="mt-1 text-xl font-semibold tracking-tight">
             {v.serviceLabel ?? `Service ${v.serviceCode}`}
           </h1>
           <p className="text-sm text-[var(--color-ink-soft)]">
             {t('voucher.at')}{' '}
-            <Link href={`/clinics/${v.provider.address}`} className="underline underline-offset-2">
+            <DetailLink detail={{ kind: 'clinic', id: v.provider.address }} className="underline underline-offset-2">
               {v.provider.name}
-            </Link>{' '}
+            </DetailLink>{' '}
             · {v.provider.country}
           </p>
         </div>
@@ -261,7 +330,11 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         <Card className="voucher-print-history space-y-4 p-5 print:space-y-2 print:p-3">
           <div className="print:hidden">
             <Field label={t('voucher.fundedBy')}>
-              <CopyValue value={v.funder} name={names.get(v.funder)} label="funder address" />
+              <CopyValue
+                value={v.funder}
+                name={names.get(v.funder)}
+                label={t('components.copyValue.labels.funderAddress')}
+              />
             </Field>
           </div>
           <Field label={t('voucher.expires')}>
@@ -304,7 +377,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
               <CopyValue
                 value={v.beneficiaryRef}
                 display={`${v.beneficiaryRef.slice(0, 16)}…`}
-                label="patient reference"
+                label={t('components.copyValue.labels.patientReference')}
               />
             </Field>
             <p className="text-xs text-[var(--color-ink-soft)]">
@@ -316,6 +389,93 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
           </div>
         </Card>
       </div>
+
+      {/* A funded voucher whose clinic cannot deliver can be moved before
+          the patient attends (#287). Only the funder may redirect it. */}
+      {address === v.funder && v.status === 'Funded' && (
+        <Card className="print:hidden flex flex-wrap items-center justify-between gap-3 p-5">
+          <div>
+            <h2 className="text-sm font-semibold">{t('voucher.redirect.action')}</h2>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+              {t('voucher.redirect.intro', {
+                amount: formatCurrency(v.amount, 'USD', locale),
+              })}
+            </p>
+          </div>
+          <Button variant="ghost" onClick={() => setRedirectOpen(true)}>
+            {t('voucher.redirect.action')}
+          </Button>
+        </Card>
+      )}
+
+      <Modal
+        open={redirectOpen}
+        onClose={() => {
+          if (!redirectBusy) setRedirectOpen(false);
+        }}
+        title={t('voucher.redirect.title', { id: v.id })}
+        actions={
+          <>
+            <Button
+              disabled={!redirectChosen || redirectBusy}
+              onClick={() => void confirmRedirect()}
+            >
+              {redirectBusy ? t('voucher.redirect.moving') : t('voucher.redirect.confirm')}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={redirectBusy}
+              onClick={() => setRedirectOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {redirectLoading ? (
+            <p role="status">{t('voucher.redirect.loading')}</p>
+          ) : redirectCandidates.length === 0 ? (
+            <p>
+              {t('voucher.redirect.empty', {
+                amount: formatCurrency(v.amount, 'USD', locale),
+              })}
+            </p>
+          ) : (
+            <>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {t('voucher.redirect.choose')}
+                </span>
+                <select
+                  value={redirectTarget ?? ''}
+                  onChange={(event) => setRedirectTarget(event.target.value || null)}
+                  className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                >
+                  <option value="">—</option>
+                  {redirectCandidates.map((candidate) => (
+                    <option key={candidate.address} value={candidate.address}>
+                      {t('voucher.redirect.option', {
+                        clinic: candidate.name,
+                        price: formatCurrency(candidate.price, 'USD', locale),
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {redirectChosen && (
+                <p className="text-sm">
+                  {t('voucher.redirect.confirmIntro', {
+                    clinic: redirectChosen.name,
+                    price: formatCurrency(redirectChosen.price, 'USD', locale),
+                    amount: formatCurrency(v.amount, 'USD', locale),
+                  })}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
 
       {/* The clinic can also claim from a scanned voucher link; the patient
           check guards that path too (#33). */}

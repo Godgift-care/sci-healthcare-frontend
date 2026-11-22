@@ -107,6 +107,45 @@ test('admin can approve clinics, resolve disputes, and manage attesters', async 
   ]);
 });
 
+test('admin can split a disputed voucher between clinic and funder', async ({ page }) => {
+  await useMockWallet(page, FUNDER, 0, ADMIN_READS);
+  await mockBackend(page, { vouchers: [DISPUTED_VOUCHER] });
+
+  await page.goto('/admin');
+  await page.getByRole('button', { name: 'Split escrow' }).click();
+
+  const dialog = page.getByRole('dialog');
+  const amount = dialog.getByLabel('Amount awarded to the clinic (USDC)');
+  await amount.fill('2.00');
+
+  // The contract quotes no fee in the mock, so the preview is exact:
+  // clinic $2.00, funder the remaining $1.00 of the $3.00 escrow.
+  await expect(dialog).toContainText('Ikeja General Clinic receives $2.00');
+  await expect(dialog).toContainText('The funder receives $1.00');
+  await expect(dialog).toContainText('add up to the escrow of $3.00');
+
+  await dialog.getByRole('button', { name: 'Confirm transaction' }).click();
+  await expect(page.getByRole('link', { name: 'View transaction' }).first()).toBeVisible();
+
+  const invokes = await mockInvokes(page);
+  expect(invokes.map(({ method }) => method)).toEqual(['resolve_split']);
+});
+
+test('split rejects an amount above the escrow', async ({ page }) => {
+  await useMockWallet(page, FUNDER, 0, ADMIN_READS);
+  await mockBackend(page, { vouchers: [DISPUTED_VOUCHER] });
+
+  await page.goto('/admin');
+  await page.getByRole('button', { name: 'Split escrow' }).click();
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Amount awarded to the clinic (USDC)').fill('4.00');
+  await expect(dialog).toContainText('Enter an amount between 0 and $3.00.');
+  await expect(
+    dialog.getByRole('button', { name: 'Confirm transaction' }),
+  ).toBeDisabled();
+});
+
 test('dispute refund confirmation names the funder and full escrow', async ({ page }) => {
   await useMockWallet(page, FUNDER, 0, ADMIN_READS);
   await mockBackend(page, { vouchers: [DISPUTED_VOUCHER] });
