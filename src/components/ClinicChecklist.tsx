@@ -20,7 +20,7 @@ const BADGE_STYLES: Record<ClinicChecklistStep['state'], string> = {
 
 const MARK_STYLES: Record<ClinicChecklistStep['state'], string> = {
   done: 'bg-emerald-600 text-white',
-  current: 'bg-[var(--color-brand)] text-white',
+  current: 'bg-[var(--color-brand)] text-[var(--color-brand-text)]',
   pending:
     'border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]',
 };

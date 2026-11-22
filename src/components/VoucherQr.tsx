@@ -137,7 +137,7 @@ export function VoucherQr({
                 {error}
               </div>
             ) : (
-              <div className="h-[200px] w-[200px] flex items-center justify-center text-xs text-[var(--color-ink-soft)] animate-pulse">
+              <div className="h-[200px] w-[200px] flex items-center justify-center text-xs text-[var(--color-ink-soft)] animate-pulse motion-reduce:animate-none">
                 {t('common.loading')}
               </div>
             )}

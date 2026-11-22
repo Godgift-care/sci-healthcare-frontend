@@ -1,6 +1,7 @@
 'use client';
 
 import { StrKey } from '@stellar/stellar-sdk';
+import { BASE_FEE } from '@stellar/stellar-sdk';
 import { DetailLink } from '@/components/DetailLink';
 import { use, useEffect, useMemo, useState } from 'react';
 
@@ -24,6 +25,12 @@ import {
   useVouchers,
 } from '@/lib/hooks';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
+import {
+  saveCheckoutDraft,
+  loadCheckoutDraft,
+  clearCheckoutDraft,
+  type CheckoutDraft,
+} from '@/lib/checkout-draft';
 import { config, explorerTx, isTestnet } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
@@ -33,17 +40,22 @@ import {
   type ExpiryChoice,
 } from '@/lib/expiry';
 import { usdc, voucher } from '@/lib/protocol';
-import { quoteXlmForUsdc } from '@/lib/stellar';
+import { quoteXlmForUsdc, type RestoreFootprintSignContext } from '@/lib/stellar';
+import { TransactionTimeoutError, RETRY_FEE_MULTIPLIER } from '@/lib/stellar';
 import { sponsorshipAvailable, SPONSOR_MAX_AMOUNT } from '@/lib/sponsorship';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
+import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 import { SkeletonDetail } from '@/components/Skeleton';
 import { FavouriteButton } from '@/components/FavouriteButton';
+import { ClinicMetadataLink } from '@/components/ClinicMetadataLink';
+import { clinicMetadataUrl } from '@/lib/clinic-metadata';
 
 /**
  * Registry status in the words a funder reads. A funder choosing a clinic
@@ -79,6 +91,7 @@ export default function ClinicPage({
   params: Promise<{ address: string }>;
 }) {
   const { address } = use(params);
+  const { t } = useLocaleContext();
   const { address: wallet, signTransaction, connect } = useWallet();
   const searchParams = useSearchParams();
 
@@ -118,6 +131,35 @@ export default function ClinicPage({
   const identifier = identifierDraft ?? saved.identifier;
   const secret = secretDraft ?? saved.key;
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
+
+  const [existingDraftOnMount] = useState<CheckoutDraft | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return loadCheckoutDraft(address);
+  });
+  const [draftDismissed, setDraftDismissed] = useState(false);
+  const isDraftVisible = Boolean(
+    existingDraftOnMount &&
+      existingDraftOnMount.selectedCodes.length > 0 &&
+      !draftDismissed,
+  );
+
+  const restoreDraft = () => {
+    if (!existingDraftOnMount) return;
+    setSelectedCodesOverride(existingDraftOnMount.selectedCodes);
+    setAmountOverride(existingDraftOnMount.amountOverride);
+    setExpiryChoice(existingDraftOnMount.expiryChoice);
+    setCustomExpiry(existingDraftOnMount.customExpiry);
+    if (existingDraftOnMount.patientNickname) {
+      void localIdentity.select(existingDraftOnMount.patientNickname);
+    }
+    setDraftDismissed(true);
+    toast.success(t('checkoutDraft.restoredMessage'));
+  };
+
+  const discardDraft = () => {
+    setDraftDismissed(true);
+    clearCheckoutDraft(address);
+  };
   const selectionTotal = useMemo(
     () =>
       selectedServices.reduce(
@@ -166,11 +208,35 @@ export default function ClinicPage({
     failed: { label: string; error: string }[];
   } | null>(null);
   const toast = useToast();
+  const txStatus = useTransactionStatus();
 
   // The wallet's USDC trustline (#1): checked on connect, before the fund
   // button is offered, so funding never dies at signing with a raw token
   // error. `missing` swaps the fund button for a one-click fix.
   const trustline = useUsdcTrustline();
+
+  useEffect(() => {
+    if (!address) return;
+    if (isDraftVisible) return;
+
+    if (selectedCodes.length > 0) {
+      saveCheckoutDraft(address, {
+        selectedCodes,
+        amountOverride,
+        expiryChoice,
+        customExpiry,
+        patientNickname: saved.selectedNickname,
+      });
+    }
+  }, [
+    address,
+    selectedCodes,
+    amountOverride,
+    expiryChoice,
+    customExpiry,
+    saved.selectedNickname,
+    isDraftVisible,
+  ]);
 
   useEffect(() => {
     if (!wallet) return;
@@ -211,7 +277,7 @@ export default function ClinicPage({
     } catch {
       return null;
     }
-  }, [amount]);
+  }, [amount, selectedServices.length, selectionTotal]);
 
   function toggleService(service: Service) {
     setSelectedCodes((current) => {
@@ -433,6 +499,16 @@ export default function ClinicPage({
       const ref = await beneficiaryRef(identifier, secret);
       await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
 
+      const wrappedSign = async (
+        xdr: string,
+        context?: RestoreFootprintSignContext,
+      ) => {
+        setTransactionStatus('signing');
+        const signed = await signTransaction(xdr, context);
+        setTransactionStatus('submitting');
+        return signed;
+      };
+
       for (let i = 0; i < requests.length; i++) {
         const request = { ...requests[i], beneficiaryRef: ref };
         setBatchProgress({
@@ -452,14 +528,16 @@ export default function ClinicPage({
           if (useSponsor && missingUsdc > 0n) {
             throw new Error('Sponsored funding requires enough USDC; XLM swaps are not sponsored.');
           }
+          setTransactionStatus('signing');
           const res =
             missingUsdc > 0n
               ? await voucher.createWithXlmSwap(
                   { ...request, swapAmount: missingUsdc },
-                  signTransaction,
+                  wrappedSign,
                   100,
                 )
-              : await voucher.create(request, signTransaction, useSponsor);
+              : await voucher.create(request, wrappedSign, useSponsor);
+          setTransactionStatus('confirming');
           const balance = await usdc.balance(wallet).catch(() => null);
           if (balance !== null) setWalletBalance(balance);
 
@@ -475,6 +553,41 @@ export default function ClinicPage({
           }
           trackEvent('voucher_funded');
         } catch (err) {
+          // A timed-out transaction may still land on chain. If it has not,
+          // offer to resubmit with a higher fee using the same sequence
+          // number — only one transaction per sequence number can be
+          // included, so the first attempt cannot also succeed (#316).
+          if (err instanceof TransactionTimeoutError) {
+            const retryFee = BigInt(Number(BASE_FEE) * RETRY_FEE_MULTIPLIER);
+            try {
+              const retry = await voucher.create(
+                { ...request },
+                signTransaction,
+                false,
+                retryFee,
+              );
+              const balance = await usdc.balance(wallet).catch(() => null);
+              if (balance !== null) setWalletBalance(balance);
+              let newId: string | null = null;
+              if (typeof retry.returnValue === 'bigint' || typeof retry.returnValue === 'number') {
+                newId = String(retry.returnValue);
+                succeeded.push(newId);
+                successfulTxs.push({ hash: retry.hash, id: newId });
+                void invalidateVouchers(newId);
+              } else {
+                successfulTxs.push({ hash: retry.hash, id: null });
+                void invalidateVouchers();
+              }
+              trackEvent('voucher_funded');
+              continue;
+            } catch (retryErr) {
+              failed.push({
+                label: selectedServices[i].label,
+                error: humaniseError(retryErr, VOUCHER_ERRORS),
+              });
+            }
+          }
+
           failed.push({
             label: selectedServices[i].label,
             error: humaniseError(err, VOUCHER_ERRORS),
@@ -488,8 +601,13 @@ export default function ClinicPage({
         }
       }
 
+      setReviewing(false);
       setBatchProgress(null);
       setBatchSummary({ succeeded, failed });
+      if (succeeded.length > 0) {
+        clearCheckoutDraft(address);
+        setDraftDismissed(true);
+      }
       const firstId = succeeded[0];
       const lastHash = successfulTxs.at(-1)?.hash ?? null;
       toast.success(
@@ -515,6 +633,7 @@ export default function ClinicPage({
       toast.error(message);
     } finally {
       setBusy(false);
+      setTransactionStatus('idle');
     }
   }
 
@@ -530,6 +649,8 @@ export default function ClinicPage({
     ? provider.registeredAt
     : null;
   const showSettled = !loadingSettled && !settledError;
+  const websiteUrl = clinicMetadataUrl(provider.metadata?.website);
+  const contactUrl = clinicMetadataUrl(provider.metadata?.contact);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -540,7 +661,11 @@ export default function ClinicPage({
               <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
               <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
                 {provider.country} ·{' '}
-                <CopyValue value={provider.address} chars={8} label="clinic address" />
+                <CopyValue
+                  value={provider.address}
+                  chars={8}
+                  label={t('components.copyValue.labels.clinicAddress')}
+                />
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -573,6 +698,19 @@ export default function ClinicPage({
               )}
             </dl>
           )}
+
+          {(websiteUrl || contactUrl) && (
+            <div className="mt-4 grid gap-2 border-t border-[var(--color-line)] pt-4 sm:grid-cols-2">
+              <ClinicMetadataLink
+                label={t('clinic.website')}
+                destination={websiteUrl}
+              />
+              <ClinicMetadataLink
+                label={t('clinic.contact')}
+                destination={contactUrl}
+              />
+            </div>
+          )}
         </Card>
 
         <Card className="divide-y divide-[var(--color-line)]">
@@ -592,7 +730,7 @@ export default function ClinicPage({
                     <span
                       className={`inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold ${
                         checked
-                          ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white'
+                          ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                           : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent'
                       }`}
                     >
@@ -619,6 +757,30 @@ export default function ClinicPage({
 
       <Card className="h-fit space-y-4 p-5">
         <h2 className="font-medium">Fund care</h2>
+
+        {isDraftVisible && existingDraftOnMount && (
+          <div
+            data-testid="checkout-draft-banner"
+            className="rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand-soft)]/20 p-3 text-sm space-y-2"
+          >
+            <div className="font-medium text-xs text-[var(--color-ink)]">
+              {t('checkoutDraft.foundTitle')}
+            </div>
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {t('checkoutDraft.foundDescription', {
+                count: existingDraftOnMount.selectedCodes.length,
+              })}
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <Button onClick={restoreDraft}>
+                {t('checkoutDraft.restore')}
+              </Button>
+              <Button variant="ghost" onClick={discardDraft}>
+                {t('checkoutDraft.discard')}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
@@ -913,7 +1075,11 @@ export default function ClinicPage({
                 className="w-full"
               >
                 {busy
-                  ? 'Confirming…'
+                  ? txStatus === 'signing'
+                    ? t('common.signing')
+                    : txStatus === 'submitting'
+                      ? t('common.submitting')
+                      : t('common.confirming')
                   : wallet
                     ? xlmSwapQuote && selectedServices.length === 1
                       ? 'Swap XLM & fund voucher'
@@ -949,7 +1115,7 @@ export default function ClinicPage({
               <CopyValue
                 value={config.contracts.voucher}
                 chars={4}
-                label="contract id"
+                label={t('components.copyValue.labels.contractId')}
               />{' '}
               and released to the clinic only after an attester confirms delivery.
               Unclaimed vouchers are refundable after {expirySummary}.
@@ -1036,7 +1202,13 @@ export default function ClinicPage({
                 onClick={() => void fund()}
                 disabled={busy || (insufficientUsdcBalance && !xlmSwapQuote)}
               >
-                {busy ? 'Confirming…' : 'Confirm'}
+                {busy
+                  ? txStatus === 'signing'
+                    ? t('common.signing')
+                    : txStatus === 'submitting'
+                      ? t('common.submitting')
+                      : t('common.confirming')
+                  : 'Confirm'}
               </Button>
             </div>
           </div>

@@ -73,9 +73,40 @@ describe('buildVoucherCsvRows', () => {
       'funded',
       'settled or refunded date',
       'transaction link',
+      'staff note',
     ]);
     expect(rows[1][3]).toBe('1.50');
     expect(rows[1][7]).toBe('https://example.com/vouchers/42');
+    expect(rows[1][8]).toBe('');
+  });
+
+  it('includes the staff note kept on the device, when there is one', () => {
+    const voucher = {
+      id: '42',
+      funder: 'GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR',
+      beneficiaryRef: 'beneficiary',
+      provider: { address: 'GA1', name: 'Clinic One', country: 'Nigeria' },
+      serviceCode: 7,
+      serviceLabel: 'Consultation',
+      amount: '15000000',
+      amountDisplay: '1.50',
+      status: 'Settled',
+      createdAt: '2026-05-20T10:00:00.000Z',
+      expiresAt: '2026-06-20T10:00:00.000Z',
+      claimedAt: '2026-05-21T12:00:00.000Z',
+      attestedAt: '2026-05-22T12:00:00.000Z',
+      disputeDeadline: null,
+      settledNet: '15000000',
+      settledFee: '0',
+      isSettleable: false,
+      isRefundable: false,
+    } as Voucher;
+
+    const rows = buildVoucherCsvRows([voucher], new Map(), 'https://example.com', {
+      '42': 'Patient called, coming Tuesday',
+    });
+
+    expect(rows[1][8]).toBe('Patient called, coming Tuesday');
   });
 });
 
