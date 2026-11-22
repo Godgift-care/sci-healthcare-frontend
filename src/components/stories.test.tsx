@@ -2,7 +2,7 @@
 import { render, cleanup } from '@testing-library/react';
 import { composeStories } from '@storybook/react';
 import axe from 'axe-core';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
 /**
@@ -16,6 +16,22 @@ import type React from 'react';
  * Colour contrast is not checked here: it needs layout, which jsdom does not
  * do. `@storybook/addon-a11y` reports it in Storybook itself.
  */
+
+/**
+ * The stories render outside the Next.js app router, which pages have but a
+ * unit test does not. `DetailLink` asks it for `prefetch`, so without this
+ * mock every `VoucherRow` story throws before it renders anything.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    prefetch: () => {},
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 // Every story file in this directory, so a new one is covered automatically.
 const storyModules = import.meta.glob('./*.stories.tsx', { eager: true }) as Record<

@@ -5,6 +5,7 @@ import type { NextConfig } from 'next';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants';
 import bundleAnalyzer from '@next/bundle-analyzer';
 import { parseSep24Anchors } from './src/lib/sep24-config';
+import { buildCommit } from './src/lib/build-info';
 
 import { contentSecurityPolicy, contentSecurityPolicyHeaderName } from './src/lib/csp';
 
@@ -233,6 +234,7 @@ const APP_VERSION = (
 // A distinct worker URL makes each deployment discoverable to already-open tabs.
 const APP_BUILD_ID =
   process.env.VERCEL_GIT_COMMIT_SHA || `${APP_VERSION}-${Date.now()}`;
+const APP_COMMIT = buildCommit(process.env);
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -244,7 +246,7 @@ const config: NextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
     // Shown on /status (#168) so a support question can name the build.
     APP_VERSION: APP_VERSION,
-    APP_COMMIT: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
+    APP_COMMIT,
     APP_BUILD_ID,
   },
   async headers() {

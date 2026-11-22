@@ -64,26 +64,26 @@ export async function decodeTransactionDetails(
   if ('operations' in tx && Array.isArray(tx.operations)) {
     for (const op of tx.operations) {
       if (op.type === 'invokeHostFunction') {
-        const func = op.func as any;
+        const func = op.func as unknown as Record<string, unknown> | undefined;
         const invokeContract =
-          func && (typeof func.invokeContract === 'function' ? func.invokeContract() : func.invokeContract);
+          func && (typeof func.invokeContract === 'function' ? (func.invokeContract as () => Record<string, unknown>)() : func.invokeContract as Record<string, unknown>);
 
         if (invokeContract) {
           const rawContractAddress =
             typeof invokeContract.contractAddress === 'function'
-              ? invokeContract.contractAddress()
+              ? (invokeContract.contractAddress as () => import('@stellar/stellar-sdk').xdr.ScAddress)()
               : invokeContract.contractAddress;
-          const contractId = Address.fromScAddress(rawContractAddress).toString();
+          const contractId = Address.fromScAddress(rawContractAddress as import('@stellar/stellar-sdk').xdr.ScAddress).toString();
 
           const rawMethod =
             typeof invokeContract.functionName === 'function'
-              ? invokeContract.functionName()
+              ? (invokeContract.functionName as () => unknown)()
               : invokeContract.functionName;
-          const method = rawMethod ? rawMethod.toString() : '';
+          const method = rawMethod ? String(rawMethod) : '';
 
           const rawArgs = (
-            typeof invokeContract.args === 'function' ? invokeContract.args() : invokeContract.args
-          ) as any[];
+            typeof invokeContract.args === 'function' ? (invokeContract.args as () => unknown[])() : invokeContract.args
+          ) as import('@stellar/stellar-sdk').xdr.ScVal[];
 
           // Parameter names for create_voucher contract
           const paramNames =
