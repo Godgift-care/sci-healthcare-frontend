@@ -226,6 +226,7 @@ export function ClinicVoucherQueueSection({
             onDone={onDone}
             disabled={settleAllBusy}
             requirePatientMatch
+            staffNote
           />
         ))}
       </div>

@@ -97,7 +97,7 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false) {
+  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false, fee?: bigint) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
@@ -105,6 +105,7 @@ export const voucher = {
       params.funder,
       sign,
       sponsored,
+      fee,
     );
   },
 

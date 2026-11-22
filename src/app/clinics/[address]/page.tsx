@@ -53,9 +53,8 @@ export default function ClinicPage({
 
   const { provider, error: loadError, rawError: loadRawError } = useProvider(address);
   const serviceParam = searchParams.get('service');
-  const prefilledServiceCode = serviceParam && /^\d+$/.test(serviceParam)
-    ? Number(serviceParam)
-    : null;
+  const prefilledServiceCode =
+    serviceParam && /^\d+$/.test(serviceParam) ? Number(serviceParam) : null;
   const prefilledService = provider?.services.find(
     (service) => service.code === prefilledServiceCode && service.active !== false,
   );

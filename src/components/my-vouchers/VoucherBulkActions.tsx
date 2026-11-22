@@ -9,6 +9,7 @@ import { voucher as protocol } from '@/lib/protocol';
 import { trackEvent } from '@/lib/analytics';
 import { invalidateVouchers } from '@/lib/hooks';
 import { buildVoucherCsvRows, downloadCsv } from '@/lib/csv';
+import { getStaffNotes } from '@/lib/staff-notes';
 
 export interface VoucherBulkActionsProps {
   funded: Voucher[];
@@ -88,7 +89,7 @@ export function VoucherBulkActions({
   function downloadVouchersCsv(items: Voucher[], filename: string) {
     if (items.length === 0) return;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    downloadCsv(filename, buildVoucherCsvRows(items, providerMap, origin));
+    downloadCsv(filename, buildVoucherCsvRows(items, providerMap, origin, getStaffNotes()));
   }
 
   return (
@@ -96,7 +97,7 @@ export function VoucherBulkActions({
       <div className="flex flex-wrap items-center gap-2">
         <Link
           href="/my/transactions"
-          className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+          className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
         >
           Transaction history
         </Link>

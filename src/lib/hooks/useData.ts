@@ -9,6 +9,7 @@ import {
   type Provider,
   type ProviderStats,
   type ReadyStatus,
+  type Receipt,
   type ReceiptsResponse,
   type ServiceCatalogueItem,
   type ServicesResponse,
@@ -211,6 +212,27 @@ export function useProviderVouchers(
 
   return {
     vouchers: data ?? [],
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/** Hook for every receipt paid to a clinic, across receipts-route pages. */
+export function useProviderReceipts(
+  address: string | null | undefined,
+  config?: SWRConfiguration<Receipt[]>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<Receipt[]>(
+    address ? ['provider-receipts', address] : null,
+    () => api.providerReceipts(address!),
+    config,
+  );
+
+  return {
+    receipts: data ?? [],
     error: error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,

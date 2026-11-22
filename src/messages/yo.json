@@ -13,12 +13,15 @@
   },
   "footer": {
     "testnetDisclaimer": "Ìgbékalẹ̀ Testnet. Kò sí owó gidi, àti pé kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
-    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan."
+    "mainnetDisclaimer": "Kò sí ìsọfúnni ìlera aláìsàn tí a tọ́jú lórí ẹ̀wọ̀n — àwọn vóṣà ń tọ́ka sí ẹ̀ka iṣẹ́ àti ìtọ́kasí olùjẹ́rè tí kò fi orúkọ hàn nìkan.",
+    "build": "Ẹ̀yà {commit}"
   },
   "common": {
     "loading": "Ń gbé wọlé…",
     "confirmed": "Ti jẹ́rìí",
     "confirming": "Ń jẹ́rìí…",
+    "signing": "Fọwọ́sí…",
+    "submitting": "Fífiranṣẹ́…",
     "copied": "Ti dà kọ́pì!",
     "copy": "Dà kọ́pì",
     "usdc": "USDC",
@@ -30,6 +33,14 @@
     "indexerCatchUp": "Àwọn àkójọ yóò ṣe àtúnṣe ní kété tí atọ́ka bá bá a.",
     "updateAvailable": "Ẹ̀yà tuntun ti ṣetán.",
     "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "A gbọ́dọ̀ mú àwọn dátà àdéhùn tí a fi pamọ́ padà kí ìdúnàádúrà yìí tó lè ṣiṣẹ́. A ó ní kí o fọwọ́ sí ìdúnàádúrà méjì: mímú dátà náà padà (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {restoreFee} XLM), lẹ́yìn náà parí ìdúnàádúrà rẹ (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {transactionFee} XLM). Àpapọ̀ owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {totalFee} XLM. Ṣé o fẹ́ tẹ̀síwájú?",
+    "restoreFootprintCancelled": "A fagilé ìmúpadàbọ̀sípò. A kò fi ìdúnàádúrà ránṣẹ́.",
+    "restoreRequired": "Ìdúnàádúrà yìí nílò kí a mú dátà àdéhùn tí a fi pamọ́ padà. Lo àpò tí a so pọ̀ láti tẹ̀síwájú.",
+    "restoreStillRequired": "Àdéhùn náà ṣì nílò dátà tí a fi pamọ́ lẹ́yìn ìmúpadàbọ̀sípò. A kò fi nǹkan mìíràn ránṣẹ́. Jọ̀wọ́ tún gbìyànjú lẹ́yìn náà.",
+    "restorePreparationError": "A kò lè pèsè ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}",
+    "restoreRejected": "A kọ ìdúnàádúrà ìmúpadàbọ̀sípò dátà àdéhùn tí a fi pamọ́: {error}"
   },
   "home": {
     "verifiedClinics": "Àwọn kílíníkì tí a ti jẹ́rìí",
@@ -70,22 +81,64 @@
     "reportProblemIntro": "Olùdáwó nìkan ló lè ṣí àríyànjiyàn. Tí ìwọ ni aláìsàn, ẹbí, tàbí ẹnikẹ́ni mìíràn tó ṣàkíyèsí ìṣòro pẹ̀lú vóṣà yìí, ṣí ìjábọ̀. A ti fi nọ́mbà vóṣà tí gbogbo ènìyàn rí, ipò, iṣẹ́ àti kílíníkì kún un nìkan — kì í ṣe ìtọ́kasí aláìsàn rárá.",
     "reportProblemAction": "Jábọ̀ ìṣòro",
     "redirect": {
-      "action": "Use at a different clinic",
-      "title": "Move voucher #{id}",
-      "intro": "Only active clinics that offer this service at or below {amount} are listed.",
-      "empty": "No other clinic currently offers this service at or below {amount}.",
-      "loading": "Finding clinics…",
-      "choose": "Choose a clinic",
+      "action": "Lò ní kílíníkì mìíràn",
+      "title": "Gbé vóṣà #{id}",
+      "intro": "Àwọn kílíníkì tó ń ṣiṣẹ́ nìkan tí wọ́n ń pèsè iṣẹ́ yìí ní {amount} tàbí kéré sí i ni a tò sílẹ̀.",
+      "empty": "Kò sí kílíníkì mìíràn tó ń pèsè iṣẹ́ yìí ní {amount} tàbí kéré sí i báyìí.",
+      "loading": "Ń wá àwọn kílíníkì…",
+      "choose": "Yan kílíníkì",
       "option": "{clinic} · {price}",
-      "confirmIntro": "{clinic} will receive {price} and the voucher keeps its escrow of {amount}. Check the clinic and price before signing.",
-      "confirm": "Move voucher",
-      "moving": "Moving…",
-      "error": "Could not move the voucher: {message}",
-      "success": "Voucher moved to {clinic}."
+      "confirmIntro": "{clinic} yóò gba {price}, vóṣà náà sì máa pa ìpamọ́ owó {amount} rẹ̀ mọ́. Ṣàyẹ̀wò kílíníkì àti iye kí o tó fọwọ́ sí.",
+      "confirm": "Gbé vóṣà",
+      "moving": "Ń gbé…",
+      "error": "A kò lè gbé vóṣà náà: {message}",
+      "success": "A ti gbé vóṣà náà sí {clinic}."
+    },
+    "staffNote": "Àkíyèsí",
+    "staffNoteNote": "Wọ́n fi pamọ́ ní ẹ̀rọ yìí nìkan — kì í pín tàbí kí wọ́n pa mọ́.",
+    "staffNoteAdd": "Fi kún Àkíyèsí",
+    "staffNoteEdit": "Ṣàtúnṣe Àkíyèsí",
+    "staffNoteSave": "Gbà Àkíyèsí náà",
+    "staffNoteClear": "Gbé Àkíyèsí náà kúrò",
+    "staffNotePlaceholder": "Ẹni tí ó tọ́, Ọjọ́ Tuesday",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "A di owó náà mú láìléwu títí tí a ó fi pèsè ìtọ́jú.",
+        "clinic": "A ti fi owó pamọ́. Pèsè ìtọ́jú kí o sì fi ẹ̀bẹ̀ ránṣẹ́ láti gba owó.",
+        "patient": "A ti sanwó fún ìtọ́jú. Fi vóṣà yìí hàn ní kílíníkì láti gba ìtọ́jú."
+      },
+      "Claimed": {
+        "funder": "Kílíníkì ti fi ìdí rẹ̀ múlẹ̀ pé a pèsè ìtọ́jú, ó ń dúró de àtúnyẹ̀wò.",
+        "clinic": "A ti fi ẹ̀bẹ̀ ránṣẹ́. Ó ń dúró de ẹ̀rí láti ọ̀dọ̀ olùyẹ̀wò tó ṣeé gbẹ́kẹ̀lé.",
+        "patient": "A ti gba ìtọ́jú ní kílíníkì, a sì ń ṣe àmójútó rẹ̀ lọ́wọ́."
+      },
+      "Attested": {
+        "funder": "Olùyẹ̀wò òmìnira kan ti fi ìdí ìtọ́jú múlẹ̀, ó sì ti ṣetán fún ìsanwó.",
+        "clinic": "A ti fi ìdí iṣẹ́ múlẹ̀. A lè san owó fún kílíníkì báyìí.",
+        "patient": "A ti fi ìdí ìtọ́jú múlẹ̀, ó sì ti parí."
+      },
+      "Settled": {
+        "funder": "A ti san owó náà fún kílíníkì.",
+        "clinic": "A ti san owó náà sínú àpò owó rẹ.",
+        "patient": "Ìtọ́jú ti parí, a sì ti san owó náà."
+      },
+      "Disputed": {
+        "funder": "A ti ṣí àríyànjiyàn sílẹ̀, a sì ti dá ìsanwó dúró títí a ó fi yanjú rẹ̀.",
+        "clinic": "A ṣí àríyànjiyàn fún vóṣà yìí. A ti dá ìsanwó dúró títí a ó fi yanjú rẹ̀.",
+        "patient": "Vóṣà yìí ní ìwádìí tó wà ní ṣíṣí, a sì ti dá a dúró."
+      },
+      "Refunded": {
+        "funder": "A ti da owó tí a fi pamọ́ padà sínú àpò owó rẹ.",
+        "clinic": "A ti fagilé vóṣà yìí tàbí da owó padà fún olùrànlọ́wọ́.",
+        "patient": "A ti fagilé vóṣà yìí tàbí da owó rẹ̀ padà."
+      }
     }
   },
   "clinic": {
     "title": "Tábìlì kílíníkì",
+    "website": "Ojú-òpó wẹ́ẹ̀bù",
+    "contact": "Ìbánisọ̀rọ̀",
+    "externalLinkConfirm": "O ń kúrò ní SCI Healthcare láti ṣàbẹ̀wò sí {host}. Ṣé o fẹ́ tẹ̀síwájú?",
     "checking": "Ń ṣàyẹ̀wò ìforúkọsílẹ̀…",
     "scanVoucherQr": "Yẹ̀wò QR vóṣà",
     "registerTitle": "Forúkọ kílíníkì yìí sílẹ̀",
@@ -116,16 +169,24 @@
     "settledSummary": "A ti tu owó fún",
     "settleFailedSummary": "A kò san:",
     "earnings": "Èrè",
+    "dailySummary": "Àkótán ojoojúmọ́ fún tábìlì ìtọ́jú",
+    "dailySummaryNote": "Àwọn vóṣà tí a gbà, tí a jẹ́rìí sí, àti àwọn ìsanwó tó parí lónìí.",
+    "dailyTimeZone": "Agbègbè àkókò kílíníkì: {timeZone}",
+    "dailyClaimed": "Tí a gbà",
+    "dailyAttested": "Tí a jẹ́rìí sí",
+    "dailySettled": "Tí a san",
+    "dailyReceived": "Iye tí a gbà",
+    "dailyPrint": "Tẹ àkótán ojoojúmọ́ jáde",
     "earningsNote": "Ìṣàn owó kílíníkì yìí: ìtọ́jú tí a ti san, owó tí ó ń dúró, àti àwọn owó ìsan àdéhùn tí a ti san.",
     "earningsSettled": "Ti san",
     "earningsSettledDetail": {
-      "one": "{count} voucher · {net} net after fees",
-      "other": "{count} vouchers · {net} net after fees"
+      "one": "{count} vóṣà · {net} lẹ́yìn owó ìsan",
+      "other": "{count} vóṣà · {net} lẹ́yìn owó ìsan"
     },
     "earningsPending": "Owó tó ń dúró",
     "earningsPendingDetail": {
-      "one": "{count} voucher claimed, attested or disputed, before fees",
-      "other": "{count} vouchers claimed, attested or disputed, before fees"
+      "one": "{count} tí a gbà, jẹ́rìí tàbí ní àríyànjiyàn, kí a tó yọ owó ìsan",
+      "other": "{count} tí a gbà, jẹ́rìí tàbí ní àríyànjiyàn, kí a tó yọ owó ìsan"
     },
     "earningsFees": "Owó ìsan tí a san",
     "earningsFeesDetail": "Owó ìsan àdéhùn lórí ìtọ́jú tí a san",
@@ -140,8 +201,8 @@
     "searchVoucherNumber": "Nọ́mbà vóṣà",
     "searchVoucherPlaceholder": "àpẹẹrẹ 21 tàbí #21",
     "showingVouchers": {
-      "one": "Showing {shown} of {total} voucher",
-      "other": "Showing {shown} of {total} vouchers"
+      "one": "Ń fi {shown} nínú {total} vóṣà hàn",
+      "other": "Ń fi {shown} nínú {total} vóṣà hàn"
     },
     "noMatchingVouchers": "Kò sí vóṣà tó bá ìwádìí yìí mu.",
     "clearFilters": "Pa àwọn àlẹ̀ mọ́",
@@ -194,75 +255,248 @@
     "downloadDaily": "Gba CSV ojoojúmọ́",
     "downloadClinics": "Gba CSV àwọn kílíníkì",
     "downloadVouchers": "Gba CSV àwọn vóṣà",
-    "escrowTitle": "Escrow held on chain",
-    "escrowNote": "Read from the voucher contract's own accounting, without a wallet.",
-    "escrowOpen": "Open escrow",
-    "escrowBalance": "Contract holds {amount}",
-    "escrowIndexed": "The indexer reports {amount} open in escrow.",
-    "escrowUnavailable": "The on-chain escrow figure is unavailable right now.",
-    "escrowIndexedUnavailable": "The indexer's open escrow total is unavailable right now.",
-    "escrowSolvencyMismatch": "The contract's books do not match its balance: {escrow} is recorded as open escrow but the contract holds {balance}. Do not rely on the indexed totals until this is understood.",
-    "escrowIndexerMismatch": "The chain and the indexer disagree about open escrow: the contract says {chain}, the indexer says {indexed}."
+    "escrowTitle": "Ìpamọ́ owó lórí ẹ̀wọ̀n",
+    "escrowNote": "A kà á láti inú ìṣirò àdéhùn vóṣà fúnra rẹ̀, láìsí àpò.",
+    "escrowOpen": "Ìpamọ́ owó tó ṣí",
+    "escrowBalance": "Àdéhùn ní {amount}",
+    "escrowIndexed": "Atọ́ka sọ pé {amount} wà ní ìpamọ́ tó ṣí.",
+    "escrowUnavailable": "Iye ìpamọ́ owó lórí ẹ̀wọ̀n kò sí báyìí.",
+    "escrowIndexedUnavailable": "Àpapọ̀ ìpamọ́ owó tó ṣí ti atọ́ka kò sí báyìí.",
+    "escrowSolvencyMismatch": "Ìwé àdéhùn kò bá ìyọ̀kù rẹ̀ mu: {escrow} ni a kọ sílẹ̀ gẹ́gẹ́ bí ìpamọ́ tó ṣí ṣùgbọ́n àdéhùn ní {balance}. Má ṣe gbẹ́kẹ̀ lé àwọn àpapọ̀ atọ́ka títí a ó fi yé wa.",
+    "escrowIndexerMismatch": "Ẹ̀wọ̀n àti atọ́ka kò bára wọn mu nípa ìpamọ́ owó tó ṣí: àdéhùn sọ {chain}, atọ́ka sọ {indexed}."
+  },
+  "components": {
+    "connectButton": {
+      "connecting": "Ń so pọ̀…",
+      "connect": "So àpò pọ̀",
+      "wallet": "Àpò",
+      "fallbackWallet": "Àpò Stellar",
+      "statusUnfunded": "Kò ní owó",
+      "statusLowXlm": "XLM kéré",
+      "statusActive": "Ń ṣiṣẹ́",
+      "accountAddress": "Àdírẹ́sì àkáńtì",
+      "fundWithFriendbot": "Dáwó lé pẹ̀lú Friendbot",
+      "topUpWithFriendbot": "Fi owó kún pẹ̀lú Friendbot",
+      "unfundedTitle": "A kò tíì dáwó lé àkáńtì lórí Stellar",
+      "unfundedBody": "Àkáńtì yìí kò ní ìyọ̀kù XLM. Ìdúnàádúrà àdéhùn èyíkéyìí yóò kùnà pẹ̀lú “a kò rí àkáńtì” títí yóò fi gba owó ìpamọ́ tí ó kéré jù.",
+      "lowXlmTitle": "XLM tó ṣeé lò kéré fún owó ìsan",
+      "lowXlmBodyBeforeAmount": "Ìyọ̀kù tó ṣeé lò jẹ́",
+      "lowXlmBodyAfterAmount": ". Yàtọ̀ sí ìpamọ́ ìpìlẹ̀ àkáńtì, àwọn ìdúnàádúrà nílò XLM tó ṣeé lò láti san owó ìsan nẹ́tíwọ́kì.",
+      "lowXlmUnknown": "< 1.00 XLM",
+      "viewOnExplorer": "Wo lórí Stellar Expert",
+      "disconnect": "Ya àpò kúrò"
+    },
+    "toast": {
+      "notifications": "Àwọn ìfitónilétí",
+      "dismiss": "Tì ìfitónilétí"
+    },
+    "commandPalette": {
+      "title": "Lọ sí",
+      "search": "Wá àwọn kílíníkì, àwọn ojú-ìwé tàbí nọ́mbà vóṣà",
+      "results": "Àwọn àbájáde ìlọ́nà",
+      "noResults": "Kò sí ibi tó bá mu",
+      "resultCount": {
+        "one": "Àbájáde {count}",
+        "other": "Àwọn àbájáde {count}"
+      },
+      "openVoucher": "Ṣí vóṣà #{id}",
+      "openVoucherDescription": "Lọ sí nọ́mbà vóṣà",
+      "clinicCountry": "Kílíníkì ní {country}",
+      "pages": {
+        "clinics": "Wo àwọn kílíníkì tí a ti jẹ́rìí",
+        "howItWorks": "Kọ́ nípa àwọn vóṣà ìtọ́jú",
+        "myVouchers": "Wo àwọn vóṣà tí a dáwó lé",
+        "clinicDesk": "Ṣàkóso kílíníkì",
+        "attest": "Ṣàyẹ̀wò àwọn ìbéèrè ìtọ́jú",
+        "attesters": "Wo àwọn olùjẹ́rìí tí a gbẹ́kẹ̀lé",
+        "stats": "Wo àwọn ìṣirò ìlànà",
+        "faq": "Àwọn ìbéèrè tó wọ́pọ̀",
+        "privacy": "Ìsọfúnni àṣírí",
+        "adminLabel": "Alábòójútó",
+        "admin": "Ìṣàkóso"
+      }
+    },
+    "demoTour": {
+      "title": "Tuntun síbí? Ṣe ìrìn-àjò àfihàn",
+      "introTestnet": "Ìgbésẹ̀ mẹ́ta nínú gbogbo ọjà: gba USDC ìdánwò, dáwó lé vóṣà, lẹ́yìn náà tẹ̀lé e títí dé rísíìtì.",
+      "introMainnet": "Ìgbésẹ̀ mẹ́ta nínú gbogbo ọjà: so àpò pọ̀, dáwó lé vóṣà, lẹ́yìn náà tẹ̀lé e títí dé rísíìtì.",
+      "start": "Ṣe ìrìn-àjò náà",
+      "dismiss": "Fagilé ìrìn-àjò àfihàn",
+      "stepTitle": "Ìrìn-àjò àfihàn — ìgbésẹ̀ {step} nínú {total}",
+      "back": "Padà",
+      "next": "Tẹ̀lé",
+      "finish": "Parí",
+      "skip": "Fò kọjá",
+      "steps": {
+        "testUsdcTitle": "Gba USDC ìdánwò",
+        "testUsdcBody": "So àpò nẹ́tíwọ́kì ìdánwò pọ̀ kí o sì gba USDC àfihàn láti orísun náà — ìgbà kan fún àpò kọ̀ọ̀kan lójúmọ́.",
+        "testUsdcCta": "Ṣí Àwọn vóṣà mi",
+        "connectTitle": "So àpò rẹ pọ̀",
+        "connectBody": "So àpò Stellar tó ní USDC pọ̀. Ohun èlò kò rí kọ́kọ́rọ́ àṣírí rẹ rárá; àpò rẹ ni ó ń fọwọ́ sí gbogbo ìdúnàádúrà.",
+        "connectCta": "Ṣí Àwọn vóṣà mi",
+        "fundTitle": "Dáwó lé ìtọ́jú fún kílíníkì",
+        "fundBody": "Yan kílíníkì tí a ti jẹ́rìí àti iṣẹ́ tí ẹbí rẹ nílò. Àdéhùn ni ó ń pa owó mọ́, a kò tíì fi í ránṣẹ́ sí kílíníkì.",
+        "fundCta": "Wo àwọn kílíníkì",
+        "followTitle": "Tẹ̀lé vóṣà náà",
+        "followBody": "Vóṣà kọ̀ọ̀kan ní ojú-ìwé tirẹ̀ pẹ̀lú ìtàn rẹ̀ lórí ẹ̀wọ̀n, rísíìtì àti àwọn ìgbésẹ̀ tí o lè ṣe. Ó yá láti pín nípasẹ̀ ìjápọ̀.",
+        "followCta": "Wo àwọn vóṣà rẹ"
+      }
+    },
+    "copyValue": {
+      "defaultLabel": "iye",
+      "copy": "Dà kọ́pì {label}",
+      "copied": "Ti dà kọ́pì: {label}",
+      "failed": "A kò lè dà kọ́pì {label}",
+      "labels": {
+        "clinicAddress": "àdírẹ́sì kílíníkì",
+        "funderAddress": "àdírẹ́sì olùdáwó",
+        "attesterAddress": "àdírẹ́sì olùjẹ́rìí",
+        "patientReference": "ìtọ́kasí aláìsàn",
+        "contractId": "ìdánimọ̀ àdéhùn",
+        "paymentLink": "ìjápọ̀ ìsanwó SEP-7"
+      }
+    },
+    "savedPatientControls": {
+      "selectFailed": "A kò lè yan aláìsàn yìí.",
+      "nicknameRequired": "Tẹ orúkọ ìnagijẹ fún aláìsàn yìí.",
+      "identifierRequired": "Tẹ ìtọ́kasí aláìsàn àti kọ́kọ́rọ́ tó ní ó kéré tán lẹ́tà 32.",
+      "saveFailed": "A kò lè fipamọ́ nínú aṣàwákiri yìí. Rí i dájú pé ìpamọ́ aṣàwákiri wà.",
+      "nicknameEmpty": "Tẹ orúkọ ìnagijẹ.",
+      "nicknameDuplicate": "Orúkọ ìnagijẹ yìí ti wà lọ́wọ́.",
+      "renameFailed": "A kò lè yí orúkọ aláìsàn yìí padà. Rí i dájú pé ìpamọ́ aṣàwákiri wà.",
+      "deleteFailed": "A kò lè pa aláìsàn yìí rẹ́. Rí i dájú pé ìpamọ́ aṣàwákiri wà.",
+      "passphraseTooShort": "Lo gbólóhùn ìkọ̀kọ̀ tó ní ó kéré tán lẹ́tà 12.",
+      "passphraseMismatch": "Àwọn gbólóhùn ìkọ̀kọ̀ kò bára wọn mu.",
+      "protectFailed": "A kò lè dáàbò bo àwọn aláìsàn tí a fipamọ́ nínú aṣàwákiri yìí.",
+      "unlockFailed": "A kò lè ṣí àwọn aláìsàn tí a fipamọ́. Ṣàyẹ̀wò gbólóhùn ìkọ̀kọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí i.",
+      "savedPatients": "Àwọn aláìsàn tí a fipamọ́",
+      "choosePatient": "Yan aláìsàn tí a fipamọ́",
+      "manage": "Ṣàkóso",
+      "saveAs": "Fipamọ́ aláìsàn gẹ́gẹ́ bí",
+      "patientNickname": "Orúkọ ìnagijẹ aláìsàn",
+      "nicknamePlaceholder": "àpẹẹrẹ Màmá",
+      "savePatient": "Fipamọ́ aláìsàn",
+      "storageNote": "Àwọn ìtọ́kasí àti kọ́kọ́rọ́ tí a fipamọ́ wà nínú aṣàwákiri yìí nìkan, a kì í fi wọ́n ránṣẹ́ sí iṣẹ́ náà. Ẹnikẹ́ni tó ní àǹfààní sí profáìlì aṣàwákiri yìí lè lo wọ́n.",
+      "protected": "Àwọn kọ́kọ́rọ́ aláìsàn tí a fipamọ́ wà ní ààbò.",
+      "passphrase": "Gbólóhùn ìkọ̀kọ̀",
+      "unlock": "Ṣí àwọn aláìsàn tí a fipamọ́",
+      "manageTitle": "Ṣàkóso àwọn aláìsàn tí a fipamọ́",
+      "done": "Ti parí",
+      "encryptedNote": "Àwọn kọ́kọ́rọ́ aláìsàn tí a fipamọ́ ti di ààtò lórí ẹ̀rọ yìí.",
+      "lock": "Tì àwọn aláìsàn tí a fipamọ́",
+      "protectTitle": "Dáàbò bo àwọn kọ́kọ́rọ́ tí a fipamọ́ pẹ̀lú gbólóhùn ìkọ̀kọ̀",
+      "newPassphraseLabel": "Gbólóhùn ìkọ̀kọ̀ tuntun (ó kéré tán lẹ́tà 12)",
+      "newPassphrase": "Gbólóhùn ìkọ̀kọ̀ tuntun",
+      "confirmPassphrase": "Jẹ́rìí gbólóhùn ìkọ̀kọ̀",
+      "protect": "Dáàbò bo àwọn kọ́kọ́rọ́ tí a fipamọ́",
+      "hiddenNote": "A kò fi àwọn ìtọ́kasí àti kọ́kọ́rọ́ aláìsàn hàn níbí.",
+      "empty": "Kò sí aláìsàn tí a fipamọ́.",
+      "newNickname": "Orúkọ ìnagijẹ tuntun",
+      "saveName": "Fipamọ́ orúkọ",
+      "rename": "Yí orúkọ {nickname} padà",
+      "delete": "Pa {nickname} rẹ́"
+    },
+    "sep24Cashout": {
+      "title": "Ìyọ owó ní àdúgbò",
+      "invalidAmount": "Tẹ iye tó pọ̀ ju òdo lọ pẹ̀lú ó pọ̀ jù nọ́mbà 7 lẹ́yìn ààmì ìdá.",
+      "limitsAccepted": "Anchari gba {min} sí {max} {asset}.",
+      "anyMinimum": "iye èyíkéyìí",
+      "anyMaximum": "iye èyíkéyìí",
+      "popupBlocked": "Gbà àwọn wíńdò àpòpọ̀ fún ojú-ìwé yìí kí o lè tẹ̀síwájú sí anchari.",
+      "noAnchor": "Kò sí anchari ìyọ owó tí a ṣètò tí ń bójú tó {country} báyìí. Kílíníkì rẹ ń gba USDC lórí ẹ̀wọ̀n; ìyọ owó owó ìbílẹ̀ jẹ́ iṣẹ́ ọ̀tọ̀ tí anchari ń pèsè.",
+      "smartAccount": "Àpò yìí jẹ́ àkáńtì àdéhùn ọlọ́gbọ́n. Àwọn anchari tí a ṣètò nílò ìjẹ́rìí SEP-10 pẹ̀lú àdírẹ́sì àkáńtì Stellar, nítorí náà ìyọ owó kò sí láti àpò yìí.",
+      "intro": "Ìsan vóṣà ń tú USDC sí àpò Stellar rẹ. Ìyọ owó jẹ́ ìgbésẹ̀ ọ̀tọ̀ tí kò sí lórí ẹ̀wọ̀n nipasẹ́ anchari, pẹ̀lú owó ìsan àti àkókò ìlọ́wọ́ tirẹ̀.",
+      "issuerUnsupported": "Anchari ti ṣètò fún {country}, ṣùgbọ́n kò sí èyí tó gba olùpèsè USDC ti ìgbékalẹ̀ yìí. Béèrè lọ́wọ́ olùṣakoso láti ṣètò anchari fún tọ́kẹ̀nì gangan kí o tó yọ owó.",
+      "anchor": "Anchari",
+      "selectAnchor": "Yan anchari",
+      "amount": "Iye USDC",
+      "withdraw": "Yọ owó pẹ̀lú anchari",
+      "limits": "Àwọn ààlà anchari: {min}–{max} {asset}.",
+      "noMinimum": "kò sí ìwọ̀nba",
+      "noMaximum": "kò sí ìwọ̀n òkè",
+      "disabled": "Anchari ti dínà ìyọ owó {asset}.",
+      "requirements": "Anchari lè nílò ìjẹ́rìí ìdánimọ̀ (KYC), àwọn ìwé àfikún, àti gbígba owó ìsan àti àwọn òfin tirẹ̀. SCI Healthcare kò ṣe, bẹ́ẹ̀ ni kò ṣèlérí ìsan owó fiat.",
+      "statusTitle": "Ipò ìyọ owó anchari",
+      "transaction": "Ìdúnàádúrà anchari: {id}",
+      "payout": "Owó tí anchari sọ pé a san: {amount} {asset}",
+      "moreInfo": "Ìsọfúnni síi láti ọ̀dọ̀ anchari",
+      "statusFailed": "Ìmúpadà ipò kùnà: {error}. Anchari ṣì lè ń ṣe ìyọ owó yìí.",
+      "refresh": "Mú ipò padà",
+      "autoRefresh": "Ó ń mú ipò padà fúnra rẹ̀ ní gbogbo ìṣẹ́jú 12.",
+      "settlementNote": "Ìyọ owó kò yí ipò vóṣà tàbí ìsan lórí ẹ̀wọ̀n padà.",
+      "viewAccount": "Wo àkáńtì Stellar rẹ"
+    },
+    "ui": {
+      "closeDialog": "Tì pátákó ìjíròrò",
+      "moreInformation": "Ìsọfúnni síi"
+    }
   },
   "my": {
-    "selectAllVisible": "Select all on this page ({count})",
-    "selectVoucher": "Select voucher #{id}",
-    "selectedCount": "{count} selected",
-    "exportSelected": "Download selected CSV",
-    "refundSelected": "Refund selected ({count})",
-    "refundAll": "Refund all ({count})",
-    "refundingCount": "Refunding {current}/{total}…",
-    "refundProgress": "{current} of {total}",
-    "refundingVoucher": "Refunding voucher #{id}…",
-    "refundedSummary": "Refunded {count} voucher(s) successfully:",
-    "refundFailedSummary": "Failed to refund {count} voucher(s):"
+    "selectAllVisible": "Yan gbogbo rẹ̀ lórí ojú-ìwé yìí ({count})",
+    "selectVoucher": "Yan vóṣà #{id}",
+    "selectedCount": "{count} ti yàn",
+    "exportSelected": "Gba CSV àwọn tí a yàn",
+    "refundSelected": "Dá owó àwọn tí a yàn padà ({count})",
+    "refundAll": "Dá gbogbo owó padà ({count})",
+    "refundingCount": "Ń dá owó padà {current}/{total}…",
+    "refundProgress": "{current} nínú {total}",
+    "refundingVoucher": "Ń dá owó vóṣà #{id} padà…",
+    "refundedSummary": "A ti dá owó vóṣà {count} padà láṣeyọrí:",
+    "refundFailedSummary": "A kò lè dá owó vóṣà {count} padà:"
   },
   "admin": {
     "split": {
-      "button": "Split escrow",
-      "amountLabel": "Amount awarded to the clinic (USDC)",
-      "amountHint": "Gross amount before the protocol fee, between 0 and {amount}. The rest returns to the funder.",
-      "invalid": "Enter an amount between 0 and {amount}.",
-      "loading": "Calculating the fee…",
-      "error": "Could not calculate the fee: {message}",
-      "clinicReceives": "{clinic} receives {net} after the {fee} fee.",
-      "funderReceives": "The funder receives {amount}.",
-      "sum": "The clinic net, the fee and the funder refund add up to the escrow of {amount}."
+      "button": "Pín ìpamọ́ owó",
+      "amountLabel": "Iye tí a yàn fún kílíníkì (USDC)",
+      "amountHint": "Iye àpapọ̀ kí a tó yọ owó ìsan àdéhùn, láàrín 0 àti {amount}. Ìyókù yóò padà sọ́dọ̀ olùdáwó.",
+      "invalid": "Tẹ iye láàrín 0 àti {amount}.",
+      "loading": "Ń ṣe ìṣirò owó ìsan…",
+      "error": "A kò lè ṣe ìṣirò owó ìsan: {message}",
+      "clinicReceives": "{clinic} yóò gba {net} lẹ́yìn owó ìsan {fee}.",
+      "funderReceives": "Olùdáwó yóò gba {amount}.",
+      "sum": "Owó àpapọ̀ kílíníkì, owó ìsan àti ìdápadà olùdáwó jẹ́ ìpamọ́ owó {amount}."
     }
   },
   "attest": {
-    "leftToday": "{count} attestations left today",
-    "capReached": "You have reached today's attestation limit. Confirm care again after {time} UTC.",
-    "leftUnavailable": "Remaining attestations could not be read right now."
+    "leftToday": "Ìjẹ́rìí {count} ló kù lónìí",
+    "capReached": "O ti dé ààlà ìjẹ́rìí ti lónìí. Jẹ́rìí ìtọ́jú lẹ́ẹ̀kan sí i lẹ́yìn {time} UTC.",
+    "leftUnavailable": "A kò lè kà àwọn ìjẹ́rìí tó kù báyìí."
   },
   "print": {
-    "verify": "Verify on chain",
-    "verifying": "Verifying…",
-    "verified": "Verified on chain",
-    "mismatch": "Does not match the chain",
-    "mismatchShort": "Mismatch",
-    "error": "Could not read the chain",
-    "fieldMismatch": "{field}: shown {displayed}, chain says {onChain}",
+    "verify": "Jẹ́rìí lórí ẹ̀wọ̀n",
+    "verifying": "Ń jẹ́rìí…",
+    "verified": "Ti jẹ́rìí lórí ẹ̀wọ̀n",
+    "mismatch": "Kò bá ẹ̀wọ̀n mu",
+    "mismatchShort": "Kò bá mu",
+    "error": "A kò lè ka ẹ̀wọ̀n",
+    "fieldMismatch": "{field}: a fi {displayed} hàn, ẹ̀wọ̀n sọ {onChain}",
     "field": {
-      "voucher": "Receipt number",
-      "provider": "Clinic",
-      "service": "Service",
-      "amount": "Amount",
-      "settledAt": "Date"
+      "voucher": "Nọ́mbà rísíìtì",
+      "provider": "Kílíníkì",
+      "service": "Iṣẹ́",
+      "amount": "Iye",
+      "settledAt": "Ọjọ́"
     }
   },
   "offlineQueue": {
-    "title": "Waiting to submit",
-    "note": "These claims were signed on this device and will be submitted automatically when the connection returns.",
-    "voucher": "Voucher #{id}",
-    "queuedStatus": "Queued",
-    "submitting": "Submitting…",
-    "failed": "Not submitted: {error}",
-    "validUntil": "Valid until {time}",
-    "submitNow": "Submit now",
-    "discard": "Discard",
-    "expiredTitle": "Queued claim discarded",
-    "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
-    "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+    "title": "Ń dúró láti fi ránṣẹ́",
+    "note": "A ti fọwọ́ sí àwọn ẹ̀tọ́ wọ̀nyí lórí ẹ̀rọ yìí, a ó sì fi wọ́n ránṣẹ́ fúnra wọn nígbà tí ìsopọ̀ bá padà.",
+    "voucher": "Vóṣà #{id}",
+    "queuedStatus": "Ní ìtò",
+    "submitting": "Ń fi ránṣẹ́…",
+    "failed": "A kò fi ránṣẹ́: {error}",
+    "validUntil": "Wà ní ìtọ́ títí dé {time}",
+    "submitNow": "Fi ránṣẹ́ báyìí",
+    "discard": "Sọ nù",
+    "expiredTitle": "A sọ ẹ̀tọ́ tó wà ní ìtò nù",
+    "expired": "Ẹ̀tọ́ tó wà ní ìtò parí kí a tó lè fi ránṣẹ́, nítorí náà a sọ ọ́ nù. A kò fi ohunkóhun ránṣẹ́ sí kílíníkì; gbà vóṣà náà lẹ́ẹ̀kan sí i tí aláìsàn bá ṣì wà ní tábìlì.",
+    "queuedToast": "A ti fipamọ́ sórí ẹ̀rọ yìí. A ó fi ẹ̀tọ́ náà ránṣẹ́ nígbà tí ìsopọ̀ bá padà."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Ṣe àtúnṣe ìsanwó tẹ́lẹ̀?",
+    "foundDescription": "O ní àkọsílẹ̀ àkọ́kọ́ tí a fipamọ́ pẹ̀lú iṣẹ́ {count} tí a yàn láti ìgbà tẹ́lẹ̀.",
+    "restore": "Dá àkọsílẹ̀ padà",
+    "discard": "Pa á rẹ́",
+    "restoredMessage": "A ti dá àkọsílẹ̀ ìsanwó padà."
   }
 }

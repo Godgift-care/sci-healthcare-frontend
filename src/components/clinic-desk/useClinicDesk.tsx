@@ -4,16 +4,19 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
-import { toAmountInput } from '@/lib/amounts';
+import { formatUsdc, toAmountInput } from '@/lib/amounts';
+import { monthlyEarnings, summariseDailyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
+import { useNow } from '@/lib/hooks/useNow';
+import { useSyncExternalStore } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { settleableVouchers } from '@/lib/batch-settle';
 import type { Service, VoucherStatus } from '@/lib/api';
-import { monthlyEarnings, summariseEarnings } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
 import {
   useLiveUpdates,
   useProvider,
+  useProviderReceipts,
   useProviderStats,
   useProviderVouchers,
   useVouchers,
@@ -39,6 +42,10 @@ export const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Suspended:
     'This clinic is suspended. It cannot list services, receive new vouchers or claim funded ones. Contact the administrator.',
 };
+
+const subscribeToTimeZone = () => () => {};
+const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const getServerTimeZone = (): null => null;
 
 export function useClinicDesk() {
   const router = useRouter();
@@ -93,8 +100,28 @@ export function useClinicDesk() {
     error: earningsError,
     mutate: refreshEarnings,
   } = useProviderVouchers(address);
+  const {
+    receipts: earningsReceipts,
+    error: receiptsError,
+    isLoading: receiptsLoading,
+    mutate: mutateEarningsReceipts,
+  } = useProviderReceipts(address);
+
   const earnings = useMemo(() => summariseEarnings(earningsVouchers), [earningsVouchers]);
   const months = useMemo(() => monthlyEarnings(earningsVouchers), [earningsVouchers]);
+  const now = useNow();
+  const timeZone = useSyncExternalStore(
+    subscribeToTimeZone,
+    getBrowserTimeZone,
+    getServerTimeZone,
+  );
+  const dailyEarnings = useMemo(
+    () =>
+      timeZone
+        ? summariseDailyEarnings(earningsVouchers, earningsReceipts, new Date(now), timeZone)
+        : null,
+    [earningsVouchers, earningsReceipts, now, timeZone],
+  );
 
   const { vouchers, mutate: mutateVouchers } = useVouchers(
     address ? { provider: address } : null,
@@ -113,6 +140,7 @@ export function useClinicDesk() {
     void refreshProvider();
     void refreshStats();
     void refreshEarnings();
+    void mutateEarningsReceipts();
     void mutateVouchers();
     void mutateStatus();
   }
@@ -242,6 +270,13 @@ export function useClinicDesk() {
     provider,
     stats,
     statsError,
+    earningsReceipts,
+    receiptsError,
+    receiptsLoading,
+    now,
+    timeZone,
+    dailyEarnings,
+    formatUsdc,
     earningsVouchers,
     loadingEarnings,
     earningsError,

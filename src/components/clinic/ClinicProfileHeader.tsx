@@ -4,6 +4,9 @@ import { formatDate } from '@/lib/amounts';
 import { CopyValue } from '@/components/CopyValue';
 import { FavouriteButton } from '@/components/FavouriteButton';
 import { Card } from '@/components/ui';
+import { ClinicMetadataLink } from '@/components/ClinicMetadataLink';
+import { clinicMetadataUrl } from '@/lib/clinic-metadata';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 export interface ClinicProfileHeaderProps {
   provider: Provider;
@@ -20,13 +23,17 @@ export function ClinicProfileHeader({
   showSettled,
   settledCount,
 }: ClinicProfileHeaderProps) {
+  const { t } = useLocaleContext();
+  const websiteUrl = clinicMetadataUrl(provider.metadata?.website);
+  const contactUrl = clinicMetadataUrl(provider.metadata?.contact);
+
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">{provider.name}</h1>
           <p className="mono mt-1 text-xs text-[var(--color-ink-soft)]">
-            {provider.country} ·{' '}
+            {provider.country} · 
             <CopyValue value={provider.address} chars={8} label="clinic address" />
           </p>
         </div>
@@ -59,6 +66,19 @@ export function ClinicProfileHeader({
             </div>
           )}
         </dl>
+      )}
+
+      {(websiteUrl || contactUrl) && (
+        <div className="mt-4 grid gap-2 border-t border-[var(--color-line)] pt-4 sm:grid-cols-2">
+          <ClinicMetadataLink
+            label={t('clinic.website')}
+            destination={websiteUrl}
+          />
+          <ClinicMetadataLink
+            label={t('clinic.contact')}
+            destination={contactUrl}
+          />
+        </div>
       )}
     </Card>
   );

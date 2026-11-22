@@ -34,6 +34,9 @@ import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
 import { useToast } from '@/components/Toast';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+import { useTransactionStatus } from '@/lib/pending-tx';
+import { clearCheckoutDraft } from '@/lib/checkout-draft';
 import { Alert, Button, Card, ExplorerLink, Field } from '@/components/ui';
 
 export interface ClinicCheckoutProps {
@@ -107,6 +110,8 @@ export function ClinicCheckout({
     failed: { label: string; error: string }[];
   } | null>(null);
   const toast = useToast();
+  const { t, locale } = useLocaleContext();
+  const txStatus = useTransactionStatus();
 
   const trustline = useUsdcTrustline();
 
@@ -387,6 +392,7 @@ export function ClinicCheckout({
           });
           setBatchProgress(null);
           setBatchSummary({ succeeded, failed });
+      if (succeeded.length > 0) clearCheckoutDraft(address);
           toast.error(
             `Funded ${succeeded.length} of ${requests.length} service${requests.length === 1 ? '' : 's'} before ${selectedServices[i].label} failed: ${failed[failed.length - 1].error}`,
           );

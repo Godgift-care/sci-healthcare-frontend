@@ -25,7 +25,7 @@ export default function ClinicDeskPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="clinic-desk-page space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{d.t('clinic.title')}</h1>
@@ -78,6 +78,78 @@ export default function ClinicDeskPage() {
       )}
       <RecentVouchers />
       <OfflineClaimQueue />
+
+      {d.standing !== null && d.standing !== 'Unregistered' && (
+        <section
+          aria-labelledby="clinic-daily-summary"
+          className="clinic-daily-summary space-y-4 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-line)] pb-4">
+            <div>
+              <h2 id="clinic-daily-summary" className="text-lg font-semibold">
+                {d.t('clinic.dailySummary')}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+                {d.t('clinic.dailySummaryNote')}
+              </p>
+              <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+                {d.t('clinic.dailyTimeZone', { timeZone: d.timeZone ?? '—' })}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => window.print()}
+              disabled={!d.dailyEarnings || d.receiptsLoading || d.loadingEarnings}
+              className="print:hidden"
+            >
+              {d.t('clinic.dailyPrint')}
+            </Button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-2">
+            {[
+              ['dailyClaimed', d.dailyEarnings?.claimedCount],
+              ['dailyAttested', d.dailyEarnings?.attestedCount],
+              ['dailySettled', d.dailyEarnings?.settledCount],
+              [
+                'dailyReceived',
+                d.dailyEarnings ? `$${d.formatUsdc(d.dailyEarnings.netReceived, d.locale)}` : undefined,
+              ],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-[var(--color-line)] p-4 print:break-inside-avoid"
+              >
+                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                  {d.t(`clinic.${label}`)}
+                </div>
+                <div className="mt-1 text-2xl font-bold tabular-nums">
+                  {d.loadingEarnings || d.receiptsLoading || !d.timeZone ? (
+                    '—'
+                  ) : d.earningsError || d.receiptsError ? (
+                    '—'
+                  ) : (
+                    value
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {(d.earningsError || d.receiptsError) && (
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              {d.t('clinic.earningsUnavailable')}
+            </p>
+          )}
+          {d.timeZone && (
+            <p className="text-xs text-[var(--color-ink-soft)]">
+              {new Intl.DateTimeFormat(
+                d.locale === 'fr' ? 'fr-FR' : d.locale === 'sw' ? 'sw-KE' : 'en-GB',
+                { dateStyle: 'long', timeZone: d.timeZone },
+              ).format(new Date(d.now))}
+            </p>
+          )}
+        </section>
+      )}
 
       {d.standing !== null && d.standing !== 'Unregistered' && (
         <ClinicEarningsSection
