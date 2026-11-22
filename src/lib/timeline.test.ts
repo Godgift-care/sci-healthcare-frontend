@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Receipt, Voucher, VoucherEvent } from './api';
-import { stepTxHashes, voucherTimeline } from './timeline';
+import {
+  getStatusExplanationKey,
+  stepTxHashes,
+  TIMELINE_STATUSES,
+  VOUCHER_ROLES,
+  voucherTimeline,
+} from './timeline';
+import { locales } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 
 /**
  * Voucher lifecycle rules (#77). `voucherTimeline` turns on-chain timestamps
@@ -327,5 +335,21 @@ describe('stepTxHashes', () => {
     expect(stepTxHashes([])).toEqual({});
     expect(stepTxHashes(null)).toEqual({});
     expect(stepTxHashes(undefined)).toEqual({});
+  });
+});
+
+describe('voucher status explanations (#323)', () => {
+  it('covers every status and role combination with plain-words text in all catalogues', () => {
+    for (const locale of locales) {
+      for (const status of TIMELINE_STATUSES) {
+        for (const role of VOUCHER_ROLES) {
+          const key = getStatusExplanationKey(status, role);
+          const explanation = translate(locale, key);
+          expect(explanation, `Missing explanation for locale: ${locale}, key: ${key}`).toBeTruthy();
+          expect(explanation).not.toEqual(key);
+          expect(explanation.trim().length).toBeGreaterThan(10);
+        }
+      }
+    }
   });
 });

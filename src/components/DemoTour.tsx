@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { isTestnet } from '@/lib/config';
 import { markTourDone, useTourDone } from '@/lib/tour';
 
@@ -26,6 +27,7 @@ type Step = {
  * mainnet build leads with connecting a wallet instead.
  */
 export function DemoTour() {
+  const { t } = useLocaleContext();
   const done = useTourDone();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -35,28 +37,28 @@ export function DemoTour() {
   const steps: Step[] = [
     isTestnet
       ? {
-          title: 'Get test USDC',
-          body: 'Connect a testnet wallet and draw demo USDC from the faucet — one top-up per wallet per day.',
+          title: t('components.demoTour.steps.testUsdcTitle'),
+          body: t('components.demoTour.steps.testUsdcBody'),
           href: '/my',
-          cta: 'Open My vouchers',
+          cta: t('components.demoTour.steps.testUsdcCta'),
         }
       : {
-          title: 'Connect your wallet',
-          body: 'Connect a Stellar wallet that holds USDC. The app never sees your secret key; your wallet signs every transaction.',
+          title: t('components.demoTour.steps.connectTitle'),
+          body: t('components.demoTour.steps.connectBody'),
           href: '/my',
-          cta: 'Open My vouchers',
+          cta: t('components.demoTour.steps.connectCta'),
         },
     {
-      title: 'Fund care for a clinic',
-      body: 'Pick a verified clinic and the service your family needs. The money is escrowed by the contract, not sent to the clinic yet.',
+      title: t('components.demoTour.steps.fundTitle'),
+      body: t('components.demoTour.steps.fundBody'),
       href: '/',
-      cta: 'Browse clinics',
+      cta: t('components.demoTour.steps.fundCta'),
     },
     {
-      title: 'Follow the voucher',
-      body: 'Every voucher has its own page with its on-chain history, receipt and the actions you can take. It is safe to share by link.',
+      title: t('components.demoTour.steps.followTitle'),
+      body: t('components.demoTour.steps.followBody'),
       href: '/my',
-      cta: 'See your vouchers',
+      cta: t('components.demoTour.steps.followCta'),
     },
   ];
 
@@ -73,20 +75,20 @@ export function DemoTour() {
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
-            <h2 className="text-sm font-semibold">New here? Take the demo tour</h2>
+            <h2 className="text-sm font-semibold">{t('components.demoTour.title')}</h2>
             <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
               {isTestnet
-                ? 'Three steps through the whole product: get test USDC, fund a voucher, then follow it to the receipt.'
-                : 'Three steps through the whole product: connect a wallet, fund a voucher, then follow it to the receipt.'}
+                ? t('components.demoTour.introTestnet')
+                : t('components.demoTour.introMainnet')}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setOpen(true)}>Take the tour</Button>
+            <Button onClick={() => setOpen(true)}>{t('components.demoTour.start')}</Button>
             <button
               type="button"
               onClick={finish}
-              aria-label="Dismiss the demo tour"
-              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+              aria-label={t('components.demoTour.dismiss')}
+              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] transition motion-reduce:transition-none hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
             >
               ×
             </button>
@@ -97,7 +99,10 @@ export function DemoTour() {
       <Modal
         open={open}
         onClose={finish}
-        title={`Demo tour — step ${index + 1} of ${steps.length}`}
+        title={t('components.demoTour.stepTitle', {
+          step: index + 1,
+          total: steps.length,
+        })}
         actions={
           <>
             <Button
@@ -105,15 +110,17 @@ export function DemoTour() {
               disabled={index === 0}
               onClick={() => setIndex((i) => Math.max(0, i - 1))}
             >
-              Back
+              {t('components.demoTour.back')}
             </Button>
             {isLast ? (
-              <Button onClick={finish}>Finish</Button>
+              <Button onClick={finish}>{t('components.demoTour.finish')}</Button>
             ) : (
-              <Button onClick={() => setIndex((i) => i + 1)}>Next</Button>
+              <Button onClick={() => setIndex((i) => i + 1)}>
+                {t('components.demoTour.next')}
+              </Button>
             )}
             <Button variant="ghost" onClick={finish}>
-              Skip
+              {t('components.demoTour.skip')}
             </Button>
           </>
         }
