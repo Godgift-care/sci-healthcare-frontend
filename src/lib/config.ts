@@ -1,4 +1,5 @@
 import { parseSep24Anchors } from './sep24-config';
+import { isContractId } from './public-config';
 
 /**
  * Browser-visible configuration.
@@ -69,6 +70,17 @@ export const isTestnet = config.network !== 'public';
 export function requireContracts(): void {
   required('NEXT_PUBLIC_VOUCHER_CONTRACT_ID', config.contracts.voucher);
   required('NEXT_PUBLIC_REGISTRY_CONTRACT_ID', config.contracts.registry);
+
+  if (!isContractId(config.contracts.voucher)) {
+    throw new Error(
+      'NEXT_PUBLIC_VOUCHER_CONTRACT_ID is invalid: it must be C followed by 55 base32 characters.',
+    );
+  }
+  if (!isContractId(config.contracts.registry)) {
+    throw new Error(
+      'NEXT_PUBLIC_REGISTRY_CONTRACT_ID is invalid: it must be C followed by 55 base32 characters.',
+    );
+  }
 }
 
 export function explorerTx(hash: string): string {
