@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { formatUsdc } from '@/lib/amounts';
+import { formatCount, formatUsdc } from '@/lib/amounts';
 import { buildBarLayout, summarizeActivitySeries } from '@/lib/chart';
 import { useLowBandwidth } from '@/lib/low-bandwidth';
 import { compareEscrow } from '@/lib/escrow';
