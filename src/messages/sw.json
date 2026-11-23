@@ -32,7 +32,9 @@
     "viewTransaction": "Tazama muamala",
     "indexerCatchUp": "Orodha zitasasishwa mara tu kielezo kinapofikia.",
     "updateAvailable": "Toleo jipya liko tayari.",
-    "reloadToUpdate": "Pakia upya ili kusasisha"
+    "reloadToUpdate": "Pakia upya ili kusasisha",
+    "mockModeBadge": "Data ya Mock",
+    "mockModeBanner": "Hali ya majaribio inatumika: uundaji bila mkoba au mfumo wa nyuma. Miamala na data zote zinaigizwa."
   },
   "wallet": {
     "restoreFootprintConfirm": "Baadhi ya data ya mkataba iliyowekwa kwenye kumbukumbu lazima irejeshwe kabla muamala huu haujaendelea. Utaombwa kusaini miamala miwili: kurejesha data (ada ya mtandao inayokadiriwa: {restoreFee} XLM), kisha kukamilisha muamala wako (ada ya mtandao inayokadiriwa: {transactionFee} XLM). Jumla ya ada ya mtandao inayokadiriwa: {totalFee} XLM. Endelea?",

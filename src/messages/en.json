@@ -32,7 +32,9 @@
     "viewTransaction": "View transaction",
     "indexerCatchUp": "Lists update once the indexer catches up.",
     "updateAvailable": "A new version is ready.",
-    "reloadToUpdate": "Reload to update"
+    "reloadToUpdate": "Reload to update",
+    "mockModeBadge": "Mock Data",
+    "mockModeBanner": "Mock dev mode active: developing without a wallet or backend. All transactions and data are simulated."
   },
   "wallet": {
     "restoreFootprintConfirm": "Some archived contract data must be restored before this transaction can run. You will be asked to sign two transactions: restore the data (estimated network fee: {restoreFee} XLM), then complete your transaction (estimated network fee: {transactionFee} XLM). Estimated total network fees: {totalFee} XLM. Continue?",

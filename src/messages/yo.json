@@ -32,7 +32,9 @@
     "viewTransaction": "Wo ìdúnàádúrà",
     "indexerCatchUp": "Àwọn àkójọ yóò ṣe àtúnṣe ní kété tí atọ́ka bá bá a.",
     "updateAvailable": "Ẹ̀yà tuntun ti ṣetán.",
-    "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe"
+    "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe",
+    "mockModeBadge": "Àwọn Àkọsílẹ̀ Àwòkọ́ṣe",
+    "mockModeBanner": "Ipo ìdàgbàsókè àwòkọ́ṣe ti ń ṣiṣẹ́: ìdàgbàsókè láìsí àpamọ́wọ́ tàbí ẹ̀rọ abẹ́lé. Gbogbo ìgbòkègbodò àti àkọsílẹ̀ jẹ́ àṣedánwò."
   },
   "wallet": {
     "restoreFootprintConfirm": "A gbọ́dọ̀ mú àwọn dátà àdéhùn tí a fi pamọ́ padà kí ìdúnàádúrà yìí tó lè ṣiṣẹ́. A ó ní kí o fọwọ́ sí ìdúnàádúrà méjì: mímú dátà náà padà (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {restoreFee} XLM), lẹ́yìn náà parí ìdúnàádúrà rẹ (owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {transactionFee} XLM). Àpapọ̀ owó nẹ́tíwọ́kì tí a fojú díwọ̀n: {totalFee} XLM. Ṣé o fẹ́ tẹ̀síwájú?",

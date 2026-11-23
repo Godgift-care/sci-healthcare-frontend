@@ -11,6 +11,7 @@ import { PendingTransactionGuard } from '@/components/PendingTransactionGuard';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { SwrProvider } from '@/components/SwrProvider';
 import { TestnetNotice } from '@/components/TestnetNotice';
+import { MockModeNotice } from '@/components/MockModeNotice';
 import { ToastProvider } from '@/components/Toast';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SkipToContent } from '@/components/SkipToContent';
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <SkipToContent />
             <div className="print:hidden">
               <TestnetNotice />
+              <MockModeNotice />
             </div>
             <SiteHeader />
             <CommandPalette />

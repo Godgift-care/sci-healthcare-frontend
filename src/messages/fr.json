@@ -32,7 +32,9 @@
     "viewTransaction": "Voir la transaction",
     "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard.",
     "updateAvailable": "Une nouvelle version est prête.",
-    "reloadToUpdate": "Recharger pour mettre à jour"
+    "reloadToUpdate": "Recharger pour mettre à jour",
+    "mockModeBadge": "Données fictives",
+    "mockModeBanner": "Mode de développement fictif actif : développement sans portefeuille ni serveur. Toutes les transactions et données sont simulées."
   },
   "wallet": {
     "restoreFootprintConfirm": "Certaines données archivées du contrat doivent être restaurées avant l'exécution de cette transaction. Vous devrez signer deux transactions : restaurer les données (frais réseau estimés : {restoreFee} XLM), puis effectuer votre transaction (frais réseau estimés : {transactionFee} XLM). Total estimé des frais réseau : {totalFee} XLM. Continuer ?",
