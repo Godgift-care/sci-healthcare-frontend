@@ -551,6 +551,11 @@ export default function MyPage() {
             )}
           </div>
         </div>
+        {selectedVouchers.length > 0 && (
+          <p aria-live="polite" className="text-xs text-[var(--color-ink-soft)]">
+            {t('my.selectedCount', { count: selectedVouchers.length })}
+          </p>
+        )}
         {address && !fundedError && <ExpiryReminders vouchers={walletFunded} />}
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
