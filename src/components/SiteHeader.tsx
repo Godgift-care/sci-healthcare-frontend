@@ -60,8 +60,8 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)] print:hidden">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span
               aria-hidden
@@ -71,7 +71,10 @@ export function SiteHeader() {
             </span>
             SCI Healthcare
           </Link>
-          <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-0.5 lg:flex [&>a]:px-1 [&>a]:text-[13px]"
+          >
             {links.map((link) => (
               <NavLink key={link.href} href={link.href}>
                 {link.label}
@@ -80,7 +83,7 @@ export function SiteHeader() {
           </nav>
         </div>
 
-        <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+        <div className="ms-auto flex flex-wrap items-center justify-end gap-1">
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />
