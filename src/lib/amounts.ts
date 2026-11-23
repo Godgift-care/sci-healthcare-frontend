@@ -1,4 +1,5 @@
-import { formatRelativeFromNow } from '@/i18n/translate';
+import { localeDateFormats, type Locale } from '@/i18n/config';
+import { formatRelativeFromNow, localeTag } from '@/i18n/translate';
 
 /**
  * Amounts are i128 on chain and are carried as decimal strings in the UI.
@@ -7,6 +8,47 @@ import { formatRelativeFromNow } from '@/i18n/translate';
  */
 export const DECIMALS = 7;
 const SCALE = 10n ** BigInt(DECIMALS);
+
+/**
+ * Locale-aware display formatting.
+ *
+ * Every formatter below goes through `Intl`, so the punctuation it emits is
+ * the locale's: French groups with a narrow no-break space and writes a
+ * decimal comma, English and Swahili group with a comma and write a decimal
+ * point. Amounts stay bigint from end to end — `Intl.NumberFormat` accepts a
+ * bigint and groups it without converting to a float, so an i128 never loses
+ * precision above 2^53.
+ *
+ * Formatters are cached because `Intl.NumberFormat` construction is costly
+ * and these run per row in tables.
+ */
+const integerFormats = new Map<string, Intl.NumberFormat>();
+const decimalSeparators = new Map<string, string>();
+
+/** The locale's grouping formatter, with no fractional part. */
+function integerFormat(locale: string): Intl.NumberFormat {
+  const tag = localeTag(locale);
+  let format = integerFormats.get(tag);
+  if (!format) {
+    format = new Intl.NumberFormat(tag, { maximumFractionDigits: 0 });
+    integerFormats.set(tag, format);
+  }
+  return format;
+}
+
+/** The locale's decimal separator, e.g. `.` for en and `,` for fr. */
+function decimalSeparator(locale: string): string {
+  const tag = localeTag(locale);
+  let separator = decimalSeparators.get(tag);
+  if (separator === undefined) {
+    separator =
+      new Intl.NumberFormat(tag)
+        .formatToParts(0.5)
+        .find((part) => part.type === 'decimal')?.value ?? '.';
+    decimalSeparators.set(tag, separator);
+  }
+  return separator;
+}
 
 export function toBaseUnits(display: string): bigint {
   const trimmed = display.trim();
@@ -40,15 +82,17 @@ export function formatUsdc(base: string | bigint, locale = 'en'): string {
   const whole = value / SCALE;
   const frac = (value % SCALE).toString().padStart(DECIMALS, '0');
   const trimmed = frac.replace(/0+$/, '').padEnd(2, '0');
-  const localeTag =
-    locale === 'fr'
-      ? 'fr-FR'
-      : locale === 'sw'
-        ? 'sw-KE'
-        : locale === 'yo'
-          ? 'yo-NG'
-          : 'en-US';
-  return `${whole.toLocaleString(localeTag)}.${trimmed}`;
+  // The integer part is formatted as a bigint, never a Number: grouping is
+  // the only thing `Intl` does to it, so nothing above 2^53 is rounded.
+  return `${integerFormat(locale).format(whole)}${decimalSeparator(locale)}${trimmed}`;
+}
+
+/**
+ * Formats a count with the locale's grouping: "1,234" in en and sw,
+ * "1 234" (narrow no-break space) in fr.
+ */
+export function formatCount(count: number, locale = 'en'): string {
+  return integerFormat(locale).format(count);
 }
 
 /** Formats an amount with currency symbol or code according to the given locale */
@@ -64,12 +108,12 @@ export function formatCurrency(
   return `$${formatted}`;
 }
 
-export function formatXlm(base: string | bigint): string {
+export function formatXlm(base: string | bigint, locale = 'en'): string {
   const value = typeof base === 'bigint' ? base : BigInt(base);
   const whole = value / SCALE;
   const frac = (value % SCALE).toString().padStart(DECIMALS, '0');
   const trimmed = frac.replace(/0+$/, '').padEnd(2, '0');
-  return `${whole.toLocaleString('en-US')}.${trimmed}`;
+  return `${integerFormat(locale).format(whole)}${decimalSeparator(locale)}${trimmed}`;
 }
 
 /**
@@ -89,15 +133,8 @@ export function shortAddress(addr: string, chars = 4): string {
 export function formatDate(iso: string | Date | null, locale = 'en'): string {
   if (!iso) return '—';
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  const localeTag =
-    locale === 'fr'
-      ? 'fr-FR'
-      : locale === 'sw'
-        ? 'sw-KE'
-        : locale === 'yo'
-          ? 'yo-NG'
-          : 'en-GB';
-  return d.toLocaleDateString(localeTag, {
+  const tag = localeDateFormats[locale as Locale] ?? locale;
+  return d.toLocaleDateString(tag, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

@@ -501,5 +501,22 @@
     "restore": "Dá àkọsílẹ̀ padà",
     "discard": "Pa á rẹ́",
     "restoredMessage": "A ti dá àkọsílẹ̀ ìsanwó padà."
+  },
+  "social": {
+    "footer": "SCI Healthcare — àwọn vóṣà ìtọ́jú lórí Stellar",
+    "fallbackDetail": "Ṣí ìjápọ̀ náà fún àwọn àlàyé.",
+    "clinic": {
+      "eyebrow": "Kílíníkì",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Kílíníkì lórí SCI Healthcare",
+      "imageAlt": "Àwòrán àkọ́kọ́ kílíníkì: orúkọ, orílẹ̀-èdè àti ipò ìforúkọsílẹ̀"
+    },
+    "voucher": {
+      "eyebrow": "Vóṣà ìtọ́jú",
+      "detail": "Ipò: {status}",
+      "serviceFallback": "Iṣẹ́ {code}",
+      "fallbackTitle": "Vóṣà ìtọ́jú lórí SCI Healthcare",
+      "imageAlt": "Àwòrán àkọ́kọ́ vóṣà: iṣẹ́ àti ipò"
+    }
   }
 }

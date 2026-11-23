@@ -510,5 +510,22 @@
       "closeDialog": "Fermer la boîte de dialogue",
       "moreInformation": "Plus d'informations"
     }
+  },
+  "social": {
+    "footer": "SCI Healthcare — bons de soins sur Stellar",
+    "fallbackDetail": "Ouvrez le lien pour voir les détails.",
+    "clinic": {
+      "eyebrow": "Clinique",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Clinique sur SCI Healthcare",
+      "imageAlt": "Aperçu de la clinique : nom, pays et statut d'inscription"
+    },
+    "voucher": {
+      "eyebrow": "Bon de soins",
+      "detail": "Statut : {status}",
+      "serviceFallback": "Service {code}",
+      "fallbackTitle": "Bon de soins sur SCI Healthcare",
+      "imageAlt": "Aperçu du bon de soins : service et statut"
+    }
   }
 }

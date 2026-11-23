@@ -508,5 +508,22 @@
       "closeDialog": "Funga kidirisha",
       "moreInformation": "Maelezo zaidi"
     }
+  },
+  "social": {
+    "footer": "SCI Healthcare — vocha za huduma kwenye Stellar",
+    "fallbackDetail": "Fungua kiungo ili kuona maelezo.",
+    "clinic": {
+      "eyebrow": "Kiliniki",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Kiliniki kwenye SCI Healthcare",
+      "imageAlt": "Kadi ya hakikisho ya kiliniki: jina, nchi na hali ya usajili"
+    },
+    "voucher": {
+      "eyebrow": "Vocha ya huduma",
+      "detail": "Hali: {status}",
+      "serviceFallback": "Huduma {code}",
+      "fallbackTitle": "Vocha ya huduma kwenye SCI Healthcare",
+      "imageAlt": "Kadi ya hakikisho ya vocha: huduma na hali"
+    }
   }
 }

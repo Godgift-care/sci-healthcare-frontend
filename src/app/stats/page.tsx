@@ -33,11 +33,13 @@ function ActivityChart({
   title,
   data,
   color,
+  locale,
   unit = '',
 }: {
   title: string;
   data: { date: string; value: number; formattedValue?: string }[];
   color: string;
+  locale: string;
   unit?: string;
 }) {
   const chartHeight = 160;
@@ -61,7 +63,10 @@ function ActivityChart({
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs font-medium text-[var(--color-ink-soft)]">
         <span>{title}</span>
-        <span>Max: {unit}{maxVal.toLocaleString()}</span>
+        <span>
+          Max: {unit}
+          {formatCount(maxVal, locale)}
+        </span>
       </div>
 
       <p className="sr-only">{summary}</p>
@@ -115,7 +120,7 @@ function ActivityChart({
                   fill={color}
                   className="transition-opacity hover:opacity-80"
                 >
-                  <title>{`${d.date}: ${unit}${d.formattedValue ?? d.value}`}</title>
+                  <title>{`${d.date}: ${unit}${d.formattedValue ?? formatCount(d.value, locale)}`}</title>
                 </rect>
               </g>
             );
@@ -217,17 +222,17 @@ export default function StatsPage() {
     return series.map((s) => ({
       date: s.date,
       value: s.funded.count,
-      formattedValue: `${s.funded.count} ($${formatUsdc(s.funded.amount)})`,
+      formattedValue: `${formatCount(s.funded.count, locale)} ($${formatUsdc(s.funded.amount, locale)})`,
     }));
-  }, [series]);
+  }, [series, locale]);
 
   const settledSeries = useMemo(() => {
     return series.map((s) => ({
       date: s.date,
       value: s.settled.count,
-      formattedValue: `${s.settled.count} ($${formatUsdc(s.settled.amount)})`,
+      formattedValue: `${formatCount(s.settled.count, locale)} ($${formatUsdc(s.settled.amount, locale)})`,
     }));
-  }, [series]);
+  }, [series, locale]);
 
   const totalFundedVolume = useMemo(() => {
     return series.reduce((acc, s) => acc + BigInt(s.funded.amount || '0'), 0n).toString();
@@ -304,9 +309,11 @@ export default function StatsPage() {
           <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
             Active clinics
           </div>
-          <div className="mt-1 text-2xl font-bold">{stats ? stats.activeProviders : '—'}</div>
+          <div className="mt-1 text-2xl font-bold">
+            {stats ? formatCount(stats.activeProviders, locale) : '—'}
+          </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats ? `${stats.providers} registered total` : '…'}
+            {stats ? `${formatCount(stats.providers, locale)} registered total` : '…'}
           </div>
         </Card>
 
@@ -314,7 +321,9 @@ export default function StatsPage() {
           <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
             Countries
           </div>
-          <div className="mt-1 text-2xl font-bold">{countryCounts.length || '—'}</div>
+          <div className="mt-1 text-2xl font-bold">
+            {countryCounts.length ? formatCount(countryCounts.length, locale) : '—'}
+          </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
             operating across regions
           </div>
@@ -324,7 +333,9 @@ export default function StatsPage() {
           <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
             Vouchers funded
           </div>
-          <div className="mt-1 text-2xl font-bold">{stats ? stats.vouchers : '—'}</div>
+          <div className="mt-1 text-2xl font-bold">
+            {stats ? formatCount(stats.vouchers, locale) : '—'}
+          </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
             all-time commits
           </div>
@@ -335,10 +346,10 @@ export default function StatsPage() {
             Care settled
           </div>
           <div className="mt-1 text-2xl font-bold">
-            {stats ? `$${formatUsdc(stats.settledValue)}` : '—'}
+            {stats ? `$${formatUsdc(stats.settledValue, locale)}` : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats ? `${stats.settledVouchers} vouchers paid` : '…'}
+            {stats ? `${formatCount(stats.settledVouchers, locale)} vouchers paid` : '…'}
           </div>
         </Card>
       </section>
@@ -462,7 +473,7 @@ export default function StatsPage() {
           <Card className="p-5">
             <h3 className="font-medium text-sm">Vouchers funded per day</h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
-              Total {days}d volume: ${formatUsdc(totalFundedVolume)}
+              Total {days}d volume: ${formatUsdc(totalFundedVolume, locale)}
             </p>
             <div className="mt-4">
               {/* One broken chart leaves the totals, tables and the other chart up (#169). */}
@@ -471,6 +482,7 @@ export default function StatsPage() {
                   title="Daily Vouchers Funded"
                   data={fundedSeries}
                   color="var(--color-brand)"
+                  locale={locale}
                 />
               </WidgetBoundary>
             </div>
@@ -500,7 +512,7 @@ export default function StatsPage() {
                         accessor: (row) => row.funded.amount,
                         align: 'right',
                         className: 'font-mono',
-                        render: (row) => `$${formatUsdc(row.funded.amount)}`,
+                        render: (row) => `$${formatUsdc(row.funded.amount, locale)}`,
                       },
                     ]}
                   />
@@ -513,7 +525,7 @@ export default function StatsPage() {
           <Card className="p-5">
             <h3 className="font-medium text-sm">Care settled per day</h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
-              Total {days}d volume: ${formatUsdc(totalSettledVolume)}
+              Total {days}d volume: ${formatUsdc(totalSettledVolume, locale)}
             </p>
             <div className="mt-4">
               <WidgetBoundary label="This chart">
@@ -521,6 +533,7 @@ export default function StatsPage() {
                   title="Daily Care Settled"
                   data={settledSeries}
                   color="#059669"
+                  locale={locale}
                 />
               </WidgetBoundary>
             </div>
@@ -550,7 +563,7 @@ export default function StatsPage() {
                         accessor: (row) => row.settled.amount,
                         align: 'right',
                         className: 'font-mono',
-                        render: (row) => `$${formatUsdc(row.settled.amount)}`,
+                        render: (row) => `$${formatUsdc(row.settled.amount, locale)}`,
                       },
                     ]}
                   />
@@ -601,10 +614,10 @@ export default function StatsPage() {
                   >
                     <td className="block font-medium sm:table-cell sm:py-2.5">{country}</td>
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
-                      {stats.count} registered
+                      {formatCount(stats.count, locale)} registered
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
-                      {stats.active} active
+                      {formatCount(stats.active, locale)} active
                     </td>
                   </tr>
                 ))
@@ -659,13 +672,13 @@ export default function StatsPage() {
                       {country}
                     </td>
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
-                      {activity.funded} funded
+                      {formatCount(activity.funded, locale)} funded
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
-                      {activity.settled} settled
+                      {formatCount(activity.settled, locale)} settled
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">
-                      ${formatUsdc(activity.settledValue.toString())}
+                      ${formatUsdc(activity.settledValue.toString(), locale)}
                     </td>
                   </tr>
                 ))

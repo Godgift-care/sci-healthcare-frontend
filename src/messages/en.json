@@ -501,5 +501,22 @@
       "closeDialog": "Close dialog",
       "moreInformation": "More information"
     }
+  },
+  "social": {
+    "footer": "SCI Healthcare — care vouchers on Stellar",
+    "fallbackDetail": "Open the link for the details.",
+    "clinic": {
+      "eyebrow": "Clinic",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Clinic on SCI Healthcare",
+      "imageAlt": "Clinic preview card: name, country and registration status"
+    },
+    "voucher": {
+      "eyebrow": "Care voucher",
+      "detail": "Status: {status}",
+      "serviceFallback": "Service {code}",
+      "fallbackTitle": "Care voucher on SCI Healthcare",
+      "imageAlt": "Care voucher preview card: service and status"
+    }
   }
 }
