@@ -247,3 +247,52 @@ jobs:
       # every action pinned to a commit SHA and every workflow declaring
       # permissions. It needs no install, so it runs in this job too.
       - run: node --test .github/scripts/automerge.test.cjs .github/scripts/security-scan.test.cjs .github/scripts/workflow-policy.test.cjs
+
+  lockfile:
+    name: lockfile (npm 10)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # The change check diffs against the pull request's base commit,
+          # which the default shallow checkout does not contain.
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - name: Did package-lock.json change?
+        id: changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -z "$BASE_SHA" ]; then
+            # workflow_dispatch (the auto-merge bot runs CI on main this way)
+            # has no base commit, so always check.
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE_SHA" HEAD -- package-lock.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "package-lock.json is unchanged; skipping the npm 10 install check."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      # A lockfile written by npm 11 (and some Dependabot updates) drops
+      # entries npm 10 needs, which then fails `npm ci` in all the other jobs
+      # at once with an error that does not say what to do (#365). This job is
+      # deliberately cheap and only runs when the lockfile changed: --dry-run
+      # resolves the tree without downloading it, --ignore-scripts runs
+      # nothing.
+      - name: Install the lockfile with npm 10
+        if: steps.changed.outputs.changed == 'true'
+        run: |
+          if npm ci --ignore-scripts --dry-run; then
+            echo "package-lock.json installs with npm $(npm -v)."
+            exit 0
+          fi
+          echo "::error::package-lock.json does not install with npm $(npm -v) (the npm bundled with Node 22). It was probably written by a newer npm."
+          echo "Fix it with the Node version CI uses:"
+          echo "    nvm use              # Node 22 from .nvmrc, which ships npm 10"
+          echo "    rm -rf node_modules package-lock.json"
+          echo "    npm install          # rewrites the lockfile with npm 10"
+          echo "    git add package-lock.json"
+          echo "Do not hand-edit package-lock.json, and do not repair it with npm install under npm 11+ - that is what produced the broken lockfile."
+          exit 1
