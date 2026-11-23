@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { clinicCountries, filterClinics, parseCountry } from '@/lib/clinic-filters';
 import { useFavouriteClinics } from '@/lib/favourites';
 import { useLiveUpdates, useProviders, useStats } from '@/lib/hooks';
@@ -466,7 +467,10 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
           {p.services.slice(0, 3).map((s) => (
             <li key={s.code} className="flex justify-between gap-3 text-sm">
               <span className="min-w-0 break-words text-[var(--color-ink-soft)]">{s.label}</span>
-              <span className="mono shrink-0">${formatUsdc(s.price)}</span>
+              <span className="flex shrink-0 flex-col items-end">
+                <span className="mono">${formatUsdc(s.price)}</span>
+                <LocalEstimate amount={s.price} />
+              </span>
             </li>
           ))}
           {p.services.length === 0 && (

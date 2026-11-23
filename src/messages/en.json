@@ -561,5 +561,13 @@
     "refundingVoucher": "Refunding voucher #{id}…",
     "refundedSummary": "Refunded {count} voucher(s) successfully:",
     "refundFailedSummary": "Failed to refund {count} voucher(s):"
+  },
+  "localCurrency": {
+    "select": "Local currency estimate",
+    "off": "Local currency: off",
+    "estimate": "≈ {amount} est.",
+    "estimateRange": "≈ {min}–{max} est.",
+    "tooltip": "Estimate at the exchange rate of {date}. You pay and the clinic receives the USDC amount.",
+    "help": "Show an approximate local-currency amount next to USDC. USDC is still the amount charged."
   }
 }
