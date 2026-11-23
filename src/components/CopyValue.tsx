@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
+
 import { AddressName } from './AddressName';
 
 /**
@@ -14,7 +16,7 @@ import { AddressName } from './AddressName';
  */
 export function CopyValue({
   value,
-  label = 'value',
+  label: labelProp,
   display,
   name,
   chars = 6,
@@ -34,6 +36,8 @@ export function CopyValue({
   buttonOnly?: boolean;
   className?: string;
 }) {
+  const { t } = useLocaleContext();
+  const label = labelProp ?? t('components.copyValue.defaultLabel');
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -64,7 +68,7 @@ export function CopyValue({
       <button
         type="button"
         onClick={() => void copy()}
-        aria-label={`Copy ${label}`}
+        aria-label={t('components.copyValue.copy', { label })}
         title={value}
         className="inline-grid h-5 w-5 flex-none place-items-center rounded border border-transparent text-[var(--color-ink-soft)] transition hover:border-[var(--color-line)] hover:text-[var(--color-ink)]"
       >
@@ -99,9 +103,9 @@ export function CopyValue({
       </button>
       <span role="status" aria-live="polite" className="sr-only">
         {state === 'copied'
-          ? `${label} copied`
+          ? t('components.copyValue.copied', { label })
           : state === 'failed'
-            ? `Could not copy ${label}`
+            ? t('components.copyValue.failed', { label })
             : ''}
       </span>
     </span>

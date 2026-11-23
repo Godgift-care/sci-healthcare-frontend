@@ -262,6 +262,23 @@ export const api = {
     }
   },
 
+  /** Every receipt paid to a clinic, across the paginated receipts route. */
+  providerReceipts: async (address: string): Promise<Receipt[]> => {
+    const pageSize = 100;
+    const all: Receipt[] = [];
+    for (;;) {
+      const page = await client.receipts({
+        provider: address,
+        limit: pageSize,
+        offset: all.length,
+      });
+      all.push(...page.receipts);
+      if (page.receipts.length < pageSize || all.length >= page.total) {
+        return all;
+      }
+    }
+  },
+
   voucher: async (id: string, init?: RequestInit): Promise<VoucherDetail> => {
     const voucher = await timedClient(init?.signal).voucher(id);
     return { ...voucher, receipt: voucher.receipt ?? null };

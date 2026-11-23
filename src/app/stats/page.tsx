@@ -279,7 +279,7 @@ export default function StatsPage() {
               onClick={() => setDays(r)}
               className={`rounded-md px-2.5 py-1 font-medium transition ${
                 days === r
-                  ? 'bg-[var(--color-brand)] text-white'
+                  ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
                   : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
               }`}
             >
@@ -589,7 +589,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {formatCount(stats.count, locale)} registered
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       {formatCount(stats.active, locale)} active
                     </td>
                   </tr>
@@ -647,7 +647,7 @@ export default function StatsPage() {
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
                       {formatCount(activity.funded, locale)} funded
                     </td>
-                    <td className="block text-xs text-emerald-700 sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
                       {formatCount(activity.settled, locale)} settled
                     </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">
