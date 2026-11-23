@@ -1,338 +1,4 @@
 {
-  "nav": {
-    "clinics": "Clinics",
-    "howItWorks": "How it works",
-    "myVouchers": "My vouchers",
-    "clinicDesk": "Clinic desk",
-    "attest": "Attest",
-    "faq": "FAQ",
-    "stats": "Stats",
-    "attesters": "Attesters",
-    "privacy": "Privacy",
-    "docs": "Docs"
-  },
-  "footer": {
-    "testnetDisclaimer": "Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
-    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
-    "build": "Build {commit}"
-  },
-  "common": {
-    "loading": "Loading…",
-    "confirmed": "Confirmed",
-    "confirming": "Confirming…",
-    "signing": "Signing…",
-    "submitting": "Submitting…",
-    "copied": "Copied!",
-    "copy": "Copy",
-    "usdc": "USDC",
-    "cancel": "Cancel",
-    "close": "Close",
-    "skipToContent": "Skip to content",
-    "submitted": "Submitted.",
-    "viewTransaction": "View transaction",
-    "indexerCatchUp": "Lists update once the indexer catches up.",
-    "updateAvailable": "A new version is ready.",
-    "reloadToUpdate": "Reload to update"
-  },
-  "wallet": {
-    "restoreFootprintConfirm": "Some archived contract data must be restored before this transaction can run. You will be asked to sign two transactions: restore the data (estimated network fee: {restoreFee} XLM), then complete your transaction (estimated network fee: {transactionFee} XLM). Estimated total network fees: {totalFee} XLM. Continue?",
-    "restoreFootprintCancelled": "Restore cancelled. No transaction was submitted.",
-    "restoreRequired": "This transaction needs archived contract data restored. Use the connected wallet to continue.",
-    "restoreStillRequired": "The contract still requires archived data after restoration. Nothing else was submitted. Please try again later.",
-    "restorePreparationError": "Could not prepare the archived-data restore transaction: {error}",
-    "restoreRejected": "The archived-data restore transaction was rejected: {error}"
-  },
-  "home": {
-    "verifiedClinics": "Verified clinics",
-    "noClinics": "No clinics registered yet."
-  },
-  "voucher": {
-    "voucherNumber": "Voucher #{id}",
-    "recentlyViewed": "Recently viewed",
-    "at": "at",
-    "history": "History",
-    "fundedBy": "Funded by",
-    "expires": "Expires",
-    "clinicReceived": "Clinic received",
-    "fee": "fee",
-    "disputeOutcome": "Dispute outcome",
-    "careReceipt": "Care receipt",
-    "minted": "Minted",
-    "patientReference": "Patient reference",
-    "patientReferenceNote": "The patient reference is an opaque hash. It cannot be turned back into a name or record number.",
-    "viewContract": "View the voucher contract",
-    "copyLink": "Copy link",
-    "linkCopied": "Link copied!",
-    "addToCalendar": "Add to calendar",
-    "presentAtDesk": "Present at Clinic Desk",
-    "presentNote": "Show this QR code upon arrival at the clinic. The desk can scan it instantly to look up and claim your voucher.",
-    "scanToView": "Scan to view #{id}",
-    "printPass": "Print voucher pass",
-    "patientPass": "Patient Voucher Pass",
-    "voucherPassTitle": "Patient Clinic Voucher",
-    "voucherNumberUpper": "Voucher Number",
-    "presentNotice": "Present this number or QR code at the clinic reception desk.",
-    "service": "Service",
-    "clinic": "Clinic",
-    "voucherContract": "Voucher Contract",
-    "scanWithClinicScanner": "Scan with clinic scanner",
-    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records.",
-    "reportProblem": "Report a problem",
-    "reportProblemIntro": "Only the funder can open a dispute. If you are the patient, a relative, or anyone else who has noticed a problem with this voucher, open a report. It is prefilled with the public voucher number, status, service and clinic only — never the patient reference.",
-    "reportProblemAction": "Report a problem",
-    "redirect": {
-      "action": "Use at a different clinic",
-      "title": "Move voucher #{id}",
-      "intro": "Only active clinics that offer this service at or below {amount} are listed.",
-      "empty": "No other clinic currently offers this service at or below {amount}.",
-      "loading": "Finding clinics…",
-      "choose": "Choose a clinic",
-      "option": "{clinic} · {price}",
-      "confirmIntro": "{clinic} will receive {price} and the voucher keeps its escrow of {amount}. Check the clinic and price before signing.",
-      "confirm": "Move voucher",
-      "moving": "Moving…",
-      "error": "Could not move the voucher: {message}",
-      "success": "Voucher moved to {clinic}."
-    },
-    "staffNote": "Staff note",
-    "staffNoteNote": "Kept on this device only. Not shared or backed up.",
-    "staffNoteAdd": "Add note",
-    "staffNoteEdit": "Edit note",
-    "staffNoteSave": "Save note",
-    "staffNoteClear": "Clear note",
-    "staffNotePlaceholder": "Patient called, coming Tuesday",
-    "statusExplanation": {
-      "Funded": {
-        "funder": "Payment is held safely in escrow until care is provided.",
-        "clinic": "Funds are reserved in escrow. Deliver care and submit a claim to receive payment.",
-        "patient": "Care is covered and waiting. Show this voucher at the clinic to receive care."
-      },
-      "Claimed": {
-        "funder": "The clinic has confirmed care was provided and is awaiting review.",
-        "clinic": "Claim submitted. Awaiting attestation by a trusted reviewer.",
-        "patient": "Care has been received at the clinic and is being processed."
-      },
-      "Attested": {
-        "funder": "Care was verified by an independent reviewer and is ready to settle.",
-        "clinic": "Service verified. Funds can now be released to the clinic.",
-        "patient": "Care has been verified and completed."
-      },
-      "Settled": {
-        "funder": "Payment has been released to the clinic.",
-        "clinic": "Payment has been released to your wallet.",
-        "patient": "Care completed and payment settled."
-      },
-      "Disputed": {
-        "funder": "A dispute has been opened and payment is paused pending resolution.",
-        "clinic": "A dispute was opened for this voucher. Payment is on hold pending resolution.",
-        "patient": "This voucher has an open inquiry and is paused."
-      },
-      "Refunded": {
-        "funder": "Escrowed funds have been returned to your wallet.",
-        "clinic": "This voucher was cancelled or refunded to the funder.",
-        "patient": "This voucher was cancelled or refunded."
-      }
-    }
-  },
-  "clinic": {
-    "title": "Clinic desk",
-    "website": "Website",
-    "contact": "Contact",
-    "externalLinkConfirm": "You are leaving SCI Healthcare to visit {host}. Continue?",
-    "checking": "Checking registration…",
-    "scanVoucherQr": "Scan voucher QR",
-    "registerTitle": "Register this clinic",
-    "clinicName": "Clinic name",
-    "countryCode": "Country code (NG)",
-    "register": "Register",
-    "services": "Services",
-    "noServices": "No services listed yet. Funders can only pay for services you list.",
-    "code": "Code {code}",
-    "edit": "Edit",
-    "delist": "Delist",
-    "confirmDelist": "Confirm delist",
-    "delistNote": "Delisting stops new vouchers for this service. Vouchers already funded keep their agreed amount and settle normally.",
-    "updateService": "Update service {code}",
-    "listService": "List a service",
-    "codePlaceholder": "Code (101)",
-    "labelPlaceholder": "Outpatient consult",
-    "pricePlaceholder": "Price in USDC, e.g. 3.00",
-    "serviceNote": "Use a coarse service category, never a diagnosis. Codes are public. A new price applies to vouchers funded from now on.",
-    "incomingVouchers": "Incoming vouchers",
-    "noIncoming": "No vouchers for this clinic yet.",
-    "connectWallet": "Connect the clinic's wallet to manage this desk.",
-    "settleAll": "Settle all ({count})",
-    "settlingCount": "Settling {done}/{total}…",
-    "settlingVoucher": "Releasing payment for voucher #{id}…",
-    "settledOf": "{done} of {total} settled",
-    "settleAllProgress": "Settling due vouchers",
-    "settledSummary": "Payment released for",
-    "settleFailedSummary": "Not settled:",
-    "earnings": "Earnings",
-    "dailySummary": "Today's front-desk summary",
-    "dailySummaryNote": "Claims, attestations and payments completed on this calendar day.",
-    "dailyTimeZone": "Clinic time zone: {timeZone}",
-    "dailyClaimed": "Claimed",
-    "dailyAttested": "Attested",
-    "dailySettled": "Settled",
-    "dailyReceived": "Amount received",
-    "dailyPrint": "Print daily summary",
-    "earningsNote": "Cash flow for this clinic: settled care, payouts still in flight, and the protocol fees paid.",
-    "earningsSettled": "Settled",
-    "earningsSettledDetail": {
-      "one": "{count} voucher · {net} net after fees",
-      "other": "{count} vouchers · {net} net after fees"
-    },
-    "earningsPending": "Pending payout",
-    "earningsPendingDetail": {
-      "one": "{count} voucher claimed, attested or disputed, before fees",
-      "other": "{count} vouchers claimed, attested or disputed, before fees"
-    },
-    "earningsFees": "Fees paid",
-    "earningsFeesDetail": "Protocol fee on settled care",
-    "earningsMonthly": "Monthly earnings",
-    "earningsMonthlyNote": "Grouped by the month each voucher was funded (UTC).",
-    "earningsMonth": "Month",
-    "earningsTotal": "Total",
-    "earningsEmpty": "No settled or pending earnings yet.",
-    "earningsUnavailable": "Earnings are temporarily unavailable. The rest of the desk still works.",
-    "filterByStatus": "Filter by status",
-    "allStatuses": "All",
-    "searchVoucherNumber": "Voucher number",
-    "searchVoucherPlaceholder": "e.g. 21 or #21",
-    "showingVouchers": {
-      "one": "Showing {shown} of {total} voucher",
-      "other": "Showing {shown} of {total} vouchers"
-    },
-    "noMatchingVouchers": "No vouchers match this search.",
-    "clearFilters": "Clear filters",
-    "checklist": {
-      "title": "Getting to your first payment",
-      "note": "Five steps from registering to money in the bank. Each step turns green as it is completed.",
-      "progress": "{done} of {total} done",
-      "done": "Done",
-      "next": "Next",
-      "later": "Not yet",
-      "allDone": "All five steps are complete. Settled payments appear in Earnings.",
-      "steps": {
-        "register": "Register the clinic",
-        "verification": "Wait for verification",
-        "service": "List a service",
-        "claim": "Claim a voucher",
-        "paid": "Get paid"
-      },
-      "hints": {
-        "register": "Fill in the form below with the clinic name and country code.",
-        "waitingVerification": "An administrator must verify the clinic. This page updates when it happens.",
-        "suspended": "This clinic is suspended. Contact the administrator to restore it.",
-        "listService": "Add your first service and price below so funders can buy it.",
-        "claimVoucher": "A voucher is waiting below. Mark the patient seen to claim it.",
-        "shareClinic": "Share your clinic page so funders can find you. When a voucher arrives, mark the patient seen.",
-        "waitingAttester": "Care has been claimed. An independent attester confirms it before payment.",
-        "waitingDisputeWindow": "Care is confirmed. The payment releases once the dispute window closes.",
-        "disputed": "A dispute is open, so the payment is frozen until an administrator resolves it.",
-        "releasePayment": "A confirmed voucher is ready below. Release the payment to receive the money."
-      }
-    }
-  },
-  "my": {
-    "selectAllVisible": "Select all on this page ({count})",
-    "selectVoucher": "Select voucher #{id}",
-    "selectedCount": "{count} selected",
-    "exportSelected": "Download selected CSV",
-    "refundSelected": "Refund selected ({count})",
-    "refundAll": "Refund all ({count})",
-    "refundingCount": "Refunding {current}/{total}…",
-    "refundProgress": "{current} of {total}",
-    "refundingVoucher": "Refunding voucher #{id}…",
-    "refundedSummary": "Refunded {count} voucher(s) successfully:",
-    "refundFailedSummary": "Failed to refund {count} voucher(s):"
-  },
-  "scanner": {
-    "title": "Scan patient voucher QR",
-    "instructions": "Point the camera at the patient's voucher QR code to open it automatically.",
-    "requestingCamera": "Requesting camera…",
-    "cameraUnavailable": "Camera unavailable",
-    "manualPrompt": "Or enter voucher number manually",
-    "manualPlaceholder": "e.g. 42 or paste URL",
-    "open": "Open"
-  },
-  "language": {
-    "en": "English",
-    "fr": "Français",
-    "sw": "Kiswahili",
-    "yo": "Yorùbá",
-    "select": "Select language"
-  },
-  "admin": {
-    "split": {
-      "button": "Split escrow",
-      "amountLabel": "Amount awarded to the clinic (USDC)",
-      "amountHint": "Gross amount before the protocol fee, between 0 and {amount}. The rest returns to the funder.",
-      "invalid": "Enter an amount between 0 and {amount}.",
-      "loading": "Calculating the fee…",
-      "error": "Could not calculate the fee: {message}",
-      "clinicReceives": "{clinic} receives {net} after the {fee} fee.",
-      "funderReceives": "The funder receives {amount}.",
-      "sum": "The clinic net, the fee and the funder refund add up to the escrow of {amount}."
-    }
-  },
-  "stats": {
-    "downloadDaily": "Download daily CSV",
-    "downloadClinics": "Download clinics CSV",
-    "downloadVouchers": "Download vouchers CSV",
-    "escrowTitle": "Escrow held on chain",
-    "escrowNote": "Read from the voucher contract's own accounting, without a wallet.",
-    "escrowOpen": "Open escrow",
-    "escrowBalance": "Contract holds {amount}",
-    "escrowIndexed": "The indexer reports {amount} open in escrow.",
-    "escrowUnavailable": "The on-chain escrow figure is unavailable right now.",
-    "escrowIndexedUnavailable": "The indexer's open escrow total is unavailable right now.",
-    "escrowSolvencyMismatch": "The contract's books do not match its balance: {escrow} is recorded as open escrow but the contract holds {balance}. Do not rely on the indexed totals until this is understood.",
-    "escrowIndexerMismatch": "The chain and the indexer disagree about open escrow: the contract says {chain}, the indexer says {indexed}."
-  },
-  "attest": {
-    "leftToday": "{count} attestations left today",
-    "capReached": "You have reached today's attestation limit. Confirm care again after {time} UTC.",
-    "leftUnavailable": "Remaining attestations could not be read right now."
-  },
-  "print": {
-    "verify": "Verify on chain",
-    "verifying": "Verifying…",
-    "verified": "Verified on chain",
-    "mismatch": "Does not match the chain",
-    "mismatchShort": "Mismatch",
-    "error": "Could not read the chain",
-    "fieldMismatch": "{field}: shown {displayed}, chain says {onChain}",
-    "field": {
-      "voucher": "Receipt number",
-      "provider": "Clinic",
-      "service": "Service",
-      "amount": "Amount",
-      "settledAt": "Date"
-    }
-  },
-  "offlineQueue": {
-    "title": "Waiting to submit",
-    "note": "These claims were signed on this device and will be submitted automatically when the connection returns.",
-    "voucher": "Voucher #{id}",
-    "queuedStatus": "Queued",
-    "submitting": "Submitting…",
-    "failed": "Not submitted: {error}",
-    "validUntil": "Valid until {time}",
-    "submitNow": "Submit now",
-    "discard": "Discard",
-    "expiredTitle": "Queued claim discarded",
-    "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
-    "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
-  },
-  "checkoutDraft": {
-    "foundTitle": "Restore previous checkout?",
-    "foundDescription": "You have a saved draft with {count} selected service(s) from a previous session.",
-    "restore": "Restore draft",
-    "discard": "Discard",
-    "restoredMessage": "Checkout draft restored."
-  },
   "components": {
     "connectButton": {
       "connecting": "Connecting…",
@@ -498,5 +164,393 @@
       "closeDialog": "Close dialog",
       "moreInformation": "More information"
     }
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restore previous checkout?",
+    "foundDescription": "You have a saved draft with {count} selected service(s) from a previous session.",
+    "restore": "Restore draft",
+    "discard": "Discard",
+    "restoredMessage": "Checkout draft restored."
+  },
+  "common": {
+    "loading": "Loading…",
+    "confirmed": "Confirmed",
+    "confirming": "Confirming…",
+    "signing": "Signing…",
+    "submitting": "Submitting…",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "usdc": "USDC",
+    "cancel": "Cancel",
+    "close": "Close",
+    "skipToContent": "Skip to content",
+    "submitted": "Submitted.",
+    "viewTransaction": "View transaction",
+    "indexerCatchUp": "Lists update once the indexer catches up.",
+    "updateAvailable": "A new version is ready.",
+    "reloadToUpdate": "Reload to update"
+  },
+  "social": {
+    "footer": "SCI Healthcare — care vouchers on Stellar",
+    "fallbackDetail": "Open the link for the details.",
+    "clinic": {
+      "eyebrow": "Clinic",
+      "detail": "{country} · {status}",
+      "fallbackTitle": "Clinic on SCI Healthcare",
+      "imageAlt": "Clinic preview card: name, country and registration status"
+    },
+    "voucher": {
+      "eyebrow": "Care voucher",
+      "detail": "Status: {status}",
+      "serviceFallback": "Service {code}",
+      "fallbackTitle": "Care voucher on SCI Healthcare",
+      "imageAlt": "Care voucher preview card: service and status"
+    }
+  },
+  "nav": {
+    "clinics": "Clinics",
+    "howItWorks": "How it works",
+    "myVouchers": "My vouchers",
+    "clinicDesk": "Clinic desk",
+    "attest": "Attest",
+    "faq": "FAQ",
+    "stats": "Stats",
+    "attesters": "Attesters",
+    "privacy": "Privacy",
+    "docs": "Docs"
+  },
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "sw": "Kiswahili",
+    "yo": "Yorùbá",
+    "select": "Select language"
+  },
+  "stats": {
+    "downloadDaily": "Download daily CSV",
+    "downloadClinics": "Download clinics CSV",
+    "downloadVouchers": "Download vouchers CSV",
+    "escrowTitle": "Escrow held on chain",
+    "escrowNote": "Read from the voucher contract's own accounting, without a wallet.",
+    "escrowOpen": "Open escrow",
+    "escrowBalance": "Contract holds {amount}",
+    "escrowIndexed": "The indexer reports {amount} open in escrow.",
+    "escrowUnavailable": "The on-chain escrow figure is unavailable right now.",
+    "escrowIndexedUnavailable": "The indexer's open escrow total is unavailable right now.",
+    "escrowSolvencyMismatch": "The contract's books do not match its balance: {escrow} is recorded as open escrow but the contract holds {balance}. Do not rely on the indexed totals until this is understood.",
+    "escrowIndexerMismatch": "The chain and the indexer disagree about open escrow: the contract says {chain}, the indexer says {indexed}."
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "Some archived contract data must be restored before this transaction can run. You will be asked to sign two transactions: restore the data (estimated network fee: {restoreFee} XLM), then complete your transaction (estimated network fee: {transactionFee} XLM). Estimated total network fees: {totalFee} XLM. Continue?",
+    "restoreFootprintCancelled": "Restore cancelled. No transaction was submitted.",
+    "restoreRequired": "This transaction needs archived contract data restored. Use the connected wallet to continue.",
+    "restoreStillRequired": "The contract still requires archived data after restoration. Nothing else was submitted. Please try again later.",
+    "restorePreparationError": "Could not prepare the archived-data restore transaction: {error}",
+    "restoreRejected": "The archived-data restore transaction was rejected: {error}"
+  },
+  "footer": {
+    "testnetDisclaimer": "Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
+    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
+    "build": "Build {commit}"
+  },
+  "scanner": {
+    "title": "Scan patient voucher QR",
+    "instructions": "Point the camera at the patient's voucher QR code to open it automatically.",
+    "requestingCamera": "Requesting camera…",
+    "cameraUnavailable": "Camera unavailable",
+    "manualPrompt": "Or enter voucher number manually",
+    "manualPlaceholder": "e.g. 42 or paste URL",
+    "open": "Open"
+  },
+  "status": {
+    "title": "Status",
+    "subtitle": "Lists, balances and receipts are read from the API. Transactions are signed in your wallet and sent straight to the Stellar network, so they do not depend on the API being healthy.",
+    "checkAgain": "Check again",
+    "checking": "Checking…",
+    "notReported": "Not reported",
+    "headline": {
+      "checking": "Checking the API…",
+      "operational": "All systems operational",
+      "degraded": "Degraded: the API is up but not fully healthy",
+      "unreachable": "The API cannot be reached"
+    },
+    "unreachableBodyStart": "The API at",
+    "unreachableBodyEnd": "did not answer. Pages that list clinics or vouchers will not load until it is back; it may also be waking up, which can take up to a minute.",
+    "mismatchTitle": "This app and the API disagree about the deployment",
+    "apiReadiness": "API readiness",
+    "readiness": "Readiness",
+    "ready": "Ready",
+    "degraded": "Degraded",
+    "unreachable": "Unreachable",
+    "database": "Database",
+    "connected": "Connected",
+    "indexerLag": "Indexer lag",
+    "latestIndexedLedger": "Latest indexed ledger",
+    "ledgerHistory": "Ledger history",
+    "complete": "Complete",
+    "gapDetected": "Gap detected",
+    "network": "Network",
+    "thisAppSignsFor": "This app signs for",
+    "apiIndexes": "The API indexes",
+    "versions": "Versions",
+    "webApp": "Web app",
+    "api": "API",
+    "notAvailable": "Not available",
+    "apiRunningSince": "API running since",
+    "unknown": "unknown"
+  },
+  "attest": {
+    "leftToday": "{count} attestations left today",
+    "capReached": "You have reached today's attestation limit. Confirm care again after {time} UTC.",
+    "leftUnavailable": "Remaining attestations could not be read right now."
+  },
+  "print": {
+    "verify": "Verify on chain",
+    "verifying": "Verifying…",
+    "verified": "Verified on chain",
+    "mismatch": "Does not match the chain",
+    "mismatchShort": "Mismatch",
+    "error": "Could not read the chain",
+    "fieldMismatch": "{field}: shown {displayed}, chain says {onChain}",
+    "field": {
+      "voucher": "Receipt number",
+      "provider": "Clinic",
+      "service": "Service",
+      "amount": "Amount",
+      "settledAt": "Date"
+    }
+  },
+  "clinic": {
+    "title": "Clinic desk",
+    "website": "Website",
+    "contact": "Contact",
+    "externalLinkConfirm": "You are leaving SCI Healthcare to visit {host}. Continue?",
+    "checking": "Checking registration…",
+    "scanVoucherQr": "Scan voucher QR",
+    "registerTitle": "Register this clinic",
+    "clinicName": "Clinic name",
+    "countryCode": "Country code (NG)",
+    "register": "Register",
+    "services": "Services",
+    "noServices": "No services listed yet. Funders can only pay for services you list.",
+    "code": "Code {code}",
+    "edit": "Edit",
+    "delist": "Delist",
+    "confirmDelist": "Confirm delist",
+    "delistNote": "Delisting stops new vouchers for this service. Vouchers already funded keep their agreed amount and settle normally.",
+    "updateService": "Update service {code}",
+    "listService": "List a service",
+    "codePlaceholder": "Code (101)",
+    "labelPlaceholder": "Outpatient consult",
+    "pricePlaceholder": "Price in USDC, e.g. 3.00",
+    "serviceNote": "Use a coarse service category, never a diagnosis. Codes are public. A new price applies to vouchers funded from now on.",
+    "incomingVouchers": "Incoming vouchers",
+    "noIncoming": "No vouchers for this clinic yet.",
+    "connectWallet": "Connect the clinic's wallet to manage this desk.",
+    "settleAll": "Settle all ({count})",
+    "settlingCount": "Settling {done}/{total}…",
+    "settlingVoucher": "Releasing payment for voucher #{id}…",
+    "settledOf": "{done} of {total} settled",
+    "settleAllProgress": "Settling due vouchers",
+    "settledSummary": "Payment released for",
+    "settleFailedSummary": "Not settled:",
+    "earnings": "Earnings",
+    "dailySummary": "Today's front-desk summary",
+    "dailySummaryNote": "Claims, attestations and payments completed on this calendar day.",
+    "dailyTimeZone": "Clinic time zone: {timeZone}",
+    "dailyClaimed": "Claimed",
+    "dailyAttested": "Attested",
+    "dailySettled": "Settled",
+    "dailyReceived": "Amount received",
+    "dailyPrint": "Print daily summary",
+    "earningsNote": "Cash flow for this clinic: settled care, payouts still in flight, and the protocol fees paid.",
+    "earningsSettled": "Settled",
+    "earningsSettledDetail": {
+      "one": "{count} voucher · {net} net after fees",
+      "other": "{count} vouchers · {net} net after fees"
+    },
+    "earningsPending": "Pending payout",
+    "earningsPendingDetail": {
+      "one": "{count} voucher claimed, attested or disputed, before fees",
+      "other": "{count} vouchers claimed, attested or disputed, before fees"
+    },
+    "earningsFees": "Fees paid",
+    "earningsFeesDetail": "Protocol fee on settled care",
+    "earningsMonthly": "Monthly earnings",
+    "earningsMonthlyNote": "Grouped by the month each voucher was funded (UTC).",
+    "earningsMonth": "Month",
+    "earningsTotal": "Total",
+    "earningsEmpty": "No settled or pending earnings yet.",
+    "earningsUnavailable": "Earnings are temporarily unavailable. The rest of the desk still works.",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All",
+    "searchVoucherNumber": "Voucher number",
+    "searchVoucherPlaceholder": "e.g. 21 or #21",
+    "showingVouchers": {
+      "one": "Showing {shown} of {total} voucher",
+      "other": "Showing {shown} of {total} vouchers"
+    },
+    "noMatchingVouchers": "No vouchers match this search.",
+    "clearFilters": "Clear filters",
+    "checklist": {
+      "title": "Getting to your first payment",
+      "note": "Five steps from registering to money in the bank. Each step turns green as it is completed.",
+      "progress": "{done} of {total} done",
+      "done": "Done",
+      "next": "Next",
+      "later": "Not yet",
+      "allDone": "All five steps are complete. Settled payments appear in Earnings.",
+      "steps": {
+        "register": "Register the clinic",
+        "verification": "Wait for verification",
+        "service": "List a service",
+        "claim": "Claim a voucher",
+        "paid": "Get paid"
+      },
+      "hints": {
+        "register": "Fill in the form below with the clinic name and country code.",
+        "waitingVerification": "An administrator must verify the clinic. This page updates when it happens.",
+        "suspended": "This clinic is suspended. Contact the administrator to restore it.",
+        "listService": "Add your first service and price below so funders can buy it.",
+        "claimVoucher": "A voucher is waiting below. Mark the patient seen to claim it.",
+        "shareClinic": "Share your clinic page so funders can find you. When a voucher arrives, mark the patient seen.",
+        "waitingAttester": "Care has been claimed. An independent attester confirms it before payment.",
+        "waitingDisputeWindow": "Care is confirmed. The payment releases once the dispute window closes.",
+        "disputed": "A dispute is open, so the payment is frozen until an administrator resolves it.",
+        "releasePayment": "A confirmed voucher is ready below. Release the payment to receive the money."
+      }
+    }
+  },
+  "admin": {
+    "split": {
+      "button": "Split escrow",
+      "amountLabel": "Amount awarded to the clinic (USDC)",
+      "amountHint": "Gross amount before the protocol fee, between 0 and {amount}. The rest returns to the funder.",
+      "invalid": "Enter an amount between 0 and {amount}.",
+      "loading": "Calculating the fee…",
+      "error": "Could not calculate the fee: {message}",
+      "clinicReceives": "{clinic} receives {net} after the {fee} fee.",
+      "funderReceives": "The funder receives {amount}.",
+      "sum": "The clinic net, the fee and the funder refund add up to the escrow of {amount}."
+    }
+  },
+  "voucher": {
+    "voucherNumber": "Voucher #{id}",
+    "recentlyViewed": "Recently viewed",
+    "at": "at",
+    "history": "History",
+    "fundedBy": "Funded by",
+    "expires": "Expires",
+    "clinicReceived": "Clinic received",
+    "fee": "fee",
+    "disputeOutcome": "Dispute outcome",
+    "careReceipt": "Care receipt",
+    "minted": "Minted",
+    "patientReference": "Patient reference",
+    "patientReferenceNote": "The patient reference is an opaque hash. It cannot be turned back into a name or record number.",
+    "viewContract": "View the voucher contract",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
+    "addToCalendar": "Add to calendar",
+    "presentAtDesk": "Present at Clinic Desk",
+    "presentNote": "Show this QR code upon arrival at the clinic. The desk can scan it instantly to look up and claim your voucher.",
+    "scanToView": "Scan to view #{id}",
+    "printPass": "Print voucher pass",
+    "patientPass": "Patient Voucher Pass",
+    "voucherPassTitle": "Patient Clinic Voucher",
+    "voucherNumberUpper": "Voucher Number",
+    "presentNotice": "Present this number or QR code at the clinic reception desk.",
+    "service": "Service",
+    "clinic": "Clinic",
+    "voucherContract": "Voucher Contract",
+    "scanWithClinicScanner": "Scan with clinic scanner",
+    "ledgerNote": "This voucher represents an escrowed commitment on the Stellar ledger. It contains no personally identifiable medical or identity records.",
+    "reportProblem": "Report a problem",
+    "reportProblemIntro": "Only the funder can open a dispute. If you are the patient, a relative, or anyone else who has noticed a problem with this voucher, open a report. It is prefilled with the public voucher number, status, service and clinic only — never the patient reference.",
+    "reportProblemAction": "Report a problem",
+    "redirect": {
+      "action": "Use at a different clinic",
+      "title": "Move voucher #{id}",
+      "intro": "Only active clinics that offer this service at or below {amount} are listed.",
+      "empty": "No other clinic currently offers this service at or below {amount}.",
+      "loading": "Finding clinics…",
+      "choose": "Choose a clinic",
+      "option": "{clinic} · {price}",
+      "confirmIntro": "{clinic} will receive {price} and the voucher keeps its escrow of {amount}. Check the clinic and price before signing.",
+      "confirm": "Move voucher",
+      "moving": "Moving…",
+      "error": "Could not move the voucher: {message}",
+      "success": "Voucher moved to {clinic}."
+    },
+    "staffNote": "Staff note",
+    "staffNoteNote": "Kept on this device only. Not shared or backed up.",
+    "staffNoteAdd": "Add note",
+    "staffNoteEdit": "Edit note",
+    "staffNoteSave": "Save note",
+    "staffNoteClear": "Clear note",
+    "staffNotePlaceholder": "Patient called, coming Tuesday",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Payment is held safely in escrow until care is provided.",
+        "clinic": "Funds are reserved in escrow. Deliver care and submit a claim to receive payment.",
+        "patient": "Care is covered and waiting. Show this voucher at the clinic to receive care."
+      },
+      "Claimed": {
+        "funder": "The clinic has confirmed care was provided and is awaiting review.",
+        "clinic": "Claim submitted. Awaiting attestation by a trusted reviewer.",
+        "patient": "Care has been received at the clinic and is being processed."
+      },
+      "Attested": {
+        "funder": "Care was verified by an independent reviewer and is ready to settle.",
+        "clinic": "Service verified. Funds can now be released to the clinic.",
+        "patient": "Care has been verified and completed."
+      },
+      "Settled": {
+        "funder": "Payment has been released to the clinic.",
+        "clinic": "Payment has been released to your wallet.",
+        "patient": "Care completed and payment settled."
+      },
+      "Disputed": {
+        "funder": "A dispute has been opened and payment is paused pending resolution.",
+        "clinic": "A dispute was opened for this voucher. Payment is on hold pending resolution.",
+        "patient": "This voucher has an open inquiry and is paused."
+      },
+      "Refunded": {
+        "funder": "Escrowed funds have been returned to your wallet.",
+        "clinic": "This voucher was cancelled or refunded to the funder.",
+        "patient": "This voucher was cancelled or refunded."
+      }
+    }
+  },
+  "home": {
+    "verifiedClinics": "Verified clinics",
+    "noClinics": "No clinics registered yet."
+  },
+  "offlineQueue": {
+    "title": "Waiting to submit",
+    "note": "These claims were signed on this device and will be submitted automatically when the connection returns.",
+    "voucher": "Voucher #{id}",
+    "queuedStatus": "Queued",
+    "submitting": "Submitting…",
+    "failed": "Not submitted: {error}",
+    "validUntil": "Valid until {time}",
+    "submitNow": "Submit now",
+    "discard": "Discard",
+    "expiredTitle": "Queued claim discarded",
+    "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
+    "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  },
+  "my": {
+    "selectAllVisible": "Select all on this page ({count})",
+    "selectVoucher": "Select voucher #{id}",
+    "selectedCount": "{count} selected",
+    "exportSelected": "Download selected CSV",
+    "refundSelected": "Refund selected ({count})",
+    "refundAll": "Refund all ({count})",
+    "refundingCount": "Refunding {current}/{total}…",
+    "refundProgress": "{current} of {total}",
+    "refundingVoucher": "Refunding voucher #{id}…",
+    "refundedSummary": "Refunded {count} voucher(s) successfully:",
+    "refundFailedSummary": "Failed to refund {count} voucher(s):"
   }
 }

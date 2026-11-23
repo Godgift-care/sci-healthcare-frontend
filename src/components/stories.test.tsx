@@ -5,6 +5,15 @@ import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
+// `VoucherRow` links through `DetailLink`, which asks Next for a router to
+// prefetch its page on intent. Stories render outside the app router, so
+// supply the two methods it calls instead of failing on the invariant.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ prefetch: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 /**
  * Runs the stories (#350).
  *
@@ -38,6 +47,26 @@ const storyModules = import.meta.glob('./*.stories.tsx', { eager: true }) as Rec
   string,
   Record<string, unknown>
 >;
+
+/**
+ * Stories render outside a Next app router, so `useRouter` and `usePathname`
+ * would throw here even though they are fine in Storybook, whose Next.js
+ * framework stubs the router. This is that same stub, so a component that
+ * links to another page — `DetailLink`, used by `VoucherRow` — renders.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    prefetch: () => {},
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+    forward: () => {},
+    refresh: () => {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+}));
 
 type StoryComponent = React.ComponentType;
 
