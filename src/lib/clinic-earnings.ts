@@ -20,6 +20,25 @@ export type EarningsVoucher = {
   settledFee?: string | null;
 };
 
+export type DailyEarningsVoucher = EarningsVoucher & {
+  id: string;
+  claimedAt?: string | Date | null;
+  attestedAt?: string | Date | null;
+};
+
+export type DailyEarningsReceipt = {
+  voucherId: string;
+  amount: string;
+  settledAt: string | Date;
+};
+
+export type ClinicDailySummary = {
+  claimedCount: number;
+  attestedCount: number;
+  settledCount: number;
+  netReceived: string;
+};
+
 /**
  * Vouchers whose care has started but whose payout has not landed.
  *
@@ -59,6 +78,81 @@ export type ClinicEarningsMonth = {
 function units(value: string | null | undefined): bigint {
   if (value === null || value === undefined || value === '') return 0n;
   return BigInt(value);
+}
+
+/** `YYYY-MM-DD` for a timestamp in the supplied IANA time zone. */
+export function dayKey(value: string | Date, timeZone: string): string | null {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone,
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value;
+  const year = part('year');
+  const month = part('month');
+  const day = part('day');
+  return year && month && day ? `${year}-${month}-${day}` : null;
+}
+
+/**
+ * Counts claim and attestation events by their own timestamps, and receipts
+ * by settlement time. The received amount is the clinic's net after fees.
+ */
+export function summariseDailyEarnings(
+  vouchers: DailyEarningsVoucher[],
+  receipts: DailyEarningsReceipt[],
+  date: Date,
+  timeZone: string,
+): ClinicDailySummary {
+  const today = dayKey(date, timeZone);
+  if (!today) {
+    return { claimedCount: 0, attestedCount: 0, settledCount: 0, netReceived: '0' };
+  }
+
+  const byId = new Map(vouchers.map((voucher) => [voucher.id, voucher]));
+  const summary: ClinicDailySummary = {
+    claimedCount: 0,
+    attestedCount: 0,
+    settledCount: 0,
+    netReceived: '0',
+  };
+  let netReceived = 0n;
+  const settledIds = new Set<string>();
+
+  for (const voucher of vouchers) {
+    if (voucher.claimedAt && dayKey(voucher.claimedAt, timeZone) === today) {
+      summary.claimedCount += 1;
+    }
+    if (voucher.attestedAt && dayKey(voucher.attestedAt, timeZone) === today) {
+      summary.attestedCount += 1;
+    }
+  }
+
+  for (const receipt of receipts) {
+    if (dayKey(receipt.settledAt, timeZone) !== today || settledIds.has(receipt.voucherId)) {
+      continue;
+    }
+    settledIds.add(receipt.voucherId);
+    summary.settledCount += 1;
+
+    const voucher = byId.get(receipt.voucherId);
+    if (voucher?.status === 'Settled') {
+      const fee = settledFee(voucher);
+      netReceived += settledNet(voucher, fee);
+    } else {
+      // Older indexer rows may omit voucher fee fields; gross is the best
+      // available received amount, matching the earnings fallback.
+      netReceived += units(receipt.amount);
+    }
+  }
+
+  summary.netReceived = netReceived.toString();
+  return summary;
 }
 
 /** The fee charged on a settled voucher, from the indexer when it has it. */

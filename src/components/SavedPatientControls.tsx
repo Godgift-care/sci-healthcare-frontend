@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { localIdentity, type SavedPatient } from '@/lib/beneficiary';
 import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import { Alert, Button, Modal } from '@/components/ui';
@@ -15,6 +16,7 @@ export function SavedPatientControls({
   keyValue: string;
   onSelect: (patient: SavedPatient | null) => void;
 }) {
+  const { t } = useLocaleContext();
   const saved = useSavedIdentity();
   const [saveName, setSaveName] = useState<string | null>(null);
   const [managing, setManaging] = useState(false);
@@ -30,7 +32,7 @@ export function SavedPatientControls({
     const patient = saved.patients.find((item) => item.nickname === nicknameValue) ?? null;
     setMessage(null);
     if (!(await localIdentity.select(patient?.nickname ?? ''))) {
-      setMessage('Could not select this patient.');
+      setMessage(t('components.savedPatientControls.selectFailed'));
       return;
     }
     setSaveName(patient?.nickname ?? '');
@@ -40,15 +42,15 @@ export function SavedPatientControls({
   async function savePatient() {
     setMessage(null);
     if (!nickname.trim()) {
-      setMessage('Enter a nickname for this patient.');
+      setMessage(t('components.savedPatientControls.nicknameRequired'));
       return;
     }
     if (!identifier.trim() || keyValue.length < 32) {
-      setMessage('Enter a patient reference and a key of at least 32 characters.');
+      setMessage(t('components.savedPatientControls.identifierRequired'));
       return;
     }
     if (!(await localIdentity.save(nickname, identifier, keyValue))) {
-      setMessage('Could not save in this browser. Check that browser storage is available.');
+      setMessage(t('components.savedPatientControls.saveFailed'));
       return;
     }
     setSaveName(nickname.trim());
@@ -58,7 +60,7 @@ export function SavedPatientControls({
     const nextNickname = renameDraft.trim();
     setMessage(null);
     if (!nextNickname) {
-      setMessage('Enter a nickname.');
+      setMessage(t('components.savedPatientControls.nicknameEmpty'));
       return;
     }
     const duplicate = saved.patients.some(
@@ -67,11 +69,11 @@ export function SavedPatientControls({
         item.nickname.toLowerCase() === nextNickname.toLowerCase(),
     );
     if (duplicate) {
-      setMessage('That nickname is already in use.');
+      setMessage(t('components.savedPatientControls.nicknameDuplicate'));
       return;
     }
     if (!(await localIdentity.rename(patient.nickname, nextNickname))) {
-      setMessage('Could not rename this patient. Check that browser storage is available.');
+      setMessage(t('components.savedPatientControls.renameFailed'));
       return;
     }
     if (saved.selectedNickname === patient.nickname) {
@@ -84,7 +86,7 @@ export function SavedPatientControls({
   async function deletePatient(patient: SavedPatient) {
     setMessage(null);
     if (!(await localIdentity.remove(patient.nickname))) {
-      setMessage('Could not delete this patient. Check that browser storage is available.');
+      setMessage(t('components.savedPatientControls.deleteFailed'));
       return;
     }
     if (saved.selectedNickname === patient.nickname) {
@@ -99,15 +101,15 @@ export function SavedPatientControls({
   async function protectSavedPatients() {
     setMessage(null);
     if (passphrase.length < 12) {
-      setMessage('Use a passphrase with at least 12 characters.');
+      setMessage(t('components.savedPatientControls.passphraseTooShort'));
       return;
     }
     if (passphrase !== confirmPassphrase) {
-      setMessage('The passphrases do not match.');
+      setMessage(t('components.savedPatientControls.passphraseMismatch'));
       return;
     }
     if (!(await localIdentity.enableEncryption(passphrase))) {
-      setMessage('Could not protect saved patients in this browser.');
+      setMessage(t('components.savedPatientControls.protectFailed'));
       return;
     }
     setPassphrase('');
@@ -117,7 +119,7 @@ export function SavedPatientControls({
   async function unlockSavedPatients() {
     setMessage(null);
     if (!(await localIdentity.unlock(passphrase))) {
-      setMessage('Could not unlock saved patients. Check your passphrase and try again.');
+      setMessage(t('components.savedPatientControls.unlockFailed'));
       return;
     }
     setPassphrase('');
@@ -129,15 +131,15 @@ export function SavedPatientControls({
       <div className="flex flex-col gap-2 sm:flex-row">
         <label className="block min-w-0 flex-1">
           <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-            Saved patients
+            {t('components.savedPatientControls.savedPatients')}
           </span>
           <select
-            aria-label="Saved patients"
+            aria-label={t('components.savedPatientControls.savedPatients')}
             value={saved.selectedNickname}
             onChange={(event) => selectPatient(event.target.value)}
             className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
           >
-            <option value="">Choose a saved patient</option>
+            <option value="">{t('components.savedPatientControls.choosePatient')}</option>
             {saved.patients.map((patient) => (
               <option key={patient.nickname} value={patient.nickname}>
                 {patient.nickname}
@@ -153,42 +155,43 @@ export function SavedPatientControls({
             setManaging(true);
           }}
         >
-          Manage
+          {t('components.savedPatientControls.manage')}
         </Button>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <label className="block min-w-0 flex-1">
           <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-            Save patient as
+            {t('components.savedPatientControls.saveAs')}
           </span>
           <input
-            aria-label="Patient nickname"
+            aria-label={t('components.savedPatientControls.patientNickname')}
             value={nickname}
             onChange={(event) => setSaveName(event.target.value)}
-            placeholder="e.g. Mum"
+            placeholder={t('components.savedPatientControls.nicknamePlaceholder')}
             className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
           />
         </label>
         <Button variant="ghost" className="whitespace-nowrap" onClick={savePatient}>
-          Save patient
+          {t('components.savedPatientControls.savePatient')}
         </Button>
       </div>
       <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-        Saved references and keys stay in this browser only and are never sent to the
-        service. Anyone with access to this browser profile can use them.
+        {t('components.savedPatientControls.storageNote')}
       </p>
       </>}
 
       {saved.locked && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Saved patient keys are protected.</p>
+          <p className="text-sm font-medium">
+            {t('components.savedPatientControls.protected')}
+          </p>
           <label className="block">
             <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-              Passphrase
+              {t('components.savedPatientControls.passphrase')}
             </span>
             <input
-              aria-label="Passphrase"
+              aria-label={t('components.savedPatientControls.passphrase')}
               type="password"
               autoComplete="current-password"
               value={passphrase}
@@ -196,7 +199,9 @@ export function SavedPatientControls({
               className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
             />
           </label>
-          <Button onClick={unlockSavedPatients}>Unlock saved patients</Button>
+          <Button onClick={unlockSavedPatients}>
+            {t('components.savedPatientControls.unlock')}
+          </Button>
         </div>
       )}
       {message && <Alert>{message}</Alert>}
@@ -204,17 +209,17 @@ export function SavedPatientControls({
       {!saved.locked && <Modal
         open={managing}
         onClose={closeManager}
-        title="Manage saved patients"
+        title={t('components.savedPatientControls.manageTitle')}
         actions={
           <Button variant="ghost" onClick={closeManager}>
-            Done
+            {t('components.savedPatientControls.done')}
           </Button>
         }
       >
         {saved.encrypted ? (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-4">
             <p className="text-xs text-[var(--color-ink-soft)]">
-              Saved patient keys are encrypted on this device.
+              {t('components.savedPatientControls.encryptedNote')}
             </p>
             <Button
               variant="ghost"
@@ -225,18 +230,20 @@ export function SavedPatientControls({
                 setManaging(false);
               }}
             >
-              Lock saved patients
+              {t('components.savedPatientControls.lock')}
             </Button>
           </div>
         ) : (
           <div className="mb-4 space-y-2 border-b border-[var(--color-line)] pb-4">
-            <p className="text-sm font-medium">Protect saved keys with a passphrase</p>
+            <p className="text-sm font-medium">
+              {t('components.savedPatientControls.protectTitle')}
+            </p>
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-                New passphrase (12 characters minimum)
+                {t('components.savedPatientControls.newPassphraseLabel')}
               </span>
               <input
-                aria-label="New passphrase"
+                aria-label={t('components.savedPatientControls.newPassphrase')}
                 type="password"
                 autoComplete="new-password"
                 value={passphrase}
@@ -246,10 +253,10 @@ export function SavedPatientControls({
             </label>
             <label className="block">
               <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-                Confirm passphrase
+                {t('components.savedPatientControls.confirmPassphrase')}
               </span>
               <input
-                aria-label="Confirm passphrase"
+                aria-label={t('components.savedPatientControls.confirmPassphrase')}
                 type="password"
                 autoComplete="new-password"
                 value={confirmPassphrase}
@@ -258,15 +265,17 @@ export function SavedPatientControls({
               />
             </label>
             <Button variant="ghost" onClick={protectSavedPatients}>
-              Protect saved keys
+              {t('components.savedPatientControls.protect')}
             </Button>
           </div>
         )}
         <p className="mb-3 text-xs text-[var(--color-ink-soft)]">
-          Patient references and keys are not shown here.
+          {t('components.savedPatientControls.hiddenNote')}
         </p>
         {saved.patients.length === 0 ? (
-          <p className="py-2 text-sm text-[var(--color-ink-soft)]">No saved patients.</p>
+          <p className="py-2 text-sm text-[var(--color-ink-soft)]">
+            {t('components.savedPatientControls.empty')}
+          </p>
         ) : (
           <ul className="divide-y divide-[var(--color-line)]">
             {saved.patients.map((patient) => (
@@ -274,21 +283,25 @@ export function SavedPatientControls({
                 {editingNickname === patient.nickname ? (
                   <div className="space-y-2">
                     <label className="block">
-                      <span className="text-xs text-[var(--color-ink-soft)]">New nickname</span>
+                      <span className="text-xs text-[var(--color-ink-soft)]">
+                        {t('components.savedPatientControls.newNickname')}
+                      </span>
                       <input
-                        aria-label="New nickname"
+                        aria-label={t('components.savedPatientControls.newNickname')}
                         value={renameDraft}
                         onChange={(event) => setRenameDraft(event.target.value)}
                         className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
                       />
                     </label>
                     <div className="flex gap-2">
-                      <Button onClick={() => renamePatient(patient)}>Save name</Button>
+                      <Button onClick={() => renamePatient(patient)}>
+                        {t('components.savedPatientControls.saveName')}
+                      </Button>
                       <Button
                         variant="ghost"
                         onClick={() => setEditingNickname(null)}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -305,14 +318,18 @@ export function SavedPatientControls({
                           setRenameDraft(patient.nickname);
                         }}
                       >
-                        Rename {patient.nickname}
+                        {t('components.savedPatientControls.rename', {
+                          nickname: patient.nickname,
+                        })}
                       </Button>
                       <Button
                         variant="danger"
                         className="px-3"
                         onClick={() => deletePatient(patient)}
                       >
-                        Delete {patient.nickname}
+                        {t('components.savedPatientControls.delete', {
+                          nickname: patient.nickname,
+                        })}
                       </Button>
                     </div>
                   </div>

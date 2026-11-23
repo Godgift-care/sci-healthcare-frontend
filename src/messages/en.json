@@ -13,12 +13,15 @@
   },
   "footer": {
     "testnetDisclaimer": "Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
-    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only."
+    "mainnetDisclaimer": "No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.",
+    "build": "Build {commit}"
   },
   "common": {
     "loading": "Loading…",
     "confirmed": "Confirmed",
     "confirming": "Confirming…",
+    "signing": "Signing…",
+    "submitting": "Submitting…",
     "copied": "Copied!",
     "copy": "Copy",
     "usdc": "USDC",
@@ -30,6 +33,14 @@
     "indexerCatchUp": "Lists update once the indexer catches up.",
     "updateAvailable": "A new version is ready.",
     "reloadToUpdate": "Reload to update"
+  },
+  "wallet": {
+    "restoreFootprintConfirm": "Some archived contract data must be restored before this transaction can run. You will be asked to sign two transactions: restore the data (estimated network fee: {restoreFee} XLM), then complete your transaction (estimated network fee: {transactionFee} XLM). Estimated total network fees: {totalFee} XLM. Continue?",
+    "restoreFootprintCancelled": "Restore cancelled. No transaction was submitted.",
+    "restoreRequired": "This transaction needs archived contract data restored. Use the connected wallet to continue.",
+    "restoreStillRequired": "The contract still requires archived data after restoration. Nothing else was submitted. Please try again later.",
+    "restorePreparationError": "Could not prepare the archived-data restore transaction: {error}",
+    "restoreRejected": "The archived-data restore transaction was rejected: {error}"
   },
   "home": {
     "verifiedClinics": "Verified clinics",
@@ -82,10 +93,52 @@
       "moving": "Moving…",
       "error": "Could not move the voucher: {message}",
       "success": "Voucher moved to {clinic}."
+    },
+    "staffNote": "Staff note",
+    "staffNoteNote": "Kept on this device only. Not shared or backed up.",
+    "staffNoteAdd": "Add note",
+    "staffNoteEdit": "Edit note",
+    "staffNoteSave": "Save note",
+    "staffNoteClear": "Clear note",
+    "staffNotePlaceholder": "Patient called, coming Tuesday",
+    "statusExplanation": {
+      "Funded": {
+        "funder": "Payment is held safely in escrow until care is provided.",
+        "clinic": "Funds are reserved in escrow. Deliver care and submit a claim to receive payment.",
+        "patient": "Care is covered and waiting. Show this voucher at the clinic to receive care."
+      },
+      "Claimed": {
+        "funder": "The clinic has confirmed care was provided and is awaiting review.",
+        "clinic": "Claim submitted. Awaiting attestation by a trusted reviewer.",
+        "patient": "Care has been received at the clinic and is being processed."
+      },
+      "Attested": {
+        "funder": "Care was verified by an independent reviewer and is ready to settle.",
+        "clinic": "Service verified. Funds can now be released to the clinic.",
+        "patient": "Care has been verified and completed."
+      },
+      "Settled": {
+        "funder": "Payment has been released to the clinic.",
+        "clinic": "Payment has been released to your wallet.",
+        "patient": "Care completed and payment settled."
+      },
+      "Disputed": {
+        "funder": "A dispute has been opened and payment is paused pending resolution.",
+        "clinic": "A dispute was opened for this voucher. Payment is on hold pending resolution.",
+        "patient": "This voucher has an open inquiry and is paused."
+      },
+      "Refunded": {
+        "funder": "Escrowed funds have been returned to your wallet.",
+        "clinic": "This voucher was cancelled or refunded to the funder.",
+        "patient": "This voucher was cancelled or refunded."
+      }
     }
   },
   "clinic": {
     "title": "Clinic desk",
+    "website": "Website",
+    "contact": "Contact",
+    "externalLinkConfirm": "You are leaving SCI Healthcare to visit {host}. Continue?",
     "checking": "Checking registration…",
     "scanVoucherQr": "Scan voucher QR",
     "registerTitle": "Register this clinic",
@@ -116,6 +169,14 @@
     "settledSummary": "Payment released for",
     "settleFailedSummary": "Not settled:",
     "earnings": "Earnings",
+    "dailySummary": "Today's front-desk summary",
+    "dailySummaryNote": "Claims, attestations and payments completed on this calendar day.",
+    "dailyTimeZone": "Clinic time zone: {timeZone}",
+    "dailyClaimed": "Claimed",
+    "dailyAttested": "Attested",
+    "dailySettled": "Settled",
+    "dailyReceived": "Amount received",
+    "dailyPrint": "Print daily summary",
     "earningsNote": "Cash flow for this clinic: settled care, payouts still in flight, and the protocol fees paid.",
     "earningsSettled": "Settled",
     "earningsSettledDetail": {
@@ -145,7 +206,6 @@
     },
     "noMatchingVouchers": "No vouchers match this search.",
     "clearFilters": "Clear filters",
-    "connectWallet": "Connect the clinic's wallet to manage this desk.",
     "checklist": {
       "title": "Getting to your first payment",
       "note": "Five steps from registering to money in the bank. Each step turns green as it is completed.",
@@ -265,6 +325,179 @@
     "expiredTitle": "Queued claim discarded",
     "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
     "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  },
+  "checkoutDraft": {
+    "foundTitle": "Restore previous checkout?",
+    "foundDescription": "You have a saved draft with {count} selected service(s) from a previous session.",
+    "restore": "Restore draft",
+    "discard": "Discard",
+    "restoredMessage": "Checkout draft restored."
+  },
+  "components": {
+    "connectButton": {
+      "connecting": "Connecting…",
+      "connect": "Connect wallet",
+      "wallet": "Wallet",
+      "fallbackWallet": "Stellar Wallet",
+      "statusUnfunded": "Unfunded",
+      "statusLowXlm": "Low XLM",
+      "statusActive": "Active",
+      "accountAddress": "Account Address",
+      "fundWithFriendbot": "Fund with Friendbot",
+      "topUpWithFriendbot": "Top up with Friendbot",
+      "unfundedTitle": "Account not funded on Stellar",
+      "unfundedBody": "This account has no XLM balance. Any contract transaction will fail with “account not found” until it receives minimum reserve funds.",
+      "lowXlmTitle": "Spendable XLM is low for fees",
+      "lowXlmBodyBeforeAmount": "Spendable balance is",
+      "lowXlmBodyAfterAmount": ". In addition to the base account reserve, transactions require spendable XLM to pay network fees.",
+      "lowXlmUnknown": "< 1.00 XLM",
+      "viewOnExplorer": "View on Stellar Expert",
+      "disconnect": "Disconnect wallet"
+    },
+    "toast": {
+      "notifications": "Notifications",
+      "dismiss": "Dismiss notification"
+    },
+    "commandPalette": {
+      "title": "Go to",
+      "search": "Search clinics, pages, or voucher number",
+      "results": "Navigation results",
+      "noResults": "No matching destinations",
+      "resultCount": {
+        "one": "{count} result",
+        "other": "{count} results"
+      },
+      "openVoucher": "Open voucher #{id}",
+      "openVoucherDescription": "Go to voucher number",
+      "clinicCountry": "{country} clinic",
+      "pages": {
+        "clinics": "Browse verified clinics",
+        "howItWorks": "Learn about care vouchers",
+        "myVouchers": "View funded vouchers",
+        "clinicDesk": "Manage a clinic",
+        "attest": "Review care claims",
+        "attesters": "View trusted attesters",
+        "stats": "View protocol statistics",
+        "faq": "Frequently asked questions",
+        "privacy": "Privacy information",
+        "adminLabel": "Admin",
+        "admin": "Administration"
+      }
+    },
+    "demoTour": {
+      "title": "New here? Take the demo tour",
+      "introTestnet": "Three steps through the whole product: get test USDC, fund a voucher, then follow it to the receipt.",
+      "introMainnet": "Three steps through the whole product: connect a wallet, fund a voucher, then follow it to the receipt.",
+      "start": "Take the tour",
+      "dismiss": "Dismiss the demo tour",
+      "stepTitle": "Demo tour — step {step} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish",
+      "skip": "Skip",
+      "steps": {
+        "testUsdcTitle": "Get test USDC",
+        "testUsdcBody": "Connect a testnet wallet and draw demo USDC from the faucet — one top-up per wallet per day.",
+        "testUsdcCta": "Open My vouchers",
+        "connectTitle": "Connect your wallet",
+        "connectBody": "Connect a Stellar wallet that holds USDC. The app never sees your secret key; your wallet signs every transaction.",
+        "connectCta": "Open My vouchers",
+        "fundTitle": "Fund care for a clinic",
+        "fundBody": "Pick a verified clinic and the service your family needs. The money is escrowed by the contract, not sent to the clinic yet.",
+        "fundCta": "Browse clinics",
+        "followTitle": "Follow the voucher",
+        "followBody": "Every voucher has its own page with its on-chain history, receipt and the actions you can take. It is safe to share by link.",
+        "followCta": "See your vouchers"
+      }
+    },
+    "copyValue": {
+      "defaultLabel": "value",
+      "copy": "Copy {label}",
+      "copied": "{label} copied",
+      "failed": "Could not copy {label}",
+      "labels": {
+        "clinicAddress": "clinic address",
+        "funderAddress": "funder address",
+        "attesterAddress": "attester address",
+        "patientReference": "patient reference",
+        "contractId": "contract id",
+        "paymentLink": "SEP-7 payment link"
+      }
+    },
+    "savedPatientControls": {
+      "selectFailed": "Could not select this patient.",
+      "nicknameRequired": "Enter a nickname for this patient.",
+      "identifierRequired": "Enter a patient reference and a key of at least 32 characters.",
+      "saveFailed": "Could not save in this browser. Check that browser storage is available.",
+      "nicknameEmpty": "Enter a nickname.",
+      "nicknameDuplicate": "That nickname is already in use.",
+      "renameFailed": "Could not rename this patient. Check that browser storage is available.",
+      "deleteFailed": "Could not delete this patient. Check that browser storage is available.",
+      "passphraseTooShort": "Use a passphrase with at least 12 characters.",
+      "passphraseMismatch": "The passphrases do not match.",
+      "protectFailed": "Could not protect saved patients in this browser.",
+      "unlockFailed": "Could not unlock saved patients. Check your passphrase and try again.",
+      "savedPatients": "Saved patients",
+      "choosePatient": "Choose a saved patient",
+      "manage": "Manage",
+      "saveAs": "Save patient as",
+      "patientNickname": "Patient nickname",
+      "nicknamePlaceholder": "e.g. Mum",
+      "savePatient": "Save patient",
+      "storageNote": "Saved references and keys stay in this browser only and are never sent to the service. Anyone with access to this browser profile can use them.",
+      "protected": "Saved patient keys are protected.",
+      "passphrase": "Passphrase",
+      "unlock": "Unlock saved patients",
+      "manageTitle": "Manage saved patients",
+      "done": "Done",
+      "encryptedNote": "Saved patient keys are encrypted on this device.",
+      "lock": "Lock saved patients",
+      "protectTitle": "Protect saved keys with a passphrase",
+      "newPassphraseLabel": "New passphrase (12 characters minimum)",
+      "newPassphrase": "New passphrase",
+      "confirmPassphrase": "Confirm passphrase",
+      "protect": "Protect saved keys",
+      "hiddenNote": "Patient references and keys are not shown here.",
+      "empty": "No saved patients.",
+      "newNickname": "New nickname",
+      "saveName": "Save name",
+      "rename": "Rename {nickname}",
+      "delete": "Delete {nickname}"
+    },
+    "sep24Cashout": {
+      "title": "Local cash-out",
+      "invalidAmount": "Enter an amount greater than zero with up to 7 decimal places.",
+      "limitsAccepted": "The anchor accepts {min} to {max} {asset}.",
+      "anyMinimum": "any",
+      "anyMaximum": "any",
+      "popupBlocked": "Allow pop-ups for this site to continue to the anchor.",
+      "noAnchor": "No configured cash-out anchor currently serves {country}. Your clinic receives USDC on chain; local-currency withdrawal is a separate service provided by an anchor.",
+      "smartAccount": "This wallet is a smart contract account. The configured anchors require SEP-10 authentication with a Stellar account address, so cash-out is not available from this wallet.",
+      "intro": "Voucher settlement releases USDC to your Stellar wallet. Cash-out is a separate off-chain withdrawal through an anchor, with its own fees and processing time.",
+      "issuerUnsupported": "An anchor is configured for {country}, but none accepts this deployment's USDC issuer. Ask the operator to configure an anchor for the exact token before withdrawing.",
+      "anchor": "Anchor",
+      "selectAnchor": "Select an anchor",
+      "amount": "USDC amount",
+      "withdraw": "Withdraw with anchor",
+      "limits": "Anchor limits: {min}–{max} {asset}.",
+      "noMinimum": "no minimum",
+      "noMaximum": "no maximum",
+      "disabled": "The anchor has disabled {asset} withdrawals.",
+      "requirements": "The anchor may require identity verification (KYC), additional documents, and acceptance of its own fees and terms. SCI Healthcare does not perform or guarantee the fiat payout.",
+      "statusTitle": "Anchor withdrawal status",
+      "transaction": "Anchor transaction: {id}",
+      "payout": "Anchor-reported payout: {amount} {asset}",
+      "moreInfo": "More information from the anchor",
+      "statusFailed": "Status refresh failed: {error}. The anchor may still be processing this withdrawal.",
+      "refresh": "Refresh status",
+      "autoRefresh": "Refreshes automatically every 12 seconds.",
+      "settlementNote": "Cash-out does not change voucher or on-chain settlement status.",
+      "viewAccount": "View your Stellar account"
+    },
+    "ui": {
+      "closeDialog": "Close dialog",
+      "moreInformation": "More information"
+    }
   },
   "social": {
     "footer": "SCI Healthcare — care vouchers on Stellar",

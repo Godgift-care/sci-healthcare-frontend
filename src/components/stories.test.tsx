@@ -5,6 +5,15 @@ import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
+// `VoucherRow` links through `DetailLink`, which asks Next for a router to
+// prefetch its page on intent. Stories render outside the app router, so
+// supply the two methods it calls instead of failing on the invariant.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ prefetch: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 /**
  * Runs the stories (#350).
  *
@@ -16,6 +25,22 @@ import type React from 'react';
  * Colour contrast is not checked here: it needs layout, which jsdom does not
  * do. `@storybook/addon-a11y` reports it in Storybook itself.
  */
+
+/**
+ * The stories render outside the Next.js app router, which pages have but a
+ * unit test does not. `DetailLink` asks it for `prefetch`, so without this
+ * mock every `VoucherRow` story throws before it renders anything.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    prefetch: () => {},
+    push: () => {},
+    replace: () => {},
+    back: () => {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 // Every story file in this directory, so a new one is covered automatically.
 const storyModules = import.meta.glob('./*.stories.tsx', { eager: true }) as Record<
