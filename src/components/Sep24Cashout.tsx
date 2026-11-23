@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { Alert, Button, Card, ExplorerLink } from '@/components/ui';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 import { toBaseUnits } from '@/lib/amounts';
 import { config, explorerAccount } from '@/lib/config';
 import { isAnchorUrl } from '@/lib/sep24-config';
@@ -53,6 +54,7 @@ export function Sep24Cashout({
   country: string;
   signTransaction: (xdr: string) => Promise<string>;
 }) {
+  const { t } = useLocaleContext();
   const countryAnchors = config.sep24Anchors.filter((anchor) => supportsCountry(anchor, country));
   const anchors = countryAnchors.filter(
     (anchor) => anchor.assetIssuer === config.usdcIssuer,
@@ -132,11 +134,11 @@ export function Sep24Cashout({
     let amountValue: bigint;
     try {
       if (!/^\d+(\.\d{1,7})?$/.test(amount)) {
-        throw new Error('Enter an amount greater than zero with up to 7 decimal places.');
+        throw new Error(t('components.sep24Cashout.invalidAmount'));
       }
       amountValue = toBaseUnits(amount);
       if (amountValue <= 0n) {
-        throw new Error('Enter an amount greater than zero with up to 7 decimal places.');
+        throw new Error(t('components.sep24Cashout.invalidAmount'));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -147,14 +149,18 @@ export function Sep24Cashout({
       (info.maxAmount !== undefined && amountValue > toBaseUnits(String(info.maxAmount)))
     ) {
       setError(
-        `The anchor accepts ${info.minAmount ?? 'any'} to ${info.maxAmount ?? 'any'} ${anchor.config.assetCode}.`,
+        t('components.sep24Cashout.limitsAccepted', {
+          min: info.minAmount ?? t('components.sep24Cashout.anyMinimum'),
+          max: info.maxAmount ?? t('components.sep24Cashout.anyMaximum'),
+          asset: anchor.config.assetCode,
+        }),
       );
       return;
     }
 
     const popup = window.open('about:blank', '_blank');
     if (!popup) {
-      setError('Allow pop-ups for this site to continue to the anchor.');
+      setError(t('components.sep24Cashout.popupBlocked'));
       return;
     }
     popup.opener = null;
@@ -192,9 +198,11 @@ export function Sep24Cashout({
   if (countryAnchors.length === 0) {
     return (
       <section aria-labelledby="cashout-title" className="space-y-3">
-        <h2 id="cashout-title" className="text-lg font-semibold">Local cash-out</h2>
+        <h2 id="cashout-title" className="text-lg font-semibold">
+          {t('components.sep24Cashout.title')}
+        </h2>
         <Alert kind="info">
-          No configured cash-out anchor currently serves {country}. Your clinic receives USDC on chain; local-currency withdrawal is a separate service provided by an anchor.
+          {t('components.sep24Cashout.noAnchor', { country })}
         </Alert>
       </section>
     );
@@ -203,10 +211,10 @@ export function Sep24Cashout({
   if (!account.startsWith('G')) {
     return (
       <section aria-labelledby="cashout-title" className="space-y-3">
-        <h2 id="cashout-title" className="text-lg font-semibold">Local cash-out</h2>
-        <Alert kind="info">
-          This wallet is a smart contract account. The configured anchors require SEP-10 authentication with a Stellar account address, so cash-out is not available from this wallet.
-        </Alert>
+        <h2 id="cashout-title" className="text-lg font-semibold">
+          {t('components.sep24Cashout.title')}
+        </h2>
+        <Alert kind="info">{t('components.sep24Cashout.smartAccount')}</Alert>
       </section>
     );
   }
@@ -214,34 +222,40 @@ export function Sep24Cashout({
   return (
     <section aria-labelledby="cashout-title" className="space-y-3">
       <div>
-        <h2 id="cashout-title" className="text-lg font-semibold">Local cash-out</h2>
+        <h2 id="cashout-title" className="text-lg font-semibold">
+          {t('components.sep24Cashout.title')}
+        </h2>
         <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          Voucher settlement releases USDC to your Stellar wallet. Cash-out is a separate off-chain withdrawal through an anchor, with its own fees and processing time.
+          {t('components.sep24Cashout.intro')}
         </p>
       </div>
       {anchors.length === 0 ? (
         <Alert kind="info">
-          An anchor is configured for {country}, but none accepts this deployment&apos;s USDC issuer. Ask the operator to configure an anchor for the exact token before withdrawing.
+          {t('components.sep24Cashout.issuerUnsupported', { country })}
         </Alert>
       ) : (
         <Card className="space-y-4 p-4 sm:p-5">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
             <label className="block text-sm">
-              <span className="mb-1 block font-medium">Anchor</span>
+              <span className="mb-1 block font-medium">
+                {t('components.sep24Cashout.anchor')}
+              </span>
               <select
                 value={selectedDomain}
                 onChange={(event) => void loadAnchor(event.target.value)}
                 disabled={busy}
                 className="min-h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm"
               >
-                <option value="" disabled>Select an anchor</option>
+                <option value="" disabled>{t('components.sep24Cashout.selectAnchor')}</option>
                 {anchors.map((candidate) => (
                   <option key={candidate.domain} value={candidate.domain}>{candidate.name}</option>
                 ))}
               </select>
             </label>
             <label className="block text-sm">
-              <span className="mb-1 block font-medium">USDC amount</span>
+              <span className="mb-1 block font-medium">
+                {t('components.sep24Cashout.amount')}
+              </span>
               <input
                 inputMode="decimal"
                 value={amount}
@@ -261,18 +275,28 @@ export function Sep24Cashout({
               }
               onClick={() => void beginCashout()}
             >
-              {busy ? 'Connecting…' : 'Withdraw with anchor'}
+              {busy
+                ? t('components.connectButton.connecting')
+                : t('components.sep24Cashout.withdraw')}
             </Button>
           </div>
           {anchor && info && (
             <p className="text-xs text-[var(--color-ink-soft)]">
               {info.enabled
-                ? `Anchor limits: ${info.minAmount ?? 'no minimum'}–${info.maxAmount ?? 'no maximum'} ${anchor.config.assetCode}.`
-                : `The anchor has disabled ${anchor.config.assetCode} withdrawals.`}
+                ? t('components.sep24Cashout.limits', {
+                    min:
+                      info.minAmount ?? t('components.sep24Cashout.noMinimum'),
+                    max:
+                      info.maxAmount ?? t('components.sep24Cashout.noMaximum'),
+                    asset: anchor.config.assetCode,
+                  })
+                : t('components.sep24Cashout.disabled', {
+                    asset: anchor.config.assetCode,
+                  })}
             </p>
           )}
           <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-            The anchor may require identity verification (KYC), additional documents, and acceptance of its own fees and terms. SCI Healthcare does not perform or guarantee the fiat payout.
+            {t('components.sep24Cashout.requirements')}
           </p>
           {error && <Alert>{error}</Alert>}
         </Card>
@@ -281,30 +305,48 @@ export function Sep24Cashout({
       {withdrawal && (
         <Card className="space-y-2 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-medium">Anchor withdrawal status</h3>
+            <h3 className="font-medium">{t('components.sep24Cashout.statusTitle')}</h3>
             <span className="rounded-md bg-[var(--color-canvas)] px-2 py-1 text-xs font-semibold uppercase">{withdrawal.transaction.status.replaceAll('_', ' ')}</span>
           </div>
-          <p className="break-all text-xs text-[var(--color-ink-soft)]">Anchor transaction: {withdrawal.id}</p>
+          <p className="break-all text-xs text-[var(--color-ink-soft)]">
+            {t('components.sep24Cashout.transaction', { id: withdrawal.id })}
+          </p>
           {withdrawal.transaction.amount_out && (
             <p className="text-sm">
-              Anchor-reported payout: {withdrawal.transaction.amount_out}{' '}
-              {withdrawal.transaction.amount_out_asset ?? ''}
+              {t('components.sep24Cashout.payout', {
+                amount: withdrawal.transaction.amount_out,
+                asset: withdrawal.transaction.amount_out_asset ?? '',
+              })}
             </p>
           )}
           {withdrawal.transaction.message && <p className="text-sm">{withdrawal.transaction.message}</p>}
-          {moreInfoUrl && <ExplorerLink href={moreInfoUrl}>More information from the anchor</ExplorerLink>}
-          {pollError && <Alert kind="info">Status refresh failed: {pollError}. The anchor may still be processing this withdrawal.</Alert>}
+          {moreInfoUrl && (
+            <ExplorerLink href={moreInfoUrl}>
+              {t('components.sep24Cashout.moreInfo')}
+            </ExplorerLink>
+          )}
+          {pollError && (
+            <Alert kind="info">
+              {t('components.sep24Cashout.statusFailed', { error: pollError })}
+            </Alert>
+          )}
           {!TERMINAL_STATUSES.has(withdrawal.transaction.status) && (
             <div className="flex flex-wrap items-center gap-3 pt-1">
-              <Button variant="ghost" onClick={() => void refreshStatus()}>Refresh status</Button>
-              <span className="text-xs text-[var(--color-ink-soft)]">Refreshes automatically every 12 seconds.</span>
+              <Button variant="ghost" onClick={() => void refreshStatus()}>
+                {t('components.sep24Cashout.refresh')}
+              </Button>
+              <span className="text-xs text-[var(--color-ink-soft)]">
+                {t('components.sep24Cashout.autoRefresh')}
+              </span>
             </div>
           )}
         </Card>
       )}
       <p className="text-xs text-[var(--color-ink-soft)]">
-        Cash-out does not change voucher or on-chain settlement status.{' '}
-        <ExplorerLink href={explorerAccount(account)}>View your Stellar account</ExplorerLink>
+        {t('components.sep24Cashout.settlementNote')}{' '}
+        <ExplorerLink href={explorerAccount(account)}>
+          {t('components.sep24Cashout.viewAccount')}
+        </ExplorerLink>
       </p>
     </section>
   );

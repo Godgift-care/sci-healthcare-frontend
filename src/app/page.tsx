@@ -205,19 +205,19 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href="#directory"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-white transition hover:opacity-90"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
           >
             Browse clinics &darr;
           </a>
           <Link
             href="/how-it-works"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             How it works &rarr;
           </Link>
           <Link
             href="/clinic"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             Clinic desk
           </Link>
@@ -437,7 +437,7 @@ function ViewToggle({
       title={disabled ? disabledReason : undefined}
       className={`rounded-md px-3 py-1 text-sm font-medium transition max-sm:min-h-11 max-sm:px-4 ${
         active
-          ? 'bg-[var(--color-brand)] text-white'
+          ? 'bg-[var(--color-brand)] text-[var(--color-brand-text)]'
           : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]'
       } disabled:cursor-not-allowed disabled:opacity-40`}
     >

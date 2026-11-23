@@ -40,7 +40,7 @@ function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: stri
   const { t } = useLocaleContext();
   if (ok === undefined) return <span className="text-[var(--color-ink-soft)]">{t('status.notReported')}</span>;
   return ok ? (
-    <span className="text-emerald-700">{okText}</span>
+    <span className="text-[var(--color-ok)]">{okText}</span>
   ) : (
     <span className="text-[var(--color-danger)]">{failText}</span>
   );
