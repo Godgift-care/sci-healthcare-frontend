@@ -32,6 +32,12 @@ export const DISPUTE_REASONS_I18N: Record<string, Record<number, string>> = {
     3: 'Huduma tofauti ilitolewa',
     4: 'Kitu kingine',
   },
+  yo: {
+    1: 'A kò rí aláìsàn náà',
+    2: 'A kò pèsè ìtọ́jú gẹ́gẹ́ bí a ti ṣàlàyé',
+    3: 'Iṣẹ́ mìíràn ni a pèsè',
+    4: 'Nǹkan mìírán',
+  },
 };
 
 export type DisputeReasonCode = (typeof DISPUTE_REASONS)[number]['code'];
@@ -51,5 +57,7 @@ export function disputeReasonLabel(
     ? `Motif #${code}`
     : locale === 'sw'
       ? `Sababu #${code}`
-      : `Reason #${code}`;
+      : locale === 'yo'
+        ? `Ìdí #${code}`
+        : `Reason #${code}`;
 }

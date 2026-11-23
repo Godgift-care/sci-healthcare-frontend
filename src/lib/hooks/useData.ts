@@ -9,6 +9,7 @@ import {
   type Provider,
   type ProviderStats,
   type ReadyStatus,
+  type Receipt,
   type ReceiptsResponse,
   type ServiceCatalogueItem,
   type ServicesResponse,
@@ -153,6 +154,47 @@ export function useProviderStats(
 }
 
 /**
+ * The voucher contract's own escrow accounting (#295). A simulation read,
+ * so it needs no wallet. The SDK is imported lazily to keep it out of the
+ * statistics page's initial bundle.
+ */
+export function useEscrowSummary() {
+  const { data, error, isLoading, mutate } = useSWR<[bigint, bigint]>(
+    'escrow-summary',
+    async () => {
+      const { voucher } = await import('../protocol');
+      return voucher.escrowSummary();
+    },
+    { shouldRetryOnError: false },
+  );
+
+  return {
+    escrow: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    isLoading,
+    mutate,
+  };
+}
+
+/**
+ * Total open escrow the indexer reports (#295), across every open status.
+ */
+export function useOpenEscrowTotal() {
+  const { data, error, isLoading, mutate } = useSWR<bigint>(
+    'open-escrow-total',
+    () => api.openEscrowTotal(),
+    { shouldRetryOnError: false },
+  );
+
+  return {
+    indexedOpen: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    isLoading,
+    mutate,
+  };
+}
+
+/**
  * Hook for every voucher a clinic has received, across list-route pages.
  *
  * The monthly earnings table is an aggregate over the whole history, so it
@@ -170,6 +212,27 @@ export function useProviderVouchers(
 
   return {
     vouchers: data ?? [],
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    rawError: error,
+    isLoading,
+    isValidating,
+    mutate,
+  };
+}
+
+/** Hook for every receipt paid to a clinic, across receipts-route pages. */
+export function useProviderReceipts(
+  address: string | null | undefined,
+  config?: SWRConfiguration<Receipt[]>,
+) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<Receipt[]>(
+    address ? ['provider-receipts', address] : null,
+    () => api.providerReceipts(address!),
+    config,
+  );
+
+  return {
+    receipts: data ?? [],
     error: error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
@@ -397,6 +460,31 @@ export function useIsAttester(address: string | null | undefined) {
     isAttester: data ?? null,
     isLoading,
     error: error instanceof Error ? error.message : error ? String(error) : null,
+  };
+}
+
+/**
+ * Attestations the connected attester may still make today (#292).
+ *
+ * Read from the voucher contract rather than counted in the browser: the
+ * cap is per attester per UTC day, and only the contract knows how many
+ * this address has already used.
+ */
+export function useAttestationsLeft(attester: string | null | undefined) {
+  const { data, error, isLoading, mutate } = useSWR<number>(
+    attester ? ['attestations-left', attester] : null,
+    async () => {
+      const { voucher } = await import('../protocol');
+      return voucher.attestationsLeft(attester!);
+    },
+    { shouldRetryOnError: false },
+  );
+
+  return {
+    left: data ?? null,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    isLoading,
+    mutate,
   };
 }
 

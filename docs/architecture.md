@@ -115,6 +115,15 @@ keep in sync. Two routes are static server components (`/how-it-works`,
 title. The sleeping indexer can therefore never block a page render. No
 patient or beneficiary reference appears in a title or a preview.
 
+The picture on that preview is drawn beside the same two layouts
+(`src/app/clinics/[address]/opengraph-image.tsx`,
+`src/app/vouchers/[id]/opengraph-image.tsx`) from the card builders in
+`src/lib/social-card.ts`: a clinic card carries its name, country and status,
+a voucher card the service and status only. The builders take a narrowed shape
+that has no amount, funder address or beneficiary reference on it, so those
+values are unreachable from the drawing code rather than merely unused, and
+the rendered PNG is served with a public, hour-long cache.
+
 ## Providers
 
 `src/app/layout.tsx` mounts them in this order. Anything above a provider can
@@ -183,6 +192,15 @@ Two helpers keep the cache honest after a write:
   key.
 - `invalidateProvider(providerAddress?)` — the provider and every `providers` /
   `provider` key.
+
+`DetailLink` disables automatic viewport route prefetch. Clinic and voucher
+links warm their route and SWR data only on hover or keyboard focus through
+`src/lib/detail-prefetch.ts`, which reads `isLowBandwidth()` at event time and
+skips both operations when enabled. Clinic preloads use `['provider', address]`
+and `['vouchers', { provider: address, status: 'Settled', limit: 1 }]`; vouchers
+use `['voucher', id]` and `['voucher-events', id]`, matching the destination hooks.
+SWR deduplicates repeated events and consumes the preloaded promises on navigation.
+The map popup anchors apply the same helper.
 
 Global SWR defaults live in `src/components/SwrProvider.tsx`:
 
@@ -337,7 +355,7 @@ src/lib/            Domain logic: api, protocol, wallet, hooks, contracts
 src/lib/contracts/generated/   Soroban TS bindings (registry, voucher, faucet)
 src/lib/hooks/      The whole read surface
 src/i18n/           Locale context and the locale configuration
-src/messages/       en.json, fr.json, sw.json
+src/messages/       en.json, fr.json, sw.json, yo.json
 src/lib/*.test.ts   Vitest unit tests
 tests/e2e/          Playwright specs, fixtures and the mock backend
 tests/visual/       Playwright snapshots (6 routes × 2 viewports)
@@ -462,6 +480,7 @@ disclaimer. Setting it to `public` hides all of it.
 | You want to… | Start at |
 | --- | --- |
 | Add a page | `src/app/<route>/page.tsx`, then a sibling `layout.tsx` if it needs its own title |
+| Change what a shared link previews | `src/lib/social-card.ts`, then the `opengraph-image.tsx` route that draws it |
 | Read a new piece of indexer data | `@sci-healthcare/client` → `src/lib/api.ts` → a hook in `src/lib/hooks/useData.ts` |
 | Change the cache behaviour | `src/components/SwrProvider.tsx` (global) or the hook's SWR config (per read) |
 | Add or change a contract call | `src/lib/contracts/generated/` → `src/lib/protocol.ts` → `src/lib/stellar.ts` |

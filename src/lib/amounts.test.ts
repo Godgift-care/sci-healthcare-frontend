@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   DECIMALS,
+  formatCount,
   formatDate,
   formatUsdc,
   shortAddress,
@@ -22,6 +23,9 @@ const SCALE = 10n ** BigInt(DECIMALS);
 
 /** The largest value an i128 can hold. */
 const I128_MAX = 2n ** 127n - 1n;
+
+/** French grouping is a narrow no-break space (U+202F), not a plain space. */
+const NBSP = '\u202f';
 
 describe('toBaseUnits', () => {
   it('parses whole amounts', () => {
@@ -109,10 +113,79 @@ describe('formatUsdc', () => {
   it('groups thousands for display', () => {
     expect(formatUsdc(1_000_000_000n)).toBe('100.00');
     expect(formatUsdc(1_000_000_000_000n)).toBe('100,000.00');
+    expect(formatUsdc(1_000_000_000_000n, 'yo')).toBe('100,000.00');
   });
 
   it('accepts bigint and string alike', () => {
     expect(formatUsdc(30_000_000n)).toBe(formatUsdc('30000000'));
+  });
+
+  describe('per locale', () => {
+    // French groups with a narrow no-break space (U+202F) and writes a
+    // decimal comma; English and Swahili use a comma and a decimal point.
+    it('renders en with point decimals and comma grouping', () => {
+      expect(formatUsdc(1_234_500_000n, 'en')).toBe('123.45');
+      expect(formatUsdc(1_000_000_000_000n, 'en')).toBe('100,000.00');
+    });
+
+    it('renders fr with comma decimals and no-break-space grouping', () => {
+      expect(formatUsdc(1_234_500_000n, 'fr')).toBe('123,45');
+      expect(formatUsdc(1_000_000_000_000n, 'fr')).toBe(`100${NBSP}000,00`);
+      expect(formatUsdc(1n, 'fr')).toBe('0,0000001');
+    });
+
+    it('renders sw with point decimals and comma grouping', () => {
+      expect(formatUsdc(1_234_500_000n, 'sw')).toBe('123.45');
+      expect(formatUsdc(1_000_000_000_000n, 'sw')).toBe('100,000.00');
+    });
+
+    it('defaults to en', () => {
+      expect(formatUsdc(1_000_000_000_000n)).toBe(formatUsdc(1_000_000_000_000n, 'en'));
+    });
+  });
+
+  describe('precision above 2^53', () => {
+    // 9,007,199,254,740,993 is the first integer a float cannot represent.
+    const ABOVE_SAFE = 9_007_199_254_740_993n * SCALE + 1_234_567n;
+
+    it('formats a value above 2^53 without rounding', () => {
+      // The value does not survive a trip through Number, which is exactly
+      // why the formatter never makes that trip.
+      expect(BigInt(Number(ABOVE_SAFE))).not.toBe(ABOVE_SAFE);
+      expect(formatUsdc(ABOVE_SAFE, 'en')).toBe('9,007,199,254,740,993.1234567');
+      expect(formatUsdc(ABOVE_SAFE, 'fr')).toBe(
+        `9${NBSP}007${NBSP}199${NBSP}254${NBSP}740${NBSP}993,1234567`,
+      );
+      expect(formatUsdc(ABOVE_SAFE, 'sw')).toBe('9,007,199,254,740,993.1234567');
+      // The string input takes the same path as the bigint one.
+      expect(formatUsdc(ABOVE_SAFE.toString(), 'en')).toBe(
+        '9,007,199,254,740,993.1234567',
+      );
+    });
+
+    it('formats the i128 maximum exactly in every locale', () => {
+      expect(formatUsdc(I128_MAX, 'fr')).toBe(
+        `17${NBSP}014${NBSP}118${NBSP}346${NBSP}046${NBSP}923${NBSP}173${NBSP}168${NBSP}730${NBSP}371${NBSP}588,4105727`,
+      );
+      expect(formatUsdc(I128_MAX, 'sw')).toBe(
+        '17,014,118,346,046,923,173,168,730,371,588.4105727',
+      );
+    });
+  });
+});
+
+describe('formatCount', () => {
+  it('groups counts per locale', () => {
+    expect(formatCount(1_234, 'en')).toBe('1,234');
+    expect(formatCount(1_234, 'sw')).toBe('1,234');
+    // French groups with a narrow no-break space, not a comma.
+    expect(formatCount(1_234, 'fr')).toBe('1\u202f234');
+    expect(formatCount(1_234_567, 'fr')).toBe('1\u202f234\u202f567');
+  });
+
+  it('leaves a single-digit count alone and defaults to en', () => {
+    expect(formatCount(7)).toBe('7');
+    expect(formatCount(0)).toBe('0');
   });
 });
 
@@ -160,8 +233,10 @@ describe('formatDate', () => {
 
   it('renders dates per locale', () => {
     const d = new Date('2026-05-20T10:00:00.000Z');
-    expect(formatDate(d, 'fr')).toMatch(/20/);
-    expect(formatDate(d, 'sw')).toMatch(/20/);
+    expect(formatDate(d, 'fr')).toBe('20 mai 2026');
+    expect(formatDate(d, 'sw')).toBe('20 Mei 2026');
+    // Yoruba month names come from the locale, not the English fallback.
+    expect(formatDate(d, 'yo')).toBe('20 Oṣù Ẹ̀bibi 2026');
   });
 
   it('renders a dash for missing dates', () => {
@@ -182,13 +257,17 @@ describe('timeUntil', () => {
   });
 
   it('picks the largest whole unit', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', now)).toBe('30m');
-    expect(timeUntil('2026-05-20T15:00:00.000Z', now)).toBe('5h');
-    expect(timeUntil('2026-05-23T10:00:00.000Z', now)).toBe('3d');
+    expect(timeUntil('2026-05-20T10:30:00.000Z', now)).toBe('in 30 minutes');
+    expect(timeUntil('2026-05-20T15:00:00.000Z', now)).toBe('in 5 hours');
+    expect(timeUntil('2026-05-23T10:00:00.000Z', now)).toBe('in 3 days');
+  });
+
+  it('follows the active locale (#278)', () => {
+    expect(timeUntil('2026-05-23T10:00:00.000Z', now, 'fr')).toBe('dans 3 jours');
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('30m');
+    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('in 30 minutes');
   });
 
   afterEach(() => {
@@ -198,8 +277,8 @@ describe('timeUntil', () => {
   it('falls back to the wall clock when now is 0 or null', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
-    expect(timeUntil('2026-05-20T11:00:00.000Z', 0)).toBe('1h');
-    expect(timeUntil('2026-05-20T11:00:00.000Z', null)).toBe('1h');
+    expect(timeUntil('2026-05-20T11:00:00.000Z', 0)).toBe('in 1 hour');
+    expect(timeUntil('2026-05-20T11:00:00.000Z', null)).toBe('in 1 hour');
   });
 });
 
@@ -210,19 +289,23 @@ describe('timeSince', () => {
     expect(timeSince(null)).toBe('—');
   });
 
-  it('returns "just now" for the present or future', () => {
-    expect(timeSince('2026-05-20T10:00:00.000Z', now)).toBe('just now');
-    expect(timeSince('2026-05-20T11:00:00.000Z', now)).toBe('just now');
+  it('returns "now" for the present or future', () => {
+    expect(timeSince('2026-05-20T10:00:00.000Z', now)).toBe('now');
+    expect(timeSince('2026-05-20T11:00:00.000Z', now)).toBe('now');
   });
 
   it('picks the largest whole unit', () => {
-    expect(timeSince('2026-05-20T09:30:00.000Z', now)).toBe('30m ago');
-    expect(timeSince('2026-05-20T05:00:00.000Z', now)).toBe('5h ago');
-    expect(timeSince('2026-05-17T10:00:00.000Z', now)).toBe('3d ago');
+    expect(timeSince('2026-05-20T09:30:00.000Z', now)).toBe('30 minutes ago');
+    expect(timeSince('2026-05-20T05:00:00.000Z', now)).toBe('5 hours ago');
+    expect(timeSince('2026-05-17T10:00:00.000Z', now)).toBe('3 days ago');
+  });
+
+  it('follows the active locale (#278)', () => {
+    expect(timeSince('2026-05-17T10:00:00.000Z', now, 'fr')).toBe('il y a 3 jours');
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30m ago');
+    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30 minutes ago');
   });
 
   afterEach(() => {
@@ -232,7 +315,7 @@ describe('timeSince', () => {
   it('falls back to the wall clock when now is 0 or null', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
-    expect(timeSince('2026-05-20T09:00:00.000Z', 0)).toBe('1h ago');
-    expect(timeSince('2026-05-20T09:00:00.000Z', null)).toBe('1h ago');
+    expect(timeSince('2026-05-20T09:00:00.000Z', 0)).toBe('1 hour ago');
+    expect(timeSince('2026-05-20T09:00:00.000Z', null)).toBe('1 hour ago');
   });
 });
