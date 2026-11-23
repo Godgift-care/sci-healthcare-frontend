@@ -115,6 +115,15 @@ keep in sync. Two routes are static server components (`/how-it-works`,
 title. The sleeping indexer can therefore never block a page render. No
 patient or beneficiary reference appears in a title or a preview.
 
+The picture on that preview is drawn beside the same two layouts
+(`src/app/clinics/[address]/opengraph-image.tsx`,
+`src/app/vouchers/[id]/opengraph-image.tsx`) from the card builders in
+`src/lib/social-card.ts`: a clinic card carries its name, country and status,
+a voucher card the service and status only. The builders take a narrowed shape
+that has no amount, funder address or beneficiary reference on it, so those
+values are unreachable from the drawing code rather than merely unused, and
+the rendered PNG is served with a public, hour-long cache.
+
 ## Providers
 
 `src/app/layout.tsx` mounts them in this order. Anything above a provider can
@@ -471,6 +480,7 @@ disclaimer. Setting it to `public` hides all of it.
 | You want to… | Start at |
 | --- | --- |
 | Add a page | `src/app/<route>/page.tsx`, then a sibling `layout.tsx` if it needs its own title |
+| Change what a shared link previews | `src/lib/social-card.ts`, then the `opengraph-image.tsx` route that draws it |
 | Read a new piece of indexer data | `@sci-healthcare/client` → `src/lib/api.ts` → a hook in `src/lib/hooks/useData.ts` |
 | Change the cache behaviour | `src/components/SwrProvider.tsx` (global) or the hook's SWR config (per read) |
 | Add or change a contract call | `src/lib/contracts/generated/` → `src/lib/protocol.ts` → `src/lib/stellar.ts` |
