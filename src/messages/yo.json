@@ -163,6 +163,15 @@
     "ui": {
       "closeDialog": "Tì pátákó ìjíròrò",
       "moreInformation": "Ìsọfúnni síi"
+    },
+    "shareReceipt": {
+      "action": "Pín rísíìtì",
+      "label": "Pín rísíìtì ìtọ́jú fún vóṣà #{id}",
+      "copied": "Ìjápọ̀ rísíìtì ti dà kọ́pì",
+      "failed": "A kò lè pín rísíìtì náà. Dà kọ́pì ìjápọ̀ ojú-ìwé dípò rẹ̀.",
+      "title": "Rísíìtì ìtọ́jú #{id}",
+      "text": "Rísíìtì ìtọ́jú fún vóṣà #{id}: {service}, ${amount} USDC, a sanwó ní {date}.",
+      "textWithClinic": "Rísíìtì ìtọ́jú fún vóṣà #{id}: {service} ní {clinic}, ${amount} USDC, a sanwó ní {date}."
     }
   },
   "checkoutDraft": {

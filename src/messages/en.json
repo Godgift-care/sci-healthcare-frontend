@@ -163,6 +163,15 @@
     "ui": {
       "closeDialog": "Close dialog",
       "moreInformation": "More information"
+    },
+    "shareReceipt": {
+      "action": "Share receipt",
+      "label": "Share the care receipt for voucher #{id}",
+      "copied": "Receipt link copied",
+      "failed": "Could not share the receipt. Copy the page link instead.",
+      "title": "Care receipt #{id}",
+      "text": "Care receipt for voucher #{id}: {service}, ${amount} USDC, settled {date}.",
+      "textWithClinic": "Care receipt for voucher #{id}: {service} at {clinic}, ${amount} USDC, settled {date}."
     }
   },
   "checkoutDraft": {

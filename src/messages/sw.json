@@ -163,6 +163,15 @@
     "ui": {
       "closeDialog": "Funga kidirisha",
       "moreInformation": "Maelezo zaidi"
+    },
+    "shareReceipt": {
+      "action": "Shiriki stakabadhi",
+      "label": "Shiriki stakabadhi ya huduma ya vocha #{id}",
+      "copied": "Kiungo cha stakabadhi kimenakiliwa",
+      "failed": "Imeshindikana kushiriki stakabadhi. Nakili kiungo cha ukurasa badala yake.",
+      "title": "Stakabadhi ya huduma #{id}",
+      "text": "Stakabadhi ya huduma ya vocha #{id}: {service}, ${amount} USDC, ililipwa {date}.",
+      "textWithClinic": "Stakabadhi ya huduma ya vocha #{id}: {service} katika {clinic}, ${amount} USDC, ililipwa {date}."
     }
   },
   "checkoutDraft": {
