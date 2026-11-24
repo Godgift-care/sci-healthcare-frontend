@@ -136,6 +136,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <Link href="/stats" className="hover:text-[var(--color-brand)]">
                     Stats
                   </Link>
+                  <Link href="/services" className="hover:text-[var(--color-brand)]">
+                    Services
+                  </Link>
                   <Link href="/attesters" className="hover:text-[var(--color-brand)]">
                     Attesters
                   </Link>
