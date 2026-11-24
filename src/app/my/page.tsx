@@ -32,6 +32,7 @@ import {
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
+import { ShareReceiptButton } from '@/components/ShareReceiptButton';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { RecentVouchers } from '@/components/RecentVouchers';
 import { TestUsdc } from '@/components/TestUsdc';
@@ -924,7 +925,18 @@ export default function MyPage() {
                       {formatDate(r.settledAt)}
                     </div>
                   </div>
-                  <div className="mono">${r.amountDisplay}</div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="mono">${r.amountDisplay}</div>
+                    <ShareReceiptButton
+                      receipt={{
+                        voucherId: r.voucherId,
+                        service: r.serviceLabel ?? `Service ${r.serviceCode}`,
+                        clinic: r.providerName,
+                        amount: r.amountDisplay,
+                        settledOn: formatDate(r.settledAt),
+                      }}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>

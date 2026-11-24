@@ -8,11 +8,27 @@ import { detailHref, prefetchDetail, type DetailTarget } from '@/lib/detail-pref
 
 type Props = Omit<ComponentProps<typeof Link>, 'href' | 'prefetch'> & { detail: DetailTarget };
 
+/**
+ * `useRouter` throws outside of the Next app router (e.g. when a story is
+ * rendered in jsdom). Degrade to a no-op prefetch in that case so the link
+ * still renders; production always has the router mounted.
+ */
+function useOptionalRouter() {
+  try {
+    return useRouter();
+  } catch {
+    return null;
+  }
+}
+
 /** Disable Next's automatic viewport prefetch: both page and API reads
  * must pass the low-data guard, even on the first render. */
 export function DetailLink({ detail, onMouseEnter, onFocus, ...props }: Props) {
-  const router = useRouter();
-  const warm = () => prefetchDetail(detail, (href) => router.prefetch(href));
+  const router = useOptionalRouter();
+  const warm = () => {
+    if (!router) return;
+    prefetchDetail(detail, (href) => router.prefetch(href));
+  };
   return (
     <Link
       {...props}
