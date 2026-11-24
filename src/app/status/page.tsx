@@ -14,15 +14,17 @@ import {
   type Overall,
 } from '@/lib/status';
 import { Alert, Button, Card } from '@/components/ui';
+import { useLocaleContext } from '@/i18n/LocaleContext';
+import { localeTag } from '@/i18n/translate';
 
 /** Re-check readiness while the page is open; it is what people watch. */
 const READY_REFRESH_MS = 30_000;
 
-const HEADLINE: Record<Overall, { kind: 'success' | 'error' | 'info'; text: string }> = {
-  checking: { kind: 'info', text: 'Checking the API…' },
-  operational: { kind: 'success', text: 'All systems operational' },
-  degraded: { kind: 'error', text: 'Degraded: the API is up but not fully healthy' },
-  unreachable: { kind: 'error', text: 'The API cannot be reached' },
+const HEADLINE_KIND: Record<Overall, 'success' | 'error' | 'info'> = {
+  checking: 'info',
+  operational: 'success',
+  degraded: 'error',
+  unreachable: 'error',
 };
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -35,7 +37,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: string; failText: string }) {
-  if (ok === undefined) return <span className="text-[var(--color-ink-soft)]">Not reported</span>;
+  const { t } = useLocaleContext();
+  if (ok === undefined) return <span className="text-[var(--color-ink-soft)]">{t('status.notReported')}</span>;
   return ok ? (
     <span className="text-[var(--color-ok)]">{okText}</span>
   ) : (
@@ -52,6 +55,7 @@ function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: stri
  * here comes from `GET /ready` and `GET /version`; nothing is inferred.
  */
 export default function StatusPage() {
+  const { t, locale } = useLocaleContext();
   const {
     ready,
     error: readyError,
@@ -63,7 +67,7 @@ export default function StatusPage() {
   // A cached answer stays on screen while a refresh fails, so the page only
   // calls the API unreachable when there is no answer at all.
   const overall = overallStatus(ready, Boolean(readyError));
-  const headline = HEADLINE[overall];
+  const headlineKind = HEADLINE_KIND[overall];
   // A few ledgers of lag is normal; the reasons are listed only once the
   // indexer itself says it is degraded.
   const problems = ready?.status === 'degraded' ? readinessProblems(ready) : [];
@@ -76,26 +80,24 @@ export default function StatusPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Status</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('status.title')}</h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-            Lists, balances and receipts are read from the API. Transactions are
-            signed in your wallet and sent straight to the Stellar network, so
-            they do not depend on the API being healthy.
+            {t('status.subtitle')}
           </p>
         </div>
         <Button variant="ghost" disabled={isValidating} onClick={() => void mutate()}>
-          {isValidating ? 'Checking…' : 'Check again'}
+          {isValidating ? t('status.checking') : t('status.checkAgain')}
         </Button>
       </div>
 
       <div role="status" aria-live="polite">
-        <Alert kind={headline.kind}>
-          <p className="font-semibold">{headline.text}</p>
+        <Alert kind={headlineKind}>
+          <p className="font-semibold">{t(`status.headline.${overall}`)}</p>
           {overall === 'unreachable' && (
             <p className="mt-1">
-              The API at <span className="mono break-all">{config.apiUrl}</span> did
-              not answer. Pages that list clinics or vouchers will not load until it
-              is back; it may also be waking up, which can take up to a minute.
+              {t('status.unreachableBodyStart')}{' '}
+              <span className="mono break-all">{config.apiUrl}</span>{' '}
+              {t('status.unreachableBodyEnd')}
             </p>
           )}
           {problems.length > 0 && (
@@ -110,7 +112,7 @@ export default function StatusPage() {
 
       {mismatches.length > 0 && (
         <Alert>
-          <p className="font-semibold">This app and the API disagree about the deployment</p>
+          <p className="font-semibold">{t('status.mismatchTitle')}</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {mismatches.map((m) => (
               <li key={m}>{m}</li>
@@ -120,38 +122,38 @@ export default function StatusPage() {
       )}
 
       <section aria-labelledby="status-api" className="space-y-2">
-        <h2 id="status-api" className="text-base font-semibold">API readiness</h2>
+        <h2 id="status-api" className="text-base font-semibold">{t('status.apiReadiness')}</h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
-            <Row label="Readiness">
+            <Row label={t('status.readiness')}>
               {ready ? (
-                <Check ok={ready.status === 'ready'} okText="Ready" failText="Degraded" />
+                <Check ok={ready.status === 'ready'} okText={t('status.ready')} failText={t('status.degraded')} />
               ) : overall === 'unreachable' ? (
-                <span className="text-[var(--color-danger)]">Unreachable</span>
+                <span className="text-[var(--color-danger)]">{t('status.unreachable')}</span>
               ) : (
                 '…'
               )}
             </Row>
-            <Row label="Database">
+            <Row label={t('status.database')}>
               {ready ? (
-                <Check ok={ready.checks.database} okText="Connected" failText="Unreachable" />
+                <Check ok={ready.checks.database} okText={t('status.connected')} failText={t('status.unreachable')} />
               ) : (
                 '—'
               )}
             </Row>
-            <Row label="Indexer lag">
+            <Row label={t('status.indexerLag')}>
               {ready ? describeLag(ready.checks.lagLedgers) : '—'}
             </Row>
-            <Row label="Latest indexed ledger">
+            <Row label={t('status.latestIndexedLedger')}>
               {ready?.checks.indexedLedger !== undefined ? (
-                <span className="mono">{ready.checks.indexedLedger.toLocaleString('en')}</span>
+                <span className="mono">{ready.checks.indexedLedger.toLocaleString(localeTag(locale))}</span>
               ) : (
                 '—'
               )}
             </Row>
-            <Row label="Ledger history">
+            <Row label={t('status.ledgerHistory')}>
               {ready?.checks.gapDetected !== undefined ? (
-                <Check ok={!ready.checks.gapDetected} okText="Complete" failText="Gap detected" />
+                <Check ok={!ready.checks.gapDetected} okText={t('status.complete')} failText={t('status.gapDetected')} />
               ) : (
                 '—'
               )}
@@ -161,11 +163,11 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-network" className="space-y-2">
-        <h2 id="status-network" className="text-base font-semibold">Network</h2>
+        <h2 id="status-network" className="text-base font-semibold">{t('status.network')}</h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
-            <Row label="This app signs for">{config.network}</Row>
-            <Row label="The API indexes">{apiNetwork ?? '—'}</Row>
+            <Row label={t('status.thisAppSignsFor')}>{config.network}</Row>
+            <Row label={t('status.apiIndexes')}>{apiNetwork ?? '—'}</Row>
           </dl>
         </Card>
       </section>
@@ -200,29 +202,29 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-versions" className="space-y-2">
-        <h2 id="status-versions" className="text-base font-semibold">Versions</h2>
+        <h2 id="status-versions" className="text-base font-semibold">{t('status.versions')}</h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
-            <Row label="Web app">
+            <Row label={t('status.webApp')}>
               <span className="mono">
-                {process.env.APP_VERSION ?? 'unknown'}
+                {process.env.APP_VERSION ?? t('status.unknown')}
                 {appCommit && ` (${appCommit})`}
               </span>
             </Row>
-            <Row label="API">
+            <Row label={t('status.api')}>
               {version ? (
                 <span className="mono">
                   {version.version}
                   {apiCommit && ` (${apiCommit})`}
                 </span>
               ) : versionError ? (
-                <span className="text-[var(--color-ink-soft)]">Not available</span>
+                <span className="text-[var(--color-ink-soft)]">{t('status.notAvailable')}</span>
               ) : (
                 '…'
               )}
             </Row>
             {version?.startedAt && (
-              <Row label="API running since">{formatDate(version.startedAt)}</Row>
+              <Row label={t('status.apiRunningSince')}>{formatDate(version.startedAt, locale)}</Row>
             )}
           </dl>
         </Card>
