@@ -444,6 +444,9 @@
     }
   },
   "voucher": {
+    "chainDataBannerTitle": "Showing live on-chain data",
+    "chainDataBadge": "Stellar Ledger",
+    "chainDataBannerText": "The indexer API is currently unavailable. Voucher status, clinic details and actions are loaded directly from the Stellar blockchain.",
     "voucherNumber": "Voucher #{id}",
     "recentlyViewed": "Recently viewed",
     "at": "at",
