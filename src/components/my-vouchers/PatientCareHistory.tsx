@@ -18,6 +18,7 @@ import {
 } from '@/lib/beneficiary';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { ShareReceiptButton } from '@/components/ShareReceiptButton';
 import { VoucherRow } from '@/components/VoucherRow';
 
 export function PatientCareHistory() {
@@ -402,7 +403,18 @@ export function PatientCareHistory() {
                     {formatDate(r.settledAt)}
                   </div>
                 </div>
-                <div className="mono">${r.amountDisplay}</div>
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="mono">${r.amountDisplay}</div>
+                  <ShareReceiptButton
+                    receipt={{
+                      voucherId: r.voucherId,
+                      service: r.serviceLabel ?? `Service ${r.serviceCode}`,
+                      clinic: r.providerName,
+                      amount: r.amountDisplay,
+                      settledOn: formatDate(r.settledAt),
+                    }}
+                  />
+                </div>
               </li>
             ))}
           </ul>

@@ -163,6 +163,15 @@
     "ui": {
       "closeDialog": "Fermer la boîte de dialogue",
       "moreInformation": "Plus d'informations"
+    },
+    "shareReceipt": {
+      "action": "Partager le reçu",
+      "label": "Partager le reçu de soins du bon #{id}",
+      "copied": "Lien du reçu copié",
+      "failed": "Impossible de partager le reçu. Copiez plutôt le lien de la page.",
+      "title": "Reçu de soins #{id}",
+      "text": "Reçu de soins pour le bon #{id} : {service}, {amount} $ USDC, réglé le {date}.",
+      "textWithClinic": "Reçu de soins pour le bon #{id} : {service} à {clinic}, {amount} $ USDC, réglé le {date}."
     }
   },
   "checkoutDraft": {
