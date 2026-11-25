@@ -561,5 +561,13 @@
     "refundingVoucher": "Refunding voucher #{id}…",
     "exportSelected": "Download selected CSV",
     "refundedSummary": "Refunded {count} voucher(s) successfully:"
+  },
+  "localCurrency": {
+    "select": "Ìṣirò owó ìbílẹ̀",
+    "off": "Owó ìbílẹ̀: pa á",
+    "estimate": "≈ {amount} (ìṣirò)",
+    "estimateRange": "≈ {min}–{max} (ìṣirò)",
+    "tooltip": "Ìṣirò ní òṣùwọ̀n pàṣípààrọ̀ ti {date}. Iye USDC ni o máa san tí kílíníkì sì máa gbà.",
+    "help": "Fi iye owó ìbílẹ̀ tí ó súnmọ́ hàn lẹ́gbẹ̀ẹ́ USDC. USDC ṣì ni iye tí a ń gbà."
   }
 }

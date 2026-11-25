@@ -15,6 +15,8 @@ import { ThemeToggle } from './ThemeToggle';
 
 const LINKS = [
   { href: '/', label: 'Clinics' },
+  { href: '/services', label: 'Services' },
+  { href: '/stats', label: 'Statistics' },
   { href: '/how-it-works', label: 'How it works' },
   { href: '/my', label: 'My vouchers' },
   { href: '/clinic', label: 'Clinic desk' },
@@ -25,11 +27,16 @@ const LINKS = [
 /**
  * Site header (#6).
  *
- * Below `sm` the six desktop links collapse into a menu button so the header
- * fits a 360px screen: the logo, the three status controls and a 44px tap
- * target already fill the row. The panel opens under the row and closes on a
- * link press (a client-side navigation would otherwise leave it open), on
- * Escape, or when the route changes.
+ * Below `lg` the desktop links collapse into a menu button so the header fits a
+ * 360px screen: the logo, the three status controls and a 44px tap target
+ * already fill the row. The panel opens under the row and closes on a link
+ * press (a client-side navigation would otherwise leave it open), on Escape,
+ * or when the route changes.
+ *
+ * Services and Statistics are here rather than only in the footer (#375):
+ * browsing clinics by service and seeing what the protocol has done are the
+ * two things a first-time visitor looks for, and both were reachable only by
+ * URL or the command palette.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -53,8 +60,8 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-[var(--color-line)] bg-[var(--color-surface)] print:hidden">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span
               aria-hidden
@@ -64,7 +71,10 @@ export function SiteHeader() {
             </span>
             SCI Healthcare
           </Link>
-          <nav aria-label="Primary" className="hidden items-center gap-1 sm:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-0.5 lg:flex [&>a]:px-1 [&>a]:text-[13px]"
+          >
             {links.map((link) => (
               <NavLink key={link.href} href={link.href}>
                 {link.label}
@@ -73,7 +83,7 @@ export function SiteHeader() {
           </nav>
         </div>
 
-        <div className="ms-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+        <div className="ms-auto flex flex-wrap items-center justify-end gap-1">
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />
@@ -84,7 +94,7 @@ export function SiteHeader() {
             aria-controls={panelId}
             aria-label={open ? 'Close menu' : 'Open menu'}
             onClick={() => setOpenPath(open ? null : pathname)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] sm:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] lg:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
               {open ? '×' : '☰'}
@@ -97,7 +107,7 @@ export function SiteHeader() {
         id={panelId}
         aria-label="Mobile"
         hidden={!open}
-        className="border-t border-[var(--color-line)] bg-[var(--color-surface)] px-4 pb-2 sm:hidden"
+        className="border-t border-[var(--color-line)] bg-[var(--color-surface)] px-4 pb-2 lg:hidden"
       >
         <ul className="divide-y divide-[var(--color-line)]">
           {links.map((link) => (
