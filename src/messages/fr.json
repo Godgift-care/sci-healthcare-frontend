@@ -308,6 +308,43 @@
     "apiRunningSince": "API en service depuis",
     "unknown": "inconnu"
   },
+  "services": {
+    "badge": "Protocole de bons de soins sur Stellar",
+    "title": "Trouver des soins par prestation",
+    "subtitle": "Recherchez les soins que vous souhaitez payer et comparez ce que les cliniques facturent, puis financez un bon depuis la page de la clinique.",
+    "browseClinics": "Parcourir les cliniques →",
+    "howItWorks": "Comment ça marche →",
+    "catalogueTitle": "Catalogue des prestations",
+    "searchLabel": "Rechercher une prestation",
+    "searchPlaceholder": "Rechercher une prestation",
+    "showing": {
+      "one": "Affichage de {shown} sur {total} prestation",
+      "other": "Affichage de {shown} sur {total} prestations"
+    },
+    "emptyTitle": "Aucune prestation publiée pour l'instant",
+    "emptyDescription": "Les cliniques publient les soins qu'elles proposent depuis le guichet de la clinique. Dès qu'une clinique le fait, la prestation apparaîtra ici pour que les financeurs puissent comparer.",
+    "listService": "Publier une prestation",
+    "noMatchTitle": "Aucune prestation ne correspond à votre recherche.",
+    "noMatchDescription": "Essayez un terme plus large ou effacez la recherche pour voir tout le catalogue.",
+    "clearSearch": "Effacer la recherche",
+    "clinicCount": {
+      "one": "{count} clinique",
+      "other": "{count} cliniques"
+    },
+    "priceRange": "Fourchette de prix",
+    "compareClinics": "Comparer les cliniques →",
+    "detailSubtitle": "Comparez ce que les cliniques actives facturent pour cette prestation, puis financez un bon depuis la clinique de votre choix.",
+    "serviceCatalogue": "Catalogue des prestations →",
+    "clinicsOffering": "Cliniques proposant cette prestation",
+    "sortedByPrice": "Triées par prix, cliniques actives uniquement.",
+    "noClinics": "Aucune clinique active ne propose encore cette prestation.",
+    "caption": "Cliniques proposant {service}, triées par prix",
+    "clinic": "Clinique",
+    "country": "Pays",
+    "price": "Prix",
+    "fund": "Financer",
+    "fundCare": "Financer les soins →"
+  },
   "attest": {
     "leftToday": "{count} attestations restantes aujourd'hui",
     "capReached": "Vous avez atteint la limite d'attestations du jour. Confirmez à nouveau après {time} UTC.",

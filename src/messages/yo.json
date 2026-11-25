@@ -308,6 +308,43 @@
     "apiRunningSince": "API ti ń ṣiṣẹ́ láti",
     "unknown": "a kò mọ̀"
   },
+  "services": {
+    "badge": "Ìlànà vóṣà ìtọ́jú lórí Stellar",
+    "title": "Wá ìtọ́jú nípasẹ̀ iṣẹ́",
+    "subtitle": "Wá ìtọ́jú tí o fẹ́ sanwó fún, fi òǹtẹ̀ẹ̀ kan ohun tí àwọn kílíníkì ń gbà, kí o sì dáwó lé vóṣà láti ojú-ìwé kílíníkì.",
+    "browseClinics": "Wo àwọn kílíníkì →",
+    "howItWorks": "Bí ó ṣe ń ṣiṣẹ́ →",
+    "catalogueTitle": "Àkójọ iṣẹ́",
+    "searchLabel": "Wá orúkọ iṣẹ́",
+    "searchPlaceholder": "Wá orúkọ iṣẹ́",
+    "showing": {
+      "one": "Ń fi {shown} nínú {total} iṣẹ́ hàn",
+      "other": "Ń fi {shown} nínú {total} iṣẹ́ hàn"
+    },
+    "emptyTitle": "Kò sí iṣẹ́ tí a tò sílẹ̀ síbẹ̀",
+    "emptyDescription": "Àwọn kílíníkì ń gbé ìtọ́jú tí wọ́n ń ṣe jáde láti tábìlì kílíníkì. Ní kété tí ọ̀kan bá ṣe bẹ́ẹ̀, yóò farahàn níbí kí àwọn olùdáwó lè fi wé.",
+    "listService": "Tọ iṣẹ́ sílẹ̀",
+    "noMatchTitle": "Kò sí iṣẹ́ tó bá ìwádìí rẹ mu.",
+    "noMatchDescription": "Gbiyanju ọ̀rọ̀ gbòòrò sí i, tàbí nu ìwádìí kí o lè rí àkójọ kíkún.",
+    "clearSearch": "Nu ìwádìí",
+    "clinicCount": {
+      "one": "kílíníkì {count}",
+      "other": "kílíníkì {count}"
+    },
+    "priceRange": "Ìwọ̀n owó",
+    "compareClinics": "Fi àwọn kílíníkì wé →",
+    "detailSubtitle": "Fi ohun tí àwọn kílíníkì tó ń ṣiṣẹ́ ń gbà fún iṣẹ́ yìí wé, kí o sì dáwó lé vóṣà láti kílíníkì tí o yàn.",
+    "serviceCatalogue": "Àkójọ iṣẹ́ →",
+    "clinicsOffering": "Àwọn kílíníkì tó ń ṣe iṣẹ́ yìí",
+    "sortedByPrice": "A tò wọ́n nípa owó, àwọn kílíníkì tó ń ṣiṣẹ́ nìkan.",
+    "noClinics": "Kò sí kílíníkì tó ń ṣiṣẹ́ tó tọ iṣẹ́ yìí sílẹ̀ síbẹ̀.",
+    "caption": "Àwọn kílíníkì tó ń ṣe {service}, a tò wọ́n nípa owó",
+    "clinic": "Kílíníkì",
+    "country": "Orílẹ̀-èdè",
+    "price": "Owó",
+    "fund": "Dáwó lé",
+    "fundCare": "Dáwó lé ìtọ́jú →"
+  },
   "print": {
     "mismatch": "Does not match the chain",
     "verifying": "Verifying…",

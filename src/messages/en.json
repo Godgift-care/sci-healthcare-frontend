@@ -308,6 +308,43 @@
     "apiRunningSince": "API running since",
     "unknown": "unknown"
   },
+  "services": {
+    "badge": "Care-voucher protocol on Stellar",
+    "title": "Find care by service",
+    "subtitle": "Search for the care you want to pay for and compare what clinics charge for it, then fund a voucher from the clinic page.",
+    "browseClinics": "Browse clinics →",
+    "howItWorks": "How it works →",
+    "catalogueTitle": "Service catalogue",
+    "searchLabel": "Search service name",
+    "searchPlaceholder": "Search service name",
+    "showing": {
+      "one": "Showing {shown} of {total} service",
+      "other": "Showing {shown} of {total} services"
+    },
+    "emptyTitle": "No services listed yet",
+    "emptyDescription": "Clinics publish the care they offer from the clinic desk. Once one does, it will appear here for funders to compare.",
+    "listService": "List a service",
+    "noMatchTitle": "No services match your search.",
+    "noMatchDescription": "Try a broader term, or clear the search to see the full catalogue.",
+    "clearSearch": "Clear search",
+    "clinicCount": {
+      "one": "{count} clinic",
+      "other": "{count} clinics"
+    },
+    "priceRange": "Price range",
+    "compareClinics": "Compare clinics →",
+    "detailSubtitle": "Compare what active clinics charge for this service, then fund a voucher from the clinic of your choice.",
+    "serviceCatalogue": "Service catalogue →",
+    "clinicsOffering": "Clinics offering this service",
+    "sortedByPrice": "Sorted by price, active clinics only.",
+    "noClinics": "No active clinics list this service yet.",
+    "caption": "Clinics offering {service}, sorted by price",
+    "clinic": "Clinic",
+    "country": "Country",
+    "price": "Price",
+    "fund": "Fund",
+    "fundCare": "Fund care →"
+  },
   "attest": {
     "leftToday": "{count} attestations left today",
     "capReached": "You have reached today's attestation limit. Confirm care again after {time} UTC.",

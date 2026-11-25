@@ -308,6 +308,43 @@
     "apiRunningSince": "API inaendesha tangu",
     "unknown": "haijulikani"
   },
+  "services": {
+    "badge": "Itifaki ya vocha za huduma kwenye Stellar",
+    "title": "Tafuta huduma unayohitaji",
+    "subtitle": "Tafuta huduma unayotaka kulipia na linganisha bei za kliniki, kisha fadhili vocha kutoka ukurasa wa kliniki.",
+    "browseClinics": "Vinjari kliniki →",
+    "howItWorks": "Inavyofanya kazi →",
+    "catalogueTitle": "Orodha ya huduma",
+    "searchLabel": "Tafuta jina la huduma",
+    "searchPlaceholder": "Tafuta jina la huduma",
+    "showing": {
+      "one": "Inaonyesha {shown} kati ya {total} huduma",
+      "other": "Inaonyesha {shown} kati ya {total} huduma"
+    },
+    "emptyTitle": "Hakuna huduma zilizoorodheshwa bado",
+    "emptyDescription": "Kliniki huchapisha huduma wanazotoa kutoka dawati la kliniki. Mara moja ikifanya hivyo, itaonekana hapa ili wafadhili walinganishe.",
+    "listService": "Orodhesha huduma",
+    "noMatchTitle": "Hakuna huduma inayolingana na utafutaji wako.",
+    "noMatchDescription": "Jaribu neno pana zaidi, au futa utafutaji ili kuona orodha kamili.",
+    "clearSearch": "Futa utafutaji",
+    "clinicCount": {
+      "one": "kliniki {count}",
+      "other": "kliniki {count}"
+    },
+    "priceRange": "Kiwango cha bei",
+    "compareClinics": "Linganisha kliniki →",
+    "detailSubtitle": "Linganisha bei za kliniki hai kwa huduma hii, kisha fadhili vocha kutoka kliniki unayochagua.",
+    "serviceCatalogue": "Orodha ya huduma →",
+    "clinicsOffering": "Kliniki zinazotoa huduma hii",
+    "sortedByPrice": "Zimepangwa kwa bei, kliniki hai pekee.",
+    "noClinics": "Hakuna kliniki hai inayoorodhesha huduma hii bado.",
+    "caption": "Kliniki zinazotoa {service}, zimepangwa kwa bei",
+    "clinic": "Kliniki",
+    "country": "Nchi",
+    "price": "Bei",
+    "fund": "Fadhili",
+    "fundCare": "Fadhili huduma →"
+  },
   "attest": {
     "leftToday": "{count} uthibitisho umebaki leo",
     "capReached": "Umefikia kikomo cha uthibitisho wa leo. Thibitisha tena baada ya {time} UTC.",

@@ -1,7 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { blockAnalytics } from '../analytics-guard';
-import { CLINIC, FUNDED_VOUCHER, PROVIDER } from './fixtures';
+import {
+  CLINIC,
+  FUNDED_VOUCHER,
+  PROVIDER,
+  SERVICE_BY_CODE,
+  SERVICE_CATALOGUE,
+} from './fixtures';
 import { mockBackend, useMockWallet } from './helpers';
 
 /**
@@ -62,6 +68,8 @@ test.beforeEach(async ({ page }) => {
     provider: CLINIC,
     vouchers: [FUNDED_VOUCHER(VOUCHER_ID)],
     voucherById: { [VOUCHER_ID]: FUNDED_VOUCHER(VOUCHER_ID) },
+    services: SERVICE_CATALOGUE,
+    serviceByCode: SERVICE_BY_CODE,
   });
 });
 
@@ -176,6 +184,44 @@ test.describe('Language switching persists (#153)', () => {
     await expect(languageSwitcher(page)).toHaveValue('en');
     await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
+});
+
+/**
+ * The services pages (#264). Their copy lives in the `services` namespace, so
+ * the catalogue and the per-service comparison page follow the chosen
+ * language — including the search field and the price, which is formatted
+ * with the active locale.
+ */
+test.describe('services pages (#264)', () => {
+  test('translates the catalogue and the comparison page', async ({ page }) => {
+    await page.goto('/services');
+    await expect(page.getByRole('heading', { name: 'Find care by service' })).toBeVisible();
+
+    await languageSwitcher(page).selectOption('fr');
+    await expect(page.getByRole('heading', { name: 'Trouver des soins par prestation' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Catalogue des prestations' })).toBeVisible();
+    await expect(page.getByLabel('Rechercher une prestation')).toBeVisible();
+    // Numbers follow the locale: French writes a decimal comma.
+    await expect(page.getByText('$3,00 – $4,50')).toBeVisible();
+
+    await page.goto('/services/101');
+    await expect(
+      page.getByRole('heading', { name: 'Cliniques proposant cette prestation' }),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /Financer les soins/i }).first()).toBeVisible();
+
+    await languageSwitcher(page).selectOption('sw');
+    await expect(
+      page.getByRole('heading', { name: 'Kliniki zinazotoa huduma hii' }),
+    ).toBeVisible();
+
+    await page.goto('/services');
+    await expect(page.getByRole('heading', { name: 'Tafuta huduma unayohitaji' })).toBeVisible();
+
+    await languageSwitcher(page).selectOption('yo');
+    await expect(page.getByRole('heading', { name: 'Àkójọ iṣẹ́' })).toBeVisible();
+    await expect(page.getByText('kílíníkì 1')).toBeVisible();
   });
 });
 
