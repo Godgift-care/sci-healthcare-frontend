@@ -95,6 +95,12 @@ function isAbsoluteUrl(value: string): boolean {
 function configProblems(env: NodeJS.ProcessEnv): string[] {
   const problems: string[] = [];
 
+  if (env.NEXT_PUBLIC_MOCK_MODE === 'true') {
+    problems.push(
+      'NEXT_PUBLIC_MOCK_MODE is enabled — refusing production build with mock dev mode active.',
+    );
+  }
+
   for (const { name, why } of REQUIRED_BUILD_VARS) {
     if (!env[name]?.trim()) {
       problems.push(`${name} is not set — ${why}.`);

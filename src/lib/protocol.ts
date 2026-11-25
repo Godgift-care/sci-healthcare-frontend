@@ -5,8 +5,10 @@ import { claimOrQueue } from './claim-queue';
 import { config, isTestnet } from './config';
 import {
   FaucetClient,
+  ReceiptClient,
   RegistryClient,
   VoucherClient,
+  ProviderCategory,
 } from './contracts';
 import { ProviderStatus } from './contracts/generated/registry';
 import {
@@ -22,7 +24,7 @@ import {
   type SignFn,
 } from './stellar';
 
-export { RegistryClient, VoucherClient, FaucetClient } from './contracts';
+export { RegistryClient, VoucherClient, FaucetClient, ReceiptClient, ProviderCategory } from './contracts';
 
 /**
  * Typed wrappers for every contract call the app makes.
@@ -53,6 +55,14 @@ function getRegistryClient() {
 function getFaucetClient() {
   return new FaucetClient({
     contractId: config.contracts.faucet,
+    networkPassphrase: config.networkPassphrase,
+    rpcUrl: config.rpcUrl,
+  });
+}
+
+function getReceiptClient() {
+  return new ReceiptClient({
+    contractId: config.contracts.receipt,
     networkPassphrase: config.networkPassphrase,
     rpcUrl: config.rpcUrl,
   });
@@ -548,22 +558,42 @@ export const registry = {
     );
   },
 
-  /** register_provider(owner, name, country) */
+  /** register_provider(owner, name, country, category?) */
   async registerProvider(
     owner: string,
     name: string,
     country: string,
-    sign: SignFn,
+    categoryOrSign?: ProviderCategory | SignFn,
+    maybeSign?: SignFn,
   ) {
+    const category = typeof categoryOrSign === 'number' ? categoryOrSign : ProviderCategory.Clinic;
+    const sign = typeof categoryOrSign === 'function' ? categoryOrSign : maybeSign!;
     const client = getRegistryClient();
     const args = client.spec.funcArgsToScVals('register_provider', {
       owner,
       name,
       country,
+      category,
     });
     return invokeContract(
       config.contracts.registry,
       'register_provider',
+      args,
+      owner,
+      sign,
+    );
+  },
+
+  /** retire(owner, reason_code) */
+  async retire(owner: string, reasonCode: number, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('retire', {
+      owner,
+      reason_code: reasonCode,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'retire',
       args,
       owner,
       sign,
@@ -701,13 +731,66 @@ export type ChainReceipt = {
 
 export const receipt = {
   /** get_receipt(voucher_id) -> Receipt */
-  async get(voucherId: string): Promise<ChainReceipt> {
+  async get(voucherId: string | bigint | number): Promise<ChainReceipt> {
     if (!config.contracts.receipt) {
       throw new Error('This deployment has no receipt contract configured.');
     }
-    return readContract<ChainReceipt>(config.contracts.receipt, 'get_receipt', [
-      await arg.u64(BigInt(voucherId)),
-    ]);
+    const client = getReceiptClient();
+    const args = client.spec.funcArgsToScVals('get_receipt', {
+      voucher_id: BigInt(voucherId),
+    });
+    return readContract<ChainReceipt>(config.contracts.receipt, 'get_receipt', args);
+  },
+
+  /** get_receipt alias matching contract method name */
+  async get_receipt(voucherId: string | bigint | number): Promise<ChainReceipt> {
+    return receipt.get(voucherId);
+  },
+
+  /** count_for(beneficiary_ref) -> u32 */
+  async countFor(beneficiaryRef: string): Promise<number> {
+    if (!config.contracts.receipt) {
+      throw new Error('This deployment has no receipt contract configured.');
+    }
+    const client = getReceiptClient();
+    const clean = beneficiaryRef.startsWith('0x')
+      ? beneficiaryRef.slice(2)
+      : beneficiaryRef;
+    const args = client.spec.funcArgsToScVals('count_for', {
+      beneficiary_ref: Buffer.from(clean, 'hex'),
+    });
+    const count = await readContract<number | bigint>(config.contracts.receipt, 'count_for', args);
+    return Number(count);
+  },
+
+  /** count_for alias matching contract method name */
+  async count_for(beneficiaryRef: string): Promise<number> {
+    return receipt.countFor(beneficiaryRef);
+  },
+
+  /** provider_stats(provider) -> (u32, i128) as { count: number; totalAmount: bigint } */
+  async providerStats(providerAddress: string): Promise<{ count: number; totalAmount: bigint }> {
+    if (!config.contracts.receipt) {
+      throw new Error('This deployment has no receipt contract configured.');
+    }
+    const client = getReceiptClient();
+    const args = client.spec.funcArgsToScVals('provider_stats', {
+      provider: providerAddress,
+    });
+    const res = await readContract<readonly [number | bigint, bigint | number | string]>(
+      config.contracts.receipt,
+      'provider_stats',
+      args,
+    );
+    return {
+      count: Number(res[0]),
+      totalAmount: BigInt(res[1]),
+    };
+  },
+
+  /** provider_stats alias matching contract method name */
+  async provider_stats(providerAddress: string): Promise<{ count: number; totalAmount: bigint }> {
+    return receipt.providerStats(providerAddress);
   },
 };
 

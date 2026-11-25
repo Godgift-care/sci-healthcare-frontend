@@ -9,10 +9,12 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "NEXT_PUBLIC_MOCK_MODE=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "check:bindings": "node scripts/check-contract-bindings.mjs",
     "test:unit": "vitest run",
     "analyze": "ANALYZE=true next build --webpack",
     "icons": "node scripts/generate-icons.mjs",

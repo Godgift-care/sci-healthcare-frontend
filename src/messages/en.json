@@ -197,7 +197,9 @@
     "viewTransaction": "View transaction",
     "indexerCatchUp": "Lists update once the indexer catches up.",
     "updateAvailable": "A new version is ready.",
-    "reloadToUpdate": "Reload to update"
+    "reloadToUpdate": "Reload to update",
+    "mockModeBadge": "Mock Data",
+    "mockModeBanner": "Mock dev mode active: developing without a wallet or backend. All transactions and data are simulated."
   },
   "social": {
     "footer": "SCI Healthcare — care vouchers on Stellar",

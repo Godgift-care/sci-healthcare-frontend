@@ -197,7 +197,9 @@
     "viewTransaction": "Voir la transaction",
     "indexerCatchUp": "Les listes se mettent à jour dès que l'indexeur rattrape son retard.",
     "updateAvailable": "Une nouvelle version est prête.",
-    "reloadToUpdate": "Recharger pour mettre à jour"
+    "reloadToUpdate": "Recharger pour mettre à jour",
+    "mockModeBadge": "Données fictives",
+    "mockModeBanner": "Mode de développement fictif actif : développement sans portefeuille ni serveur. Toutes les transactions et données sont simulées."
   },
   "social": {
     "footer": "SCI Healthcare — bons de soins sur Stellar",

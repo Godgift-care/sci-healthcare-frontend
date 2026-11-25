@@ -197,7 +197,9 @@
     "viewTransaction": "Wo ìdúnàádúrà",
     "indexerCatchUp": "Àwọn àkójọ yóò ṣe àtúnṣe ní kété tí atọ́ka bá bá a.",
     "updateAvailable": "Ẹ̀yà tuntun ti ṣetán.",
-    "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe"
+    "reloadToUpdate": "Tún ojú-ìwé gbé láti ṣe àtúnṣe",
+    "mockModeBadge": "Àwọn Àkọsílẹ̀ Àwòkọ́ṣe",
+    "mockModeBanner": "Ipo ìdàgbàsókè àwòkọ́ṣe ti ń ṣiṣẹ́: ìdàgbàsókè láìsí àpamọ́wọ́ tàbí ẹ̀rọ abẹ́lé. Gbogbo ìgbòkègbodò àti àkọsílẹ̀ jẹ́ àṣedánwò."
   },
   "social": {
     "footer": "SCI Healthcare — àwọn vóṣà ìtọ́jú lórí Stellar",

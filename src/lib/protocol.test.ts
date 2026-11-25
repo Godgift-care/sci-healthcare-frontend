@@ -2,8 +2,8 @@ import { Address, xdr } from '@stellar/stellar-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { config } from './config';
-import { FaucetClient, RegistryClient, VoucherClient } from './contracts';
-import { faucet, registry, usdc, voucher } from './protocol';
+import { FaucetClient, ReceiptClient, RegistryClient, VoucherClient, ProviderCategory } from './contracts';
+import { faucet, receipt, registry, usdc, voucher } from './protocol';
 
 const mocks = vi.hoisted(() => {
   const recorded: Array<{
@@ -61,6 +61,16 @@ const mocks = vi.hoisted(() => {
       if (args[1] === 'get_provider') return { status: 1 };
       if (args[1] === 'get_config') return { amount: 123n };
       if (args[1] === 'quote') return [1n, 2n];
+      if (args[1] === 'get_receipt')
+        return {
+          voucher_id: 42n,
+          provider: PROVIDER,
+          service_code: 101,
+          amount: 30000000n,
+          settled_at: 1800000000n,
+        };
+      if (args[1] === 'count_for') return 3;
+      if (args[1] === 'provider_stats') return [5, 150000000n];
       return true;
     }),
   };
@@ -87,6 +97,7 @@ vi.mock('./config', async (importOriginal) => {
       contracts: {
         ...actual.config.contracts,
         usdc: 'CCB25WG7DQ2CSNXPTOHZO2PDZ324FQPZLH3LSNCCLWYM3FEH52GEXC47',
+        receipt: 'CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7',
       },
     },
   };
@@ -112,6 +123,11 @@ const faucetBinding = new FaucetClient({
   networkPassphrase: config.networkPassphrase,
   rpcUrl: config.rpcUrl,
 });
+const receiptBinding = new ReceiptClient({
+  contractId: config.contracts.receipt,
+  networkPassphrase: config.networkPassphrase,
+  rpcUrl: config.rpcUrl,
+});
 
 function encoded(args: xdr.ScVal[]): string[] {
   return args.map((arg) => Buffer.from(arg.toXDR()).toString('base64'));
@@ -120,7 +136,7 @@ function encoded(args: xdr.ScVal[]): string[] {
 function expectBindingEncoding(
   index: number,
   method: string,
-  spec: VoucherClient['spec'] | RegistryClient['spec'] | FaucetClient['spec'],
+  spec: VoucherClient['spec'] | RegistryClient['spec'] | FaucetClient['spec'] | ReceiptClient['spec'],
   expectedArguments: Record<string, unknown>,
   kind: string,
 ) {
@@ -227,7 +243,17 @@ describe('protocol contract argument encoding', () => {
       index++,
       'register_provider',
       registryBinding.spec,
-      { owner: PROVIDER, name: 'Clinic', country: 'NG' },
+      { owner: PROVIDER, name: 'Clinic', country: 'NG', category: ProviderCategory.Clinic },
+      'invoke',
+    );
+
+    index = mocks.recorded.length;
+    await registry.retire(PROVIDER, 1, SIGN);
+    expectBindingEncoding(
+      index++,
+      'retire',
+      registryBinding.spec,
+      { owner: PROVIDER, reason_code: 1 },
       'invoke',
     );
 
@@ -296,6 +322,39 @@ describe('protocol contract argument encoding', () => {
       Buffer.from(Address.fromString(FUNDER).toScVal().toXDR()).toString('base64'),
     ]);
 
-    expect(mocks.recorded).toHaveLength(index + 1);
+    index = mocks.recorded.length;
+    const rec = await receipt.get('42');
+    expect(rec.voucher_id).toBe(42n);
+    expectBindingEncoding(
+      index++,
+      'get_receipt',
+      receiptBinding.spec,
+      { voucher_id: 42n },
+      'read',
+    );
+
+    index = mocks.recorded.length;
+    const count = await receipt.countFor(beneficiaryRef);
+    expect(count).toBe(3);
+    expectBindingEncoding(
+      index++,
+      'count_for',
+      receiptBinding.spec,
+      { beneficiary_ref: Buffer.from(beneficiaryRef, 'hex') },
+      'read',
+    );
+
+    index = mocks.recorded.length;
+    const stats = await receipt.providerStats(PROVIDER);
+    expect(stats).toEqual({ count: 5, totalAmount: 150000000n });
+    expectBindingEncoding(
+      index++,
+      'provider_stats',
+      receiptBinding.spec,
+      { provider: PROVIDER },
+      'read',
+    );
+
+    expect(mocks.recorded).toHaveLength(index);
   });
 });

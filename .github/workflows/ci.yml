@@ -38,6 +38,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: npm run check:bindings
       - run: npm run typecheck
 
   unit:
@@ -96,6 +97,17 @@ jobs:
           fi
           cat /tmp/build-without-config.log
           grep -q 'NEXT_PUBLIC_VOUCHER_CONTRACT_ID' /tmp/build-without-config.log
+      # Regression test for #372: refuse production build with mock dev mode on
+      - name: build stops when mock dev mode is enabled
+        env:
+          NEXT_PUBLIC_MOCK_MODE: 'true'
+        run: |
+          if npm run build > /tmp/build-with-mock-mode.log 2>&1; then
+            echo "::error::the build passed with NEXT_PUBLIC_MOCK_MODE=true"
+            exit 1
+          fi
+          cat /tmp/build-with-mock-mode.log
+          grep -q 'NEXT_PUBLIC_MOCK_MODE' /tmp/build-with-mock-mode.log
 
   storybook:
     name: storybook

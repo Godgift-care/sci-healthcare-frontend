@@ -47,15 +47,25 @@ declare global {
   }
 }
 
-/** Address injected by Playwright, or null in normal use. */
-export function mockWalletAddress(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.__SCI_MOCK_WALLET__?.address ?? null;
+import { initMockDev, isMockMode, MOCK_PROVIDER } from './mock-dev';
+
+export { isMockMode };
+
+if (typeof window !== 'undefined' && isMockMode) {
+  initMockDev();
 }
 
-/** True once Playwright has installed the RPC mock for this page. */
+/** Address injected by Playwright or mock dev mode, or null in normal use. */
+export function mockWalletAddress(): string | null {
+  if (typeof window === 'undefined') return null;
+  if (isMockMode) initMockDev();
+  return window.__SCI_MOCK_WALLET__?.address ?? (isMockMode ? MOCK_PROVIDER : null);
+}
+
+/** True once Playwright has installed the RPC mock for this page, or in mock dev mode. */
 export function isMockRpc(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_RPC__);
+  if (typeof window === 'undefined') return false;
+  return Boolean(window.__SCI_MOCK_RPC__) || isMockMode;
 }
 
 export function recordMockCall(call: MockRpcCall, args: string[] = []): void {

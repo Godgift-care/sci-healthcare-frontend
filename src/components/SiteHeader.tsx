@@ -10,6 +10,7 @@ import { useWallet } from '@/lib/wallet';
 
 import { ConnectButton } from './ConnectButton';
 import { LowBandwidthToggle } from './LowBandwidthToggle';
+import { MockModeBadge } from './MockModeBadge';
 import { NetworkBadge } from './NetworkBadge';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -87,6 +88,7 @@ export function SiteHeader() {
           <LowBandwidthToggle />
           <ThemeToggle />
           <NetworkBadge />
+          <MockModeBadge />
           <ConnectButton />
           <button
             type="button"
