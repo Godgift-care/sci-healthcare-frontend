@@ -42,6 +42,8 @@ export const REGISTRY_ERRORS: Record<number, string> = {
 };
 
 export const FAUCET_ERRORS: Record<number, string> = {
+  // #353: the contract emits this one; it had no message.
+  1: 'This faucet has already been set up.',
   2: 'The test USDC faucet is not set up on this network.',
   3: 'You are not authorised to do that.',
   4: 'The faucet amount must be greater than zero.',
@@ -155,12 +157,14 @@ export const REGISTRY_ERRORS_I18N: Record<string, Record<number, string>> = {
 export const FAUCET_ERRORS_I18N: Record<string, Record<number, string>> = {
   en: FAUCET_ERRORS,
   fr: {
+    1: 'Ce robinet a déjà été configuré.',
     2: "Le robinet USDC de test n'est pas configuré sur ce réseau.",
     3: "Vous n'êtes pas autorisé à faire cela.",
     4: 'Le montant du robinet doit être supérieur à zéro.',
     5: "Vous avez déjà reçu des USDC de test aujourd'hui. Réessayez plus tard.",
   },
   sw: {
+    1: 'Bomba hili tayari limewekwa.',
     2: 'Bomba la majaribio la USDC halijawekwa kwenye mtandao huu.',
     3: 'Huna mamlaka ya kufanya hivyo.',
     4: 'Kiasi cha bomba lazima kiwe zaidi ya sifuri.',
