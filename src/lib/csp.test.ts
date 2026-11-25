@@ -5,6 +5,7 @@ import {
   contentSecurityPolicyHeaderName,
   TRUSTED_TYPES_POLICY,
 } from './csp';
+import { FX_RATES_ORIGIN, FX_RATES_URL } from './local-currency';
 
 /**
  * The policy is a pure function of the build environment so it can be
@@ -71,6 +72,12 @@ describe('contentSecurityPolicy', () => {
     expect(map.get('connect-src')).toContain('https://sentry.example.test');
     expect(map.get('img-src')).toContain('https://tile.openstreetmap.org');
     expect(map.get('img-src')).toContain('https://stellar.creit.tech');
+  });
+
+  it('allows the exchange-rate origin the local-currency estimate fetches (#132)', () => {
+    const map = directives(contentSecurityPolicy(BASE_ENV));
+    expect(map.get('connect-src')).toContain(FX_RATES_ORIGIN);
+    expect(new URL(FX_RATES_URL).origin).toBe(FX_RATES_ORIGIN);
   });
 
   it('picks Horizon from the network', () => {

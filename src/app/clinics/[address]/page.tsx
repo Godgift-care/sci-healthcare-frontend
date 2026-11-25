@@ -3,6 +3,7 @@
 import { StrKey } from '@stellar/stellar-sdk';
 import { BASE_FEE } from '@stellar/stellar-sdk';
 import { DetailLink } from '@/components/DetailLink';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { use, useEffect, useMemo, useState } from 'react';
 
 import { notFound, useSearchParams } from 'next/navigation';
@@ -743,7 +744,10 @@ export default function ClinicPage({
                       </div>
                     </div>
                   </div>
-                  <div className="mono text-sm">${formatUsdc(s.price)}</div>
+                  <div className="flex flex-col items-end">
+                    <div className="mono text-sm">${formatUsdc(s.price)}</div>
+                    <LocalEstimate amount={s.price} />
+                  </div>
                 </button>
               );
             })}
@@ -835,12 +839,18 @@ export default function ClinicPage({
                 {selectedServices.map((service) => (
                   <div key={service.code} className="flex items-center justify-between gap-3">
                     <span className="text-sm">{service.label}</span>
-                    <span className="mono text-sm">${formatUsdc(service.price)}</span>
+                    <span className="flex flex-col items-end">
+                      <span className="mono text-sm">${formatUsdc(service.price)}</span>
+                      <LocalEstimate amount={service.price} />
+                    </span>
                   </div>
                 ))}
                 <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-2 text-sm font-medium">
                   <span>Total</span>
-                  <span className="mono">${formatUsdc(selectionTotal)}</span>
+                  <span className="flex flex-col items-end">
+                    <span className="mono">${formatUsdc(selectionTotal)}</span>
+                    <LocalEstimate amount={selectionTotal} />
+                  </span>
                 </div>
               </div>
             </Field>
@@ -1156,7 +1166,12 @@ export default function ClinicPage({
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Amount</dt>
-                <dd className="mono text-end font-medium">${reviewAmount}</dd>
+                <dd className="text-end font-medium">
+                  <span className="mono">${reviewAmount}</span>
+                  {baseAmount !== null && (
+                    <LocalEstimate amount={baseAmount} className="block" />
+                  )}
+                </dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-[var(--color-ink-soft)]">Protocol fee</dt>

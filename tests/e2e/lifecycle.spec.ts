@@ -85,13 +85,16 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
   await expect(page.getByText('Voucher funded.')).toBeVisible();
   const openLink = page.getByRole('link', { name: `Open voucher #${voucherId}` });
   await expect(openLink).toBeVisible();
+  // Each navigation starts a fresh RPC recorder, so collect the writes per role.
+  const invokes = await mockInvokes(page);
 
   // -----------------------------------------------------------------------
   // Step 2: Switch to CLINIC wallet (PROVIDER) - clinic sees & claims voucher
   // -----------------------------------------------------------------------
-  await page.evaluate((address) => {
-    window.__SCI_MOCK_WALLET__ = { address };
-  }, PROVIDER);
+  // The mock wallet and RPC recorder are init scripts, so they are set
+  // again on every navigation: switch wallets with another init script
+  // (the latest one wins) rather than a page.evaluate the next goto undoes.
+  await useMockWallet(page, PROVIDER);
 
   // Navigate to clinic desk; the newly funded voucher is already visible without reload
   await page.goto('/clinic');
@@ -108,9 +111,10 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
 
   // Mark patient seen (claim)
   await page.getByRole('button', { name: 'Mark patient seen' }).click();
-  await expect(page.getByText('Done.')).toBeVisible();
 
-  // Update in-memory backend state for subsequent role queries
+  // The indexer catches up to the claim: the desk polls GET /vouchers/:id
+  // until it reads Claimed before it says "Done." (#9), so the mock has to
+  // reflect the write before we wait for it.
   voucherRecord.status = 'Claimed';
   voucherRecord.claimedAt = '2026-05-22T10:00:00.000Z';
   voucherRecord.refundableAt = '2026-07-01T00:00:00.000Z';
@@ -119,13 +123,13 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
     txHash: 'tx_claim_002',
     timestamp: '2026-05-22T10:00:00.000Z',
   });
+  await expect(page.getByText('Done.')).toBeVisible();
+  invokes.push(...(await mockInvokes(page)));
 
   // -----------------------------------------------------------------------
   // Step 3: Switch to ATTESTER wallet - attester confirms care delivered
   // -----------------------------------------------------------------------
-  await page.evaluate((address) => {
-    window.__SCI_MOCK_WALLET__ = { address };
-  }, ATTESTER);
+  await useMockWallet(page, ATTESTER);
 
   await page.goto('/attest');
   await expect(page.getByText('Awaiting confirmation')).toBeVisible();
@@ -134,9 +138,9 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
   await page.getByRole('button', { name: 'Confirm care delivered' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
-  await expect(page.getByText('Done.')).toBeVisible();
 
-  // Update in-memory backend state to Attested/Receipt minted
+  // The indexer catches up to the attestation (Attested, receipt minted)
+  // before the attest page polls it into "Done." (#9).
   voucherRecord.status = 'Attested';
   voucherRecord.attestedAt = '2026-05-23T10:00:00.000Z';
   voucherRecord.disputeDeadline = '2026-05-30T10:00:00.000Z';
@@ -167,6 +171,8 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
       },
     ],
   };
+  await expect(page.getByText('Done.')).toBeVisible();
+  invokes.push(...(await mockInvokes(page)));
 
   // -----------------------------------------------------------------------
   // Step 4: Verify complete lifecycle on voucher details page
@@ -177,7 +183,6 @@ test('the whole lifecycle from funding to receipt in one test', async ({ page })
   await expect(page.getByText('Attested').first()).toBeVisible();
 
   // Verify all contract invocations were recorded in sequence: create_voucher -> claim -> attest
-  const invokes = await mockInvokes(page);
   expect(invokes).toEqual([
     { kind: 'invoke', contractId: E2E_CONTRACTS.voucher, method: 'create_voucher' },
     { kind: 'invoke', contractId: E2E_CONTRACTS.voucher, method: 'claim' },
