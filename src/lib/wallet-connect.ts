@@ -16,7 +16,7 @@ export type WalletConnectChain = 'stellar:pubnet' | 'stellar:testnet';
 
 /** True when NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID was set at build time. */
 export function isWalletConnectConfigured(): boolean {
-  return config.walletConnectProjectId.trim().length > 0;
+  return config.flags.walletConnect;
 }
 
 /** The namespaced Stellar chain the module may request for this build. */

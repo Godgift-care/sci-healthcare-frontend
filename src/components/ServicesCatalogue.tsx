@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useServices } from '@/lib/hooks';
 import { formatUsdc } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { Alert, Button, Card, Empty } from '@/components/ui';
 import { SkeletonCard } from '@/components/Skeleton';
 
@@ -161,8 +162,11 @@ function ServiceCard({
               {s.clinicCount} clinic{s.clinicCount === 1 ? '' : 's'}
             </p>
           </div>
-          <span className="shrink-0 mono text-sm font-medium">
-            ${formatUsdc(s.minPrice)}
+          <span className="flex shrink-0 flex-col items-end">
+            <span className="mono text-sm font-medium">
+              ${formatUsdc(s.minPrice)}
+            </span>
+            <LocalEstimate amount={s.minPrice} />
           </span>
         </div>
 
@@ -171,7 +175,8 @@ function ServiceCard({
             Price range{' '}
             <span className="text-[var(--color-ink)]">
               ${formatUsdc(s.minPrice)} – ${formatUsdc(s.maxPrice)}
-            </span>
+            </span>{' '}
+            <LocalEstimate amount={s.minPrice} max={s.maxPrice} />
           </p>
         </div>
 

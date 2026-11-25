@@ -1,0 +1,101 @@
+name: Nightly smoke
+
+# Read-only checks against the deployed testnet stack (#355). Every other
+# suite mocks the API, so a backend outage used to go unnoticed for days.
+#
+# One tracking issue per outage: a failure opens it (or bumps the existing
+# one), a recovery closes it. The issue is found by title, so no label has to
+# exist first.
+
+on:
+  schedule:
+    # 05:20 UTC: after the contracts repo's own nightly, before the working day.
+    - cron: '20 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nightly-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: deployed smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SMOKE_BASE_URL: https://sci-healthcare.vercel.app
+      TITLE: '[nightly] production smoke test failing'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Playwright OS dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # The suite is read-only: no wallet, no secret, no fixture user. It runs
+      # against whatever the deployment is serving right now.
+      - id: smoke
+        name: Read-only smoke
+        run: npx playwright test --config=playwright.smoke.config.ts
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: steps.smoke.outcome == 'failure'
+        with:
+          name: nightly-smoke-results
+          path: |
+            test-results/
+            playwright-report/
+
+      - name: Open or bump the tracking issue
+        if: steps.smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "\"$TITLE\" in:title" --json number,title \
+            --jq "[.[] | select(.title == \"$TITLE\")][0].number // empty")
+          body=$(printf 'The nightly read-only smoke run failed against %s on %s.\n\nRun: %s/%s/actions/runs/%s\n\nA red run means the deployment or the API behind it is not serving the home page, the statistics page, the status page or a clinic page. Close this issue when the run is green again.\n' \
+            "$SMOKE_BASE_URL" "$(date -u +%Y-%m-%d)" \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          if [ -z "$existing" ]; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body"
+          else
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          fi
+
+      - name: Close the tracking issue on recovery
+        if: steps.smoke.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for number in $(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "\"$TITLE\" in:title" --json number,title \
+            --jq ".[] | select(.title == \"$TITLE\") | .number"); do
+            gh issue close "$number" --repo "$GITHUB_REPOSITORY" \
+              --comment "The nightly smoke run is green again: $(date -u +%Y-%m-%d). Closing."
+          done
+
+      # The tracking issue is bookkeeping; the run itself must still be red.
+      - name: Fail when the smoke run failed
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1

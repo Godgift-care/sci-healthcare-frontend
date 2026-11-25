@@ -19,13 +19,16 @@ import {
   type VoucherDetail,
   type VoucherEvent,
   type VouchersResponse,
+  ApiError,
 } from '../api';
+import { fetchVoucherFromChain } from '../voucher-chain';
 
-export type LoadedVoucher = VoucherDetail;
+export type LoadedVoucher = VoucherDetail & { isChainFallback?: boolean };
 
 /**
  * Hook for fetching and caching a single voucher with its receipt (#63).
  * Automatically revalidates on window focus and network reconnect.
+ * Falls back to direct chain simulation if the indexer API is unreachable (#314).
  */
 export function useVoucher(
   id: string | null | undefined,
@@ -33,13 +36,28 @@ export function useVoucher(
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR<LoadedVoucher>(
     id ? ['voucher', id] : null,
-    () => api.voucher(id!),
+    async () => {
+      try {
+        return await api.voucher(id!);
+      } catch (err) {
+        // Not-found is a 404 missing resource; rethrow rather than fallback
+        if (err instanceof ApiError && err.status === 404) {
+          throw err;
+        }
+        try {
+          return await fetchVoucherFromChain(id!);
+        } catch {
+          throw err;
+        }
+      }
+    },
     config,
   );
 
   return {
     voucher: data ?? null,
     receipt: data?.receipt ?? null,
+    isChainFallback: Boolean(data?.isChainFallback),
     error: error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,

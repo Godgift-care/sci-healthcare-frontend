@@ -3,8 +3,9 @@
 import { useSyncExternalStore } from 'react';
 
 import { config } from '@/lib/config';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 
-const STORAGE_KEY = 'sci:testnet-notice-dismissed';
+const STORAGE_KEY = STORAGE_KEYS.TESTNET_ACK;
 
 const listeners = new Set<() => void>();
 
@@ -24,11 +25,7 @@ function subscribe(callback: () => void): () => void {
 }
 
 function getSnapshot(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
+  return getStorageItem(STORAGE_KEY) === '1';
 }
 
 function getServerSnapshot(): boolean {
@@ -44,11 +41,7 @@ export function TestnetNotice() {
   }
 
   const handleDismiss = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      // Local storage unavailable (private mode or restricted)
-    }
+    setStorageItem(STORAGE_KEY, '1');
     notify();
   };
 

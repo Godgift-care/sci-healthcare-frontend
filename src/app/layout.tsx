@@ -21,6 +21,7 @@ import { LocaleProvider } from '@/i18n/LocaleContext';
 import { resolveLocale } from '@/i18n/detect';
 import { directionForLocale } from '@/i18n/direction';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { LocalCurrencySelect } from '@/components/LocalCurrencySelect';
 
 import './globals.css';
 
@@ -85,7 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script src="/theme-init.js" />
       </head>
       <body>
-        {config.plausibleDomain ? <Analytics domain={config.plausibleDomain} /> : null}
+        {config.flags.analytics ? <Analytics domain={config.plausibleDomain} /> : null}
         <ErrorReporter />
         <PendingTransactionGuard />
         <WalletProvider>
@@ -124,17 +125,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
                   <BuildVersion />
                 </p>
-                {/* Language choice for translated text (#5). */}
-                <LanguageSwitcher />
-                {/* Explicit analytics opt-out (#143); hidden when analytics
-                    is not configured at build time. */}
-                <AnalyticsToggle />
+                {/* Per-browser preferences, kept together so they wrap as
+                    one group rather than squeezing the footer links. */}
+                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+                  {/* Language choice for translated text (#5). */}
+                  <LanguageSwitcher />
+                  {/* Optional local-currency estimate beside USDC amounts
+                      (#132); off by default. */}
+                  <LocalCurrencySelect />
+                  {/* Explicit analytics opt-out (#143); hidden when analytics
+                      is not configured at build time. */}
+                  <AnalyticsToggle />
+                </div>
                 <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
                   <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
                     How it works
                   </Link>
                   <Link href="/stats" className="hover:text-[var(--color-brand)]">
                     Stats
+                  </Link>
+                  <Link href="/services" className="hover:text-[var(--color-brand)]">
+                    Services
                   </Link>
                   <Link href="/attesters" className="hover:text-[var(--color-brand)]">
                     Attesters

@@ -6,6 +6,7 @@ import { use, useEffect, useState } from 'react';
 
 import { ApiError } from '@/lib/api';
 import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
+import { LocalEstimate } from '@/components/LocalEstimate';
 import { config, explorerContract, explorerTx } from '@/lib/config';
 import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
 import {
@@ -93,7 +94,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
     }
   }
 
-  const { voucher: v, error, rawError, mutate } = useVoucher(validId ? id : undefined);
+  const { voucher: v, isChainFallback, error, rawError, mutate } = useVoucher(validId ? id : undefined);
   // Only fetched once the funder opens the move dialog (#287).
   const { providers: redirectProviders, isLoading: redirectLoading } = useProviders(
     redirectOpen ? { status: 'Active' } : null,
@@ -209,6 +210,21 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="voucher-print-page space-y-6 print:space-y-3">
+      {isChainFallback && (
+        <div className="print:hidden">
+          <Alert kind="info">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">{t('voucher.chainDataBannerTitle')}</span>
+              <span className="rounded bg-sky-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-sky-800">
+                {t('voucher.chainDataBadge')}
+              </span>
+            </div>
+            <p className="mt-1 text-xs">
+              {t('voucher.chainDataBannerText')}
+            </p>
+          </Alert>
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -283,6 +299,7 @@ export default function VoucherPage({ params }: { params: Promise<{ id: string }
         <div className="text-end">
           <div className="mono text-2xl font-semibold">${formatUsdc(v.amount, locale)}</div>
           <div className="text-xs text-[var(--color-ink-soft)]">{t('common.usdc')}</div>
+          <LocalEstimate amount={v.amount} className="block" />
         </div>
       </div>
 

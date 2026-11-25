@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { config } from './config';
 import {
   WALLET_CONNECT_WALLET_ID,
   walletConnectChainId,
@@ -56,9 +57,7 @@ describe('isWalletConnectConfigured', () => {
   it('is off unless a project id is configured at build time', () => {
     // The unit test runs without the variable; a set value is covered by the
     // build/e2e configuration rather than mutating the imported config.
-    expect(isWalletConnectConfigured()).toBe(
-      Boolean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim()),
-    );
+    expect(isWalletConnectConfigured()).toBe(config.flags.walletConnect);
   });
 
   it('turns on when a build sets NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID', async () => {

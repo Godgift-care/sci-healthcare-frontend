@@ -12,8 +12,9 @@ import { defaultLocale, isLocale, type Locale } from './config';
 import { bestLocale } from './detect';
 import { directionForLocale } from './direction';
 import { translate } from './translate';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 
-export const LOCALE_STORAGE_KEY = 'sci-locale';
+export const LOCALE_STORAGE_KEY = STORAGE_KEYS.LOCALE;
 
 /** Where the choice is written as well, for when localStorage is blocked. */
 const LOCALE_COOKIE = 'NEXT_LOCALE';
@@ -26,12 +27,8 @@ const LOCALE_CHANGE_EVENT = 'sci-locale-change';
  */
 function readLocale(): Locale {
   if (typeof window === 'undefined') return defaultLocale;
-  try {
-    const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (isLocale(saved)) return saved;
-  } catch {
-    // Storage disabled; the cookie below still carries the choice.
-  }
+  const saved = getStorageItem(STORAGE_KEYS.LOCALE);
+  if (isLocale(saved)) return saved;
   const cookie = new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([^;]*)`).exec(
     document.cookie,
   )?.[1];
@@ -106,11 +103,7 @@ export function LocaleProvider({
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!isLocale(newLocale)) return;
-    try {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
-    } catch {
-      // Storage unavailable; the cookie below still carries the choice.
-    }
+    setStorageItem(STORAGE_KEYS.LOCALE, newLocale);
     try {
       document.cookie = `${LOCALE_COOKIE}=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {

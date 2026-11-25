@@ -444,6 +444,9 @@
     }
   },
   "voucher": {
+    "chainDataBannerTitle": "Fífihan àkọsílẹ̀ orí-ẹ̀wọ̀n tààrà",
+    "chainDataBadge": "Lẹ́jà Stellar",
+    "chainDataBannerText": "API atọ́ka kò sí lọ́wọ́lọ́wọ́. Ipò vóṣà, kúlẹ̀kúlẹ̀ kílíníkì àti àwọn ìgbésẹ̀ ni a ń gbé wá tààrà láti orí blockchain Stellar.",
     "fee": "owó ìsan",
     "patientReferenceNote": "Ìtọ́kasí aláìsàn jẹ́ àkójọ tí kò fi orúkọ hàn. A kò lè yí i padà sí orúkọ tàbí nọ́mbà ìwé ìlera.",
     "presentNotice": "Fi nọ́mbà yìí tàbí kóòdù QR hàn ní tábìlì ìgbàlódé kílíníkì.",
@@ -561,5 +564,13 @@
     "refundingVoucher": "Refunding voucher #{id}…",
     "exportSelected": "Download selected CSV",
     "refundedSummary": "Refunded {count} voucher(s) successfully:"
+  },
+  "localCurrency": {
+    "select": "Ìṣirò owó ìbílẹ̀",
+    "off": "Owó ìbílẹ̀: pa á",
+    "estimate": "≈ {amount} (ìṣirò)",
+    "estimateRange": "≈ {min}–{max} (ìṣirò)",
+    "tooltip": "Ìṣirò ní òṣùwọ̀n pàṣípààrọ̀ ti {date}. Iye USDC ni o máa san tí kílíníkì sì máa gbà.",
+    "help": "Fi iye owó ìbílẹ̀ tí ó súnmọ́ hàn lẹ́gbẹ̀ẹ́ USDC. USDC ṣì ni iye tí a ń gbà."
   }
 }
