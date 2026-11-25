@@ -127,11 +127,6 @@ test.describe('Language switching persists (#153)', () => {
     await expect(languageSwitcher(page)).toHaveAttribute('aria-label', 'Yan èdè');
     await expect(page.locator('html')).toHaveAttribute('lang', 'yo');
 
-    // Dates are formatted with the Yoruba locale (yo-NG), not the default
-    // English one. The browser running this suite may not ship Yoruba ICU
-    // data (headless Chromium here falls back to its own default), so compare
-    // with what this browser formats for yo-NG; the Yoruba month names
-    // themselves are pinned by src/lib/amounts.test.ts under Node's ICU.
     const expiry = await page.evaluate(() =>
       new Intl.DateTimeFormat('yo-NG', {
         day: 'numeric',
@@ -142,13 +137,44 @@ test.describe('Language switching persists (#153)', () => {
     await expect(page.getByText(expiry).filter({ visible: true }).first()).toBeVisible();
     await expect(page.getByText('$3.00').filter({ visible: true }).first()).toBeVisible();
 
-    // Longer Yoruba strings must not widen the page at either project width.
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
-    // A reload rebuilds the provider: the choice comes back from storage.
     await page.reload();
     await expect(page.getByText(`Vóṣà #${VOUCHER_ID}`)).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'yo');
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('keeps Hausa across a reload and formats its dates', async ({ page }) => {
+    const errors = hydrationErrors(page);
+
+    await page.goto(`/vouchers/${VOUCHER_ID}`);
+    await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
+
+    await languageSwitcher(page).selectOption('ha');
+
+    await expect(page.getByText(`Takardar shaida #${VOUCHER_ID}`)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tarihi' })).toBeVisible();
+    await expect(languageSwitcher(page)).toHaveAttribute('aria-label', 'Zaɓi harshe');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ha');
+
+    const expiry = await page.evaluate(() =>
+      new Intl.DateTimeFormat('ha-NG', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date('2026-06-19T10:00:00.000Z')),
+    );
+    await expect(page.getByText(expiry).filter({ visible: true }).first()).toBeVisible();
+    await expect(page.getByText('$3.00').filter({ visible: true }).first()).toBeVisible();
+
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+
+    await page.reload();
+    await expect(page.getByText(`Takardar shaida #${VOUCHER_ID}`)).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ha');
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
     expect(errors).toEqual([]);
