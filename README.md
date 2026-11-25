@@ -97,6 +97,7 @@ Every one of these is inlined into the client bundle at **build** time.
 | Variable | Example |
 | --- | --- |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8080` |
+| `NEXT_PUBLIC_SITE_URL` | (optional) public origin used on the server for absolute sitemap and robots URLs, e.g. `https://app.example.com`; Vercel's production domain is used when unset, locally `http://localhost:3000` |
 | `NEXT_PUBLIC_SPONSORED_FEES` | `(optional) true enables opt-in testnet fee sponsorship; unset disables it. Requires the separate sponsor backend described in docs/sponsored-fees.md.` |
 | `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet` |
 | `NEXT_PUBLIC_SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` |
