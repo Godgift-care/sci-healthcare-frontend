@@ -49,12 +49,12 @@ export function normalizePath(pathname: string): string {
 
 /** Analytics is configured and this visitor has not opted out. */
 export function isAnalyticsEnabled(): boolean {
-  return config.plausibleDomain.length > 0 && !isAnalyticsOptedOut();
+  return config.flags.analytics && !isAnalyticsOptedOut();
 }
 
 /** Analytics is configured at build time (the toggle is offered). */
 export function isAnalyticsConfigured(): boolean {
-  return config.plausibleDomain.length > 0;
+  return config.flags.analytics;
 }
 
 type PlausibleFn = (event: string, opts?: { u?: string; props?: Record<string, string | number> }) => void;

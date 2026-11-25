@@ -1,8 +1,9 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
 
-export const STAFF_NOTES_STORAGE_KEY = 'sci:staff-notes';
+export const STAFF_NOTES_STORAGE_KEY = STORAGE_KEYS.STAFF_NOTES;
 export const STAFF_NOTES_CHANGE_EVENT = 'sci:staff-notes-change';
 
 /** A note longer than this is trimmed before it is stored. */
@@ -18,7 +19,7 @@ let cachedNotes: StaffNotes | null = null;
 function readNotes(): StaffNotes {
   if (typeof window === 'undefined') return EMPTY_NOTES;
   try {
-    const snapshot = window.localStorage.getItem(STAFF_NOTES_STORAGE_KEY);
+    const snapshot = getStorageItem(STAFF_NOTES_STORAGE_KEY);
     if (!snapshot) {
       cachedNotes = {};
       return cachedNotes;
@@ -45,9 +46,11 @@ function writeNotes(notes: StaffNotes): boolean {
   if (typeof window === 'undefined') return false;
   try {
     cachedNotes = { ...notes };
-    window.localStorage.setItem(STAFF_NOTES_STORAGE_KEY, JSON.stringify(cachedNotes));
-    window.dispatchEvent(new Event(STAFF_NOTES_CHANGE_EVENT));
-    return true;
+    const success = setStorageItem(STAFF_NOTES_STORAGE_KEY, JSON.stringify(cachedNotes));
+    if (success) {
+      window.dispatchEvent(new Event(STAFF_NOTES_CHANGE_EVENT));
+    }
+    return success;
   } catch {
     // Storage may be unavailable in private browsing or by user policy.
     return false;

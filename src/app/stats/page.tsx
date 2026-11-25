@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 
 import { formatCount, formatUsdc } from '@/lib/amounts';
+import { buildBarLayout, summarizeActivitySeries } from '@/lib/chart';
+import { useLowBandwidth } from '@/lib/low-bandwidth';
 import { compareEscrow } from '@/lib/escrow';
 import {
   buildClinicCountryCsvRows,
@@ -40,15 +42,22 @@ function ActivityChart({
   locale: string;
   unit?: string;
 }) {
-  const maxVal = Math.max(...data.map((d) => d.value), 1);
   const chartHeight = 160;
   const chartWidth = 600;
   const paddingX = 40;
   const paddingY = 25;
-  const plotWidth = chartWidth - paddingX * 2;
-  const plotHeight = chartHeight - paddingY * 2;
 
-  const barWidth = Math.max(2, Math.min(24, (plotWidth / (data.length || 1)) * 0.7));
+  const maxVal = Math.max(...data.map((d) => d.value), 1);
+  const plotHeight = chartHeight - paddingY * 2;
+  const bars = buildBarLayout({
+    values: data.map((d) => d.value),
+    chartWidth,
+    chartHeight,
+    paddingX,
+    paddingY,
+  });
+
+  const summary = summarizeActivitySeries(title, data, unit);
 
   return (
     <div className="space-y-2">
@@ -60,6 +69,8 @@ function ActivityChart({
         </span>
       </div>
 
+      <p className="sr-only">{summary}</p>
+
       <div className="w-full overflow-x-auto">
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
@@ -67,6 +78,7 @@ function ActivityChart({
           role="img"
           aria-label={`${title} chart`}
         >
+          <desc>{summary}</desc>
           {/* Background grid lines */}
           <line
             x1={paddingX}
@@ -94,20 +106,16 @@ function ActivityChart({
 
           {/* Bars */}
           {data.map((d, i) => {
-            const x =
-              paddingX +
-              (i * plotWidth) / (data.length > 1 ? data.length - 1 : 1) -
-              barWidth / 2;
-            const h = (d.value / maxVal) * plotHeight;
-            const y = chartHeight - paddingY - h;
+            const bar = bars[i];
+            if (!bar) return null;
 
             return (
               <g key={d.date} className="group">
                 <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={Math.max(h, 2)}
+                  x={bar.x}
+                  y={bar.y}
+                  width={bar.width}
+                  height={bar.height}
                   rx={2}
                   fill={color}
                   className="transition-opacity hover:opacity-80"
@@ -144,6 +152,9 @@ function ActivityChart({
           )}
         </svg>
       </div>
+      <p className="text-xs text-[var(--color-ink-soft)] italic" aria-hidden="true">
+        {summary}
+      </p>
     </div>
   );
 }
@@ -152,6 +163,9 @@ export default function StatsPage() {
   const { t, locale } = useLocaleContext();
   const [days, setDays] = useState<TimeRange>(30);
   const [showTables, setShowTables] = useState<boolean>(false);
+  const [revealLowBandwidthCharts, setRevealLowBandwidthCharts] = useState<boolean>(false);
+  const lowBandwidth = useLowBandwidth();
+  const chartsHiddenByLowBandwidth = lowBandwidth && !revealLowBandwidthCharts;
 
   const { stats } = useStats();
   const { dailyStats, isLoading: dailyLoading } = useDailyStats(days);
@@ -438,7 +452,20 @@ export default function StatsPage() {
       )}
 
       {/* Daily Charts */}
-      {!dailyLoading && series.length === 0 ? (
+      {chartsHiddenByLowBandwidth ? (
+        <Card className="p-6 text-center">
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            Activity charts are hidden in low-bandwidth mode to save network data.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRevealLowBandwidthCharts(true)}
+            className="mt-3 inline-flex items-center rounded-lg bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white shadow hover:opacity-90 transition"
+          >
+            Tap to display charts
+          </button>
+        </Card>
+      ) : !dailyLoading && series.length === 0 ? (
         <Empty>No activity recorded in this period.</Empty>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">

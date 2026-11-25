@@ -19,6 +19,16 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+export type FeatureFlags = {
+  readonly sponsoredFees: boolean;
+  readonly walletConnect: boolean;
+  readonly analytics: boolean;
+  readonly errorReporting: boolean;
+  readonly faucet: boolean;
+  readonly sep24: boolean;
+  readonly testnet: boolean;
+};
+
 export const config = {
   sponsoredFees: process.env.NEXT_PUBLIC_SPONSORED_FEES === 'true',
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
@@ -55,7 +65,18 @@ export const config = {
    */
   walletConnectProjectId:
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
+  flags: {
+    sponsoredFees: process.env.NEXT_PUBLIC_SPONSORED_FEES === 'true',
+    walletConnect: Boolean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim()),
+    analytics: Boolean(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN?.trim()),
+    errorReporting: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN?.trim()),
+    faucet: Boolean(process.env.NEXT_PUBLIC_FAUCET_CONTRACT_ID?.trim()),
+    sep24: parseSep24Anchors(process.env.NEXT_PUBLIC_SEP24_ANCHORS).length > 0,
+    testnet: (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet') !== 'public',
+  } satisfies FeatureFlags,
 } as const;
+
+export const flags = config.flags;
 
 /**
  * True unless the app is built for Stellar's public network.
@@ -64,7 +85,7 @@ export const config = {
  * the faucet and its notices, and the footer disclaimer. A production build
  * (`NEXT_PUBLIC_STELLAR_NETWORK=public`) therefore hides all of it.
  */
-export const isTestnet = config.network !== 'public';
+export const isTestnet = config.flags.testnet;
 
 export function requireContracts(): void {
   required('NEXT_PUBLIC_VOUCHER_CONTRACT_ID', config.contracts.voucher);

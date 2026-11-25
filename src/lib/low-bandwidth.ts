@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from 'react';
 
+import { getStorageItem, removeStorageItem, setStorageItem, STORAGE_KEYS } from './storage';
+
 /**
  * Low-bandwidth mode (#75).
  *
@@ -30,18 +32,14 @@ import { useSyncExternalStore } from 'react';
  * React hydrates.
  */
 
-const STORAGE_KEY = 'sci-low-bandwidth';
+const STORAGE_KEY = STORAGE_KEYS.LOW_BANDWIDTH;
 const CHANGE_EVENT = 'sci-low-bandwidth-change';
 
 /** Poll interval used in place of the 6s default while the mode is on. */
 export const LOW_BANDWIDTH_POLL_INTERVAL_MS = 60_000;
 
 function read(): boolean {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
+  return getStorageItem(STORAGE_KEY) === '1';
 }
 
 /** The stored setting, or false when storage is unavailable. */
@@ -53,15 +51,10 @@ export function isLowBandwidth(): boolean {
 /** Turn the mode on or off, and tell every subscriber in this tab. */
 export function setLowBandwidth(on: boolean): void {
   if (typeof window === 'undefined') return;
-  try {
-    if (on) {
-      window.localStorage.setItem(STORAGE_KEY, '1');
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // Storage can be unavailable (private mode, blocked storage); the
-    // setting then applies to this page and is not remembered.
+  if (on) {
+    setStorageItem(STORAGE_KEY, '1');
+  } else {
+    removeStorageItem(STORAGE_KEY);
   }
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
