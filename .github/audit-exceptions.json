@@ -1,0 +1,79 @@
+{
+  "$comment": [
+    "High and critical advisories that have been reviewed and accepted, read by",
+    ".github/scripts/dependency-audit.mjs on every push and pull request (#335).",
+    "",
+    "An entry is not a way to silence a finding: it is a note that this advisory",
+    "cannot be reached from the app, or that its fix needs a change that belongs",
+    "in its own pull request. Anything not listed here fails the audit job, so a",
+    "new advisory is visible on the pull request that adds it.",
+    "",
+    "Every entry needs `package`, `reason` and `reviewBy` (YYYY-MM-DD). When the",
+    "date passes the job still passes but warns, so the exception gets looked at",
+    "again rather than living here forever. Remove an entry as soon as the",
+    "advisory disappears from `npm audit --omit=dev`; the job warns about those",
+    "too."
+  ],
+  "exceptions": [
+    {
+      "package": "@creit.tech/stellar-wallets-kit",
+      "reason": "The only fix npm offers is a semver-major change of the wallet kit itself (2.8.0 -> 1.9.5), which owns the signing path. That upgrade is its own change, needing manual wallet testing, not a lockfile bump inside the audit job.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "axios",
+      "reason": "Transitive under @coinbase/cdp-sdk inside the wallet kit's WalletConnect option. The app's own HTTP goes through fetch, not axios, and the advisories are prototype-pollution and proxy-bypass gadgets in request construction; no app code constructs axios requests or sets a proxy. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "zod",
+      "reason": "Two copies, pinned inside @reown/appkit-wallet (3.22.4) and @coinbase/cdp-sdk. The advisory is memory exhaustion validating an oversized constrained collection; those schemas validate WalletConnect's own payloads, not user input, and the wallet kit pins the version. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "abitype",
+      "reason": "ABI type generation inside @coinbase/cdp-sdk. It is a build-time-shaped dependency of that SDK; nothing passes it untrusted ABI data at run time. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@coinbase/cdp-sdk",
+      "reason": "The Coinbase mobile-wallet path inside the wallet kit's WalletConnect option, which is only loaded when NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is set (see src/lib/walletconnect.ts). It pulls axios, zod and abitype, so it inherits their entries. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit",
+      "reason": "Reown AppKit is reached only through @creit.tech/stellar-wallets-kit's WalletConnect option, and only in builds that set NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID. It stays out of the initial bundle otherwise (see the bundle-size check). Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-controllers",
+      "reason": "Part of Reown AppKit; same reachability as @reown/appkit. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-pay",
+      "reason": "Part of Reown AppKit; same reachability as @reown/appkit. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-scaffold-ui",
+      "reason": "Part of Reown AppKit; same reachability as @reown/appkit. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-ui",
+      "reason": "Part of Reown AppKit; same reachability as @reown/appkit. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-utils",
+      "reason": "Part of Reown AppKit; same reachability as @reown/appkit. Fixing it means upgrading @creit.tech/stellar-wallets-kit, which owns this version.",
+      "reviewBy": "2027-03-01"
+    },
+    {
+      "package": "@reown/appkit-wallet",
+      "reason": "Part of Reown AppKit, and the package that pins zod 3.22.4; same reachability as @reown/appkit. Fixed by the wallet-kit upgrade above.",
+      "reviewBy": "2027-03-01"
+    }
+  ]
+}
