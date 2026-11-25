@@ -403,79 +403,85 @@ export const voucher = {
     return readContract<[bigint, bigint]>(config.contracts.voucher, 'quote', args);
   },
 
-  /** resolve_dispute(admin, voucher_id, refund_funder) */
-  async resolveDispute(
-    admin: string,
-    voucherId: string,
-    refundFunder: boolean,
-    sign: SignFn,
-  ) {
+  /** Current administrator of the voucher contract. */
+  async getAdmin(): Promise<string> {
     const client = getVoucherClient();
-    const args = client.spec.funcArgsToScVals('resolve_dispute', {
+    const args = client.spec.funcArgsToScVals('get_admin', {});
+    return readContract<string>(config.contracts.voucher, 'get_admin', args);
+  },
+
+  /** Nominated (pending) administrator, or null when no handover is in flight. */
+  async getPendingAdmin(): Promise<string | null> {
+    const client = getVoucherClient();
+    const args = client.spec.funcArgsToScVals('get_pending_admin', {});
+    return readContract<string | null>(config.contracts.voucher, 'get_pending_admin', args);
+  },
+
+  /** Propose a new administrator. Only the current admin may call. */
+  async proposeAdmin(admin: string, newAdmin: string, sign: SignFn) {
+    const client = getVoucherClient();
+    const args = client.spec.funcArgsToScVals('propose_admin', {
       admin,
-      voucher_id: BigInt(voucherId),
-      refund_funder: refundFunder,
+      new_admin: newAdmin,
     });
     return invokeContract(
       config.contracts.voucher,
-      'resolve_dispute',
+      'propose_admin',
       args,
       admin,
       sign,
     );
   },
 
-  /**
-   * resolve_split(admin, voucher_id, to_provider) (#289).
-   *
-   * `toProvider` is the gross part of the escrow awarded to the clinic;
-   * the rest returns to the funder and the fee is taken from the clinic's
-   * part. The deployed bindings predate this method, so its arguments are
-   * encoded directly instead of through the generated spec.
-   */
-  async resolveSplit(
-    admin: string,
-    voucherId: string,
-    toProvider: bigint,
-    sign: SignFn,
-  ) {
-    const args = [
-      await arg.address(admin),
-      await arg.u64(BigInt(voucherId)),
-      await arg.i128(toProvider),
-    ];
+  /** Accept a pending admin nomination. Only the nominee may call. */
+  async acceptAdmin(nominee: string, sign: SignFn) {
+    const client = getVoucherClient();
+    const args = client.spec.funcArgsToScVals('accept_admin', {
+      new_admin: nominee,
+    });
     return invokeContract(
       config.contracts.voucher,
-      'resolve_split',
+      'accept_admin',
+      args,
+      nominee,
+      sign,
+    );
+  },
+
+  /** Current daily attestation cap for the voucher contract. */
+  async getAttestationCap(): Promise<number> {
+    return readContract<number>(config.contracts.voucher, 'get_attestation_cap', []);
+  },
+
+  /** Set the daily attestation cap. Only the admin may call. */
+  async setAttestationCap(admin: string, cap: number, sign: SignFn) {
+    const args = [await arg.address(admin), await arg.u32(cap)];
+    return invokeContract(
+      config.contracts.voucher,
+      'set_attestation_cap',
       args,
       admin,
       sign,
     );
   },
 
-  /**
-   * redirect(funder, voucher_id, new_provider) (#287).
-   *
-   * Moves an unclaimed `Funded` voucher to another active clinic that lists
-   * the same service at or below the escrowed amount. Encoded directly for
-   * the same reason as `resolveSplit`: the vendored bindings predate it.
-   */
-  async redirect(
-    funder: string,
-    voucherId: string,
-    newProvider: string,
-    sign: SignFn,
-  ) {
-    const args = [
-      await arg.address(funder),
-      await arg.u64(BigInt(voucherId)),
-      await arg.address(newProvider),
-    ];
+  /** Current per-clinic (per-provider) escrow cap for the voucher contract. */
+  async getMaxEscrowPerProvider(): Promise<bigint> {
+    return readContract<bigint>(
+      config.contracts.voucher,
+      'get_max_escrow_per_provider',
+      [],
+    );
+  },
+
+  /** Set the per-clinic escrow cap. Only the admin may call. */
+  async setMaxEscrowPerProvider(admin: string, cap: bigint, sign: SignFn) {
+    const args = [await arg.address(admin), await arg.i128(cap)];
     return invokeContract(
       config.contracts.voucher,
-      'redirect',
+      'set_max_escrow_per_provider',
       args,
-      funder,
+      admin,
       sign,
     );
   },
@@ -680,6 +686,51 @@ export const registry = {
       addr: address,
     });
     return readContract<boolean>(config.contracts.registry, 'is_attester', args);
+  },
+
+  /** Current administrator of the registry contract. */
+  async getAdmin(): Promise<string> {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('get_admin', {});
+    return readContract<string>(config.contracts.registry, 'get_admin', args);
+  },
+
+  /** Nominated (pending) administrator, or null when no handover is in flight. */
+  async getPendingAdmin(): Promise<string | null> {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('get_pending_admin', {});
+    return readContract<string | null>(config.contracts.registry, 'get_pending_admin', args);
+  },
+
+  /** Propose a new administrator. Only the current admin may call. */
+  async proposeAdmin(admin: string, newAdmin: string, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('propose_admin', {
+      admin,
+      new_admin: newAdmin,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'propose_admin',
+      args,
+      admin,
+      sign,
+    );
+  },
+
+  /** Accept a pending admin nomination. Only the nominee may call. */
+  async acceptAdmin(nominee: string, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('accept_admin', {
+      new_admin: nominee,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'accept_admin',
+      args,
+      nominee,
+      sign,
+    );
   },
 };
 

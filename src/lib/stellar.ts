@@ -1242,10 +1242,22 @@ async function mockReadResult<T>(
       return { amount: 500000000n } as unknown as T;
     case 'balance':
       return 100000000n as unknown as T;
-    case 'attestations_left':
-      return 100 as unknown as T;
-    case 'escrow_summary':
-      return [0n, 0n] as unknown as T;
+    case 'get_admin':
+      return ((typeof window !== 'undefined' &&
+        (window as unknown as { __SCI_MOCK_ADMIN__?: string }).__SCI_MOCK_ADMIN__) ||
+        'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF') as unknown as T;
+    case 'get_pending_admin':
+      return ((typeof window !== 'undefined' &&
+        (window as unknown as { __SCI_MOCK_PENDING_ADMIN__?: string | null })
+          .__SCI_MOCK_PENDING_ADMIN__) ?? null) as unknown as T;
+    case 'get_attestation_cap':
+      return ((typeof window !== 'undefined' &&
+        (window as unknown as { __SCI_MOCK_ATTESTATION_CAP__?: number })
+          .__SCI_MOCK_ATTESTATION_CAP__) ?? 100) as unknown as T;
+    case 'get_max_escrow_per_provider':
+      return ((typeof window !== 'undefined' &&
+        (window as unknown as { __SCI_MOCK_MAX_ESCROW_PER_PROVIDER__?: bigint | number })
+          .__SCI_MOCK_MAX_ESCROW_PER_PROVIDER__) ?? 1000000000n) as unknown as T;
     default:
       throw new Error(`E2E mock has no canned read for ${method}`);
   }

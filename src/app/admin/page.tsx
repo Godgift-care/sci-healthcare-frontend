@@ -1,517 +1,530 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import useSWR from 'swr';
 
-import { useToast } from '@/components/Toast';
-import { Alert, Button, Card, Empty, ExplorerLink, Modal } from '@/components/ui';
-import { api, type Attester, type Provider, type Voucher } from '@/lib/api';
-import { formatCurrency, toAmountInput } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
-import { disputeReasonLabel } from '@/lib/disputes';
 import { humaniseError, REGISTRY_ERRORS, VOUCHER_ERRORS } from '@/lib/errors';
-import { invalidateProvider, invalidateVouchers, useAdminAccess } from '@/lib/hooks';
-import { registry, voucher as voucherContract, type ProviderStanding } from '@/lib/protocol';
-import { parseSplitAmount, splitBreakdown } from '@/lib/split';
+import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
+import { registry, voucher } from '@/lib/protocol';
 import { useWallet } from '@/lib/wallet';
-import { useLocaleContext } from '@/i18n/LocaleContext';
+import { useToast } from '@/components/Toast';
+import { Button, Card, Empty, ExplorerLink, Modal } from '@/components/ui';
 
-const PAGE_SIZE = 50;
+type ContractKind = 'registry' | 'voucher';
 
-type AdminAction =
-  | { kind: 'provider'; provider: Provider; status: ProviderStanding }
-  | { kind: 'resolve'; voucher: Voucher; refundFunder: boolean }
-  | { kind: 'split'; voucher: Voucher }
-  | { kind: 'remove-attester'; attester: Attester };
+const CONTRACT_LABELS: Record<ContractKind, string> = {
+  registry: 'Registry contract',
+  voucher: 'Voucher contract',
+};
 
-function shortAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-5)}`;
+const CONTRACT_ERRORS: Record<ContractKind, Record<number, string>> = {
+  registry: REGISTRY_ERRORS,
+  voucher: VOUCHER_ERRORS,
+};
+
+async function getAdmin(kind: ContractKind): Promise<string> {
+  return kind === 'registry' ? registry.getAdmin() : voucher.getAdmin();
+}
+
+async function getPendingAdmin(kind: ContractKind): Promise<string | null> {
+  return kind === 'registry'
+    ? registry.getPendingAdmin()
+    : voucher.getPendingAdmin();
+}
+
+async function proposeAdmin(
+  kind: ContractKind,
+  admin: string,
+  newAdmin: string,
+  sign: (xdr: string) => Promise<string>,
+) {
+  return kind === 'registry'
+    ? registry.proposeAdmin(admin, newAdmin, sign)
+    : voucher.proposeAdmin(admin, newAdmin, sign);
+}
+
+async function acceptAdmin(
+  kind: ContractKind,
+  nominee: string,
+  sign: (xdr: string) => Promise<string>,
+) {
+  return kind === 'registry'
+    ? registry.acceptAdmin(nominee, sign)
+    : voucher.acceptAdmin(nominee, sign);
 }
 
 export default function AdminPage() {
-  const router = useRouter();
   const { address, signTransaction, connect } = useWallet();
-  const { isAdmin, isLoading: checkingAdmin, error: accessError } = useAdminAccess(address);
-  const { t } = useLocaleContext();
   const toast = useToast();
-  const [offsets, setOffsets] = useState({ providers: 0, vouchers: 0, attesters: 0 });
-  const [action, setAction] = useState<AdminAction | null>(null);
-  const [attesterAddress, setAttesterAddress] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [quote, setQuote] = useState<{ voucherId: string; amounts: [bigint, bigint] } | null>(null);
-  const [quoteError, setQuoteError] = useState<{ voucherId: string; message: string } | null>(null);
-  const [quoteLoadingId, setQuoteLoadingId] = useState<string | null>(null);
-  const [splitInput, setSplitInput] = useState('');
-  const [splitQuote, setSplitQuote] = useState<{
-    voucherId: string;
-    gross: bigint;
-    fee: bigint;
-  } | null>(null);
-  const [splitQuoteError, setSplitQuoteError] = useState<string | null>(null);
-  const [splitQuoteLoading, setSplitQuoteLoading] = useState(false);
 
-  useEffect(() => {
-    if (address && !checkingAdmin && !isAdmin) router.replace('/');
-  }, [address, checkingAdmin, isAdmin, router]);
+  const [busy, setBusy] = useState<ContractKind | null>(null);
+  const [nomineeDraft, setNomineeDraft] = useState<Record<ContractKind, string>>({
+    registry: '',
+    voucher: '',
+  });
 
-  const providersKey = isAdmin ? ['admin-pending-providers', offsets.providers] : null;
-  const vouchersKey = isAdmin ? ['admin-disputed-vouchers', offsets.vouchers] : null;
-  const attestersKey = isAdmin ? ['admin-attesters', offsets.attesters] : null;
-  const { data: providerPage, error: providerError, mutate: mutateProviders } = useSWR(
-    providersKey,
-    () => api.providers({ status: 'Pending', limit: PAGE_SIZE, offset: offsets.providers }),
-  );
-  const { data: voucherPage, error: voucherError, mutate: mutateVouchers } = useSWR(
-    vouchersKey,
-    () => api.vouchers({ status: 'Disputed', limit: PAGE_SIZE, offset: offsets.vouchers }),
-  );
-  const { data: attesterPage, error: attesterError, mutate: mutateAttesters } = useSWR(
-    attestersKey,
-    () => api.attesters({ all: true, limit: PAGE_SIZE, offset: offsets.attesters }),
-  );
-
-  function openResolution(voucher: Voucher, refundFunder: boolean) {
-    setAction({ kind: 'resolve', voucher, refundFunder });
-    setQuote(null);
-    setQuoteError(null);
-    if (refundFunder) {
-      setQuoteLoadingId(null);
-      return;
-    }
-    setQuoteLoadingId(voucher.id);
-    void voucherContract
-      .quote(BigInt(voucher.amount))
-      .then((result) => {
-        setQuote({ voucherId: voucher.id, amounts: result });
-      })
-      .catch((err: unknown) => {
-        setQuoteError({
-          voucherId: voucher.id,
-          message: err instanceof Error ? err.message : String(err),
-        });
-      })
-      .finally(() => {
-        setQuoteLoadingId((current) => current === voucher.id ? null : current);
-      });
-  }
-
-  // The fee is a contract read on the gross award. The preview only counts
-  // when the quote matches the amount now in the field, so a slower earlier
-  // answer cannot overwrite the current one.
-  function requestSplitQuote(voucherId: string, gross: bigint) {
-    setSplitQuoteLoading(true);
-    setSplitQuoteError(null);
-    voucherContract
-      .quote(gross)
-      .then(([fee]) => setSplitQuote({ voucherId, gross, fee }))
-      .catch((err: unknown) => {
-        setSplitQuote(null);
-        setSplitQuoteError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => setSplitQuoteLoading(false));
-  }
-
-  function changeSplitAmount(value: string, voucher: Voucher) {
-    setSplitInput(value);
-    const gross = parseSplitAmount(value, BigInt(voucher.amount));
-    if (gross === null) {
-      setSplitQuote(null);
-      setSplitQuoteError(null);
-      setSplitQuoteLoading(false);
-      return;
-    }
-    requestSplitQuote(voucher.id, gross);
-  }
-
-  function openSplit(voucher: Voucher) {
-    setAction({ kind: 'split', voucher });
-    setSplitInput(toAmountInput(voucher.amount));
-    setSplitQuote(null);
-    requestSplitQuote(voucher.id, BigInt(voucher.amount));
-  }
-
-  async function submitAction() {
-    if (!address || !action) return;
-    setBusy(true);
-    try {
-      let result: { hash: string };
-      if (action.kind === 'provider') {
-        result = await registry.setProviderStatus(
-          address,
-          action.provider.address,
-          action.status,
-          signTransaction,
-        );
-        await Promise.all([mutateProviders(), invalidateProvider(action.provider.address)]);
-      } else if (action.kind === 'resolve') {
-        result = await voucherContract.resolveDispute(
-          address,
-          action.voucher.id,
-          action.refundFunder,
-          signTransaction,
-        );
-        await Promise.all([mutateVouchers(), invalidateVouchers(action.voucher.id)]);
-      } else if (action.kind === 'split') {
-        const gross = parseSplitAmount(splitInput, BigInt(action.voucher.amount));
-        if (gross === null) throw new Error('Enter an amount within the escrow.');
-        result = await voucherContract.resolveSplit(
-          address,
-          action.voucher.id,
-          gross,
-          signTransaction,
-        );
-        await Promise.all([mutateVouchers(), invalidateVouchers(action.voucher.id)]);
-      } else {
-        result = await registry.removeAttester(address, action.attester.address, signTransaction);
-        await mutateAttesters();
-      }
-      toast.success(
-        <>
-          Transaction submitted.{' '}
-          <ExplorerLink href={explorerTx(result.hash)}>View transaction</ExplorerLink>
-        </>,
-      );
-      setAction(null);
-    } catch (err) {
-      toast.error(
-        humaniseError(
-          err,
-          action.kind === 'resolve' || action.kind === 'split'
-            ? VOUCHER_ERRORS
-            : REGISTRY_ERRORS,
-        ),
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function addAttester(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!address || !attesterAddress.trim()) return;
-    setBusy(true);
-    try {
-      const result = await registry.addAttester(address, attesterAddress.trim(), signTransaction);
-      setAttesterAddress('');
-      await mutateAttesters();
-      toast.success(
-        <>
-          Attester added.{' '}
-          <ExplorerLink href={explorerTx(result.hash)}>View transaction</ExplorerLink>
-        </>,
-      );
-    } catch (err) {
-      toast.error(humaniseError(err, REGISTRY_ERRORS));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!address) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">Admin console</h1>
-        <Empty>
-          <div className="space-y-3">
-            <p>Connect the administrator wallet for both contracts.</p>
-            <Button onClick={() => void connect()}>Connect wallet</Button>
-          </div>
-        </Empty>
-      </div>
-    );
-  }
-
-  if (checkingAdmin) {
-    return <p role="status" className="text-sm text-[var(--color-ink-soft)]">Checking contract administrator…</p>;
-  }
-
-  if (!isAdmin) return null;
-
-  const errors = [providerError, voucherError, attesterError].filter(Boolean);
-  const currentAction = action;
-  const isProviderAction = currentAction?.kind === 'provider';
-  const isResolution = currentAction?.kind === 'resolve';
-  const isSplit = currentAction?.kind === 'split';
-  const currentQuote = isResolution && quote?.voucherId === currentAction.voucher.id ? quote : null;
-  const currentQuoteError = isResolution && quoteError?.voucherId === currentAction.voucher.id ? quoteError.message : null;
-  const quoteLoading = isResolution && quoteLoadingId === currentAction.voucher.id;
-
-  // The split preview only counts when the quote belongs to the amount now
-  // in the field, so a stale async answer cannot be confirmed.
-  const splitGross = isSplit
-    ? parseSplitAmount(splitInput, BigInt(currentAction.voucher.amount))
-    : null;
-  const currentSplit =
-    isSplit &&
-    splitGross !== null &&
-    splitQuote?.voucherId === currentAction.voucher.id &&
-    splitQuote.gross === splitGross
-      ? splitBreakdown(BigInt(currentAction.voucher.amount), splitGross, splitQuote.fee)
-      : null;
-
-  const confirmDisabled =
-    busy ||
-    quoteLoading ||
-    splitQuoteLoading ||
-    (!!isResolution && !currentAction.refundFunder && !currentQuote) ||
-    (isSplit && !currentSplit);
+  const contracts: ContractKind[] = ['registry', 'voucher'];
 
   return (
     <div className="space-y-8">
-      <header className="border-b border-[var(--color-line)] pb-5">
-        <p className="text-xs font-semibold uppercase text-[var(--color-brand)]">Protocol operations</p>
-        <h1 className="mt-1 text-2xl font-semibold">Admin console</h1>
-        <p className="mt-2 break-all text-sm text-[var(--color-ink-soft)]">
-          Connected administrator: <code>{address}</code>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Admin console</h1>
+        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+          Hand over the administrator role in two steps: propose a nominee, then
+          the nominee accepts. The change takes effect only after acceptance, so
+          a typo in the address cannot strand the contract.
         </p>
-      </header>
+      </div>
 
-      {accessError && <Alert>{`Could not verify contract administrator: ${accessError}`}</Alert>}
-      {errors.map((error) => <Alert key={String(error)}>{String(error)}</Alert>)}
+      {!address && (
+        <Empty>Connect the administrator wallet to propose or accept a handover.</Empty>
+      )}
 
-      <section aria-labelledby="providers-heading" className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="providers-heading" className="text-lg font-semibold">Pending clinics</h2>
-          <span className="text-sm text-[var(--color-ink-soft)]">{providerPage?.total ?? 0} awaiting review</span>
-        </div>
-        {!providerPage?.providers.length ? (
-          <Empty>{providerError ? 'Clinic applications could not be loaded.' : 'No clinics are awaiting review.'}</Empty>
-        ) : (
-          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
-            {providerPage.providers.map((provider) => (
-              <div key={provider.address} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="font-medium">{provider.name}</h3>
-                  <p className="text-sm text-[var(--color-ink-soft)]">{provider.country}</p>
-                  <code className="block break-all text-xs text-[var(--color-ink-soft)]">{provider.address}</code>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button disabled={busy} onClick={() => setAction({ kind: 'provider', provider, status: 'Active' })}>Approve</Button>
-                  <Button variant="danger" disabled={busy} onClick={() => setAction({ kind: 'provider', provider, status: 'Suspended' })}>Suspend</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <Pagination
-          offset={offsets.providers}
-          total={providerPage?.total ?? 0}
-          onChange={(offset) => setOffsets((value) => ({ ...value, providers: offset }))}
+      {contracts.map((kind) => (
+        <AdminContractCard
+          key={kind}
+          kind={kind}
+          address={address}
+          busy={busy === kind}
+          setBusy={(v) => setBusy(v ? kind : null)}
+          nomineeDraft={nomineeDraft[kind]}
+          setNomineeDraft={(v) =>
+            setNomineeDraft((prev) => ({ ...prev, [kind]: v }))
+          }
+          signTransaction={signTransaction}
+          connect={connect}
+          toast={toast}
         />
-      </section>
+      ))}
 
-      <section aria-labelledby="disputes-heading" className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="disputes-heading" className="text-lg font-semibold">Disputed vouchers</h2>
-          <span className="text-sm text-[var(--color-ink-soft)]">{voucherPage?.total ?? 0} open disputes</span>
-        </div>
-        {!voucherPage?.vouchers.length ? (
-          <Empty>{voucherError ? 'Disputed vouchers could not be loaded.' : 'No vouchers are currently disputed.'}</Empty>
-        ) : (
-          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
-            {voucherPage.vouchers.map((voucher) => (
-              <div key={voucher.id} className="space-y-3 py-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div><p className="text-xs uppercase text-[var(--color-ink-soft)]">Voucher</p><p className="font-medium">#{voucher.id}</p></div>
-                  <div><p className="text-xs uppercase text-[var(--color-ink-soft)]">Escrow</p><p>{formatCurrency(voucher.amount)}</p></div>
-                  <div><p className="text-xs uppercase text-[var(--color-ink-soft)]">Clinic</p><p className="break-words">{voucher.provider.name}</p><code className="break-all text-xs text-[var(--color-ink-soft)]">{shortAddress(voucher.provider.address)}</code></div>
-                  <div><p className="text-xs uppercase text-[var(--color-ink-soft)]">Funder</p><code className="break-all text-xs">{shortAddress(voucher.funder)}</code></div>
-                </div>
-                <p className="text-sm">
-                  <span className="font-medium">Funder&apos;s reason: </span>
-                  {voucher.disputeReason == null
-                    ? 'No reason code supplied by the indexer.'
-                    : `#${voucher.disputeReason}: ${disputeReasonLabel(voucher.disputeReason)}`}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="danger" disabled={busy} onClick={() => openResolution(voucher, true)}>Refund funder</Button>
-                  <Button disabled={busy} onClick={() => openResolution(voucher, false)}>Pay clinic</Button>
-                  <Button variant="ghost" disabled={busy} onClick={() => openSplit(voucher)}>
-                    {t('admin.split.button')}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <Pagination
-          offset={offsets.vouchers}
-          total={voucherPage?.total ?? 0}
-          onChange={(offset) => setOffsets((value) => ({ ...value, vouchers: offset }))}
-        />
-      </section>
-
-      <section aria-labelledby="attesters-heading" className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="attesters-heading" className="text-lg font-semibold">Attesters</h2>
-          <span className="text-sm text-[var(--color-ink-soft)]">{attesterPage?.total ?? 0} records</span>
-        </div>
-        <Card className="p-4">
-          <form onSubmit={(event) => void addAttester(event)} className="flex flex-col gap-2 sm:flex-row">
-            <label className="sr-only" htmlFor="new-attester-address">Stellar address</label>
-            <input
-              id="new-attester-address"
-              value={attesterAddress}
-              onChange={(event) => setAttesterAddress(event.target.value)}
-              placeholder="G... Stellar address"
-              autoComplete="off"
-              className="min-w-0 flex-1 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-            />
-            <Button type="submit" disabled={busy || !attesterAddress.trim()}>Add attester</Button>
-          </form>
-        </Card>
-        {!attesterPage?.attesters.length ? (
-          <Empty>{attesterError ? 'Attesters could not be loaded.' : 'No attesters are registered.'}</Empty>
-        ) : (
-          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
-            {attesterPage.attesters.map((attester) => (
-              <div key={attester.address} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="font-medium">{attester.name || attester.organisation || 'Attester'}</p>
-                  <code className="block break-all text-xs text-[var(--color-ink-soft)]">{attester.address}</code>
-                  <p className="text-xs text-[var(--color-ink-soft)]">{attester.active ? 'Active' : 'Inactive'} · {attester.attestations} attestations</p>
-                </div>
-                {attester.active && (
-                  <Button variant="danger" disabled={busy} onClick={() => setAction({ kind: 'remove-attester', attester })}>Remove</Button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        <Pagination
-          offset={offsets.attesters}
-          total={attesterPage?.total ?? 0}
-          onChange={(offset) => setOffsets((value) => ({ ...value, attesters: offset }))}
-        />
-      </section>
-
-      <Modal
-        open={!!action}
-        onClose={() => { if (!busy) setAction(null); }}
-        title={
-          isProviderAction
-            ? `${currentAction.status === 'Active' ? 'Approve' : 'Suspend'} clinic`
-            : isResolution || isSplit
-              ? `Resolve voucher #${currentAction.voucher.id}`
-              : 'Remove attester'
-        }
-        actions={(
-          <>
-            <Button
-              variant={isProviderAction && currentAction.status === 'Suspended' || isResolution && currentAction.refundFunder || currentAction?.kind === 'remove-attester' ? 'danger' : 'primary'}
-              disabled={confirmDisabled}
-              onClick={() => void submitAction()}
-            >
-              {busy ? 'Submitting…' : 'Confirm transaction'}
-            </Button>
-            <Button variant="ghost" disabled={busy} onClick={() => setAction(null)}>Cancel</Button>
-          </>
-        )}
-      >
-        <div className="space-y-3">
-          {isProviderAction && (
-            <p>Set <strong>{currentAction.provider.name}</strong> ({shortAddress(currentAction.provider.address)}) to <strong>{currentAction.status}</strong>.</p>
-          )}
-          {isResolution && currentAction.refundFunder && (
-            <p>
-              The funder <code className="break-all">{currentAction.voucher.funder}</code> receives the full escrow of{' '}
-              <strong>{formatCurrency(currentAction.voucher.amount)}</strong>. The clinic receives nothing.
-            </p>
-          )}
-          {isResolution && !currentAction.refundFunder && (
-            <div>
-              {quoteLoading && <p role="status">Calculating the clinic payout…</p>}
-              {currentQuoteError && <Alert>{`Could not calculate the contract payout: ${currentQuoteError}`}</Alert>}
-              {currentQuote && (
-                <p>
-                  <strong>{currentAction.voucher.provider.name}</strong> (<code className="break-all">{currentAction.voucher.provider.address}</code>) receives{' '}
-                  <strong>{formatCurrency(currentQuote.amounts[1])}</strong>; the protocol fee is {formatCurrency(currentQuote.amounts[0])}. The funder receives nothing.
-                </p>
-              )}
-            </div>
-          )}
-          {isSplit && currentAction?.kind === 'split' && (
-            <div className="space-y-3">
-              <label className="block">
-                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-                  {t('admin.split.amountLabel')}
-                </span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={splitInput}
-                  onChange={(event) => changeSplitAmount(event.target.value, currentAction.voucher)}
-                  aria-label={t('admin.split.amountLabel')}
-                  className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
-                />
-              </label>
-              <p className="text-xs text-[var(--color-ink-soft)]">
-                {t('admin.split.amountHint', {
-                  amount: formatCurrency(currentAction.voucher.amount),
-                })}
-              </p>
-              {splitInput.trim() !== '' && splitGross === null && (
-                <Alert>
-                  {t('admin.split.invalid', {
-                    amount: formatCurrency(currentAction.voucher.amount),
-                  })}
-                </Alert>
-              )}
-              {splitQuoteLoading && <p role="status">{t('admin.split.loading')}</p>}
-              {splitQuoteError && (
-                <Alert>
-                  {t('admin.split.error', { message: splitQuoteError })}
-                </Alert>
-              )}
-              {currentSplit && (
-                <div className="space-y-1 text-sm">
-                  <p>
-                    {t('admin.split.clinicReceives', {
-                      clinic: currentAction.voucher.provider.name,
-                      net: formatCurrency(currentSplit.providerNet),
-                      fee: formatCurrency(currentSplit.fee),
-                    })}
-                  </p>
-                  <p>
-                    {t('admin.split.funderReceives', {
-                      amount: formatCurrency(currentSplit.toFunder),
-                    })}
-                  </p>
-                  <p className="text-xs text-[var(--color-ink-soft)]">
-                    {t('admin.split.sum', {
-                      amount: formatCurrency(currentSplit.escrow),
-                    })}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-          {currentAction?.kind === 'remove-attester' && (
-            <p>Revoke attester access for <code className="break-all">{currentAction.attester.address}</code>.</p>
-          )}
-          <p className="text-xs text-[var(--color-ink-soft)]">Review the recipient and outcome carefully. This transaction is recorded on chain.</p>
-        </div>
-      </Modal>
+      <VoucherRiskLimits
+        address={address}
+        signTransaction={signTransaction}
+        toast={toast}
+      />
     </div>
   );
 }
 
-function Pagination({
-  offset,
-  total,
-  onChange,
+function AdminContractCard({
+  kind,
+  address,
+  busy,
+  setBusy,
+  nomineeDraft,
+  setNomineeDraft,
+  signTransaction,
+  connect,
+  toast,
 }: {
-  offset: number;
-  total: number;
-  onChange: (offset: number) => void;
+  kind: ContractKind;
+  address: string | null;
+  busy: boolean;
+  setBusy: (v: boolean) => void;
+  nomineeDraft: string;
+  setNomineeDraft: (v: string) => void;
+  signTransaction: (xdr: string) => Promise<string>;
+  connect: () => void;
+  toast: ReturnType<typeof useToast>;
 }) {
-  if (total <= PAGE_SIZE) return null;
+  const adminKey = ['admin', kind];
+  const pendingKey = ['pending-admin', kind];
+
+  const { data: admin, error: adminError, mutate: mutateAdmin } = useSWR(
+    adminKey,
+    () => getAdmin(kind),
+  );
+  const { data: pending, error: pendingError, mutate: mutatePending } = useSWR(
+    pendingKey,
+    () => getPendingAdmin(kind),
+  );
+
+  const isAdmin =
+    !!address && !!admin && address.toLowerCase() === admin.toLowerCase();
+  const isNominee =
+    !!address && !!pending && address.toLowerCase() === pending.toLowerCase();
+
+  async function handlePropose() {
+    if (!address) return void connect();
+    const target = nomineeDraft.trim();
+    if (!target) return;
+    setBusy(true);
+    try {
+      const res = await proposeAdmin(kind, address, target, signTransaction);
+      await mutateAdmin();
+      await mutatePending();
+      toast.success(
+        <>
+          Handover proposed.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
+      setNomineeDraft('');
+    } catch (err) {
+      toast.error(humaniseError(err, CONTRACT_ERRORS[kind]));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleAccept() {
+    if (!address) return void connect();
+    setBusy(true);
+    try {
+      const res = await acceptAdmin(kind, address, signTransaction);
+      await mutateAdmin();
+      await mutatePending();
+      toast.success(
+        <>
+          Handover accepted.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
+    } catch (err) {
+      toast.error(humaniseError(err, CONTRACT_ERRORS[kind]));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="flex items-center justify-end gap-2 text-sm">
-      <Button variant="ghost" disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - PAGE_SIZE))}>Previous</Button>
-      <span>{offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}</span>
-      <Button variant="ghost" disabled={offset + PAGE_SIZE >= total} onClick={() => onChange(offset + PAGE_SIZE)}>Next</Button>
-    </div>
+    <Card className="space-y-4 p-5">
+      <h2 className="font-medium">{CONTRACT_LABELS[kind]}</h2>
+
+      {adminError && (
+        <p className="text-sm text-[var(--color-ink-soft)]">
+          {humaniseError(adminError, CONTRACT_ERRORS[kind])}
+        </p>
+      )}
+      {pendingError && (
+        <p className="text-sm text-[var(--color-ink-soft)]">
+          {humaniseError(pendingError, CONTRACT_ERRORS[kind])}
+        </p>
+      )}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <div className="text-xs text-[var(--color-ink-soft)]">Current admin</div>
+          <div className="mt-1 break-all text-sm">
+            {admin ?? (adminError ? '—' : 'Loading…')}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs text-[var(--color-ink-soft)]">Pending admin</div>
+          <div className="mt-1 break-all text-sm">
+            {pending === undefined
+              ? 'Loading…'
+              : pending === null
+                ? 'None'
+                : pending}
+          </div>
+        </div>
+      </div>
+
+      {isAdmin && (
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Propose a new admin</div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={nomineeDraft}
+              onChange={(e) => setNomineeDraft(e.target.value)}
+              placeholder="New admin address"
+              className="min-w-[16rem] flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+            />
+            <Button
+              disabled={busy || !nomineeDraft.trim()}
+              onClick={() => void handlePropose()}
+            >
+              {busy ? 'Confirming…' : 'Propose'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isNominee && (
+        <div className="space-y-2">
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            You are the nominated administrator for this contract. Accept to
+            complete the handover.
+          </p>
+          <Button disabled={busy} onClick={() => void handleAccept()}>
+            {busy ? 'Confirming…' : 'Accept handover'}
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function VoucherRiskLimits({
+  address,
+  signTransaction,
+  toast,
+}: {
+  address: string | null;
+  signTransaction: (xdr: string) => Promise<string>;
+  toast: ReturnType<typeof useToast>;
+}) {
+  const adminKey = ['admin', 'voucher'];
+  const { data: admin } = useSWR(adminKey, () => voucher.getAdmin());
+  const isAdmin =
+    !!address && !!admin && address.toLowerCase() === admin.toLowerCase();
+
+  const { data: attCap, mutate: mutateAtt } = useSWR('attestation-cap', () =>
+    voucher.getAttestationCap(),
+  );
+  const { data: escrowCap, mutate: mutateEscrow } = useSWR(
+    'escrow-cap',
+    () => voucher.getMaxEscrowPerProvider(),
+  );
+
+  const [attDraft, setAttDraft] = useState('');
+  const [escrowDraft, setEscrowDraft] = useState('');
+  const [attError, setAttError] = useState<string | null>(null);
+  const [escrowError, setEscrowError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<'att' | 'escrow' | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function validateAtt(value: string): string | null {
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) return 'Enter a whole number.';
+    const n = Number(trimmed);
+    if (!Number.isSafeInteger(n) || n <= 0)
+      return 'Must be a positive whole number.';
+    return null;
+  }
+
+  function validateEscrow(value: string): string | null {
+    const trimmed = value.trim();
+    try {
+      const base = toBaseUnits(trimmed);
+      if (base <= 0n) return 'Must be greater than zero.';
+    } catch {
+      return 'Enter a valid USDC amount.';
+    }
+    return null;
+  }
+
+  async function confirmAtt() {
+    if (!address) return;
+    const err = validateAtt(attDraft);
+    setAttError(err);
+    if (err) return void setConfirming(null);
+    setBusy(true);
+    try {
+      const res = await voucher.setAttestationCap(
+        address,
+        Number(attDraft.trim()),
+        signTransaction,
+      );
+      await mutateAtt();
+      toast.success(
+        <>
+          Attestation cap updated.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
+      setConfirming(null);
+      setAttDraft('');
+    } catch (err) {
+      toast.error(humaniseError(err, VOUCHER_ERRORS));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmEscrow() {
+    if (!address) return;
+    const err = validateEscrow(escrowDraft);
+    setEscrowError(err);
+    if (err) return void setConfirming(null);
+    setBusy(true);
+    try {
+      const base = toBaseUnits(escrowDraft.trim());
+      const res = await voucher.setMaxEscrowPerProvider(
+        address,
+        base,
+        signTransaction,
+      );
+      await mutateEscrow();
+      toast.success(
+        <>
+          Escrow cap updated.{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+        </>,
+      );
+      setConfirming(null);
+      setEscrowDraft('');
+    } catch (err) {
+      toast.error(humaniseError(err, VOUCHER_ERRORS));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="space-y-4 p-5">
+      <div>
+        <h2 className="font-medium">Voucher risk limits</h2>
+        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+          Protocol risk limits enforced by the voucher contract. Only the
+          current administrator can change them.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <div className="text-xs text-[var(--color-ink-soft)]">
+            Daily attestation cap
+          </div>
+          <div className="mt-1 text-sm">
+            {attCap === undefined ? 'Loading…' : `${attCap} attestations / day`}
+          </div>
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+            Maximum number of vouchers an attester may confirm per day.
+          </p>
+        </div>
+        <div>
+          <div className="text-xs text-[var(--color-ink-soft)]">
+            Per-clinic escrow cap
+          </div>
+          <div className="mt-1 text-sm">
+            {escrowCap === undefined
+              ? 'Loading…'
+              : `${formatUsdc(escrowCap)} USDC`}
+          </div>
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+            Maximum total value held in escrow for any single clinic at once.
+          </p>
+        </div>
+      </div>
+
+      {isAdmin && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Daily attestation cap</div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={attDraft}
+                onChange={(e) => {
+                  setAttDraft(e.target.value);
+                  setAttError(validateAtt(e.target.value));
+                }}
+                placeholder={
+                  attCap === undefined ? 'Loading…' : String(attCap)
+                }
+                className="min-w-[16rem] flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+              <Button
+                disabled={busy || !attDraft.trim() || !!validateAtt(attDraft)}
+                onClick={() => {
+                  const err = validateAtt(attDraft);
+                  setAttError(err);
+                  if (!err) setConfirming('att');
+                }}
+              >
+                Update attestation cap
+              </Button>
+            </div>
+            {attError && (
+              <p className="text-xs text-red-600">{attError}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Per-clinic escrow cap</div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={escrowDraft}
+                onChange={(e) => {
+                  setEscrowDraft(e.target.value);
+                  setEscrowError(validateEscrow(e.target.value));
+                }}
+                placeholder={
+                  escrowCap === undefined
+                    ? 'Loading…'
+                    : toAmountInput(escrowCap)
+                }
+                className="min-w-[16rem] flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+              <Button
+                disabled={
+                  busy || !escrowDraft.trim() || !!validateEscrow(escrowDraft)
+                }
+                onClick={() => {
+                  const err = validateEscrow(escrowDraft);
+                  setEscrowError(err);
+                  if (!err) setConfirming('escrow');
+                }}
+              >
+                Update escrow cap
+              </Button>
+            </div>
+            {escrowError && (
+              <p className="text-xs text-red-600">{escrowError}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!address && (
+        <p className="text-sm text-[var(--color-ink-soft)]">
+          Connect the administrator wallet to change these limits.
+        </p>
+      )}
+
+      <Modal
+        open={confirming === 'att'}
+        onClose={() => {
+          if (!busy) setConfirming(null);
+        }}
+        title="Update daily attestation cap"
+        actions={
+          <>
+            <Button disabled={busy} onClick={() => void confirmAtt()}>
+              {busy ? 'Confirming…' : 'Confirm'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setConfirming(null)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">
+          Set the daily attestation cap to {attDraft}?
+        </p>
+      </Modal>
+
+      <Modal
+        open={confirming === 'escrow'}
+        onClose={() => {
+          if (!busy) setConfirming(null);
+        }}
+        title="Update per-clinic escrow cap"
+        actions={
+          <>
+            <Button disabled={busy} onClick={() => void confirmEscrow()}>
+              {busy ? 'Confirming…' : 'Confirm'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setConfirming(null)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm">
+          Set the per-clinic escrow cap to {escrowDraft} USDC?
+        </p>
+      </Modal>
+    </Card>
   );
 }
