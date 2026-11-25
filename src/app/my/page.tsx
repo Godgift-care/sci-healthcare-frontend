@@ -34,6 +34,7 @@ import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 import { ShareReceiptButton } from '@/components/ShareReceiptButton';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
+import { ExpiryReminders } from '@/components/ExpiryReminders';
 import { RecentVouchers } from '@/components/RecentVouchers';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
@@ -556,6 +557,7 @@ export default function MyPage() {
             {t('my.selectedCount', { count: selectedVouchers.length })}
           </p>
         )}
+        {address && !fundedError && <ExpiryReminders vouchers={walletFunded} />}
         {batchProgress && (
           <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
             <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">
