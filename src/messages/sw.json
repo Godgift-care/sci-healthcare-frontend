@@ -360,6 +360,8 @@
     "externalLinkConfirm": "Unaondoka SCI Healthcare kwenda {host}. Ungependa kuendelea?",
     "checking": "Inakagua usajili…",
     "scanVoucherQr": "Changanua QR ya vocha",
+    "openInMaps": "Fungua kwenye ramani",
+    "openInOpenStreetMap": "Fungua kwenye OpenStreetMap",
     "registerTitle": "Sajili kliniki hii",
     "clinicName": "Jina la kliniki",
     "countryCode": "Msimbo wa nchi (NG)",
@@ -534,138 +536,22 @@
     "manualPlaceholder": "k.m. 42 au bandika URL",
     "open": "Fungua"
   },
-  "voucher": {
-    "chainDataBannerTitle": "Inaonyesha data moja kwa moja kutoka kwenye leja",
-    "chainDataBadge": "Leja ya Stellar",
-    "chainDataBannerText": "API ya kiashiria haipatikani kwa sasa. Hali ya vocha, maelezo ya kliniki na vitendo vimepakiwa moja kwa moja kutoka kwa mfumo wa Stellar.",
-    "voucherNumber": "Vocha #{id}",
-    "recentlyViewed": "Zilizotazamwa hivi karibuni",
-    "at": "katika",
-    "history": "Historia",
-    "fundedBy": "Imefadhiliwa na",
-    "expires": "Inaisha muda",
-    "clinicReceived": "Kliniki ilipokea",
-    "fee": "ada",
-    "disputeOutcome": "Matokeo ya mgogoro",
-    "careReceipt": "Stakabadhi ya huduma",
-    "minted": "Iliundwa",
-    "patientReference": "Rejeleo la mgonjwa",
-    "patientReferenceNote": "Rejeleo la mgonjwa ni msimbo usio wa wazi. Haliwezi kugeuzwa kuwa jina au nambari ya rekodi.",
-    "viewContract": "Tazama mkataba wa vocha",
-    "copyLink": "Nakili kiungo",
-    "linkCopied": "Kiungo kimenakiliwa!",
-    "addToCalendar": "Ongeza kalenda",
-    "presentAtDesk": "Onyesha kwenye Dawati la Kliniki",
-    "presentNote": "Onyesha msimbo huu wa QR unapofika kliniki. Dawati linaweza kuuchanganua mara moja ili kutafuta na kudai vocha yako.",
-    "scanToView": "Changanua kutazama #{id}",
-    "printPass": "Chapisha pasi ya vocha",
-    "patientPass": "Pasi ya Vocha ya Mgonjwa",
-    "voucherPassTitle": "Vocha ya Kiliniki ya Mgonjwa",
-    "voucherNumberUpper": "Nambari ya Vocha",
-    "presentNotice": "Onyesha nambari hii au msimbo wa QR kwenye mapokezi ya kliniki.",
-    "service": "Huduma",
-    "clinic": "Kliniki",
-    "voucherContract": "Mkataba wa Vocha",
-    "scanWithClinicScanner": "Changanua na kichanganuzi cha kliniki",
-    "ledgerNote": "Vocha hii inawakilisha ahadi ya amana kwenye daftari ya Stellar. Haina rekodi zozote za kibinafsi za matibabu au utambulisho.",
-    "reportProblem": "Ripoti tatizo",
-    "reportProblemIntro": "Ni mfadhili pekee anayeweza kufungua mgogoro. Ikiwa wewe ni mgonjwa, jamaa au mtu mwingine yeyote aliyegundua tatizo kwenye vocha hii, fungua ripoti. Inajazwa mapema na nambari ya umma ya vocha, hali, huduma na kliniki pekee — kamwe si rejeleo la mgonjwa.",
-    "reportProblemAction": "Ripoti tatizo",
-    "redirect": {
-      "action": "Tumia katika kliniki nyingine",
-      "title": "Hamisha vocha #{id}",
-      "intro": "Kliniki hai tu zinazotoa huduma hii kwa {amount} au chini yake zimeorodheshwa.",
-      "empty": "Hakuna kliniki nyingine inayotoa huduma hii kwa {amount} au chini yake kwa sasa.",
-      "loading": "Inatafuta kliniki…",
-      "choose": "Chagua kliniki",
-      "option": "{clinic} · {price}",
-      "confirmIntro": "{clinic} atapokea {price} na vocha itabaki na {amount} zilizowekwa. Hakiki kliniki na bei kabla ya kusaini.",
-      "confirm": "Hamisha vocha",
-      "moving": "Inahamisha…",
-      "error": "Imeshindwa kuhamisha vocha: {message}",
-      "success": "Vocha imehamishwa kwenda {clinic}."
-    },
-    "staffNote": "Kumbukumbu ya wafanyakazi",
-    "staffNoteNote": "Inabakwa kwa kifaa hiki pekee. Haichagawi wala kuhesabiwa.",
-    "staffNoteAdd": "Ongeza kumbukumbu",
-    "staffNoteEdit": "Hariri kumbukumbu",
-    "staffNoteSave": "Tahakia kumbukumbu",
-    "staffNoteClear": "Futa kumbukumbu",
-    "staffNotePlaceholder": "Mgonjwa alia, Jumanne",
-    "statusExplanation": {
-      "Funded": {
-        "funder": "Malipo yanashikiliwa kwa usalama hadi huduma itolewe.",
-        "clinic": "Fedha zimetengwa. Toa huduma kisha uwasilishe dai ili upokee malipo.",
-        "patient": "Huduma imelipiwa na inasubiri. Onyesha vocha hii kiliniki ili kupata huduma."
-      },
-      "Claimed": {
-        "funder": "Kiliniki imethibitisha kuwa huduma ilitolewa na inasubiri uhakiki.",
-        "clinic": "Dai limewasilishwa. Inasubiri uthibitisho kutoka kwa mhakiki anayeaminika.",
-        "patient": "Huduma imepokelewa kiliniki na inashughulikiwa."
-      },
-      "Attested": {
-        "funder": "Huduma imethibitishwa na mhakiki huru na iko tayari kulipwa.",
-        "clinic": "Huduma imethibitishwa. Fedha sasa zinaweza kutolewa kwa kiliniki.",
-        "patient": "Huduma imethibitishwa na kukamilika."
-      },
-      "Settled": {
-        "funder": "Malipo yametolewa kwa kiliniki.",
-        "clinic": "Malipo yametolewa kwenye pochi yako.",
-        "patient": "Huduma imekamilika na malipo yamelipwa."
-      },
-      "Disputed": {
-        "funder": "Mgogoro umefunguliwa na malipo yamesitishwa hadi utatuzi upatikane.",
-        "clinic": "Mgogoro umefunguliwa kwa vocha hii. Malipo yamesitishwa hadi utatuzi.",
-        "patient": "Vocha hii ina mgogoro unaochunguzwa na imesitishwa."
-      },
-      "Refunded": {
-        "funder": "Fedha zilizohifadhiwa zimerejeshwa kwenye pochi yako.",
-        "clinic": "Vocha hii ilighairiwa au kurejeshwa kwa mfadhili.",
-        "patient": "Vocha hii ilighairiwa au kurejeshwa."
-      }
-    }
+  "wallet": {
+    "connect": "Unganisha pochi",
+    "checking": "Inatafuta pochi…",
+    "noWalletTitle": "Hakuna pochi ya Stellar iliyopatikana",
+    "noWalletBody": "Kivinjari hiki hakina pochi ya Stellar iliyosakinishwa. Unahitaji moja ili kusaini miamala — hakuna kinachoweza kufadhiliwa bila hiyo.",
+    "recommendedDesktop": "Kwenye kompyuta, sakinisha Freighter, kiendelezi cha kivinjari.",
+    "recommendedMobile": "Kwenye simu, sakinisha LOBSTR, programu ya pochi ya Stellar.",
+    "installWallet": "Sakinisha {wallet}",
+    "passkey": "Unda pochi ya passkey",
+    "passkeyNote": "Hakuna ufungaji wala programu: kivinjari hiki husaini kwa passkey (Face ID, Touch ID au PIN ya kifaa chako).",
+    "allWallets": "Ona chaguo zote za pochi"
   },
-  "home": {
-    "verifiedClinics": "Kliniki zilizothibitishwa",
-    "noClinics": "Bado hakuna kliniki zilizosajiliwa.",
-    "noClinicsHint": "Kwanza ukurasa kwenye kuongeza orodha ya kliniki zilizothibitishwa, au sajili kliniki yako kwa kuongeza huduma.",
-    "fundCare": "Fadhili huduma",
-    "findClinic": "Pata kliniki",
-    "listService": "Orodesha huduma"
-  },
-  "offlineQueue": {
-    "title": "Inasubiri kutumwa",
-    "note": "Madai haya yalisainiwa kwenye kifaa hiki na yatatumwa kiotomatiki mtandao unaporejea.",
-    "voucher": "Vocha #{id}",
-    "queuedStatus": "Inasubiri",
-    "submitting": "Inatuma…",
-    "failed": "Haijatumwa: {error}",
-    "validUntil": "Inatumika hadi {time}",
-    "submitNow": "Tuma sasa",
-    "discard": "Ondoa",
-    "expiredTitle": "Dai lililosubiri limeondolewa",
-    "expired": "Dai lililosubiri liliisha muda kabla ya kutumwa, kwa hiyo liliondolewa. Hakuna kilichotumwa kwa kliniki; dai vocha tena ikiwa mgonjwa bado yuko dirishani.",
-    "queuedToast": "Imehifadhiwa kwenye kifaa hiki. Dai litatumwa mtandao unaporejea."
-  },
-  "my": {
-    "selectAllVisible": "Chagua zote kwenye ukurasa huu ({count})",
-    "selectVoucher": "Chagua vocha #{id}",
-    "selectedCount": "{count} zimechaguliwa",
-    "exportSelected": "Pakua CSV zilizochaguliwa",
-    "refundSelected": "Rejesha zilizochaguliwa ({count})",
-    "refundAll": "Rejesha zote ({count})",
-    "refundingCount": "Inarejesha {current}/{total}…",
-    "refundProgress": "{current} kati ya {total}",
-    "refundingVoucher": "Inarejesha vocha #{id}…",
-    "refundedSummary": "Vocha {count} zimerejeshwa kikamilifu:",
-    "refundFailedSummary": "Imeshindwa kurejesha vocha {count}:"
-  },
-  "localCurrency": {
-    "select": "Makadirio kwa sarafu ya ndani",
-    "off": "Sarafu ya ndani: imezimwa",
-    "estimate": "≈ {amount} takriban",
-    "estimateRange": "≈ {min}–{max} takriban",
-    "tooltip": "Makadirio kwa kiwango cha ubadilishaji cha {date}. Unalipa, na kliniki inapokea, kiasi cha USDC.",
-    "help": "Onyesha kiasi cha takriban kwa sarafu ya ndani karibu na USDC. Kiasi kinachotozwa bado ni USDC."
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "sw": "Kiswahili",
+    "select": "Chagua lugha"
   }
 }

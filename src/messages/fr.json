@@ -360,6 +360,8 @@
     "externalLinkConfirm": "Vous quittez SCI Healthcare pour visiter {host}. Continuer ?",
     "checking": "Vérification de l'enregistrement…",
     "scanVoucherQr": "Scanner le QR du bon",
+    "openInMaps": "Ouvrir dans une carte",
+    "openInOpenStreetMap": "Ouvrir dans OpenStreetMap",
     "registerTitle": "Enregistrer cette clinique",
     "clinicName": "Nom de la clinique",
     "countryCode": "Code pays (NG)",
@@ -537,137 +539,22 @@
     "manualPlaceholder": "ex. 42 ou collez l'URL",
     "open": "Ouvrir"
   },
-  "voucher": {
-    "chainDataBannerTitle": "Affichage des données directes de la chaîne",
-    "chainDataBadge": "Registre Stellar",
-    "chainDataBannerText": "L'API de l'indexeur est actuellement indisponible. Les détails du bon, de la clinique et les actions sont chargés directement depuis la blockchain Stellar.",
-    "voucherNumber": "Bon #{id}",
-    "recentlyViewed": "Consultés récemment",
-    "at": "chez",
-    "history": "Historique",
-    "fundedBy": "Financé par",
-    "expires": "Expire le",
-    "clinicReceived": "Clinique a reçu",
-    "fee": "frais",
-    "disputeOutcome": "Résultat du litige",
-    "careReceipt": "Reçu de soins",
-    "minted": "Émis le",
-    "patientReference": "Référence patient",
-    "patientReferenceNote": "La référence patient est un hachage opaque. Elle ne peut pas être reconvertie en nom ou numéro de dossier.",
-    "viewContract": "Voir le contrat de bon",
-    "copyLink": "Copier le lien",
-    "linkCopied": "Lien copié !",
-    "addToCalendar": "Ajouter au calendrier",
-    "presentAtDesk": "À présenter à l'accueil de la clinique",
-    "presentNote": "Présentez ce code QR à votre arrivée à la clinique. L'accueil peut le scanner instantanément pour trouver et réclamer votre bon.",
-    "scanToView": "Scanner pour voir #{id}",
-    "printPass": "Imprimer le pass de bon",
-    "patientPass": "Pass de bon patient",
-    "voucherPassTitle": "Bon de clinique patient",
-    "voucherNumberUpper": "Numéro de bon",
-    "presentNotice": "Présentez ce numéro ou code QR à l'accueil de la clinique.",
-    "service": "Service",
-    "clinic": "Clinique",
-    "voucherContract": "Contrat de bon",
-    "scanWithClinicScanner": "Scanner avec le scanner de la clinique",
-    "ledgerNote": "Ce bon représente un engagement sous séquestre sur le registre Stellar. Il ne contient aucun dossier médical ou d'identité personnel.",
-    "reportProblem": "Signaler un problème",
-    "reportProblemIntro": "Seul le financeur peut ouvrir un litige. Si vous êtes le patient, un proche, ou toute autre personne ayant remarqué un problème avec ce bon, ouvrez un signalement. Il est prérempli avec le numéro public du bon, son statut, le service et la clinique uniquement — jamais la référence patient.",
-    "reportProblemAction": "Signaler un problème",
-    "redirect": {
-      "action": "Utiliser dans une autre clinique",
-      "title": "Déplacer le bon #{id}",
-      "intro": "Seules les cliniques actives proposant ce service au prix de {amount} ou moins sont listées.",
-      "empty": "Aucune autre clinique ne propose actuellement ce service au prix de {amount} ou moins.",
-      "loading": "Recherche des cliniques…",
-      "choose": "Choisir une clinique",
-      "option": "{clinic} · {price}",
-      "confirmIntro": "{clinic} recevra {price} et le bon conserve son dépôt de {amount}. Vérifiez la clinique et le prix avant de signer.",
-      "confirm": "Déplacer le bon",
-      "moving": "Déplacement…",
-      "error": "Impossible de déplacer le bon : {message}",
-      "success": "Bon déplacé vers {clinic}."
-    },
-    "staffNote": "Note du personnel",
-    "staffNoteNote": "Gardée uniquement sur cet appareil. Non partagée et non sauvegardée.",
-    "staffNoteAdd": "Ajouter une note",
-    "staffNoteEdit": "Modifier la note",
-    "staffNoteSave": "Enregistrer la note",
-    "staffNoteClear": "Supprimer la note",
-    "staffNotePlaceholder": "Le patient a appelé, mardi",
-    "statusExplanation": {
-      "Funded": {
-        "funder": "Le paiement est conservé en toute sécurité sous séquestre jusqu'à la prestation des soins.",
-        "clinic": "Les fonds sont réservés sous séquestre. Dispensez les soins et soumettez une réclamation pour être payé.",
-        "patient": "Les soins sont couverts et disponibles. Présentez ce bon à la clinique pour recevoir les soins."
-      },
-      "Claimed": {
-        "funder": "La clinique a confirmé la prestation des soins, en attente de vérification.",
-        "clinic": "Réclamation soumise. En attente d'attestation par un vérificateur de confiance.",
-        "patient": "Les soins ont été reçus à la clinique et sont en cours de traitement."
-      },
-      "Attested": {
-        "funder": "Les soins ont été vérifiés par un tiers indépendant et sont prêts à être réglés.",
-        "clinic": "Service vérifié. Les fonds peuvent maintenant être versés à la clinique.",
-        "patient": "Les soins ont été vérifiés et validés."
-      },
-      "Settled": {
-        "funder": "Le paiement a été versé à la clinique.",
-        "clinic": "Le paiement a été versé sur votre portefeuille.",
-        "patient": "Soins terminés et paiement réglé."
-      },
-      "Disputed": {
-        "funder": "Un litige a été ouvert et le paiement est suspendu en attendant sa résolution.",
-        "clinic": "Un litige a été ouvert pour ce bon. Le paiement est bloqué jusqu'à résolution.",
-        "patient": "Ce bon fait l'objet d'un litige et est suspendu."
-      },
-      "Refunded": {
-        "funder": "Les fonds sous séquestre ont été reversés sur votre portefeuille.",
-        "clinic": "Ce bon a été annulé ou remboursé au financeur.",
-        "patient": "Ce bon a été annulé ou remboursé."
-      }
-    }
+  "wallet": {
+    "connect": "Connecter un portefeuille",
+    "checking": "Recherche d'un portefeuille…",
+    "noWalletTitle": "Aucun portefeuille Stellar trouvé",
+    "noWalletBody": "Ce navigateur n'a pas de portefeuille Stellar installé. Il en faut un pour signer les transactions — aucun financement n'est possible sans lui.",
+    "recommendedDesktop": "Sur ordinateur, installez Freighter, une extension de navigateur.",
+    "recommendedMobile": "Sur téléphone, installez LOBSTR, une application de portefeuille Stellar.",
+    "installWallet": "Installer {wallet}",
+    "passkey": "Créer un portefeuille à clé d'accès",
+    "passkeyNote": "Sans installation ni application : ce navigateur signe avec une clé d'accès (Face ID, Touch ID ou le code de votre appareil).",
+    "allWallets": "Voir toutes les options de portefeuille"
   },
-  "home": {
-    "verifiedClinics": "Cliniques vérifiées",
-    "noClinics": "Aucune clinique enregistrée pour le moment.",
-    "noClinicsHint": "Les cliniques apparaîtront ici dès qu'elles s'enregistreront et seront vérifiées. Si vous gérez une clinique, commencez par l'enregistrer.",
-    "noClinicsAction": "Enregistrer une clinique",
-    "noClinicsActionLink": "/clinic"
-  },
-  "offlineQueue": {
-    "title": "En attente d'envoi",
-    "note": "Ces réclamations ont été signées sur cet appareil et seront envoyées automatiquement dès le retour de la connexion.",
-    "voucher": "Bon #{id}",
-    "queuedStatus": "En attente",
-    "submitting": "Envoi…",
-    "failed": "Non envoyé : {error}",
-    "validUntil": "Valable jusqu'au {time}",
-    "submitNow": "Envoyer maintenant",
-    "discard": "Supprimer",
-    "expiredTitle": "Bon en attente supprimé",
-    "expired": "Une réclamation en attente a expiré avant d'être envoyée et a été supprimée. Rien n'a été envoyé à la clinique ; réclamez à nouveau le bon si le patient est encore au guichet.",
-    "queuedToast": "Enregistré sur cet appareil. La réclamation sera envoyée dès le retour de la connexion."
-  },
-  "my": {
-    "selectAllVisible": "Tout sélectionner sur cette page ({count})",
-    "selectVoucher": "Sélectionner le bon nº {id}",
-    "selectedCount": "{count} sélectionné(s)",
-    "exportSelected": "Télécharger le CSV sélectionné",
-    "refundSelected": "Rembourser la sélection ({count})",
-    "refundAll": "Tout rembourser ({count})",
-    "refundingCount": "Remboursement {current}/{total}…",
-    "refundProgress": "{current} sur {total}",
-    "refundingVoucher": "Remboursement du bon nº {id}…",
-    "refundedSummary": "{count} bon(s) remboursé(s) avec succès :",
-    "refundFailedSummary": "Échec du remboursement de {count} bon(s) :"
-  },
-  "localCurrency": {
-    "select": "Estimation en monnaie locale",
-    "off": "Monnaie locale : désactivée",
-    "estimate": "≈ {amount} env.",
-    "estimateRange": "≈ {min}–{max} env.",
-    "tooltip": "Estimation au taux de change du {date}. Vous payez et la clinique reçoit le montant en USDC.",
-    "help": "Afficher un montant approximatif en monnaie locale à côté de l'USDC. Le montant facturé reste celui en USDC."
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "sw": "Kiswahili",
+    "select": "Choisir la langue"
   }
 }

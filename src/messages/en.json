@@ -495,6 +495,8 @@
     "title": "Clinic desk",
     "checking": "Checking registration…",
     "scanVoucherQr": "Scan voucher QR",
+    "openInMaps": "Open in maps",
+    "openInOpenStreetMap": "Open in OpenStreetMap",
     "registerTitle": "Register this clinic",
     "clinicName": "Clinic name",
     "countryCode": "Country code (NG)",
@@ -662,39 +664,22 @@
     "manualPlaceholder": "e.g. 42 or paste URL",
     "open": "Open"
   },
-  "offlineQueue": {
-    "title": "Waiting to submit",
-    "note": "These claims were signed on this device and will be submitted automatically when the connection returns.",
-    "voucher": "Voucher #{id}",
-    "queuedStatus": "Queued",
-    "submitting": "Submitting…",
-    "failed": "Not submitted: {error}",
-    "validUntil": "Valid until {time}",
-    "submitNow": "Submit now",
-    "discard": "Discard",
-    "expiredTitle": "Queued claim discarded",
-    "expired": "A queued claim expired before it could be submitted, so it was discarded. Nothing was sent to the clinic; claim the voucher again if the patient is still at the desk.",
-    "queuedToast": "Saved on this device. The claim will be submitted when the connection returns."
+  "wallet": {
+    "connect": "Connect wallet",
+    "checking": "Checking for a wallet…",
+    "noWalletTitle": "No Stellar wallet found",
+    "noWalletBody": "This browser does not have a Stellar wallet installed. You need one to sign transactions — nothing can be funded without it.",
+    "recommendedDesktop": "On a computer, install Freighter, a browser extension.",
+    "recommendedMobile": "On a phone, install LOBSTR, a Stellar wallet app.",
+    "installWallet": "Install {wallet}",
+    "passkey": "Create a passkey wallet",
+    "passkeyNote": "No install and no app: this browser signs with a passkey (Face ID, Touch ID or your device PIN).",
+    "allWallets": "See all wallet options"
   },
-  "my": {
-    "selectAllVisible": "Select all on this page ({count})",
-    "selectVoucher": "Select voucher #{id}",
-    "selectedCount": "{count} selected",
-    "exportSelected": "Download selected CSV",
-    "refundSelected": "Refund selected ({count})",
-    "refundAll": "Refund all ({count})",
-    "refundingCount": "Refunding {current}/{total}…",
-    "refundProgress": "{current} of {total}",
-    "refundingVoucher": "Refunding voucher #{id}…",
-    "refundedSummary": "Refunded {count} voucher(s) successfully:",
-    "refundFailedSummary": "Failed to refund {count} voucher(s):"
-  },
-  "localCurrency": {
-    "select": "Local currency estimate",
-    "off": "Local currency: off",
-    "estimate": "≈ {amount} est.",
-    "estimateRange": "≈ {min}–{max} est.",
-    "tooltip": "Estimate at the exchange rate of {date}. You pay and the clinic receives the USDC amount.",
-    "help": "Show an approximate local-currency amount next to USDC. USDC is still the amount charged."
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "sw": "Kiswahili",
+    "select": "Select language"
   }
 }

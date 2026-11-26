@@ -5,7 +5,7 @@ import {
   contentSecurityPolicyHeaderName,
   TRUSTED_TYPES_POLICY,
 } from './csp';
-import { FX_RATES_ORIGIN, FX_RATES_URL } from './local-currency';
+import { WALLET_INSTALL_ORIGINS } from './wallet-guidance';
 
 /**
  * The policy is a pure function of the build environment so it can be
@@ -72,6 +72,11 @@ describe('contentSecurityPolicy', () => {
     expect(map.get('connect-src')).toContain('https://sentry.example.test');
     expect(map.get('img-src')).toContain('https://tile.openstreetmap.org');
     expect(map.get('img-src')).toContain('https://stellar.creit.tech');
+
+    // The no-wallet guidance may only link to hosts this policy allows (#317).
+    for (const origin of WALLET_INSTALL_ORIGINS) {
+      expect(map.get('connect-src')).toContain(origin);
+    }
   });
 
   it('allows the exchange-rate origin the local-currency estimate fetches (#132)', () => {

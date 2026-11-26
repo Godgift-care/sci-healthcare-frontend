@@ -28,6 +28,7 @@
 
 import { parseSep24Anchors } from './sep24-config';
 import { TRUSTED_TYPES_POLICY } from './trusted-types';
+import { WALLET_INSTALL_ORIGINS } from './wallet-guidance';
 
 export type CspEnv = Record<string, string | undefined>;
 
@@ -184,6 +185,10 @@ export function contentSecurityPolicy(env: CspEnv, isDev = false): string {
       horizonOrigin(network),
       WALLETS.albedo,
       WALLETS.xbull,
+      // Install pages the no-wallet guidance links to (#317). Nothing is
+      // fetched from these hosts; they are listed so a recommendation can
+      // never send a visitor somewhere this build does not already trust.
+      ...WALLET_INSTALL_ORIGINS,
       plausible,
       sentry,
       FX_RATES,

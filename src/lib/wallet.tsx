@@ -176,6 +176,20 @@ async function getKit() {
   return StellarWalletsKit;
 }
 
+/**
+ * Product ids the kit reports as available in this browser (#317).
+ *
+ * The kit loads here, on demand, rather than on first paint: read-only
+ * visitors never download it. Callers should pass the list to
+ * `hasInstalledWallet`, because a few modules (Albedo, xBull, the passkey
+ * wallet) answer "available" on every device and do not need an install.
+ */
+export async function availableWalletIds(): Promise<string[]> {
+  const kit = await getKit();
+  const wallets = await kit.refreshSupportedWallets();
+  return wallets.filter((wallet) => wallet.isAvailable).map((wallet) => wallet.id);
+}
+
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [walletName, setWalletName] = useState<string | null>(null);
