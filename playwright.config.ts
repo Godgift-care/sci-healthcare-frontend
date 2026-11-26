@@ -12,8 +12,11 @@ import { E2E_CONTRACTS } from './tests/e2e/contracts';
  *   refund) against a mocked API with a mock wallet and mock RPC
  *   (see src/lib/e2e-seam.ts). No testnet, indexer or wallet needed.
  *
- * Every test runs twice — desktop width and 390px. The web server builds
- * and serves the app, so NEXT_PUBLIC_* below is what tests build against.
+ * The e2e suite runs on five projects — desktop Chromium, a Pixel 7 profile,
+ * and WebKit, Firefox and an iPhone 14 profile for the e2e suite only (#345,
+ * #346). Visual snapshots stay on the two Chromium projects, where they were
+ * recorded. The web server builds and serves the app, so NEXT_PUBLIC_* below
+ * is what tests build against.
  * Contract ids mirror vercel.json (public addresses, not secrets); the API
  * URL never answers because routes mock it.
  */
@@ -52,14 +55,31 @@ export default defineConfig({
       },
     },
     {
+      // A real device profile rather than a desktop browser with a small
+      // viewport (#346): Pixel 7 exercises touch events, the mobile user
+      // agent and a 2.625 device pixel ratio, which is where mobile-only
+      // bugs live.
       name: 'mobile',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 390, height: 844 },
-        deviceScaleFactor: 1,
-        isMobile: true,
-        hasTouch: true,
-      },
+      use: { ...devices['Pixel 7'] },
+    },
+    // Other engines run the e2e suite only (#345). iPhones run WebKit, and
+    // clipboard, share and storage behave differently there; Firefox covers
+    // the third engine the app claims to support. Snapshots are not recorded
+    // here: the visual suite is Chromium-only by design.
+    {
+      name: 'webkit',
+      testMatch: /e2e\/.*\.spec\.ts/,
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'firefox',
+      testMatch: /e2e\/.*\.spec\.ts/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'mobile-safari',
+      testMatch: /e2e\/.*\.spec\.ts/,
+      use: { ...devices['iPhone 14'] },
     },
   ],
   webServer: {

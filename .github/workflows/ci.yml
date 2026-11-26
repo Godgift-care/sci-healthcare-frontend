@@ -194,9 +194,48 @@ jobs:
             test-results/
             playwright-report/
 
+  bundle:
+    name: bundle budget
+    runs-on: ubuntu-24.04
+    # Same build-time env as the build job: the budget is measured on an
+    # identical production build.
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_STELLAR_NETWORK: testnet
+      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
+      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
+      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
+      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
+      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Per-route first-load JavaScript against bundle-baseline.json (#344).
+      # Lighthouse catches large regressions on three pages; this catches a
+      # chunk growing on any route. The comparison also lands in the job
+      # summary, which is where the pull request shows it.
+      - name: Compare with the committed budget
+        run: |
+          set -o pipefail
+          { echo '### Bundle budget'; echo '```'; npm run bundle:budget; echo '```'; } \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
   e2e:
     name: e2e
     runs-on: ubuntu-24.04
+    # Three engines (#345) over two shards, so the extra coverage does not
+    # multiply wall-clock time. fail-fast: false is deliberate: the value of
+    # running every engine is seeing which ones fail.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -217,20 +256,20 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
           restore-keys: |
             playwright-${{ runner.os }}-
-      - name: Install Playwright Chromium
+      - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit firefox
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: npx playwright install-deps chromium webkit firefox
       # The web server builds the app itself (see playwright.config.ts).
       # Each flow runs against a mocked API with a mock wallet and mock RPC
       # (see src/lib/e2e-seam.ts): no testnet, indexer or wallet needed.
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/2
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
-          name: e2e-test-results
+          name: e2e-test-results-${{ matrix.shard }}
           path: |
             test-results/
             playwright-report/

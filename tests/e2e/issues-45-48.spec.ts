@@ -251,7 +251,17 @@ test.describe('Dispute outcome on voucher page (#47)', () => {
 });
 
 test.describe('Copy link on voucher page (#48)', () => {
-  test('copy link button copies voucher URL with confirmation message', async ({ page, context }) => {
+  test('copy link button copies voucher URL with confirmation message', async ({
+    page,
+    context,
+    browserName,
+  }) => {
+    // clipboard-read is not a grantable permission outside Chromium
+    // (#345), so the copy assertions run there only.
+    test.skip(
+      browserName !== 'chromium',
+      'clipboard-read is not a grantable permission outside Chromium',
+    );
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     const voucher = {

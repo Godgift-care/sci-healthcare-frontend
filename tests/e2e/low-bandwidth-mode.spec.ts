@@ -135,7 +135,13 @@ test.describe('live updates', () => {
 });
 
 test.describe('page weight', () => {
-  test('is lower with the mode on', async ({ page }) => {
+  test('is lower with the mode on', async ({ page, browserName }) => {
+    // The wire size comes from a CDP session's encodedDataLength, which only
+    // Chromium exposes (#345).
+    test.skip(
+      browserName !== 'chromium',
+      'measuring transferred bytes needs a CDP session, which only Chromium exposes',
+    );
     await mockBackend(page, { providers: [LOCATED_CLINIC] });
     await page.route('**tile.openstreetmap.org/**', (route) =>
       route.fulfill({ status: 200, contentType: 'image/png', body: TILE_BODY }),

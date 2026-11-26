@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { mutate } from 'swr';
 
 import { config } from '../config';
-import { LOW_BANDWIDTH_POLL_INTERVAL_MS, useLowBandwidth } from '../low-bandwidth';
+import {
+  isLowBandwidth,
+  LOW_BANDWIDTH_POLL_INTERVAL_MS,
+  useLowBandwidth,
+} from '../low-bandwidth';
 
 export interface LiveUpdateOptions {
   voucherId?: string;
@@ -106,7 +110,14 @@ export function useLiveUpdates({
 
     // Attempt EventSource connection if available. Skipped entirely in
     // low-bandwidth mode: no long-lived connection on a metered link.
-    if (!lowBandwidth && typeof EventSource !== 'undefined') {
+    //
+    // The stored flag is read again here, synchronously, because the first
+    // effect after hydration can still see the server snapshot of the hook
+    // (`false`) before it flips to the stored value. That would open a stream
+    // for a moment — enough for the request to leave a metered link, and
+    // visible on Firefox, which sends it before the subscription is torn
+    // down (#75, #345).
+    if (!lowBandwidth && !isLowBandwidth() && typeof EventSource !== 'undefined') {
       try {
         const streamUrl = new URL('/events', config.apiUrl);
         if (voucherId) streamUrl.searchParams.set('voucherId', voucherId);
