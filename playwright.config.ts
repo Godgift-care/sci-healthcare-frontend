@@ -12,11 +12,9 @@ import { E2E_CONTRACTS } from './tests/e2e/contracts';
  *   refund) against a mocked API with a mock wallet and mock RPC
  *   (see src/lib/e2e-seam.ts). No testnet, indexer or wallet needed.
  *
- * The e2e suite runs on five projects — desktop Chromium, a Pixel 7 profile,
- * and WebKit, Firefox and an iPhone 14 profile for the e2e suite only (#345,
- * #346). Visual snapshots stay on the two Chromium projects, where they were
- * recorded. The web server builds and serves the app, so NEXT_PUBLIC_* below
- * is what tests build against.
+ * Every test runs twice — desktop width and 390px. Local runs build the app;
+ * jobs with PLAYWRIGHT_USE_BUILD_ARTIFACT serve the shared production
+ * artifact. NEXT_PUBLIC_* below is applied when building locally.
  * Contract ids mirror vercel.json (public addresses, not secrets); the API
  * URL never answers because routes mock it.
  */
@@ -84,7 +82,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run build && npx next start -p 3100',
+    command: process.env.PLAYWRIGHT_USE_BUILD_ARTIFACT === 'true'
+      ? 'npm run start -- -p 3100'
+      : 'npm run build && npm run start -- -p 3100',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
@@ -123,10 +123,9 @@ export default defineConfig({
       // Enables the analytics branch under test; tests/analytics-guard.ts
       // stops the script request itself from leaving the sandbox.
       NEXT_PUBLIC_PLAUSIBLE_DOMAIN: 'test.sci-healthcare.example',
-      // Points error reporting at an unroutable host that only the
-      // error-reporting spec intercepts.
+      // Uses a test-only DSN that only the error-reporting spec intercepts.
       NEXT_PUBLIC_SENTRY_DSN:
-        'https://abc123abc123abc123abc123abc123ab@sentry-test.local/42',
+        'https://localhost@sentry.example.com/42',
     },
   },
 });

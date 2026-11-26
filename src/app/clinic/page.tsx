@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
 import { formatDate, formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
@@ -39,8 +40,6 @@ import {
 } from '@/lib/voucher-filters';
 import { useWallet } from '@/lib/wallet';
 import { ClinicChecklist } from '@/components/ClinicChecklist';
-import { QrScannerModal } from '@/components/QrScannerModal';
-import { OfflineClaimQueue } from '@/components/OfflineClaimQueue';
 import { RecentVouchers } from '@/components/RecentVouchers';
 import { VoucherRow } from '@/components/VoucherRow';
 import { useToast } from '@/components/Toast';
@@ -96,6 +95,11 @@ function StatusTab({
     </button>
   );
 }
+
+const QrScannerModal = dynamic(
+  () => import('@/components/QrScannerModal').then((module) => module.QrScannerModal),
+  { ssr: false },
+);
 
 const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Unregistered:
@@ -527,16 +531,16 @@ export default function ClinicDeskPage() {
         </div>
       </div>
 
-      <QrScannerModal
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={(voucherId, presenceSecret) => {
-          setScannerOpen(false);
-          // The code stays in session storage; it is never put in a URL.
-          if (presenceSecret) saveScannedPresenceCode(voucherId, presenceSecret);
-          router.push(`/vouchers/${voucherId}`);
-        }}
-      />
+      {scannerOpen && (
+        <QrScannerModal
+          open={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onScan={(voucherId) => {
+            setScannerOpen(false);
+            router.push(`/vouchers/${voucherId}`);
+          }}
+        />
+      )}
 
       {standing !== null &&
         (standing === 'Unregistered' || provider !== null) && (
