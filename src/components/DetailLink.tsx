@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import type { ComponentProps } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { ComponentProps } from "react";
 
 import {
   detailHref,
   prefetchDetail,
   type DetailTarget,
-} from '@/lib/detail-prefetch';
+} from "@/lib/detail-prefetch";
 
-type Props = Omit<ComponentProps<typeof Link>, 'href' | 'prefetch'> & {
+type Props = Omit<ComponentProps<typeof Link>, "href" | "prefetch"> & {
   detail: DetailTarget;
 };
 
