@@ -11,12 +11,14 @@ import { LocalEstimate } from '@/components/LocalEstimate';
 import { useProviders, useService } from '@/lib/hooks';
 import { Alert, Button, Card, Empty } from '@/components/ui';
 import { SkeletonCard, SkeletonDetail } from '@/components/Skeleton';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 export default function ServicePage({
   params,
 }: {
   params: Promise<{ code: string }>;
 }) {
+  const { t, locale } = useLocaleContext();
   const { code: codeParam } = use(params);
   const code = Number(codeParam);
 
@@ -55,15 +57,14 @@ export default function ServicePage({
     <div className="space-y-6">
       <section className="rounded-2xl border border-[var(--color-line)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-canvas)] p-4 sm:p-5">
         <div className="max-w-2xl space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset">
-            Care-voucher protocol on Stellar
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+            {t('services.badge')}
           </div>
           <h1 className="text-xl font-bold tracking-tight text-[var(--color-ink)] sm:text-2xl">
             {service.labels.join(' · ')}
           </h1>
-          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)] sm:text-sm">
-            Compare what active clinics charge for this service, then fund a
-            voucher from the clinic of your choice.
+          <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink-soft)]">
+            {t('services.detailSubtitle')}
           </p>
         </div>
 
@@ -72,24 +73,22 @@ export default function ServicePage({
             href="/services"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
           >
-            Service catalogue →
+            {t('services.serviceCatalogue')}
           </Link>
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
           >
-            Browse clinics →
+            {t('services.browseClinics')}
           </Link>
         </div>
       </section>
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">
-            Clinics offering this service
-          </h2>
+          <h2 className="text-lg font-semibold">{t('services.clinicsOffering')}</h2>
           <p className="text-xs text-[var(--color-ink-soft)]">
-            Sorted by price, active clinics only.
+            {t('services.sortedByPrice')}
           </p>
         </div>
 
@@ -102,28 +101,28 @@ export default function ServicePage({
         )}
 
         {!service && !loadError && clinics.length === 0 && (
-          <Empty>No active clinics list this service yet.</Empty>
+          <Empty>{t('services.noClinics')}</Empty>
         )}
 
         {service && clinics.length > 0 && (
-          <div className="overflow-x-auto rounded-xl border border-[var(--color-line)] sm:overflow-visible">
-            <table className="min-w-full text-left text-sm">
+          <div className="overflow-x-auto border border-[var(--color-line)] rounded-xl sm:overflow-visible">
+            <table className="min-w-full text-start text-sm">
               <caption className="sr-only">
-                Clinics offering {service.labels.join(' · ')}, sorted by price
+                {t('services.caption', { service: service.labels.join(' · ') })}
               </caption>
               <thead className="border-b border-[var(--color-line)] text-[var(--color-ink-soft)]">
                 <tr className="text-xs tracking-wide uppercase">
                   <th scope="col" className="px-4 py-3 font-medium">
-                    Clinic
+                    {t('services.clinic')}
                   </th>
                   <th scope="col" className="px-4 py-3 font-medium">
-                    Country
+                    {t('services.country')}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-right font-medium">
-                    Price
+                  <th scope="col" className="px-4 py-3 font-medium text-end">
+                    {t('services.price')}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-right font-medium">
-                    Fund
+                  <th scope="col" className="px-4 py-3 font-medium text-end">
+                    {t('services.fund')}
                   </th>
                 </tr>
               </thead>
@@ -136,16 +135,15 @@ export default function ServicePage({
                     <td className="px-4 py-3 text-[var(--color-ink-soft)]">
                       {c.country}
                     </td>
-                    <td className="mono px-4 py-3 text-right text-[var(--color-ink)]">
-                      ${formatUsdc(c.price)}
-                      <LocalEstimate amount={c.price} className="block" />
+                    <td className="px-4 py-3 mono text-end text-[var(--color-ink)]">
+                      ${formatUsdc(c.price, locale)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-end">
                       <DetailLink
                         detail={{ kind: 'clinic', id: c.address }}
                         className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-line)] bg-white px-3.5 py-1.5 text-xs font-medium text-[var(--color-brand)] transition hover:bg-[var(--color-canvas)]"
                       >
-                        Fund care →
+                        {t('services.fundCare')}
                       </DetailLink>
                     </td>
                   </tr>

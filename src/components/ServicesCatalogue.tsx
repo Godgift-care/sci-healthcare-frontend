@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useServices } from '@/lib/hooks';
-import { formatUsdc } from '@/lib/amounts';
-import { LocalEstimate } from '@/components/LocalEstimate';
+import { formatCount, formatUsdc } from '@/lib/amounts';
 import { Alert, Button, Card, Empty } from '@/components/ui';
 import { SkeletonCard } from '@/components/Skeleton';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 export function ServicesCatalogue() {
+  const { t, locale } = useLocaleContext();
   const [query, setQuery] = useState('');
   const queryRef = useRef('');
 
@@ -68,7 +69,7 @@ export function ServicesCatalogue() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Service catalogue</h2>
+        <h2 className="text-lg font-semibold">{t('services.catalogueTitle')}</h2>
       </div>
 
       <div
@@ -76,12 +77,12 @@ export function ServicesCatalogue() {
         className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]"
       >
         <label className="block">
-          <span className="sr-only">Search service name</span>
+          <span className="sr-only">{t('services.searchLabel')}</span>
           <input
             type="search"
             value={searchTerm}
             onChange={(e) => setParam(e.target.value)}
-            placeholder="Search service name"
+            placeholder={t('services.searchPlaceholder')}
             className="h-11 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm"
           />
         </label>
@@ -89,7 +90,11 @@ export function ServicesCatalogue() {
 
       {filtering && !loading && !error && (
         <p className="text-xs text-[var(--color-ink-soft)]">
-          Showing {visible.length} of {services.length} services
+          {t('services.showing', {
+            shown: formatCount(visible.length, locale),
+            total: formatCount(services.length, locale),
+            count: services.length,
+          })}
         </p>
       )}
 
@@ -104,14 +109,14 @@ export function ServicesCatalogue() {
 
       {!loading && !error && services.length === 0 && (
         <Empty
-          title="No services listed yet"
-          description="Clinics publish the care they offer from the clinic desk. Once one does, it will appear here for funders to compare."
+          title={t('services.emptyTitle')}
+          description={t('services.emptyDescription')}
           action={
             <Link
               href="/clinic"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90 max-sm:min-h-11"
             >
-              List a service
+              {t('services.listService')}
             </Link>
           }
         />
@@ -119,11 +124,11 @@ export function ServicesCatalogue() {
 
       {!loading && !error && services.length > 0 && visible.length === 0 && (
         <Empty
-          title="No services match your search."
-          description="Try a broader term, or clear the search to see the full catalogue."
+          title={t('services.noMatchTitle')}
+          description={t('services.noMatchDescription')}
           action={
             <Button variant="ghost" onClick={clearFilters}>
-              Clear search
+              {t('services.clearSearch')}
             </Button>
           }
         />
@@ -153,6 +158,8 @@ function ServiceCard({
     maxPriceDisplay: string;
   };
 }) {
+  const { t, locale } = useLocaleContext();
+
   return (
     <Link href={`/services/${s.code}`}>
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
@@ -162,26 +169,25 @@ function ServiceCard({
               {s.labels.join(' · ')}
             </h3>
             <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-              {s.clinicCount} clinic{s.clinicCount === 1 ? '' : 's'}
+              {t('services.clinicCount', { count: s.clinicCount })}
             </p>
           </div>
-          <span className="mono shrink-0 text-sm font-medium">
-            ${formatUsdc(s.minPrice)}
+          <span className="shrink-0 mono text-sm font-medium">
+            ${formatUsdc(s.minPrice, locale)}
           </span>
         </div>
 
         <div className="mt-4 border-t border-[var(--color-line)] pt-3">
           <p className="text-xs text-[var(--color-ink-soft)]">
-            Price range{' '}
+            {t('services.priceRange')}{' '}
             <span className="text-[var(--color-ink)]">
-              ${formatUsdc(s.minPrice)} – ${formatUsdc(s.maxPrice)}
-            </span>{' '}
-            <LocalEstimate amount={s.minPrice} max={s.maxPrice} />
+              ${formatUsdc(s.minPrice, locale)} – ${formatUsdc(s.maxPrice, locale)}
+            </span>
           </p>
         </div>
 
-        <p className="mt-3 text-xs font-medium text-[var(--color-brand)] underline underline-offset-2 hover:opacity-80">
-          Compare clinics →
+        <p className="mt-3 text-xs text-[var(--color-brand)] font-medium underline underline-offset-2 hover:opacity-80">
+          {t('services.compareClinics')}
         </p>
       </Card>
     </Link>
