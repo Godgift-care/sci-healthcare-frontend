@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { RETRY_FEE_MULTIPLIER, TransactionTimeoutError } from './stellar';
+import {
+  RETRY_FEE_MULTIPLIER,
+  TransactionTimeoutError,
+} from './stellar';
 
 describe('TransactionTimeoutError (#316)', () => {
   it('carries the failed hash and a descriptive message', () => {

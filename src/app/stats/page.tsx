@@ -649,11 +649,8 @@ export default function StatsPage() {
                     <td className="block font-medium sm:table-cell sm:py-2.5">
                       {country}
                     </td>
-                    <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
-                      {formatCount(stats.count, locale)} registered
-                    </td>
                     <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
-                      {formatCount(stats.active, locale)} active
+                      {stats.active} active
                     </td>
                   </tr>
                 ))
@@ -720,8 +717,8 @@ export default function StatsPage() {
                     <td className="block text-right text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {formatCount(activity.funded, locale)} funded
                     </td>
-                    <td className="block text-right text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
-                      {formatCount(activity.settled, locale)} settled
+                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                      {activity.settled} settled
                     </td>
                     <td className="block text-right font-mono text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       ${formatUsdc(activity.settledValue.toString(), locale)}

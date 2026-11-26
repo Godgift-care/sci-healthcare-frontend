@@ -738,7 +738,6 @@ async function invoke(
     !sponsored,
     180,
     fee,
-    sign,
   );
   if (isMockRpc() && !sponsored) {
     const delay = mockRpcDelayMs();
@@ -884,8 +883,6 @@ async function prepareInvocation(
   allowMock: boolean,
   timeoutSeconds = 180,
   fee?: bigint,
-  signForRestore?: SignFn,
-  restoreAttempted = false,
 ): Promise<PreparedInvocation> {
   if (allowMock && isMockRpc()) {
     recordMockCall({ kind: 'invoke', contractId, method }, recordArgs(args));

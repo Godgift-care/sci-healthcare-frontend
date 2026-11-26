@@ -131,12 +131,7 @@ export const voucher = {
   },
 
   /** create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at) -> u64 */
-  async create(
-    params: CreateVoucherParams,
-    sign: SignFn,
-    sponsored = false,
-    fee?: bigint,
-  ) {
+  async create(params: CreateVoucherParams, sign: SignFn, sponsored = false, fee?: bigint) {
     return invokeContract(
       config.contracts.voucher,
       'create_voucher',
@@ -145,25 +140,6 @@ export const voucher = {
       sign,
       sponsored,
       fee,
-    );
-  },
-
-  /**
-   * `create_voucher_with_options`: the same call with optional terms (#285).
-   * `presenceCommitment` is `SHA-256(secret)` as hex; `disputeWindow` is in
-   * seconds. Both unset behaves exactly like `create`.
-   */
-  async createWithOptions(
-    params: CreateVoucherParams,
-    options: { presenceCommitment?: string; disputeWindow?: number },
-    sign: SignFn,
-  ) {
-    return invokeContract(
-      config.contracts.voucher,
-      'create_voucher_with_options',
-      await createVoucherOptionsArgs(params, options),
-      params.funder,
-      sign,
     );
   },
 

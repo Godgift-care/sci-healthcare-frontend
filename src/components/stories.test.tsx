@@ -5,15 +5,8 @@ import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
-// Stories render components that reach for the Next router (DetailLink,
-// SiteHeader); jsdom has none mounted, so provide the hooks they call.
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    prefetch: vi.fn(),
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-  }),
+  useRouter: () => ({ prefetch: vi.fn() }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));

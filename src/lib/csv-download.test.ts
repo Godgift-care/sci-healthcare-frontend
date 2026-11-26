@@ -40,10 +40,7 @@ describe('downloadCsv (#316 coverage)', () => {
   });
 
   it('creates a blob URL, triggers a click, and cleans up', () => {
-    downloadCsv('test.csv', [
-      ['a', 'b'],
-      ['1', '2'],
-    ]);
+    downloadCsv('test.csv', [['a', 'b'], ['1', '2']]);
     expect(createObjectURLSpy).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
     expect(revokeObjectURLSpy).toHaveBeenCalledWith('mock-url');

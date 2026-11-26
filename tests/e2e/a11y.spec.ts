@@ -80,10 +80,7 @@ for (const route of ROUTES) {
 
       const results = await new AxeBuilder({ page })
         .options({
-          runOnly: {
-            type: 'tag',
-            values: ['wcag2a', 'wcag2aa', 'section508', 'best-practice'],
-          },
+          runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'section508', 'best-practice'] },
         })
         .analyze();
 
