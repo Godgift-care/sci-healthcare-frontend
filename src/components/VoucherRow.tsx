@@ -1,14 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { DetailLink } from '@/components/DetailLink';
-import {
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-  type Ref,
-} from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import useSWR from 'swr';
 
 import { api, type Voucher } from '@/lib/api';
 import {
@@ -27,6 +21,7 @@ import {
 } from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
+import { getScannedPresenceCode } from '@/lib/presence-proof';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
 import {
@@ -43,11 +38,8 @@ import { AddressName } from './AddressName';
 import { useToast } from './Toast';
 import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { VerifyPatient } from './VerifyPatient';
-import {
-  availableActions,
-  type VoucherAction as Action,
-} from '@/lib/voucher-actions';
-import type { RestoreFootprintSignContext } from '@/lib/stellar';
+import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
+import { useLocaleContext } from '@/i18n/LocaleContext';
 
 /** Funnel step per contract write. Names only — never any properties. */
 const ACTION_EVENTS = {
@@ -147,29 +139,42 @@ export function VoucherRow({
   const [draft, setDraft] = useState('');
   const [editingNote, setEditingNote] = useState(false);
 
+  // #285: a voucher funded with a presence commitment can only be claimed
+  // with the code the patient brings. Read the commitment from the contract
+  // so the desk asks before the wallet is prompted.
+  const { data: voucherOptions } = useSWR(
+    actions.includes('claim') ? ['voucher-options', v.id] : null,
+    () => protocol.options(v.id),
+  );
+  const presenceRequired = Boolean(voucherOptions?.presenceCommitment);
+  // A code scanned from the patient's pass arrives through session storage;
+  // typing replaces it. The fallback avoids a setState-in-effect.
+  const { data: scannedPresenceCode } = useSWR(
+    actions.includes('claim') ? ['presence-code', v.id] : null,
+    () => getScannedPresenceCode(v.id),
+  );
+  const [typedPresenceCode, setTypedPresenceCode] = useState<string | null>(null);
+  const presenceCode = typedPresenceCode ?? scannedPresenceCode ?? '';
+
   async function run(action: Action) {
     if (!address) return void connect();
     setBusy(action);
     setTransactionStatus('signing');
     try {
-      const wrappedSign = async (
-        xdr: string,
-        context?: RestoreFootprintSignContext,
-      ) => {
-        setTransactionStatus('signing');
-        const signed = await signTransaction(xdr, context);
-        setTransactionStatus('submitting');
-        return signed;
-      };
-      const fns: Record<
-        Action,
-        () => Promise<{ hash: string; queued?: boolean }>
-      > = {
-        claim: () => protocol.claim(address, v.id, wrappedSign),
-        attest: () => protocol.attest(address, v.id, wrappedSign),
-        settle: () => protocol.settle(address, v.id, wrappedSign),
-        refund: () => protocol.refund(address, v.id, wrappedSign),
-        dispute: () => protocol.dispute(address, v.id, reason, wrappedSign),
+      const fns: Record<Action, () => Promise<{ hash: string }>> = {
+        claim: () =>
+          presenceRequired
+            ? protocol.claimWithProof(
+                address,
+                v.id,
+                presenceCode.trim(),
+                signTransaction,
+              )
+            : protocol.claim(address, v.id, signTransaction),
+        attest: () => protocol.attest(address, v.id, signTransaction),
+        settle: () => protocol.settle(address, v.id, signTransaction),
+        refund: () => protocol.refund(address, v.id, signTransaction),
+        dispute: () => protocol.dispute(address, v.id, reason, signTransaction),
       };
       const res = await fns[action]();
       setTransactionStatus('confirming');
@@ -446,7 +451,8 @@ export function VoucherRow({
                 disabled ||
                 busy !== null ||
                 reconciling !== null ||
-                (a === 'claim' && requirePatientMatch && !patientVerified)
+                (a === 'claim' && requirePatientMatch && !patientVerified) ||
+                (a === 'claim' && presenceRequired && !presenceCode.trim())
               }
               onClick={() => {
                 if (a === 'dispute') setDisputing(true);
@@ -465,6 +471,28 @@ export function VoucherRow({
                   : LABELS[a]}
             </Button>
           ))}
+        </div>
+      )}
+
+      {available.includes('claim') && presenceRequired && (
+        <div className="mt-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
+          <label className="block">
+            <span className="text-sm font-medium">{t('voucher.presenceCode')}</span>
+            <input
+              value={presenceCode}
+              onChange={(e) => setTypedPresenceCode(e.target.value.trim())}
+              placeholder={t('voucher.presenceCodePlaceholder')}
+              className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-xs"
+            />
+          </label>
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+            {t('voucher.presenceCodeNote')}
+          </p>
+          {!presenceCode.trim() && (
+            <p role="status" className="mt-2 text-xs text-[var(--color-danger)]">
+              {t('voucher.presenceRequired')}
+            </p>
+          )}
         </div>
       )}
 

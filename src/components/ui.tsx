@@ -186,14 +186,17 @@ export function ExplorerLink({
 export function NavLink({
   href,
   children,
+  compact = false,
 }: {
   href: string;
   children: ReactNode;
+  /** Tighter horizontal padding for headers that carry an extra link. */
+  compact?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="rounded-md px-3 py-2 text-sm font-medium text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
+      className={`rounded-md py-2 text-sm font-medium text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] ${compact ? 'px-1.5' : 'px-3'}`}
     >
       {children}
     </Link>

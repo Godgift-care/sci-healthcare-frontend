@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import useSWR from 'swr';
 
-import { formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
-import { LocalEstimate } from '@/components/LocalEstimate';
+import { formatDate, formatUsdc, toAmountInput, toBaseUnits } from '@/lib/amounts';
 import { trackEvent } from '@/lib/analytics';
 import { settleableVouchers } from '@/lib/batch-settle';
 import type { VoucherStatus } from '@/lib/api';
@@ -15,20 +14,24 @@ import {
   summariseEarnings,
 } from '@/lib/clinic-earnings';
 import { explorerTx } from '@/lib/config';
+import {
+  earliestEffectiveAt,
+  fromDateTimeLocalValue,
+  isNoticeLongEnough,
+  toDateTimeLocalValue,
+} from '@/lib/price-notice';
 import { humaniseError, REGISTRY_ERRORS } from '@/lib/errors';
 import {
   useLiveUpdates,
+  useNow,
   useProvider,
   useProviderReceipts,
   useProviderStats,
   useProviderVouchers,
   useVouchers,
 } from '@/lib/hooks';
-import {
-  registry,
-  voucher as protocol,
-  type ProviderStanding,
-} from '@/lib/protocol';
+import { saveScannedPresenceCode } from '@/lib/presence-proof';
+import { registry, voucher as protocol, type ProviderStanding } from '@/lib/protocol';
 import {
   VOUCHER_STATUSES,
   filterVouchers,
@@ -137,6 +140,11 @@ export default function ClinicDeskPage() {
   const [code, setCode] = useState('');
   const [label, setLabel] = useState('');
   const [price, setPrice] = useState('');
+  // Capacity and scheduled price changes (#284, #282).
+  const [capacityInput, setCapacityInput] = useState('');
+  const [scheduledCode, setScheduledCode] = useState('');
+  const [scheduledPrice, setScheduledPrice] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
   // Delisting takes a second click, like disputing.
   const [confirmRemove, setConfirmRemove] = useState<number | null>(null);
   // Incoming-voucher filters. A clerk reads one number off a patient's pass,
@@ -234,10 +242,54 @@ export default function ClinicDeskPage() {
     void mutateStatus();
     void mutateStats();
     void mutateEarningsVouchers();
-    void mutateEarningsReceipts();
+    void mutateCapacity();
+    void mutateExposure();
+    void mutateUpcoming();
   };
 
   const services = (provider?.services ?? []).filter((s) => s.active !== false);
+  const serviceCodes = services.map((s) => s.code).join(',');
+
+  // Capacity (#284): the contract's declared maximum and the clinic's own
+  // open-voucher count, both read on chain so the desk and a funder agree.
+  const { data: capacity, mutate: mutateCapacity } = useSWR(
+    address && standing && standing !== 'Unregistered'
+      ? ['registry:capacity', address]
+      : null,
+    () => registry.capacity(address!),
+  );
+  const { data: exposure, mutate: mutateExposure } = useSWR(
+    address && standing && standing !== 'Unregistered'
+      ? ['voucher:exposure', address]
+      : null,
+    () => protocol.exposure(address!),
+  );
+  const outstanding = exposure?.vouchers ?? null;
+  const full =
+    capacity !== undefined &&
+    capacity > 0 &&
+    outstanding !== null &&
+    outstanding >= capacity;
+
+  // Scheduled price changes (#282). One read per listed service; a catalogue
+  // is small and the answer is the contract's, not the indexer's.
+  const { data: upcoming, mutate: mutateUpcoming } = useSWR(
+    address && standing === 'Active' && serviceCodes
+      ? ['registry:upcoming', address, serviceCodes]
+      : null,
+    async () => {
+      const entries = await Promise.all(
+        services.map(
+          async (service) =>
+            [service.code, await registry.upcomingPrice(address!, service.code)] as const,
+        ),
+      );
+      return Object.fromEntries(entries.filter(([, change]) => change.price > 0n));
+    },
+  );
+  const now = useNow();
+  const nowSec = Math.floor(now / 1000);
+  const minScheduleAt = toDateTimeLocalValue(earliestEffectiveAt(nowSec));
 
   // Vouchers past their dispute window, in list order. Everything else is
   // left alone: a voucher still inside its window cannot be settled, and a
@@ -334,6 +386,53 @@ export default function ClinicDeskPage() {
     setSearch('');
   }
 
+  function saveCapacity() {
+    const value = Number(capacityInput);
+    if (
+      capacityInput.trim() === '' ||
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value > 0xffffffff
+    ) {
+      toast.error(t('clinic.capacityPlaceholder'));
+      return;
+    }
+    void submit(() =>
+      registry.setCapacity(address!, value, signTransaction),
+    );
+  }
+
+  function schedulePriceChange() {
+    const effectiveAt = fromDateTimeLocalValue(scheduledAt);
+    if (
+      effectiveAt === null ||
+      !isNoticeLongEnough(effectiveAt, Math.floor(Date.now() / 1000))
+    ) {
+      toast.error(t('clinic.priceNoticeError'));
+      return;
+    }
+    let newPrice: bigint;
+    try {
+      newPrice = toBaseUnits(scheduledPrice);
+    } catch {
+      toast.error(t('clinic.priceSchedulePrice'));
+      return;
+    }
+    if (!scheduledCode || newPrice <= 0n) {
+      toast.error(t('clinic.priceSchedulePrice'));
+      return;
+    }
+    void submit(() =>
+      registry.scheduleServicePrice(
+        address!,
+        Number(scheduledCode),
+        newPrice,
+        effectiveAt,
+        signTransaction,
+      ),
+    );
+  }
+
   return (
     <div className="clinic-desk-page space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -344,6 +443,22 @@ export default function ClinicDeskPage() {
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
             {standing === null ? t('clinic.checking') : STANDING_TEXT[standing]}
           </p>
+          {standing !== null && standing !== 'Unregistered' && capacity !== undefined && (
+            <p
+              className={`mt-1 text-sm font-medium ${
+                full ? 'text-[var(--color-danger)]' : 'text-emerald-700'
+              }`}
+            >
+              {full
+                ? t('clinic.capacityFull')
+                : capacity === 0
+                  ? t('clinic.capacityUnlimitedShort', { open: outstanding ?? 0 })
+                  : t('clinic.capacityOutstanding', {
+                      open: outstanding ?? 0,
+                      max: capacity,
+                    })}
+            </p>
+          )}
         </div>
         <div>
           <Button
@@ -375,8 +490,10 @@ export default function ClinicDeskPage() {
       <QrScannerModal
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onScan={(voucherId) => {
+        onScan={(voucherId, presenceSecret) => {
           setScannerOpen(false);
+          // The code stays in session storage; it is never put in a URL.
+          if (presenceSecret) saveScannedPresenceCode(voucherId, presenceSecret);
           router.push(`/vouchers/${voucherId}`);
         }}
       />
@@ -733,6 +850,17 @@ export default function ClinicDeskPage() {
                         ${formatUsdc(s.price, locale)}
                       </span>
                     </div>
+                    {upcoming?.[s.code] && (
+                      <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
+                        {t('clinic.priceScheduled', {
+                          price: `$${formatUsdc(upcoming[s.code].price, locale)}`,
+                          date: formatDate(
+                            new Date(upcoming[s.code].effectiveAt * 1000),
+                            locale,
+                          ),
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -840,6 +968,95 @@ export default function ClinicDeskPage() {
               : editing
                 ? t('clinic.updateService', { code })
                 : t('clinic.listService')}
+          </Button>
+        </Card>
+      )}
+
+      {standing === 'Active' && (
+        <Card className="space-y-3 p-5">
+          <div>
+            <h2 className="font-medium">{t('clinic.capacity')}</h2>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.capacityNote')}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <input
+              value={capacityInput}
+              onChange={(e) => setCapacityInput(e.target.value.replace(/\D/g, ''))}
+              placeholder={
+                capacity !== undefined
+                  ? String(capacity)
+                  : t('clinic.capacityPlaceholder')
+              }
+              inputMode="numeric"
+              aria-label={t('clinic.capacity')}
+              className="mono w-40 rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+            />
+            <Button disabled={busy || capacityInput === ''} onClick={saveCapacity}>
+              {busy ? t('common.confirming') : t('clinic.capacitySave')}
+            </Button>
+            <span className="text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.capacityUnlimited')}
+            </span>
+          </div>
+        </Card>
+      )}
+
+      {standing === 'Active' && (
+        <Card className="space-y-3 p-5">
+          <div>
+            <h2 className="font-medium">{t('clinic.priceSchedule')}</h2>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.priceScheduleNote')}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.priceScheduleService')}
+              <select
+                value={scheduledCode}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setScheduledCode(next);
+                  const service = services.find((s) => String(s.code) === next);
+                  if (service) setScheduledPrice(toAmountInput(service.price));
+                }}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+              >
+                <option value="">—</option>
+                {services.map((service) => (
+                  <option key={service.code} value={service.code}>
+                    {service.label} ({service.code})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.priceSchedulePrice')}
+              <input
+                value={scheduledPrice}
+                onChange={(e) => setScheduledPrice(e.target.value)}
+                inputMode="decimal"
+                className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.priceScheduleWhen')}
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                min={minScheduleAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+          <Button
+            disabled={busy || !scheduledCode || !scheduledPrice || !scheduledAt}
+            onClick={schedulePriceChange}
+          >
+            {busy ? t('common.confirming') : t('clinic.priceScheduleSubmit')}
           </Button>
         </Card>
       )}

@@ -4,21 +4,14 @@ import { DetailLink } from '@/components/DetailLink';
 import { notFound } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 
+import useSWR from 'swr';
+
 import { ApiError } from '@/lib/api';
-import { formatCurrency, formatDate, formatUsdc } from '@/lib/amounts';
-import { LocalEstimate } from '@/components/LocalEstimate';
+import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
-import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
-import {
-  useLiveUpdates,
-  useNameIndex,
-  useNow,
-  useProviders,
-  useVoucher,
-  useVoucherEvents,
-} from '@/lib/hooks';
-import { voucher as voucherContract } from '@/lib/protocol';
-import { eligibleRedirects } from '@/lib/redirect';
+import { useLiveUpdates, useNameIndex, useNow, useVoucher, useVoucherEvents } from '@/lib/hooks';
+import { getPresenceSecret } from '@/lib/presence-proof';
+import { sponsor as sponsorDesk } from '@/lib/protocol';
 import { problemReportUrl } from '@/lib/report-problem';
 import { rememberRecentVoucherId } from '@/lib/recent-vouchers';
 import {
@@ -131,6 +124,27 @@ export default function VoucherPage({
   // exactly as before, only without the "view transaction" links.
   const { events } = useVoucherEvents(validId ? id : undefined);
   useLiveUpdates({ voucherId: validId ? id : undefined });
+
+  // #285: the secret saved when this browser funded the voucher, so the
+  // patient pass can carry the code. Nothing is fetched for it: an SWR
+  // fetcher reads local storage once the voucher id is known.
+  const { data: presenceSecret = null } = useSWR(
+    validId && v?.id ? ['presence-secret', v.id] : null,
+    () => getPresenceSecret(String(v!.id)),
+  );
+
+  // #293: which match, if any, this voucher is on either side of. Both
+  // reads are skipped entirely when the sponsor contract is not configured.
+  const sponsorReady = sponsorDesk.enabled();
+  const { data: matchAsOriginal } = useSWR(
+    sponsorReady && v?.id ? ['sponsor-match', v.id] : null,
+    () => sponsorDesk.match(String(v!.id)),
+  );
+  const { data: matchAsMatched } = useSWR(
+    sponsorReady && v?.id ? ['sponsor-match-of', v.id] : null,
+    () => sponsorDesk.matchOf(String(v!.id)),
+  );
+  const match = matchAsMatched ?? matchAsOriginal ?? null;
 
   if (!validId) notFound();
   // An unknown voucher number is a missing page, not an API failure.
@@ -325,6 +339,22 @@ export default function VoucherPage({
             </DetailLink>{' '}
             · {v.provider.country}
           </p>
+          {match && (
+            <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
+              <span className="font-medium text-[var(--color-brand)]">
+                {t('voucher.matchedBy', {
+                  sponsor: names.get(match.sponsor) ?? shortAddress(match.sponsor),
+                })}
+              </span>
+              {' · '}
+              {matchAsMatched
+                ? t('voucher.matchOriginal', { id: match.originalVoucherId })
+                : t('voucher.matchAdded', {
+                    amount: `$${formatUsdc(match.amount, locale)}`,
+                    id: match.matchedVoucherId,
+                  })}
+            </p>
+          )}
         </div>
         <div className="text-end">
           <div className="mono text-2xl font-semibold">
@@ -343,6 +373,7 @@ export default function VoucherPage({
         providerName={v.provider.name}
         amount={formatUsdc(v.amount, locale)}
         expiresAt={formatDate(v.expiresAt, locale)}
+        presenceSecret={presenceSecret}
       />
 
       <div className="grid gap-6 md:grid-cols-[2fr_1fr] print:grid-cols-[2fr_1fr] print:gap-3">
