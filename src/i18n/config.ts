@@ -15,7 +15,11 @@ export function isLocale(value: unknown): value is Locale {
   );
 }
 
-export const messages: Record<Locale, typeof en> = {
+/** Message catalog, English as base with allowlisted keys. Extra keys permitted. */
+export type Messages = Record<Locale, Record<string, unknown>>;
+
+/** Message catalog, English as the base with optional extra keys. */
+export const messages: Messages = {
   en,
   fr,
   sw,
@@ -28,8 +32,7 @@ export const localeLabels: Record<Locale, string> = {
   fr: 'Français',
   sw: 'Kiswahili',
   yo: 'Yorùbá',
-  ha: 'Hausa',
-};
+} as const;
 
 export const localeNumberFormats: Record<Locale, string> = {
   en: 'en-US',

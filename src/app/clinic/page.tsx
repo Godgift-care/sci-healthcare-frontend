@@ -52,7 +52,7 @@ import { useLocaleContext } from '@/i18n/LocaleContext';
 import { useNow } from '@/lib/hooks/useNow';
 
 /** null while loading; 'Unregistered' when the registry has no entry. */
-type Standing = ProviderStanding | 'Unregistered' | null;
+type Standing = ProviderStanding | 'Retired' | 'Unregistered' | null;
 
 const subscribeToTimeZone = () => () => {};
 const getBrowserTimeZone = () =>
@@ -105,6 +105,8 @@ const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
   Active: 'This clinic is verified and can receive vouchers.',
   Suspended:
     'This clinic is suspended. It cannot list services, receive new vouchers or claim funded ones. Contact the administrator.',
+  Retired:
+    'This clinic has been retired. It cannot receive new vouchers. Vouchers already funded settle normally.',
 };
 
 /** `YYYY-MM` as a localised short month and year, read in UTC. */
@@ -138,6 +140,8 @@ export default function ClinicDeskPage() {
   const toast = useToast();
 
   const [name, setName] = useState('');
+  const [reasonCode, setReasonCode] = useState<number | null>(null);
+  const [confirmRetire, setConfirmRetire] = useState<number | null>(null);
   const [country, setCountry] = useState('');
   const [code, setCode] = useState('');
   const [label, setLabel] = useState('');
@@ -180,8 +184,17 @@ export default function ClinicDeskPage() {
     status !== undefined
       ? (status ?? 'Unregistered')
       : provider
-        ? provider.status
+        ? (provider.status === 'Suspended' ||
+            (provider.status as 'Retired' | 'Suspended' | 'Active' | 'Pending') === 'Retired')
+          ? 'Retired'
+          : provider.status === 'Active'
+          ? 'Active'
+          : 'Pending'
         : null;
+// status reason code from the registry is not exposed in the API Provider type;
+  // display status text only. The reason code could be read from the contract
+  // directly if needed in a future enhancement.
+  const statusReason = null;
 
   // Only a registered clinic has statistics to read; an unregistered wallet
   // would get a 404 from the endpoint on every page load.
@@ -359,6 +372,26 @@ export default function ClinicDeskPage() {
     }
   }
 
+  async function retireVoucher(reasonCode: number) {
+    if (!address) return void connect();
+    setBusy(true);
+    try {
+      await registry.retire(address, reasonCode, signTransaction);
+      setConfirmRetire(null);
+      refreshAll();
+      toast.success(
+        <>
+          {t('clinic.retiredSuccess')}{' '}
+          <ExplorerLink href={explorerTx('')}>{t('common.viewTransaction')}</ExplorerLink>{' '}
+        </>,
+      );
+    } catch (err) {
+      toast.error(humaniseError(err, REGISTRY_ERRORS));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function edit(s: { code: number; label: string; price: string }) {
     setCode(String(s.code));
     setLabel(s.label);
@@ -444,7 +477,11 @@ export default function ClinicDeskPage() {
             {t('clinic.title')}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-            {standing === null ? t('clinic.checking') : STANDING_TEXT[standing]}
+            {standing === null
+              ? t('clinic.checking')
+              : statusReason
+                ? `${STANDING_TEXT[standing]} — ${statusReason}`
+                : STANDING_TEXT[standing]}
           </p>
           {standing !== null && standing !== 'Unregistered' && capacity !== undefined && (
             <p
@@ -840,83 +877,113 @@ export default function ClinicDeskPage() {
             </p>
           ) : (
             <ul className="mt-3 divide-y divide-[var(--color-line)]">
-              {services.map((s) => (
-                <li
-                  key={s.code}
-                  className="flex flex-wrap items-center justify-between gap-3 py-3"
-                >
-                  <div>
-                    <div className="text-sm font-medium">{s.label}</div>
-                    <div className="text-xs text-[var(--color-ink-soft)]">
-                      {t('clinic.code', { code: s.code })} ·{' '}
-                      <span className="mono">
-                        ${formatUsdc(s.price, locale)}
-                      </span>
-                    </div>
-                    {upcoming?.[s.code] && (
-                      <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-                        {t('clinic.priceScheduled', {
-                          price: `$${formatUsdc(upcoming[s.code].price, locale)}`,
-                          date: formatDate(
-                            new Date(upcoming[s.code].effectiveAt * 1000),
-                            locale,
-                          ),
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() => edit(s)}
+              {services.map((s) => {
+                  const isPaused = s.active === false;
+                  return (
+                    <li
+                      key={s.code}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3"
                     >
-                      {t('clinic.edit')}
-                    </Button>
-                    {confirmRemove === s.code ? (
-                      <>
-                        <Button
-                          variant="danger"
-                          disabled={busy}
-                          onClick={() =>
-                            void submit(() =>
-                              registry.removeService(
-                                address,
-                                s.code,
-                                signTransaction,
-                              ),
-                            )
-                          }
-                        >
-                          {busy
-                            ? t('common.confirming')
-                            : t('clinic.confirmDelist')}
+                      <div>
+                        <div className="text-sm font-medium">{s.label}</div>
+                        <div className="text-xs text-[var(--color-ink-soft)]">
+                          {t('clinic.code', { code: s.code })} · <span className="mono">${formatUsdc(s.price, locale)}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" disabled={busy} onClick={() => edit(s)}>
+                          {t('clinic.edit')}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => setConfirmRemove(null)}
-                        >
-                          {t('common.cancel')}
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => setConfirmRemove(s.code)}
-                      >
-                        {t('clinic.delist')}
-                      </Button>
-                    )}
-                  </div>
-                </li>
-              ))}
+                        {confirmRemove === s.code ? (
+                          <>
+                            <Button
+                              variant="danger"
+                              disabled={busy}
+                              onClick={() =>
+                                void submit(() =>
+                                  registry.removeService(address, s.code, signTransaction),
+                                )
+                              }
+                            >
+                              {busy ? t('common.confirming') : t('clinic.confirmDelist')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={() => setConfirmRemove(null)}
+                            >
+                              {t('common.cancel')}
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => setConfirmRemove(s.code)}
+                          >
+                            {t('clinic.delist')}
+                          </Button>
+                        )}
+                        {/* Pause/Resume toggle */}
+                        {standing === 'Active' && (
+                          <Button
+                            variant={isPaused ? 'ghost' : 'ghost'}
+                            disabled={busy}
+                            onClick={() => registry.setServiceAvailable(address, s.code, !isPaused, signTransaction)}
+                          >
+                            {isPaused ? t('clinic.resumeService') : t('clinic.pauseService')}
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
             </ul>
           )}
           {confirmRemove !== null && (
             <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
               {t('clinic.delistNote')}
+            </p>
+          )}
+        </Card>
+      )}
+
+      {standing === 'Active' && (
+        <Card className="p-5">
+          <h2 className="font-medium">{t('clinic.retireTitle')}</h2>
+          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+            {t('clinic.retireNote')}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                {t('clinic.retireReasonCode')}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={4}
+                value={reasonCode ?? ''}
+                onChange={(e) => setReasonCode(Number(e.target.value) || null)}
+                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <Button
+                variant="danger"
+                disabled={busy || !reasonCode}
+                onClick={() => {
+                  retireVoucher(reasonCode ?? 0);
+                  setConfirmRetire(null);
+                }}
+              >
+                {busy ? t('common.confirming') : t('clinic.retire')}
+              </Button>
+            </div>
+          </div>
+          {confirmRetire !== null && (
+            <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
+              {t('clinic.retireConfirm', { reasonCode: reasonCode ?? '' })}
             </p>
           )}
         </Card>

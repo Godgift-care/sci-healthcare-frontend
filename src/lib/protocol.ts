@@ -522,6 +522,16 @@ export const voucher = {
     );
   },
 
+  /** reduce(voucher_id, new_amount) — reduce the escrowed amount. */
+  async reduce(caller: string, voucherId: string, newAmount: bigint, sign: SignFn) {
+    const client = getVoucherClient();
+    const args = client.spec.funcArgsToScVals('reduce', {
+      voucher_id: BigInt(voucherId),
+      new_amount: newAmount,
+    });
+    return invokeContract(config.contracts.voucher, 'reduce', args, caller, sign);
+  },
+
   /**
    * Refunds selected vouchers one per transaction. Keeping each write to one
    * contract invocation stays within Soroban transaction resource limits,
@@ -634,6 +644,28 @@ export const registry = {
   /** get_admin() */
   async admin(): Promise<string> {
     return readContract<string>(config.contracts.registry, 'get_admin');
+  },
+
+  /** set_service_available(provider_addr, code, available) */
+  async setServiceAvailable(
+    provider: string,
+    code: number,
+    available: boolean,
+    sign: SignFn,
+  ) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('set_service_available', {
+      provider_addr: provider,
+      code,
+      available,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'set_service_available',
+      args,
+      provider,
+      sign,
+    );
   },
 
   /** set_provider_status(admin, provider_addr, status) */
@@ -771,6 +803,22 @@ export const registry = {
     return invokeContract(
       config.contracts.registry,
       'remove_service',
+      args,
+      provider,
+      sign,
+    );
+  },
+
+  /** retire(provider_addr, reason_code). Moves a provider to Retired state permanently. */
+  async retire(provider: string, reasonCode: number, sign: SignFn) {
+    const client = getRegistryClient();
+    const args = client.spec.funcArgsToScVals('retire', {
+      provider_addr: provider,
+      reason_code: reasonCode,
+    });
+    return invokeContract(
+      config.contracts.registry,
+      'retire',
       args,
       provider,
       sign,

@@ -1,7 +1,7 @@
 import type { VoucherStatus } from './api';
 
 /** Contract writes the UI can perform from a voucher row. */
-export type WriteAction = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute';
+export type WriteAction = 'claim' | 'attest' | 'settle' | 'refund' | 'dispute' | 'reduce';
 
 /**
  * The status the indexer should converge to after each successful write.
@@ -13,6 +13,7 @@ export const EXPECTED_STATUS: Record<WriteAction, VoucherStatus> = {
   settle: 'Settled',
   refund: 'Refunded',
   dispute: 'Disputed',
+  reduce: 'Funded',
 };
 
 export type PollOutcome = 'matched' | 'timeout';

@@ -1,11 +1,67 @@
 import type { ReadyStatus, VersionInfo } from './api';
 
 /**
- * What the status page (#168) says about the read path.
+ * Registry status change reason codes.
  *
- * Pure functions of the indexer's `/ready` and `/version` answers, so the
- * wording — which is the point of the page — is covered by unit tests.
+ * The registry records a reason code with each status change. These codes
+ * are a shared convention between the app, the indexer and whoever resolves
+ * status changes. Add codes, never renumber.
  */
+export const REGISTRY_STATUS_REASONS = [
+  { code: 1, label: 'Verified by administrator' },
+  { code: 2, label: 'Suspended by administrator' },
+  { code: 3, label: 'Retired by administrator' },
+  { code: 4, label: 'Other' },
+] as const;
+
+export const REGISTRY_STATUS_REASONS_I18N: Record<string, Record<number, string>> = {
+  en: {
+    1: 'Verified by administrator',
+    2: 'Suspended by administrator',
+    3: 'Retired by administrator',
+    4: 'Other',
+  },
+  fr: {
+    1: 'Vérifié par l\'administrateur',
+    2: 'Suspendu par l\'administrateur',
+    3: 'Retiré par l\'administrateur',
+    4: 'Autre',
+  },
+  sw: {
+    1: 'Imehibitishwa na msimamizi',
+    2: 'Imesimamishwa na msimamizi',
+    3: 'Imesimamiwa na msimamizi',
+    4: 'Saaidi',
+  },
+  yo: {
+    1: 'Dìẹ́tà sí admini',
+    2: 'Dìẹ́tà sí admini',
+    3: 'Dìẹ́tà sí admini',
+    4: 'Ìdá',
+  },
+};
+
+export type RegistryStatusReasonCode = (typeof REGISTRY_STATUS_REASONS)[number]['code'];
+
+export function registryStatusReasonLabel(
+  code: number | null | undefined,
+  locale = 'en',
+): string | null {
+  if (code === null || code === undefined) return null;
+  const table = REGISTRY_STATUS_REASONS_I18N[locale] ?? REGISTRY_STATUS_REASONS_I18N.en;
+  if (table && table[code]) {
+    return table[code];
+  }
+  const fallback = REGISTRY_STATUS_REASONS.find((r) => r.code === code)?.label;
+  if (fallback) return fallback;
+  return locale === 'fr'
+    ? `Motif #${code}`
+    : locale === 'sw'
+      ? `Sababu #${code}`
+      : locale === 'yo'
+        ? `Ìdí #${code}`
+        : `Reason #${code}`;
+}
 
 /** Stellar closes a ledger roughly every five seconds. */
 export const LEDGER_SECONDS = 5;

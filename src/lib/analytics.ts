@@ -30,6 +30,7 @@ export const ANALYTICS_EVENTS = [
   'dispute_opened',
   'voucher_settled',
   'voucher_refunded',
+  'voucher_reduced',
 ] as const;
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];

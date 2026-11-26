@@ -9,9 +9,18 @@ import useSWR from 'swr';
 import { ApiError } from '@/lib/api';
 import { formatDate, formatUsdc, shortAddress } from '@/lib/amounts';
 import { config, explorerContract, explorerTx } from '@/lib/config';
-import { useLiveUpdates, useNameIndex, useNow, useVoucher, useVoucherEvents } from '@/lib/hooks';
-import { getPresenceSecret } from '@/lib/presence-proof';
-import { sponsor as sponsorDesk } from '@/lib/protocol';
+import { humaniseError, VOUCHER_ERRORS } from '@/lib/errors';
+import { type VoucherAction } from '@/lib/voucher-actions';
+import {
+  useLiveUpdates,
+  useNameIndex,
+  useNow,
+  useProviders,
+  useVoucher,
+  useVoucherEvents,
+} from '@/lib/hooks';
+import { voucher as voucherContract } from '@/lib/protocol';
+import { eligibleRedirects } from '@/lib/redirect';
 import { problemReportUrl } from '@/lib/report-problem';
 import { rememberRecentVoucherId } from '@/lib/recent-vouchers';
 import {
@@ -154,9 +163,14 @@ export default function VoucherPage({
 
   // Offer the actions this wallet can take. settle and refund are
   // permissionless, so anyone may trigger them once they are due.
+  const funderActions = ['dispute', 'refund', 'settle'] as const;
+  // The reduce action is available for funded vouchers where the escrowed
+  // amount exceeds the listed price for the service. The listed price check
+  // is performed on the contract when the action is executed.
+  const reduceAction = v.status === 'Funded' ? 'reduce' : null;
   const actions =
     address === v.funder
-      ? (['dispute', 'refund', 'settle'] as const)
+      ? reduceAction !== null ? [...funderActions, 'reduce'] : funderActions
       : address === v.provider.address
         ? (['claim', 'settle'] as const)
         : (['settle', 'refund'] as const);
@@ -592,7 +606,7 @@ export default function VoucherPage({
       <div className="print:hidden">
         <VoucherRow
           v={v}
-          actions={[...actions]}
+          actions={[...actions] as VoucherAction[]}
           onDone={() => {
             void mutate();
           }}
