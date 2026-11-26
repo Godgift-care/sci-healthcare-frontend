@@ -13,24 +13,7 @@ import {
 import { config } from './config';
 import { formatXlm } from './amounts';
 import { mockSignRejects, mockWalletAddress } from './e2e-seam';
-import {
-  PASSKEY_WALLET_ID,
-  PasskeyModule,
-  connectPasskeyWallet,
-  getStoredPasskeyAddress,
-  signWithPasskey,
-} from './passkey';
-import {
-  checkAccountFunded,
-  getAccountSpendableBalance,
-  type RestoreFootprintSignContext,
-} from './stellar';
-import {
-  getStorageItem,
-  removeStorageItem,
-  setStorageItem,
-  STORAGE_KEYS,
-} from './storage';
+import type { RestoreFootprintSignContext } from './stellar';
 import { defaultLocale, isLocale } from '@/i18n/config';
 import { translate } from '@/i18n/translate';
 import {
@@ -39,6 +22,18 @@ import {
   walletConnectChainId,
   walletConnectMetadata,
 } from './wallet-connect';
+
+export const PASSKEY_WALLET_ID = 'passkey-smart-wallet';
+const PASSKEY_STORAGE_ADDR = 'sci:passkey:address';
+
+function getStoredPasskeyAddress(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(PASSKEY_STORAGE_ADDR);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Wallet connection.
@@ -113,10 +108,12 @@ function ensureInit(): Promise<void> {
       { StellarWalletsKit, Networks },
       { FREIGHTER_ID },
       { defaultModules },
+      { PasskeyModule },
     ] = await Promise.all([
       import('@creit.tech/stellar-wallets-kit'),
       import('@creit.tech/stellar-wallets-kit/modules/freighter'),
       import('@creit.tech/stellar-wallets-kit/modules/utils'),
+      import('./passkey'),
     ]);
     const network =
       config.network === 'public'
@@ -203,10 +200,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
   const [networkMismatch, setNetworkMismatch] = useState(false);
 
-  // Restore a previous session silently (#59).
+  // Restore a previous session silently (#59, #342: scheduled after idle).
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let cancelIdle: (() => void) | undefined;
+
+    const restore = async () => {
       const mocked = mockWalletAddress();
       if (mocked) {
         if (!cancelled) {
@@ -250,9 +249,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } catch {
         // Not connected yet or wallet locked.
       }
-    })();
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = (
+        window as unknown as {
+          requestIdleCallback: (cb: () => void, opts: { timeout: number }) => number;
+        }
+      ).requestIdleCallback(
+        () => {
+          void restore();
+        },
+        { timeout: 2000 },
+      );
+      cancelIdle = () =>
+        (
+          window as unknown as { cancelIdleCallback: (id: number) => void }
+        ).cancelIdleCallback(handle);
+    } else {
+      const handle = setTimeout(() => {
+        void restore();
+      }, 50);
+      cancelIdle = () => clearTimeout(handle);
+    }
+
     return () => {
       cancelled = true;
+      cancelIdle?.();
     };
   }, []);
 
@@ -312,6 +335,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
+        const { checkAccountFunded, getAccountSpendableBalance } = await import('./stellar');
         const [funded, spendableInfo] = await Promise.all([
           checkAccountFunded(address),
           getAccountSpendableBalance(address),
@@ -353,6 +377,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       let selectedId: string | null = null;
 
       if (walletId === PASSKEY_WALLET_ID) {
+        const { connectPasskeyWallet } = await import('./passkey');
         const passkey = await connectPasskeyWallet();
         addr = passkey.address;
         selectedId = PASSKEY_WALLET_ID;
@@ -445,6 +470,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
 
       if (savedWalletId === PASSKEY_WALLET_ID || address.startsWith('C')) {
+        const { signWithPasskey } = await import('./passkey');
         return signWithPasskey(xdr);
       }
 
