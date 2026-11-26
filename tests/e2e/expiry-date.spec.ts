@@ -3,7 +3,12 @@ import { expect, test } from '@playwright/test';
 
 import { E2E_CONTRACTS } from './contracts';
 import { CLINIC, FUNDER } from './fixtures';
-import { mockBackend, mockInvokeArgs, mockInvokes, useMockWallet } from './helpers';
+import {
+  mockBackend,
+  mockInvokeArgs,
+  mockInvokes,
+  useMockWallet,
+} from './helpers';
 
 /**
  * Funder flow: choose an exact expiry date instead of a preset window (#26).
@@ -54,17 +59,22 @@ test('a custom expiry date becomes the voucher expiry', async ({ page }) => {
   const args = await mockInvokeArgs(page);
   const created = writes.findIndex(
     (call) =>
-      call.contractId === E2E_CONTRACTS.voucher && call.method === 'create_voucher',
+      call.contractId === E2E_CONTRACTS.voucher &&
+      call.method === 'create_voucher',
   );
   expect(created).toBeGreaterThanOrEqual(0);
   // create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at)
   const encodedExpiry = args[created][5];
-  const expiresAt = Number(scValToNative(xdr.ScVal.fromXDR(encodedExpiry, 'base64')));
+  const expiresAt = Number(
+    scValToNative(xdr.ScVal.fromXDR(encodedExpiry, 'base64')),
+  );
   // End of the chosen day, UTC: the voucher is valid through that date.
   expect(expiresAt).toBe(Math.floor(Date.parse(`${chosen}T23:59:59Z`) / 1000));
 });
 
-test('a custom date without a day chosen is refused before signing', async ({ page }) => {
+test('a custom date without a day chosen is refused before signing', async ({
+  page,
+}) => {
   await page.goto(`/clinics/${CLINIC.address}`);
 
   await page.getByPlaceholder('e.g. clinic card number').fill('CARD-123');

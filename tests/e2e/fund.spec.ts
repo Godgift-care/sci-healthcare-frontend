@@ -23,7 +23,9 @@ test.beforeEach(async ({ page }) => {
 test('fund a voucher for a clinic service', async ({ page }) => {
   await page.goto(`/clinics/${CLINIC.address}`);
 
-  await expect(page.getByRole('button', { name: 'Fund voucher' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Fund voucher' }),
+  ).toBeVisible();
   await page.getByPlaceholder('e.g. clinic card number').fill('CARD-123');
   await page.getByPlaceholder('stays on this device').fill('s'.repeat(32));
 
@@ -51,17 +53,25 @@ test('fund a voucher for a clinic service', async ({ page }) => {
   await expect(page.getByText('Outpatient consult').first()).toBeVisible();
 });
 
-test('shows amount validation while typing without changing valid input', async ({ page }) => {
+test('shows amount validation while typing without changing valid input', async ({
+  page,
+}) => {
   await page.goto(`/clinics/${CLINIC.address}`);
 
   const amount = page.getByLabel('Amount (USDC)');
   await amount.fill('2');
-  await expect(page.getByText('The listed price is $3.00. Enter at least that.')).toBeVisible();
+  await expect(
+    page.getByText('The listed price is $3.00. Enter at least that.'),
+  ).toBeVisible();
 
   await amount.fill('3.12345678');
-  await expect(page.getByText('Use no more than 7 decimal places.')).toBeVisible();
+  await expect(
+    page.getByText('Use no more than 7 decimal places.'),
+  ).toBeVisible();
 
   await amount.fill('3.25');
   await expect(amount).toHaveValue('3.25');
-  await expect(page.getByText('Minimum $3.00. Up to 7 decimal places.')).toBeVisible();
+  await expect(
+    page.getByText('Minimum $3.00. Up to 7 decimal places.'),
+  ).toBeVisible();
 });

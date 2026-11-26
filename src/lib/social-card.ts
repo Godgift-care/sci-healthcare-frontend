@@ -61,20 +61,30 @@ export type SocialCardContent = {
 export const SOCIAL_CARD_TITLE_MAX = 70;
 
 /** Clip `text` to `max` characters, ellipsis included. */
-export function clampText(text: string, max: number = SOCIAL_CARD_TITLE_MAX): string {
+export function clampText(
+  text: string,
+  max: number = SOCIAL_CARD_TITLE_MAX,
+): string {
   const trimmed = text.trim();
-  return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max - 1).trimEnd()}…`;
+  return trimmed.length <= max
+    ? trimmed
+    : `${trimmed.slice(0, max - 1).trimEnd()}…`;
 }
 
 /**
  * `NG` → `Nigeria`, so the card reads as words rather than as a data field.
  * A code `Intl` does not know is shown exactly as the indexer sent it.
  */
-export function countryName(code: string, locale: Locale = defaultLocale): string {
+export function countryName(
+  code: string,
+  locale: Locale = defaultLocale,
+): string {
   const trimmed = code.trim();
   if (!trimmed) return '';
   try {
-    return new Intl.DisplayNames([locale], { type: 'region' }).of(trimmed) ?? trimmed;
+    return (
+      new Intl.DisplayNames([locale], { type: 'region' }).of(trimmed) ?? trimmed
+    );
   } catch {
     return trimmed;
   }
@@ -104,13 +114,17 @@ export function voucherCard(
 ): SocialCardContent {
   const service =
     voucher.serviceLabel?.trim() ||
-    translate(locale, 'social.voucher.serviceFallback', { code: voucher.serviceCode });
+    translate(locale, 'social.voucher.serviceFallback', {
+      code: voucher.serviceCode,
+    });
 
   return {
     kind: 'voucher',
     eyebrow: translate(locale, 'social.voucher.eyebrow'),
     title: clampText(service),
-    detail: translate(locale, 'social.voucher.detail', { status: voucher.status }),
+    detail: translate(locale, 'social.voucher.detail', {
+      status: voucher.status,
+    }),
     footer: translate(locale, 'social.footer'),
   };
 }
@@ -135,10 +149,15 @@ export function unavailableCard(
 
 /** Alt text for the file convention; must not name the link's subject. */
 export const clinicCardAlt = translate(defaultLocale, 'social.clinic.imageAlt');
-export const voucherCardAlt = translate(defaultLocale, 'social.voucher.imageAlt');
+export const voucherCardAlt = translate(
+  defaultLocale,
+  'social.voucher.imageAlt',
+);
 
 /** The clinic's card, or the generic one when the read fails or times out. */
-export async function clinicCardFromApi(address: string): Promise<SocialCardContent> {
+export async function clinicCardFromApi(
+  address: string,
+): Promise<SocialCardContent> {
   const provider = await api
     .provider(address, { signal: AbortSignal.timeout(METADATA_TIMEOUT_MS) })
     .catch(() => null);
@@ -146,7 +165,9 @@ export async function clinicCardFromApi(address: string): Promise<SocialCardCont
 }
 
 /** The voucher's card, or the generic one when the read fails or times out. */
-export async function voucherCardFromApi(id: string): Promise<SocialCardContent> {
+export async function voucherCardFromApi(
+  id: string,
+): Promise<SocialCardContent> {
   const voucher = await api
     .voucher(id, { signal: AbortSignal.timeout(METADATA_TIMEOUT_MS) })
     .catch(() => null);

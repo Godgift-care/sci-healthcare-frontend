@@ -7,8 +7,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { providerLocation, type Provider } from '@/lib/api';
 import { formatUsdc } from '@/lib/amounts';
-import { LocalEstimate } from '@/components/LocalEstimate';
-import { clinicCountries, filterClinics, parseCountry } from '@/lib/clinic-filters';
+import {
+  clinicCountries,
+  filterClinics,
+  parseCountry,
+} from '@/lib/clinic-filters';
 import { useFavouriteClinics } from '@/lib/favourites';
 import { useLiveUpdates, useProviders, useStats } from '@/lib/hooks';
 import { useLowBandwidth } from '@/lib/low-bandwidth';
@@ -26,9 +29,7 @@ const ClinicMap = dynamic(
   () => import('@/components/ClinicMap').then((m) => m.ClinicMap),
   {
     ssr: false,
-    loading: () => (
-      <Skeleton className="h-96 w-full rounded-xl" />
-    ),
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
   },
 );
 
@@ -192,33 +193,35 @@ export default function HomePage() {
     <div className="space-y-6">
       <section className="space-y-3.5 rounded-2xl border border-[var(--color-line)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-canvas)] p-4 sm:p-5">
         <div className="max-w-2xl space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200 ring-inset">
             Care-voucher protocol on Stellar
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-ink)]">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--color-ink)] sm:text-2xl">
             Pay for care, not for promises
           </h1>
-          <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink-soft)]">
-            Prepaid, purpose-bound healthcare vouchers that release funds to licensed clinics only when independent attesters confirm care was delivered.
+          <p className="text-xs leading-relaxed text-[var(--color-ink-soft)] sm:text-sm">
+            Prepaid, purpose-bound healthcare vouchers that release funds to
+            licensed clinics only when independent attesters confirm care was
+            delivered.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href="#directory"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90 max-sm:min-h-11"
           >
             Browse clinics &darr;
           </a>
           <Link
             href="/how-it-works"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
           >
             How it works &rarr;
           </Link>
           <Link
             href="/clinic"
-            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
           >
             Clinic desk
           </Link>
@@ -226,38 +229,41 @@ export default function HomePage() {
 
         <div className="grid gap-2.5 pt-0.5 sm:grid-cols-3">
           <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink)] sm:text-sm">
               <span className="grid h-5 w-5 place-items-center rounded bg-blue-100 text-[11px] font-bold text-blue-800">
                 1
               </span>
               <span>Escrow (Funders)</span>
             </div>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
-              Funders commit USDC bound to a named clinic and service. Money is held securely in smart contract escrow.
+            <p className="mt-1 text-xs leading-normal text-[var(--color-ink-soft)]">
+              Funders commit USDC bound to a named clinic and service. Money is
+              held securely in smart contract escrow.
             </p>
           </div>
 
           <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink)] sm:text-sm">
               <span className="grid h-5 w-5 place-items-center rounded bg-amber-100 text-[11px] font-bold text-amber-800">
                 2
               </span>
               <span>Attestation (Attesters)</span>
             </div>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
-              Clinics claim when seen, and independent third-party attesters verify delivery before any payment can settle.
+            <p className="mt-1 text-xs leading-normal text-[var(--color-ink-soft)]">
+              Clinics claim when seen, and independent third-party attesters
+              verify delivery before any payment can settle.
             </p>
           </div>
 
           <div className="rounded-xl border border-[var(--color-line)] bg-white/70 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-[var(--color-ink)]">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-ink)] sm:text-sm">
               <span className="grid h-5 w-5 place-items-center rounded bg-emerald-100 text-[11px] font-bold text-emerald-800">
                 3
               </span>
               <span>Refunds (Protection)</span>
             </div>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)] leading-normal">
-              If the patient never attends or care is not verified, 100% of the funds return to the funder with zero fees.
+            <p className="mt-1 text-xs leading-normal text-[var(--color-ink-soft)]">
+              If the patient never attends or care is not verified, 100% of the
+              funds return to the funder with zero fees.
             </p>
           </div>
         </div>
@@ -269,7 +275,10 @@ export default function HomePage() {
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile label="Clinics" value={String(stats.activeProviders)} />
           <StatTile label="Vouchers funded" value={String(stats.vouchers)} />
-          <StatTile label="Care settled" value={String(stats.settledVouchers)} />
+          <StatTile
+            label="Care settled"
+            value={String(stats.settledVouchers)}
+          />
           <StatTile
             label="Value settled"
             value={`$${formatUsdc(stats.settledValue)}`}
@@ -301,7 +310,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div role="search" className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
+        <div
+          role="search"
+          className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]"
+        >
           <label className="block">
             <span className="sr-only">Search clinics by name or service</span>
             <input
@@ -353,8 +365,8 @@ export default function HomePage() {
 
         {!loading && !error && providers.length === 0 && (
           <Empty>
-            No verified clinics yet. Register one from the clinic desk, then have an
-            administrator activate it.
+            No verified clinics yet. Register one from the clinic desk, then
+            have an administrator activate it.
           </Empty>
         )}
 
@@ -453,12 +465,12 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="break-words font-medium">{p.name}</h3>
+            <h3 className="font-medium break-words">{p.name}</h3>
             <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
               {p.country}
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">
             Verified
           </span>
         </div>
@@ -466,11 +478,10 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
         <ul className="mt-4 space-y-1.5">
           {p.services.slice(0, 3).map((s) => (
             <li key={s.code} className="flex justify-between gap-3 text-sm">
-              <span className="min-w-0 break-words text-[var(--color-ink-soft)]">{s.label}</span>
-              <span className="flex shrink-0 flex-col items-end">
-                <span className="mono">${formatUsdc(s.price)}</span>
-                <LocalEstimate amount={s.price} />
+              <span className="min-w-0 break-words text-[var(--color-ink-soft)]">
+                {s.label}
               </span>
+              <span className="mono shrink-0">${formatUsdc(s.price)}</span>
             </li>
           ))}
           {p.services.length === 0 && (
@@ -487,7 +498,7 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-4">
-      <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+      <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
         {label}
       </div>
       <div className="mt-1 text-xl font-semibold tabular-nums">{value}</div>

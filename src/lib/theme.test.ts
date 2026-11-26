@@ -23,7 +23,7 @@ describe('theme init script', () => {
 
   it('reads the stored override and applies it before paint', () => {
     expect(served).toContain("localStorage.getItem('sci-theme')");
-    expect(served).toContain("document.documentElement.dataset.theme");
+    expect(served).toContain('document.documentElement.dataset.theme');
     expect(served).toContain('prefers-color-scheme: dark');
   });
 

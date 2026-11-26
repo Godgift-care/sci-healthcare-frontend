@@ -31,7 +31,9 @@ describe('isReadyStatus', () => {
 describe('overallStatus', () => {
   it('follows the readiness answer when there is one', () => {
     expect(overallStatus(READY, false)).toBe('operational');
-    expect(overallStatus({ ...READY, status: 'degraded' }, false)).toBe('degraded');
+    expect(overallStatus({ ...READY, status: 'degraded' }, false)).toBe(
+      'degraded',
+    );
     // A cached answer outlives a failed refresh.
     expect(overallStatus(READY, true)).toBe('operational');
   });
@@ -69,25 +71,39 @@ describe('readinessProblems', () => {
   });
 
   it('still explains a degraded answer with no failing check', () => {
-    expect(readinessProblems({ status: 'degraded', checks: { database: true } })).toEqual([
+    expect(
+      readinessProblems({ status: 'degraded', checks: { database: true } }),
+    ).toEqual([
       'The indexer reports itself degraded without naming a failing check.',
     ]);
   });
 });
 
 describe('deploymentMismatches', () => {
-  const app = { network: 'testnet', contracts: { registry: 'CREG', voucher: 'CVOU' } };
+  const app = {
+    network: 'testnet',
+    contracts: { registry: 'CREG', voucher: 'CVOU' },
+  };
 
   it('is empty when the deployments agree', () => {
     expect(
-      deploymentMismatches(app, { network: 'testnet', contracts: { ...app.contracts, receipt: '', usdc: null, faucet: null } }),
+      deploymentMismatches(app, {
+        network: 'testnet',
+        contracts: { ...app.contracts, receipt: '', usdc: null, faucet: null },
+      }),
     ).toEqual([]);
   });
 
   it('flags another network and another contract', () => {
     const out = deploymentMismatches(app, {
       network: 'public',
-      contracts: { registry: 'CREG', voucher: 'COTHER', receipt: '', usdc: null, faucet: null },
+      contracts: {
+        registry: 'CREG',
+        voucher: 'COTHER',
+        receipt: '',
+        usdc: null,
+        faucet: null,
+      },
     });
     expect(out).toEqual([
       'This app is built for testnet, but the API indexes public.',

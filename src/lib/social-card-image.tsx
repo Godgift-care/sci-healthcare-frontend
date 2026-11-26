@@ -21,58 +21,56 @@ import {
  */
 export function socialCardImage(card: SocialCardContent): ImageResponse {
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          backgroundColor: '#0f766e',
-          color: '#ffffff',
-          padding: '72px 80px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ display: 'flex', fontSize: 30, fontWeight: 700 }}>
-            SCI Healthcare
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: 24,
-              padding: '8px 20px',
-              borderRadius: 999,
-              backgroundColor: 'rgba(255, 255, 255, 0.18)',
-            }}
-          >
-            {card.eyebrow}
-          </div>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        backgroundColor: '#0f766e',
+        color: '#ffffff',
+        padding: '72px 80px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{ display: 'flex', fontSize: 30, fontWeight: 700 }}>
+          SCI Healthcare
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: card.title.length > 40 ? 64 : 78,
-              fontWeight: 700,
-              lineHeight: 1.15,
-              maxWidth: 1040,
-            }}
-          >
-            {card.title}
-          </div>
-          <div style={{ display: 'flex', fontSize: 40, opacity: 0.92 }}>
-            {card.detail}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', fontSize: 26, opacity: 0.75 }}>
-          {card.footer}
+        <div
+          style={{
+            display: 'flex',
+            fontSize: 24,
+            padding: '8px 20px',
+            borderRadius: 999,
+            backgroundColor: 'rgba(255, 255, 255, 0.18)',
+          }}
+        >
+          {card.eyebrow}
         </div>
       </div>
-    ),
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div
+          style={{
+            display: 'flex',
+            fontSize: card.title.length > 40 ? 64 : 78,
+            fontWeight: 700,
+            lineHeight: 1.15,
+            maxWidth: 1040,
+          }}
+        >
+          {card.title}
+        </div>
+        <div style={{ display: 'flex', fontSize: 40, opacity: 0.92 }}>
+          {card.detail}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', fontSize: 26, opacity: 0.75 }}>
+        {card.footer}
+      </div>
+    </div>,
     {
       ...SOCIAL_CARD_SIZE,
       headers: { 'cache-control': SOCIAL_CARD_CACHE_CONTROL },

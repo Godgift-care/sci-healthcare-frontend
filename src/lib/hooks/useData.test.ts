@@ -68,7 +68,11 @@ function respond(handler: (url: URL) => JsonReply): void {
   });
 }
 
-function error(status: number, message: string, code = `http_${status}`): JsonReply {
+function error(
+  status: number,
+  message: string,
+  code = `http_${status}`,
+): JsonReply {
   return { status, body: { error: code, message } };
 }
 
@@ -280,11 +284,15 @@ describe('useVoucherEvents', () => {
     });
     const { result } = renderHook(() => useVoucherEvents('ev-refetch'));
 
-    await waitFor(() => expect(result.current.events[0].name).toBe('voucher_created'));
+    await waitFor(() =>
+      expect(result.current.events[0].name).toBe('voucher_created'),
+    );
     await act(async () => {
       await invalidateVouchers();
     });
-    await waitFor(() => expect(result.current.events[0].name).toBe('voucher_claimed'));
+    await waitFor(() =>
+      expect(result.current.events[0].name).toBe('voucher_claimed'),
+    );
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
@@ -306,7 +314,9 @@ describe('useVouchers', () => {
     respond(() => error(500, 'Indexer unavailable'));
     const { result } = renderHook(() => useVouchers({ funder: FUNDER }));
 
-    await waitFor(() => expect(result.current.error).toBe('Indexer unavailable'));
+    await waitFor(() =>
+      expect(result.current.error).toBe('Indexer unavailable'),
+    );
     expect((result.current.rawError as ApiError).status).toBe(500);
     expect(result.current.vouchers).toEqual([]);
     expect(result.current.total).toBe(0);
@@ -344,16 +354,22 @@ describe('useProvider', () => {
       useProvider(PROVIDER, { dedupingInterval: 0 }),
     );
 
-    await waitFor(() => expect(result.current.provider?.name).toBe('Ikeja General Clinic'));
+    await waitFor(() =>
+      expect(result.current.provider?.name).toBe('Ikeja General Clinic'),
+    );
     expect(result.current.error).toBeNull();
-    expect(String(fetchMock.mock.calls[0][0])).toContain(`/providers/${PROVIDER}`);
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      `/providers/${PROVIDER}`,
+    );
   });
 
   it('surfaces an HTTP error with its status', async () => {
     respond(() => error(404, 'Provider not found'));
     const { result } = renderHook(() => useProvider('GMISSING'));
 
-    await waitFor(() => expect(result.current.error).toBe('Provider not found'));
+    await waitFor(() =>
+      expect(result.current.error).toBe('Provider not found'),
+    );
     expect((result.current.rawError as ApiError).status).toBe(404);
     expect(result.current.provider).toBeNull();
   });
@@ -395,7 +411,9 @@ describe('useProviders', () => {
     respond(() => error(503, 'Service unavailable'));
     const { result } = renderHook(() => useProviders());
 
-    await waitFor(() => expect(result.current.error).toBe('Service unavailable'));
+    await waitFor(() =>
+      expect(result.current.error).toBe('Service unavailable'),
+    );
     expect((result.current.rawError as ApiError).status).toBe(503);
     expect(result.current.providers).toEqual([]);
   });
@@ -414,7 +432,9 @@ describe('useProviders', () => {
       reads += 1;
       return { body: { total: reads, providers: [provider] } };
     });
-    const { result } = renderHook(() => useProviders(undefined, { dedupingInterval: 0 }));
+    const { result } = renderHook(() =>
+      useProviders(undefined, { dedupingInterval: 0 }),
+    );
 
     await waitFor(() => expect(result.current.total).toBe(1));
     await act(async () => {
@@ -464,7 +484,9 @@ describe('useStats', () => {
 describe('useDailyStats', () => {
   it('loads the time series for the requested window', async () => {
     respond(() => ({ body: dailyStats }));
-    const { result } = renderHook(() => useDailyStats(7, { dedupingInterval: 0 }));
+    const { result } = renderHook(() =>
+      useDailyStats(7, { dedupingInterval: 0 }),
+    );
 
     await waitFor(() => expect(result.current.dailyStats?.days).toBe(7));
     expect(result.current.dailyStats?.series).toHaveLength(1);
@@ -486,7 +508,9 @@ describe('useDailyStats', () => {
       reads += 1;
       return { body: { ...dailyStats, days: reads === 1 ? 7 : 8 } };
     });
-    const { result } = renderHook(() => useDailyStats(7, { dedupingInterval: 0 }));
+    const { result } = renderHook(() =>
+      useDailyStats(7, { dedupingInterval: 0 }),
+    );
 
     await waitFor(() => expect(result.current.dailyStats?.days).toBe(7));
     await act(async () => {
@@ -523,7 +547,9 @@ describe('useAttesters', () => {
       reads += 1;
       return { body: { ...attesters, total: reads } };
     });
-    const { result } = renderHook(() => useAttesters(undefined, { dedupingInterval: 0 }));
+    const { result } = renderHook(() =>
+      useAttesters(undefined, { dedupingInterval: 0 }),
+    );
 
     await waitFor(() => expect(result.current.total).toBe(1));
     await act(async () => {

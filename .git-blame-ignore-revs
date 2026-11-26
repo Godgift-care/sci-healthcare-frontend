@@ -1,0 +1,9 @@
+# Commits that only reformat the tree, so `git blame` should look past them.
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# (git honors the file automatically in GitHub's blame view once it is named
+# .git-blame-ignore-revs on the default branch.)
+#
+# Prettier's first pass over the repository (#361).
+38e0f17

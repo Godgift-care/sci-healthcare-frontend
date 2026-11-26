@@ -63,7 +63,12 @@ export function CopyValue({
   return (
     <span className={`inline-flex items-center gap-1 ${className}`}>
       {!buttonOnly && (
-        <AddressName address={value} name={name} display={display} chars={chars} />
+        <AddressName
+          address={value}
+          name={name}
+          display={display}
+          chars={chars}
+        />
       )}
       <button
         type="button"

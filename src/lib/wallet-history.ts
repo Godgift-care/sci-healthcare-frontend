@@ -30,12 +30,7 @@ export type WalletRole = 'funder' | 'provider';
  * submit them, so their signer is not recorded where the indexer can see it.
  */
 export type EventActorKind =
-  | 'funder'
-  | 'provider'
-  | 'attester'
-  | 'admin'
-  | 'anyone'
-  | 'unknown';
+  'funder' | 'provider' | 'attester' | 'admin' | 'anyone' | 'unknown';
 
 /**
  * The signer of an event, as far as the data allows.
@@ -167,9 +162,13 @@ export function walletRoles(voucher: Voucher, address: string): WalletRole[] {
  * the data at hand. Attestations carry no attester address and the settle
  * and refund transactions are permissionless, so those keep their own actor.
  */
-export function attributeActor(actor: EventActorKind, roles: WalletRole[]): EventActor {
+export function attributeActor(
+  actor: EventActorKind,
+  roles: WalletRole[],
+): EventActor {
   if (actor === 'funder') return roles.includes('funder') ? 'wallet' : 'funder';
-  if (actor === 'provider') return roles.includes('provider') ? 'wallet' : 'provider';
+  if (actor === 'provider')
+    return roles.includes('provider') ? 'wallet' : 'provider';
   return actor;
 }
 
@@ -193,7 +192,7 @@ export function eventTimestamp(
         : name === 'voucher_attested'
           ? voucher.attestedAt
           : name === 'voucher_refunded'
-            ? voucher.disputeResolvedAt ?? voucher.refundableAt
+            ? (voucher.disputeResolvedAt ?? voucher.refundableAt)
             : name === 'dispute_resolved'
               ? voucher.disputeResolvedAt
               : null;
@@ -268,7 +267,10 @@ export function buildHistoryRows(
         at,
         timeMs,
         ledger: typeof event.ledger === 'number' ? event.ledger : null,
-        txHash: typeof event.txHash === 'string' && event.txHash ? event.txHash : null,
+        txHash:
+          typeof event.txHash === 'string' && event.txHash
+            ? event.txHash
+            : null,
         voucherId: voucher.id,
         clinicName: voucher.provider?.name ?? '',
         serviceLabel: voucher.serviceLabel ?? `Service ${voucher.serviceCode}`,

@@ -2,6 +2,7 @@ import {
   ApiError,
   createClient,
   type Attester,
+  type DailyRow,
   type DailyStats,
   type ListProvidersParams,
   type ListVouchersParams,
@@ -29,7 +30,6 @@ export {
   ApiError,
   providerLocation,
   type Attester,
-  type DailyBucket,
   type DailyRow,
   type DailyStats,
   type ListProvidersParams,
@@ -136,7 +136,9 @@ export type ProviderStats = {
 export function parseVoucherEvents(body: unknown): VoucherEvent[] {
   const list: unknown[] = Array.isArray(body)
     ? body
-    : body && typeof body === 'object' && Array.isArray((body as { events?: unknown }).events)
+    : body &&
+        typeof body === 'object' &&
+        Array.isArray((body as { events?: unknown }).events)
       ? (body as { events: unknown[] }).events
       : [];
 
@@ -206,13 +208,24 @@ export const api = {
     const base = config.apiUrl.replace(/\/+$/, '');
     let res: Response;
     try {
-      res = await fetch(`${base}/ready`, { headers: { accept: 'application/json' } });
+      res = await fetch(`${base}/ready`, {
+        headers: { accept: 'application/json' },
+      });
     } catch (cause) {
-      throw new ApiError(0, 'network_error', `Cannot reach the API at ${base}`, cause);
+      throw new ApiError(
+        0,
+        'network_error',
+        `Cannot reach the API at ${base}`,
+        cause,
+      );
     }
     const body: unknown = await res.json().catch(() => null);
     if (isReadyStatus(body)) return body;
-    throw new ApiError(res.status, `http_${res.status}`, res.statusText || 'Readiness check failed');
+    throw new ApiError(
+      res.status,
+      `http_${res.status}`,
+      res.statusText || 'Readiness check failed',
+    );
   },
 
   /** Build version, commit and network the indexer is running (#168). */
@@ -229,7 +242,9 @@ export const api = {
 
   /** Aggregate voucher counts and settled value for one clinic (backend #10). */
   providerStats: (address: string): Promise<ProviderStats> =>
-    client.rawGet<ProviderStats>(`/providers/${encodeURIComponent(address)}/stats`),
+    client.rawGet<ProviderStats>(
+      `/providers/${encodeURIComponent(address)}/stats`,
+    ),
 
   vouchers: (params: ListVouchersParams) => client.vouchers(params),
 
@@ -291,7 +306,10 @@ export const api = {
    * answers 404 — and callers are expected to treat that as "no links",
    * not as a failure of the page.
    */
-  voucherEvents: async (id: string, init?: RequestInit): Promise<VoucherEvent[]> =>
+  voucherEvents: async (
+    id: string,
+    init?: RequestInit,
+  ): Promise<VoucherEvent[]> =>
     parseVoucherEvents(
       await timedClient(init?.signal).rawGet<unknown>(
         `/vouchers/${encodeURIComponent(id)}/events`,
@@ -326,8 +344,10 @@ export const api = {
     return total;
   },
 
-  receipts: (beneficiaryRef: string, params?: { limit?: number; offset?: number }) =>
-    client.receipts({ beneficiaryRef, ...params }),
+  receipts: (
+    beneficiaryRef: string,
+    params?: { limit?: number; offset?: number },
+  ) => client.receipts({ beneficiaryRef, ...params }),
 
   /**
    * Attester directory. Not part of the generated client yet, so it goes
@@ -345,5 +365,6 @@ export const api = {
 
   services: (): Promise<ServicesResponse> => client.services(),
 
-  service: (code: number): Promise<ServiceCatalogueItem> => client.service(code),
+  service: (code: number): Promise<ServiceCatalogueItem> =>
+    client.service(code),
 };

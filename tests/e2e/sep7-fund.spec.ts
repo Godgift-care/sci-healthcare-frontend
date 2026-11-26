@@ -27,7 +27,9 @@ test('fund a voucher through a SEP-7 payment link', async ({ page }) => {
 
   // The panel is opt-in: the extension-wallet flow stays the default.
   await page.getByText('Pay from a mobile wallet').click();
-  const create = page.getByRole('button', { name: 'Create SEP-7 payment link' });
+  const create = page.getByRole('button', {
+    name: 'Create SEP-7 payment link',
+  });
   await expect(create).toBeEnabled();
   await create.click();
 
@@ -46,7 +48,9 @@ test('fund a voucher through a SEP-7 payment link', async ({ page }) => {
   );
 
   await expect(page.getByAltText('SEP-7 payment QR code')).toBeVisible();
-  await expect(page.getByText('Waiting for the wallet to submit…')).toBeVisible();
+  await expect(
+    page.getByText('Waiting for the wallet to submit…'),
+  ).toBeVisible();
 
   // The same `create_voucher` call the local signer would build, prepared and
   // simulated for the wallet instead.

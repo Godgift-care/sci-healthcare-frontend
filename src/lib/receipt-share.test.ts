@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { translate } from '@/i18n/translate';
 
-import { buildReceiptShare, receiptShareUrl, type ShareableReceipt } from './receipt-share';
+import {
+  buildReceiptShare,
+  receiptShareUrl,
+  type ShareableReceipt,
+} from './receipt-share';
 
 /**
  * The receipt share (#122) is text that leaves the app for a chat or SMS, so

@@ -121,10 +121,12 @@ export function TestUsdc({
         <div className="mt-3">
           <Alert kind="info">
             Your wallet must trust the test USDC asset before it can hold it. In
-            Freighter: <strong>Manage assets → Add an asset</strong>, then add code{' '}
-            <span className="mono">USDC</span> with issuer{' '}
-            <span className="mono break-all">{config.usdcIssuer || 'see the docs'}</span>.
-            Then press the button again.
+            Freighter: <strong>Manage assets → Add an asset</strong>, then add
+            code <span className="mono">USDC</span> with issuer{' '}
+            <span className="mono break-all">
+              {config.usdcIssuer || 'see the docs'}
+            </span>
+            . Then press the button again.
           </Alert>
         </div>
       )}

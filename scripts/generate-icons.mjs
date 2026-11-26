@@ -19,7 +19,12 @@ import { fileURLToPath } from 'node:url';
 const BRAND = [0x0f, 0x76, 0x6e];
 const WHITE = [0xff, 0xff, 0xff];
 
-const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
+const OUT_DIR = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'public',
+  'icons',
+);
 
 const CRC_TABLE = (() => {
   const table = new Int32Array(256);
@@ -95,8 +100,10 @@ function draw(size, { rounded = true, glyphScale = 0.56, radius = 0.22 } = {}) {
       if (Math.hypot(dx, dy) > corner) return [0, 0, 0, 0];
     }
 
-    const onHorizontal = Math.abs(y - centre) <= barHalf && Math.abs(x - centre) <= armHalf;
-    const onVertical = Math.abs(x - centre) <= barHalf && Math.abs(y - centre) <= armHalf;
+    const onHorizontal =
+      Math.abs(y - centre) <= barHalf && Math.abs(x - centre) <= armHalf;
+    const onVertical =
+      Math.abs(x - centre) <= barHalf && Math.abs(y - centre) <= armHalf;
     return onHorizontal || onVertical ? [...WHITE, 255] : [...BRAND, 255];
   };
 }

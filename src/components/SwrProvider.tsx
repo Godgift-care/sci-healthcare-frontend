@@ -36,6 +36,8 @@ const LOW_BANDWIDTH = {
 export function SwrProvider({ children }: { children: React.ReactNode }) {
   const lowBandwidth = useLowBandwidth();
   return (
-    <SWRConfig value={lowBandwidth ? LOW_BANDWIDTH : NORMAL}>{children}</SWRConfig>
+    <SWRConfig value={lowBandwidth ? LOW_BANDWIDTH : NORMAL}>
+      {children}
+    </SWRConfig>
   );
 }

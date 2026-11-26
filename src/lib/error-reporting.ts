@@ -40,7 +40,8 @@ function scrubValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(scrubValue);
   if (value !== null && typeof value === 'object') {
     const out: Record<string, unknown> = {};
-    for (const [key, entry] of Object.entries(value)) out[key] = scrubValue(entry);
+    for (const [key, entry] of Object.entries(value))
+      out[key] = scrubValue(entry);
     return out;
   }
   return value;

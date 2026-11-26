@@ -36,7 +36,10 @@ export function minExpiryDate(nowMs: number = Date.now()): string {
 }
 
 /** `now + days`, as the unix seconds the contract takes. */
-export function expiresAtFromDays(days: ExpiryOption, nowMs: number = Date.now()): number {
+export function expiresAtFromDays(
+  days: ExpiryOption,
+  nowMs: number = Date.now(),
+): number {
   return Math.floor(nowMs / 1000) + days * SECONDS_PER_DAY;
 }
 

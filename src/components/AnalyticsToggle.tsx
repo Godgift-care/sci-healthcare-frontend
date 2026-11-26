@@ -1,7 +1,10 @@
 'use client';
 
 import { isAnalyticsConfigured } from '@/lib/analytics';
-import { setAnalyticsOptOut, useAnalyticsOptOut } from '@/lib/analytics-preference';
+import {
+  setAnalyticsOptOut,
+  useAnalyticsOptOut,
+} from '@/lib/analytics-preference';
 
 /**
  * Explicit opt-out for cookieless usage analytics (#143).
@@ -31,7 +34,7 @@ export function AnalyticsToggle() {
       aria-label="Usage analytics"
       title={explanation}
       onClick={() => setAnalyticsOptOut(!optedOut)}
-      className={`inline-flex max-sm:min-h-11 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset transition max-sm:px-3 ${
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 transition ring-inset max-sm:min-h-11 max-sm:px-3 ${
         optedOut
           ? 'bg-[var(--color-canvas)] text-[var(--color-ink-soft)] ring-[var(--color-line)] hover:text-[var(--color-ink)]'
           : 'bg-emerald-50 text-emerald-800 ring-emerald-200'

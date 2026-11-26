@@ -19,7 +19,11 @@ function earningsVoucher(
     id,
     funder: 'GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR',
     beneficiaryRef: 'ab'.repeat(32),
-    provider: { address: PROVIDER, name: 'Ikeja General Clinic', country: 'NG' },
+    provider: {
+      address: PROVIDER,
+      name: 'Ikeja General Clinic',
+      country: 'NG',
+    },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',
@@ -107,7 +111,9 @@ const STATS = {
 };
 
 test.describe('Clinic earnings summary (#34)', () => {
-  test('shows settled, pending and fee totals with a monthly breakdown', async ({ page }) => {
+  test('shows settled, pending and fee totals with a monthly breakdown', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: CLINIC,
@@ -117,7 +123,9 @@ test.describe('Clinic earnings summary (#34)', () => {
 
     await page.goto('/clinic');
 
-    await expect(page.getByRole('heading', { name: 'Earnings', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Earnings', exact: true }),
+    ).toBeVisible();
 
     const settledCard = page.getByRole('group', { name: 'Settled' });
     await expect(settledCard).toContainText('$70.00');
@@ -126,7 +134,9 @@ test.describe('Clinic earnings summary (#34)', () => {
 
     const pendingCard = page.getByRole('group', { name: 'Pending payout' });
     await expect(pendingCard).toContainText('$40.00');
-    await expect(pendingCard).toContainText('2 vouchers claimed, attested or disputed');
+    await expect(pendingCard).toContainText(
+      '2 vouchers claimed, attested or disputed',
+    );
 
     const feesCard = page.getByRole('group', { name: 'Fees paid' });
     await expect(feesCard).toContainText('$0.70');
@@ -157,7 +167,9 @@ test.describe('Clinic earnings summary (#34)', () => {
     expect(overflows).toBe(false);
   });
 
-  test('takes the settled total from the statistics endpoint', async ({ page }) => {
+  test('takes the settled total from the statistics endpoint', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: CLINIC,
@@ -179,7 +191,9 @@ test.describe('Clinic earnings summary (#34)', () => {
     await expect(settledCard).toContainText('9 vouchers');
   });
 
-  test('renders a clean empty state for a clinic with no money in flight', async ({ page }) => {
+  test('renders a clean empty state for a clinic with no money in flight', async ({
+    page,
+  }) => {
     await useMockWallet(page, PROVIDER);
     await mockBackend(page, {
       provider: CLINIC,
@@ -187,7 +201,14 @@ test.describe('Clinic earnings summary (#34)', () => {
       providerStats: {
         ...STATS,
         vouchers: 1,
-        byStatus: { Funded: 1, Claimed: 0, Attested: 0, Settled: 0, Disputed: 0, Refunded: 0 },
+        byStatus: {
+          Funded: 1,
+          Claimed: 0,
+          Attested: 0,
+          Settled: 0,
+          Disputed: 0,
+          Refunded: 0,
+        },
         settledVouchers: 0,
         settledValue: '0',
         settledValueDisplay: '0.00',
@@ -196,8 +217,14 @@ test.describe('Clinic earnings summary (#34)', () => {
 
     await page.goto('/clinic');
 
-    await expect(page.getByRole('group', { name: 'Settled' })).toContainText('$0.00');
-    await expect(page.getByRole('group', { name: 'Pending payout' })).toContainText('$0.00');
-    await expect(page.getByText('No settled or pending earnings yet.')).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Settled' })).toContainText(
+      '$0.00',
+    );
+    await expect(
+      page.getByRole('group', { name: 'Pending payout' }),
+    ).toContainText('$0.00');
+    await expect(
+      page.getByText('No settled or pending earnings yet.'),
+    ).toBeVisible();
   });
 });

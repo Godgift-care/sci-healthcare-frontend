@@ -5,6 +5,19 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, Modal } from '@/components/ui';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
+/**
+ * The shape of the browser's `BarcodeDetector`, which TypeScript's DOM lib does
+ * not declare yet. Declaring it once here is what keeps `(window as any)` out
+ * of the scanner.
+ */
+type BarcodeDetectorLike = {
+  detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
+};
+
+type BarcodeDetectorCtor = new (options: {
+  formats: string[];
+}) => BarcodeDetectorLike;
+
 interface QrScannerModalProps {
   open: boolean;
   onClose: () => void;
@@ -102,9 +115,12 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
     }
 
     function startScanning() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const BarcodeDetectorClass = typeof window !== 'undefined' ? (window as any).BarcodeDetector : null;
-      let detector: { detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string }>> } | null = null;
+      const BarcodeDetectorClass =
+        typeof window !== 'undefined'
+          ? (window as Window & { BarcodeDetector?: BarcodeDetectorCtor })
+              .BarcodeDetector
+          : undefined;
+      let detector: BarcodeDetectorLike | null = null;
 
       if (BarcodeDetectorClass) {
         try {
@@ -177,7 +193,11 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
         });
 
         if (!active) {
@@ -244,7 +264,7 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
         </p>
 
         {/* Video Scanner Area */}
-        <div className="relative aspect-square w-full max-w-xs mx-auto overflow-hidden rounded-xl border-2 border-dashed border-[var(--color-line)] bg-black flex items-center justify-center">
+        <div className="relative mx-auto flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[var(--color-line)] bg-black">
           <video
             ref={videoRef}
             className={`h-full w-full object-cover ${hasCamera ? '' : 'hidden'}`}
@@ -260,21 +280,27 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
           )}
 
           {hasCamera === false && (
-            <div className="p-4 text-center text-xs text-white space-y-2">
+            <div className="space-y-2 p-4 text-center text-xs text-white">
               <p>{cameraError || t('scanner.cameraUnavailable')}</p>
             </div>
           )}
 
           {hasCamera === null && (
-            <div className="text-xs text-white/70 animate-pulse motion-reduce:animate-none">
+            <div className="animate-pulse text-xs text-white/70 motion-reduce:animate-none">
               {t('scanner.requestingCamera')}
             </div>
           )}
         </div>
 
         {/* Manual Fallback Input */}
-        <form onSubmit={handleManualSubmit} className="pt-2 border-t border-[var(--color-line)] space-y-2">
-          <label htmlFor="manual-voucher-id" className="block text-xs font-medium text-[var(--color-ink-soft)]">
+        <form
+          onSubmit={handleManualSubmit}
+          className="space-y-2 border-t border-[var(--color-line)] pt-2"
+        >
+          <label
+            htmlFor="manual-voucher-id"
+            className="block text-xs font-medium text-[var(--color-ink-soft)]"
+          >
             {t('scanner.manualPrompt')}
           </label>
           <div className="flex gap-2">
@@ -284,12 +310,12 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
               placeholder={t('scanner.manualPlaceholder')}
-              className="flex-1 rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-sm mono text-[var(--color-ink)]"
+              className="mono flex-1 rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-sm text-[var(--color-ink)]"
             />
             <Button
               type="submit"
               disabled={!manualInput.trim()}
-              className="text-xs px-3"
+              className="px-3 text-xs"
             >
               {t('scanner.open')}
             </Button>

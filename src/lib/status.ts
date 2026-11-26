@@ -42,7 +42,9 @@ export function readinessProblems(ready: ReadyStatus): string[] {
   const { checks } = ready;
   const problems: string[] = [];
   if (checks.database === false) {
-    problems.push('The indexer cannot reach its database, so lists and vouchers may not load.');
+    problems.push(
+      'The indexer cannot reach its database, so lists and vouchers may not load.',
+    );
   }
   if (typeof checks.lagLedgers === 'number' && checks.lagLedgers > 0) {
     problems.push(
@@ -57,7 +59,9 @@ export function readinessProblems(ready: ReadyStatus): string[] {
     );
   }
   if (ready.status === 'degraded' && problems.length === 0) {
-    problems.push('The indexer reports itself degraded without naming a failing check.');
+    problems.push(
+      'The indexer reports itself degraded without naming a failing check.',
+    );
   }
   return problems;
 }
@@ -72,13 +76,17 @@ export function deploymentMismatches(
 ): string[] {
   const out: string[] = [];
   if (api.network && api.network !== app.network) {
-    out.push(`This app is built for ${app.network}, but the API indexes ${api.network}.`);
+    out.push(
+      `This app is built for ${app.network}, but the API indexes ${api.network}.`,
+    );
   }
   for (const name of ['registry', 'voucher'] as const) {
     const ours = app.contracts[name];
     const theirs = api.contracts?.[name];
     if (ours && theirs && ours !== theirs) {
-      out.push(`The API indexes a different ${name} contract than this app writes to.`);
+      out.push(
+        `The API indexes a different ${name} contract than this app writes to.`,
+      );
     }
   }
   return out;

@@ -35,7 +35,10 @@ function readStorage(): string[] {
       return cachedList;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every((item) => typeof item === 'string')) {
+    if (
+      Array.isArray(parsed) &&
+      parsed.every((item) => typeof item === 'string')
+    ) {
       cachedList = parsed;
     } else {
       cachedList = [];
@@ -76,7 +79,9 @@ export function toggleFavouriteClinic(address: string): boolean {
   try {
     const current = getFavouriteClinics();
     const exists = current.includes(address);
-    const next = exists ? current.filter((a) => a !== address) : [...current, address];
+    const next = exists
+      ? current.filter((a) => a !== address)
+      : [...current, address];
 
     const ok = setStorageItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
     if (ok) {
@@ -99,16 +104,21 @@ export function toggleFavouriteClinic(address: string): boolean {
 /**
  * Sets the favourite state for a clinic explicitly.
  */
-export function setClinicFavourite(address: string, favourite: boolean): boolean {
+export function setClinicFavourite(
+  address: string,
+  favourite: boolean,
+): boolean {
   if (typeof window === 'undefined' || !address) return false;
   try {
     const current = getFavouriteClinics();
     const exists = current.includes(address);
     if (exists === favourite) return favourite;
 
-    const next = favourite ? [...current, address] : current.filter((a) => a !== address);
-    const ok = setStorageItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
-    if (ok) {
+    const next = favourite
+      ? [...current, address]
+      : current.filter((a) => a !== address);
+    try {
+      window.localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(next));
       memoryFallback = null;
       cachedRaw = JSON.stringify(next);
       cachedList = next;
@@ -141,7 +151,11 @@ const EMPTY_FAVOURITES: string[] = [];
  * Hook to access favourite clinic addresses reactively.
  */
 export function useFavouriteClinics(): string[] {
-  return useSyncExternalStore(subscribe, getFavouriteClinics, () => EMPTY_FAVOURITES);
+  return useSyncExternalStore(
+    subscribe,
+    getFavouriteClinics,
+    () => EMPTY_FAVOURITES,
+  );
 }
 
 /**

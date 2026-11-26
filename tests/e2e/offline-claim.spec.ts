@@ -47,12 +47,16 @@ test('a claim made offline is queued and submits after reconnecting', async ({
 
   // Nothing is queued silently: the desk is told and the queue is on screen.
   await expect(page.getByText(/Saved on this device/)).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Waiting to submit' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Waiting to submit' }),
+  ).toBeVisible();
   await expect(page.getByText('Voucher #21')).toBeVisible();
 
   await context.setOffline(false);
 
-  await expect(page.getByRole('heading', { name: 'Waiting to submit' })).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Waiting to submit' }),
+  ).toHaveCount(0);
   expect(await mockInvokes(page)).toContainEqual({
     kind: 'invoke',
     contractId: E2E_CONTRACTS.voucher,
@@ -70,7 +74,9 @@ test('a queued claim past its time bound is discarded with a notice', async ({
 
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Mark patient seen' }).click();
-  await expect(page.getByRole('heading', { name: 'Waiting to submit' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Waiting to submit' }),
+  ).toBeVisible();
 
   // Age the stored envelope past its time bound while still offline.
   await page.evaluate(() => {
@@ -85,6 +91,10 @@ test('a queued claim past its time bound is discarded with a notice', async ({
   await context.setOffline(false);
 
   await expect(page.getByText('Queued claim discarded')).toBeVisible();
-  await expect(page.getByText(/expired before it could be submitted/)).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Waiting to submit' })).toHaveCount(0);
+  await expect(
+    page.getByText(/expired before it could be submitted/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Waiting to submit' }),
+  ).toHaveCount(0);
 });

@@ -29,7 +29,10 @@ export function RecentVouchers() {
       <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
         {ids.map((id) => (
           <li key={id}>
-            <Link href={`/vouchers/${id}`} className="underline underline-offset-2">
+            <Link
+              href={`/vouchers/${id}`}
+              className="underline underline-offset-2"
+            >
               {t('voucher.voucherNumber', { id })}
             </Link>
           </li>

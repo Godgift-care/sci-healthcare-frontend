@@ -18,7 +18,8 @@ function createMockStorage(): Storage {
 }
 
 describe('checkout-draft', () => {
-  const clinicAddress = 'GCLINIC11111111111111111111111111111111111111111111111111';
+  const clinicAddress =
+    'GCLINIC11111111111111111111111111111111111111111111111111';
   let mockStorage: Storage;
 
   beforeEach(() => {
@@ -50,7 +51,9 @@ describe('checkout-draft', () => {
     expect(draft?.patientNickname).toBe('Auntie Mary');
 
     // Inspect the actual raw JSON string in storage
-    const raw = mockStorage.getItem(`sci:checkout-draft:${clinicAddress.toLowerCase()}`);
+    const raw = mockStorage.getItem(
+      `sci:checkout-draft:${clinicAddress.toLowerCase()}`,
+    );
     expect(raw).toBeTruthy();
     expect(raw).not.toContain('identifier');
     expect(raw).not.toContain('key');
@@ -91,7 +94,9 @@ describe('checkout-draft', () => {
 
   it('handles unavailable or non-browser environments gracefully', () => {
     vi.stubGlobal('window', undefined);
-    expect(saveCheckoutDraft(clinicAddress, { selectedCodes: [101] })).toBe(false);
+    expect(saveCheckoutDraft(clinicAddress, { selectedCodes: [101] })).toBe(
+      false,
+    );
     expect(loadCheckoutDraft(clinicAddress)).toBeNull();
     expect(clearCheckoutDraft(clinicAddress)).toBe(false);
   });

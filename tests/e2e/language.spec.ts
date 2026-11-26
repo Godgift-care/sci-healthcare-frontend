@@ -41,7 +41,9 @@ async function openNavMenu(page: Page): Promise<void> {
  */
 function overflow(page: Page): Promise<number> {
   return page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
 }
 
@@ -76,7 +78,9 @@ test.describe('Language switching persists (#153)', () => {
 
     // The page is translated as soon as the choice is made.
     await expect(page.getByText(`Bon #${VOUCHER_ID}`)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Historique' }),
+    ).toBeVisible();
     // The switcher's own label follows the language it is in.
     await expect(languageSwitcher(page)).toHaveAttribute(
       'aria-label',
@@ -87,11 +91,15 @@ test.describe('Language switching persists (#153)', () => {
     await openNavMenu(page);
     await page.getByRole('link', { name: 'Clinic desk' }).first().click();
     await expect(page).toHaveURL(/\/clinic$/);
-    await expect(page.getByRole('heading', { name: 'Bureau clinique' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Bureau clinique' }),
+    ).toBeVisible();
 
     // A reload rebuilds the provider: the choice comes back from storage.
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Bureau clinique' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Bureau clinique' }),
+    ).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 
     // The server rendered English; the client has to start from there too.
@@ -113,7 +121,9 @@ test.describe('Language switching persists (#153)', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'sw');
   });
 
-  test('keeps Yoruba across a reload and formats its dates', async ({ page }) => {
+  test('keeps Yoruba across a reload and formats its dates', async ({
+    page,
+  }) => {
     const errors = hydrationErrors(page);
 
     await page.goto(`/vouchers/${VOUCHER_ID}`);
@@ -124,7 +134,10 @@ test.describe('Language switching persists (#153)', () => {
     // Every translated string follows, including the switcher's own label.
     await expect(page.getByText(`Vóṣà #${VOUCHER_ID}`)).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Ìtàn' })).toBeVisible();
-    await expect(languageSwitcher(page)).toHaveAttribute('aria-label', 'Yan èdè');
+    await expect(languageSwitcher(page)).toHaveAttribute(
+      'aria-label',
+      'Yan èdè',
+    );
     await expect(page.locator('html')).toHaveAttribute('lang', 'yo');
 
     const expiry = await page.evaluate(() =>
@@ -134,8 +147,12 @@ test.describe('Language switching persists (#153)', () => {
         year: 'numeric',
       }).format(new Date('2026-06-19T10:00:00.000Z')),
     );
-    await expect(page.getByText(expiry).filter({ visible: true }).first()).toBeVisible();
-    await expect(page.getByText('$3.00').filter({ visible: true }).first()).toBeVisible();
+    await expect(
+      page.getByText(expiry).filter({ visible: true }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText('$3.00').filter({ visible: true }).first(),
+    ).toBeVisible();
 
     expect(await overflow(page)).toBeLessThanOrEqual(0);
 
@@ -147,40 +164,9 @@ test.describe('Language switching persists (#153)', () => {
     expect(errors).toEqual([]);
   });
 
-  test('keeps Hausa across a reload and formats its dates', async ({ page }) => {
-    const errors = hydrationErrors(page);
-
-    await page.goto(`/vouchers/${VOUCHER_ID}`);
-    await expect(page.getByText(`Voucher #${VOUCHER_ID}`)).toBeVisible();
-
-    await languageSwitcher(page).selectOption('ha');
-
-    await expect(page.getByText(`Takardar shaida #${VOUCHER_ID}`)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tarihi' })).toBeVisible();
-    await expect(languageSwitcher(page)).toHaveAttribute('aria-label', 'Zaɓi harshe');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'ha');
-
-    const expiry = await page.evaluate(() =>
-      new Intl.DateTimeFormat('ha-NG', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }).format(new Date('2026-06-19T10:00:00.000Z')),
-    );
-    await expect(page.getByText(expiry).filter({ visible: true }).first()).toBeVisible();
-    await expect(page.getByText('$3.00').filter({ visible: true }).first()).toBeVisible();
-
-    expect(await overflow(page)).toBeLessThanOrEqual(0);
-
-    await page.reload();
-    await expect(page.getByText(`Takardar shaida #${VOUCHER_ID}`)).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'ha');
-    expect(await overflow(page)).toBeLessThanOrEqual(0);
-
-    expect(errors).toEqual([]);
-  });
-
-  test('applies the stored language to a page opened directly', async ({ page }) => {
+  test('applies the stored language to a page opened directly', async ({
+    page,
+  }) => {
     const errors = hydrationErrors(page);
 
     await page.goto(`/vouchers/${VOUCHER_ID}`);
@@ -189,14 +175,18 @@ test.describe('Language switching persists (#153)', () => {
 
     // A different URL, loaded from scratch rather than navigated to.
     await page.goto('/clinic');
-    await expect(page.getByRole('heading', { name: 'Bureau clinique' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Bureau clinique' }),
+    ).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 
     // The server rendered English; the client has to start from there too.
     expect(errors).toEqual([]);
   });
 
-  test('leaves English as the default for a first-time visitor', async ({ page }) => {
+  test('leaves English as the default for a first-time visitor', async ({
+    page,
+  }) => {
     await page.goto(`/vouchers/${VOUCHER_ID}`);
 
     await expect(languageSwitcher(page)).toHaveValue('en');

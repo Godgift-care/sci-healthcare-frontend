@@ -18,7 +18,10 @@ function stubWindow(options: { withTrustedTypes?: boolean } = {}): {
     createScriptURL: (url: string) => rules.createScriptURL(url),
   }));
   vi.stubGlobal('window', {
-    location: { href: 'https://app.test/clinics/x', origin: 'https://app.test' },
+    location: {
+      href: 'https://app.test/clinics/x',
+      origin: 'https://app.test',
+    },
     trustedTypes:
       options.withTrustedTypes === false ? undefined : { createPolicy },
   });
@@ -41,9 +44,8 @@ describe('sameOriginScriptUrl', () => {
   it('creates the allowlisted policy once and wraps same-origin URLs', async () => {
     const { createPolicy } = stubWindow();
     vi.resetModules();
-    const { sameOriginScriptUrl, TRUSTED_TYPES_POLICY } = await import(
-      './trusted-types'
-    );
+    const { sameOriginScriptUrl, TRUSTED_TYPES_POLICY } =
+      await import('./trusted-types');
 
     expect(TRUSTED_TYPES_POLICY).toBe('sci-healthcare');
     expect(sameOriginScriptUrl('/sw.js')).toBe('/sw.js');
@@ -90,9 +92,8 @@ describe('installTrustedTypesDefaultPolicy', () => {
   it('creates the default policy with a script-URL rule only', async () => {
     const { createPolicy } = stubWindow();
     vi.resetModules();
-    const { installTrustedTypesDefaultPolicy } = await import(
-      './trusted-types'
-    );
+    const { installTrustedTypesDefaultPolicy } =
+      await import('./trusted-types');
 
     installTrustedTypesDefaultPolicy();
     expect(createPolicy).toHaveBeenCalledTimes(1);
@@ -107,9 +108,8 @@ describe('installTrustedTypesDefaultPolicy', () => {
   it('allows same-origin and the analytics origin, and nothing else', async () => {
     const { createPolicy } = stubWindow();
     vi.resetModules();
-    const { installTrustedTypesDefaultPolicy } = await import(
-      './trusted-types'
-    );
+    const { installTrustedTypesDefaultPolicy } =
+      await import('./trusted-types');
     installTrustedTypesDefaultPolicy();
 
     const [, rules] = createPolicy.mock.calls[0] as [string, Rules];
@@ -129,9 +129,8 @@ describe('installTrustedTypesDefaultPolicy', () => {
       location: { href: 'https://app.test/', origin: 'https://app.test' },
     });
     vi.resetModules();
-    const { installTrustedTypesDefaultPolicy } = await import(
-      './trusted-types'
-    );
+    const { installTrustedTypesDefaultPolicy } =
+      await import('./trusted-types');
     expect(() => installTrustedTypesDefaultPolicy()).not.toThrow();
   });
 });

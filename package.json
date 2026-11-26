@@ -24,9 +24,11 @@
     "test:visual": "playwright test tests/visual",
     "test:visual:update": "playwright test tests/visual --update-snapshots",
     "test:e2e": "playwright test tests/e2e",
-    "bundle:budget": "node scripts/bundle-budget.mjs",
-    "bundle:budget:update": "node scripts/bundle-budget.mjs --update",
-    "test:unit:coverage": "vitest run --coverage"
+    "test:unit:coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "node scripts/install-hooks.mjs",
+    "deadcode": "knip"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "2.8.0",
@@ -65,8 +67,22 @@
     "jsdom": "^31.0.1",
     "storybook": "^10.6.2",
     "tailwindcss": "4.3.5",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "typescript": "5.7.3",
+    "vitest": "5.1.0",
+    "husky": "^9.1.7",
+    "knip": "^6.46.1",
+    "lint-staged": "^17.6.1",
+    "prettier": "^3.10.1",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
   },
   "overrides": {
     "undici": "8.5.0"

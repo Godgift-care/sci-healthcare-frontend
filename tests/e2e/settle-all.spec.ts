@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 import { E2E_CONTRACTS } from './contracts';
-import { CLINIC, FUNDED_VOUCHER, PROVIDER, SETTLEABLE_VOUCHER } from './fixtures';
+import {
+  CLINIC,
+  FUNDED_VOUCHER,
+  PROVIDER,
+  SETTLEABLE_VOUCHER,
+} from './fixtures';
 import { mockBackend, mockInvokes, useMockWallet } from './helpers';
 
 /**
@@ -56,7 +61,8 @@ test('settle all releases every due voucher and leaves the others alone', async 
   // One `settle` per due voucher, and nothing written for the funded one.
   const writes = await mockInvokes(page);
   const settles = writes.filter(
-    (call) => call.contractId === E2E_CONTRACTS.voucher && call.method === 'settle',
+    (call) =>
+      call.contractId === E2E_CONTRACTS.voucher && call.method === 'settle',
   );
   expect(settles).toHaveLength(2);
   expect(writes.some((call) => call.method === 'claim')).toBe(false);
@@ -64,7 +70,9 @@ test('settle all releases every due voucher and leaves the others alone', async 
   // 390px is the narrowest supported width: the button and summary may wrap
   // but must not push the page sideways.
   const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });

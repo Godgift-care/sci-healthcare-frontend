@@ -17,7 +17,10 @@ type Line = {
   balance: string;
 };
 
-function account(balances: Line[]): { balances: Line[]; subentry_count: number } {
+function account(balances: Line[]): {
+  balances: Line[];
+  subentry_count: number;
+} {
   return { balances, subentry_count: balances.length };
 }
 
@@ -166,8 +169,9 @@ describe('simulateContractFee', () => {
       __SCI_MOCK_RPC__: { calls, args: [] },
     });
 
-    await expect(simulateContractFee('CCONTRACT', 'create_voucher', [], 'GACCOUNT'))
-      .resolves.toBe(100_000n);
+    await expect(
+      simulateContractFee('CCONTRACT', 'create_voucher', [], 'GACCOUNT'),
+    ).resolves.toBe(100_000n);
     expect(calls).toEqual([
       { kind: 'simulate', contractId: 'CCONTRACT', method: 'create_voucher' },
     ]);

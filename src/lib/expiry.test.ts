@@ -36,8 +36,12 @@ describe('minExpiryDate', () => {
 describe('expiresAtFromDays', () => {
   it('counts the preset window from now', () => {
     const now = Date.UTC(2026, 9, 18, 12, 0, 0);
-    expect(expiresAtFromDays(14, now)).toBe(Math.floor(now / 1000) + 14 * 86_400);
-    expect(expiresAtFromDays(90, now)).toBe(Math.floor(now / 1000) + 90 * 86_400);
+    expect(expiresAtFromDays(14, now)).toBe(
+      Math.floor(now / 1000) + 14 * 86_400,
+    );
+    expect(expiresAtFromDays(90, now)).toBe(
+      Math.floor(now / 1000) + 90 * 86_400,
+    );
   });
 });
 
@@ -74,7 +78,9 @@ describe('expiresAtFor', () => {
     expect(expiresAtFor('custom', '2026-12-24', now)).toBe(
       Date.UTC(2026, 11, 24, 23, 59, 59) / 1000,
     );
-    expect(expiresAtFor(30, '', now)).toBe(Math.floor(now / 1000) + 30 * 86_400);
+    expect(expiresAtFor(30, '', now)).toBe(
+      Math.floor(now / 1000) + 30 * 86_400,
+    );
   });
 
   it('never offers the contract a date it would refuse', () => {

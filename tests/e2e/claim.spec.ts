@@ -28,7 +28,9 @@ test('clinic marks the patient seen', async ({ page }) => {
   await expect(page.getByText('This clinic is verified')).toBeVisible();
 
   // The claim is held until the patient check matches this voucher (#33).
-  await expect(page.getByRole('button', { name: 'Mark patient seen' })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Mark patient seen' }),
+  ).toBeDisabled();
   await page.getByRole('button', { name: 'Verify patient' }).click();
   await page.getByLabel('Patient reference').fill(PATIENT_IDENTIFIER);
   await page.getByLabel('Patient secret key').fill(PATIENT_KEY);
@@ -45,7 +47,9 @@ test('clinic marks the patient seen', async ({ page }) => {
   });
 });
 
-test('clinic route shows not-found for an invalid address', async ({ page }) => {
+test('clinic route shows not-found for an invalid address', async ({
+  page,
+}) => {
   await page.goto('/clinics/not-a-stellar-address');
 
   await expect(page.getByText(/not found/i)).toBeVisible();

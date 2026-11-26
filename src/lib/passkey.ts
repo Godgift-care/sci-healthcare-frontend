@@ -89,7 +89,10 @@ export async function connectPasskeyWallet(): Promise<{
   }
 
   const storedAddr = getStoredPasskeyAddress();
-  const storedId = typeof window !== 'undefined' ? getStorageItem(PASSKEY_STORAGE_ID) : null;
+  const storedId =
+    typeof window !== 'undefined'
+      ? localStorage.getItem(PASSKEY_STORAGE_ID)
+      : null;
 
   if (storedAddr && storedId) {
     try {
@@ -99,8 +102,9 @@ export async function connectPasskeyWallet(): Promise<{
           challenge,
           allowCredentials: [
             {
-              id: Uint8Array.from(atob(storedId.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-                c.charCodeAt(0),
+              id: Uint8Array.from(
+                atob(storedId.replace(/-/g, '+').replace(/_/g, '/')),
+                (c) => c.charCodeAt(0),
               ),
               type: 'public-key',
             },
@@ -130,7 +134,10 @@ export async function signWithPasskey(xdrString: string): Promise<string> {
   }
 
   const encoder = new TextEncoder();
-  const txHash = await crypto.subtle.digest('SHA-256', encoder.encode(xdrString));
+  const txHash = await crypto.subtle.digest(
+    'SHA-256',
+    encoder.encode(xdrString),
+  );
 
   const assertion = (await navigator.credentials.get({
     publicKey: {
@@ -176,12 +183,22 @@ export class PasskeyModule {
     return { signedTxXdr, signerAddress: addr };
   }
 
-  async signAuthEntry(authEntry: string): Promise<{ signedAuthEntry: string; signerAddress?: string }> {
-    return { signedAuthEntry: authEntry, signerAddress: getStoredPasskeyAddress() || '' };
+  async signAuthEntry(
+    authEntry: string,
+  ): Promise<{ signedAuthEntry: string; signerAddress?: string }> {
+    return {
+      signedAuthEntry: authEntry,
+      signerAddress: getStoredPasskeyAddress() || '',
+    };
   }
 
-  async signMessage(message: string): Promise<{ signedMessage: string; signerAddress?: string }> {
-    return { signedMessage: message, signerAddress: getStoredPasskeyAddress() || '' };
+  async signMessage(
+    message: string,
+  ): Promise<{ signedMessage: string; signerAddress?: string }> {
+    return {
+      signedMessage: message,
+      signerAddress: getStoredPasskeyAddress() || '',
+    };
   }
 
   async getNetwork(): Promise<{ network: string; networkPassphrase: string }> {

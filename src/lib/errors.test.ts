@@ -45,13 +45,15 @@ describe('humaniseError', () => {
     expect(humaniseError(new Error('Error(Contract, #13)'))).toBe(
       'The dispute window is still open. Settlement unlocks once it closes.',
     );
-    expect(humaniseError('Error(Contract, #4)')).toBe('That voucher does not exist.');
+    expect(humaniseError('Error(Contract, #4)')).toBe(
+      'That voucher does not exist.',
+    );
   });
 
   it('uses the table it is given', () => {
-    expect(humaniseError(new Error('Error(Contract, #4)'), REGISTRY_ERRORS)).toBe(
-      'That clinic is not registered.',
-    );
+    expect(
+      humaniseError(new Error('Error(Contract, #4)'), REGISTRY_ERRORS),
+    ).toBe('That clinic is not registered.');
     expect(humaniseError(new Error('Error(Contract, #5)'), FAUCET_ERRORS)).toBe(
       'You have already had test USDC today. Try again later.',
     );
@@ -78,7 +80,9 @@ describe('humaniseError', () => {
   });
 
   it('passes through a message it cannot place', () => {
-    expect(humaniseError(new Error('the network is down'))).toBe('the network is down');
+    expect(humaniseError(new Error('the network is down'))).toBe(
+      'the network is down',
+    );
     expect(humaniseError('the network is down')).toBe('the network is down');
   });
 
@@ -90,23 +94,29 @@ describe('humaniseError', () => {
     const mainnet = await import('./errors');
     const message = mainnet.humaniseError(new Error('account not found'));
     expect(message).not.toMatch(/Friendbot/);
-    expect(message).toBe('This account does not exist on the network yet. Fund it first.');
+    expect(message).toBe(
+      'This account does not exist on the network yet. Fund it first.',
+    );
   });
 
   it('supports French, Swahili and Yoruba translations', () => {
-    expect(humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'fr')).toBe(
-      "Ce bon d'achat n'existe pas.",
-    );
-    expect(humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'sw')).toBe(
-      'Vocha hiyo haipo.',
-    );
-    expect(humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'yo')).toBe(
-      'Vóṣà yẹn kò sí.',
-    );
-    expect(humaniseError(new Error('token trustline missing'), VOUCHER_ERRORS, 'fr')).toBe(
+    expect(
+      humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'fr'),
+    ).toBe("Ce bon d'achat n'existe pas.");
+    expect(
+      humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'sw'),
+    ).toBe('Vocha hiyo haipo.');
+    expect(
+      humaniseError(new Error('Error(Contract, #4)'), VOUCHER_ERRORS, 'yo'),
+    ).toBe('Vóṣà yẹn kò sí.');
+    expect(
+      humaniseError(new Error('token trustline missing'), VOUCHER_ERRORS, 'fr'),
+    ).toBe(
       'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.',
     );
-    expect(humaniseError(new Error('token trustline missing'), VOUCHER_ERRORS, 'sw')).toBe(
+    expect(
+      humaniseError(new Error('token trustline missing'), VOUCHER_ERRORS, 'sw'),
+    ).toBe(
       'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.',
     );
   });
@@ -130,14 +140,17 @@ describe('humaniseHorizonResult', () => {
   it('prefers the operation code over the transaction code', () => {
     // op_line_full and tx_failed must not collapse into a generic retry.
     expect(
-      humaniseHorizonResult(400, { tx: 'tx_failed', operations: ['op_line_full'] }),
+      humaniseHorizonResult(400, {
+        tx: 'tx_failed',
+        operations: ['op_line_full'],
+      }),
     ).toBe('Your wallet already holds all the USDC this issuer allows.');
   });
 
   it('shows an unknown code verbatim rather than swallowing it', () => {
-    expect(humaniseHorizonResult(400, { operations: ['op_weird_new_code'] })).toBe(
-      'The network rejected this request (op_weird_new_code). Try again.',
-    );
+    expect(
+      humaniseHorizonResult(400, { operations: ['op_weird_new_code'] }),
+    ).toBe('The network rejected this request (op_weird_new_code). Try again.');
   });
 
   it('says the request may still be in flight on a Horizon timeout', () => {

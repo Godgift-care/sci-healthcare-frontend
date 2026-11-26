@@ -25,23 +25,25 @@ export function buildVoucherExpiryIcs({
   const dayAfter = new Date(expiry.getTime() + 86_400_000);
   const uid = `sci-voucher-${id}-${expiresAt}@sci-healthcare`;
 
-  return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//SCI Healthcare//Voucher Expiry//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${formatIcsTimestamp(stamp)}`,
-    `DTSTART;VALUE=DATE:${formatIcsDate(expiry)}`,
-    `DTEND;VALUE=DATE:${formatIcsDate(dayAfter)}`,
-    `SUMMARY:Voucher expiry — Voucher #${id}`,
-    `DESCRIPTION:Care must be provided before this voucher expires.\\n\\nVoucher: #${id}\\nService: ${escapeText(serviceLabel)}\\n\\nThis calendar entry contains no personal data.`,
-    `URL:${voucherUrl}`,
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n') + '\r\n';
+  return (
+    [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//SCI Healthcare//Voucher Expiry//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${formatIcsTimestamp(stamp)}`,
+      `DTSTART;VALUE=DATE:${formatIcsDate(expiry)}`,
+      `DTEND;VALUE=DATE:${formatIcsDate(dayAfter)}`,
+      `SUMMARY:Voucher expiry — Voucher #${id}`,
+      `DESCRIPTION:Care must be provided before this voucher expires.\\n\\nVoucher: #${id}\\nService: ${escapeText(serviceLabel)}\\n\\nThis calendar entry contains no personal data.`,
+      `URL:${voucherUrl}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n') + '\r\n'
+  );
 }
 
 /** `YYYYMMDD` in UTC. */
@@ -73,5 +75,9 @@ function pad2(n: number): string {
 
 /** Escape text for an iCalendar property value (RFC 5545). */
 function escapeText(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
 }

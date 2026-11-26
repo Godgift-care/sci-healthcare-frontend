@@ -31,7 +31,7 @@ export function ClinicMetadataLink({
       className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm hover:bg-[var(--color-canvas)]"
     >
       <span>{label}</span>
-      <span className="mono break-all text-end text-[var(--color-ink-soft)]">
+      <span className="mono text-end break-all text-[var(--color-ink-soft)]">
         {destination.hostname}
       </span>
     </a>

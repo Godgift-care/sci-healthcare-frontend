@@ -29,7 +29,9 @@ test.beforeEach(async ({ page }) => {
   await mockBackend(page, { provider: CLINIC });
 });
 
-test('warns before unload only while a transaction is pending', async ({ page }) => {
+test('warns before unload only while a transaction is pending', async ({
+  page,
+}) => {
   await page.goto(`/clinics/${CLINIC.address}`);
   await expect(page.getByText('Fund care')).toBeVisible();
 
@@ -43,7 +45,9 @@ test('warns before unload only while a transaction is pending', async ({ page })
   await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   // Wait for the review step to close and the write to actually be in flight
   // before probing the guard, so the pending state is observable.
-  await expect(page.getByRole('button', { name: 'Confirm', exact: true })).toBeHidden();
+  await expect(
+    page.getByRole('button', { name: 'Confirm', exact: true }),
+  ).toBeHidden();
 
   // While the write is in flight, the unload is cancelled (browser warns).
   await expect

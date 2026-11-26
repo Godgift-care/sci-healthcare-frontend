@@ -2,7 +2,12 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 
-import { nextSortDirection, sortRows, type SortDirection, type SortState } from '@/lib/data-table';
+import {
+  nextSortDirection,
+  sortRows,
+  type SortDirection,
+  type SortState,
+} from '@/lib/data-table';
 
 export interface DataTableColumn<T> {
   key: string;
@@ -38,7 +43,9 @@ export function DataTable<T>({
     columns.length > 0 ? { key: columns[0].key, direction: 'ascending' } : null,
   );
 
-  const activeColumn = sort ? (columns.find((column) => column.key === sort.key) ?? null) : null;
+  const activeColumn = sort
+    ? (columns.find((column) => column.key === sort.key) ?? null)
+    : null;
 
   const sortedRows = useMemo(() => {
     if (!sort || !activeColumn) {
@@ -64,7 +71,9 @@ export function DataTable<T>({
               >
                 <button
                   type="button"
-                  onClick={() => setSort((current) => nextSortDirection(current, column.key))}
+                  onClick={() =>
+                    setSort((current) => nextSortDirection(current, column.key))
+                  }
                   aria-label={`Sort by ${column.header}${direction ? `, currently ${direction}` : ''}`}
                   className="inline-flex min-h-6 items-center gap-1 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)]"
                 >
@@ -81,7 +90,10 @@ export function DataTable<T>({
       <tbody className="divide-y divide-[var(--color-line)]">
         {sortedRows.length === 0 ? (
           <tr>
-            <td colSpan={columns.length} className="py-4 text-center text-[var(--color-ink-soft)]">
+            <td
+              colSpan={columns.length}
+              className="py-4 text-center text-[var(--color-ink-soft)]"
+            >
               {emptyMessage}
             </td>
           </tr>

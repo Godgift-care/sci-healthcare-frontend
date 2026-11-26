@@ -38,7 +38,9 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
     await expect(menu.getByText(FUNDER)).toBeVisible();
 
     // Verify explorer link (Stellar Expert on testnet)
-    const explorerLink = menu.getByRole('menuitem', { name: /view on stellar expert/i });
+    const explorerLink = menu.getByRole('menuitem', {
+      name: /view on stellar expert/i,
+    });
     await expect(explorerLink).toBeVisible();
     await expect(explorerLink).toHaveAttribute(
       'href',
@@ -74,7 +76,9 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
     await disconnectItem.click();
 
     // Now button should say "Connect wallet"
-    await expect(page.getByRole('button', { name: /connect wallet/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /connect wallet/i }),
+    ).toBeVisible();
     await expect(page.locator('#wallet-menu-button')).not.toBeVisible();
   });
 
@@ -130,9 +134,13 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
     await expect(menu.getByText('Low XLM', { exact: true })).toBeVisible();
 
     // Verify low XLM warning inside menu
-    await expect(menu.getByText(/spendable xlm is low for fees/i)).toBeVisible();
+    await expect(
+      menu.getByText(/spendable xlm is low for fees/i),
+    ).toBeVisible();
     await expect(menu.getByText(/spendable balance is/i)).toBeVisible();
-    const topUpLink = menu.getByRole('menuitem', { name: /top up with friendbot/i });
+    const topUpLink = menu.getByRole('menuitem', {
+      name: /top up with friendbot/i,
+    });
     await expect(topUpLink).toBeVisible();
     await expect(topUpLink).toHaveAttribute(
       'href',
@@ -143,7 +151,8 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
   test('auto-reconnects passkey wallet from localStorage on mount and forgets on disconnect', async ({
     page,
   }) => {
-    const dummyPasskeyAddr = 'CDWUSKGGFDI4FRXK5EBTRECZSVQSSWJHHJOGH6JWG3AUMFFMQ435DIAG';
+    const dummyPasskeyAddr =
+      'CDWUSKGGFDI4FRXK5EBTRECZSVQSSWJHHJOGH6JWG3AUMFFMQ435DIAG';
     await page.addInitScript(`
       window.localStorage.setItem('sci-wallet-connected', '1');
       window.localStorage.setItem('sci-wallet-id', 'passkey-smart-wallet');
@@ -166,7 +175,9 @@ test.describe('Wallet features (menu, auto-reconnect, unfunded detection)', () =
     const disconnectItem = menu.getByRole('menuitem', { name: /disconnect/i });
     await disconnectItem.click();
 
-    await expect(page.getByRole('button', { name: /connect wallet/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /connect wallet/i }),
+    ).toBeVisible();
 
     const storedConnected = await page.evaluate(() =>
       window.localStorage.getItem('sci-wallet-connected'),

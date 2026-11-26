@@ -53,7 +53,9 @@ export type Sep7TxRequest = {
 export function buildSep7TxUri(request: Sep7TxRequest): string {
   const xdr = request.xdr?.trim();
   if (!xdr) {
-    throw new Error('A prepared transaction envelope is required for a SEP-7 link.');
+    throw new Error(
+      'A prepared transaction envelope is required for a SEP-7 link.',
+    );
   }
 
   const params = new URLSearchParams({ xdr });

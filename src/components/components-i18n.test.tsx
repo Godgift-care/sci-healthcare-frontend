@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LocaleProvider, useLocaleContext } from '@/i18n/LocaleContext';
@@ -64,7 +70,11 @@ vi.mock('next/navigation', () => ({
 
 const ADDRESS = 'GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR';
 
-function expected(locale: Locale, key: string, params?: TranslateParams): string {
+function expected(
+  locale: Locale,
+  key: string,
+  params?: TranslateParams,
+): string {
   return translate(locale, key, params);
 }
 
@@ -184,7 +194,11 @@ describe.each(['en', 'fr'] as const)('shared components in %s', (locale) => {
   it('translates the cash-out panel', () => {
     renderIn(
       locale,
-      <Sep24Cashout account={ADDRESS} country="KE" signTransaction={async () => ''} />,
+      <Sep24Cashout
+        account={ADDRESS}
+        country="KE"
+        signTransaction={async () => ''}
+      />,
     );
 
     expect(

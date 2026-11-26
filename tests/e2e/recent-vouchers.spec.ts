@@ -8,7 +8,9 @@ const VOUCHER_ID = '601';
 const STORAGE_KEY = 'sci-recent-voucher-ids';
 const VOUCHER = FUNDED_VOUCHER(VOUCHER_ID);
 
-test('remembers a viewed voucher and links it from both desks', async ({ page }) => {
+test('remembers a viewed voucher and links it from both desks', async ({
+  page,
+}) => {
   await blockAnalytics(page);
   await useMockWallet(page, FUNDER);
   await mockBackend(page, {
@@ -24,8 +26,13 @@ test('remembers a viewed voucher and links it from both desks', async ({ page })
     .toBe(JSON.stringify([VOUCHER_ID]));
 
   await page.goto('/my');
-  const myVoucherLink = page.getByRole('link', { name: `Voucher #${VOUCHER_ID}` });
-  await expect(myVoucherLink).toHaveAttribute('href', `/vouchers/${VOUCHER_ID}`);
+  const myVoucherLink = page.getByRole('link', {
+    name: `Voucher #${VOUCHER_ID}`,
+  });
+  await expect(myVoucherLink).toHaveAttribute(
+    'href',
+    `/vouchers/${VOUCHER_ID}`,
+  );
 
   const clinicPage = await page.context().newPage();
   await blockAnalytics(clinicPage);
@@ -36,6 +43,9 @@ test('remembers a viewed voucher and links it from both desks', async ({ page })
   const clinicVoucherLink = clinicPage.getByRole('link', {
     name: `Voucher #${VOUCHER_ID}`,
   });
-  await expect(clinicVoucherLink).toHaveAttribute('href', `/vouchers/${VOUCHER_ID}`);
+  await expect(clinicVoucherLink).toHaveAttribute(
+    'href',
+    `/vouchers/${VOUCHER_ID}`,
+  );
   await clinicPage.close();
 });

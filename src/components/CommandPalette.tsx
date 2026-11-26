@@ -102,7 +102,12 @@ function clinicCommand(provider: Provider, t: Translate): Command {
 
 function matches(command: Command, query: string): boolean {
   const value = query.trim().toLocaleLowerCase();
-  return !value || `${command.label} ${command.description}`.toLocaleLowerCase().includes(value);
+  return (
+    !value ||
+    `${command.label} ${command.description}`
+      .toLocaleLowerCase()
+      .includes(value)
+  );
 }
 
 export function CommandPalette() {
@@ -185,10 +190,14 @@ export function CommandPalette() {
   function onInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      setActiveIndex((index) => (results.length ? (index + 1) % results.length : 0));
+      setActiveIndex((index) =>
+        results.length ? (index + 1) % results.length : 0,
+      );
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
-      setActiveIndex((index) => (results.length ? (index - 1 + results.length) % results.length : 0));
+      setActiveIndex((index) =>
+        results.length ? (index - 1 + results.length) % results.length : 0,
+      );
     } else if (event.key === 'Enter' && results[activeIndex]) {
       event.preventDefault();
       navigate(results[activeIndex]);
@@ -196,7 +205,11 @@ export function CommandPalette() {
   }
 
   return (
-    <Modal open={open} onClose={close} title={t('components.commandPalette.title')}>
+    <Modal
+      open={open}
+      onClose={close}
+      title={t('components.commandPalette.title')}
+    >
       <label htmlFor="command-search" className="sr-only">
         {t('components.commandPalette.search')}
       </label>
@@ -207,7 +220,9 @@ export function CommandPalette() {
         aria-autocomplete="list"
         aria-expanded="true"
         aria-controls="command-results"
-        aria-activedescendant={results[activeIndex] ? `command-option-${activeIndex}` : undefined}
+        aria-activedescendant={
+          results[activeIndex] ? `command-option-${activeIndex}` : undefined
+        }
         value={query}
         onChange={(event) => {
           setQuery(event.target.value);
@@ -241,13 +256,18 @@ export function CommandPalette() {
                 : 'text-[var(--color-ink-soft)]'
             }`}
           >
-            <span className="font-medium text-[var(--color-ink)]">{command.label}</span>
+            <span className="font-medium text-[var(--color-ink)]">
+              {command.label}
+            </span>
             <span className="text-xs">{command.description}</span>
           </button>
         ))}
       </div>
       {results.length === 0 && (
-        <p aria-live="polite" className="px-3 py-4 text-sm text-[var(--color-ink-soft)]">
+        <p
+          aria-live="polite"
+          className="px-3 py-4 text-sm text-[var(--color-ink-soft)]"
+        >
           {t('components.commandPalette.noResults')}
         </p>
       )}

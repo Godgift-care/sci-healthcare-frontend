@@ -20,10 +20,12 @@ describe('nameIndex', () => {
   });
 
   it('maps attesters, preferring a name over the organisation', () => {
-    expect(nameIndex([], [attester]).get('GATTESTER')).toBe('Red Cross Inspector');
-    expect(
-      nameIndex([], [{ ...attester, name: null }]).get('GATTESTER'),
-    ).toBe('International Medical Verification');
+    expect(nameIndex([], [attester]).get('GATTESTER')).toBe(
+      'Red Cross Inspector',
+    );
+    expect(nameIndex([], [{ ...attester, name: null }]).get('GATTESTER')).toBe(
+      'International Medical Verification',
+    );
   });
 
   it('needs no arguments', () => {
@@ -39,7 +41,10 @@ describe('nameIndex', () => {
   });
 
   it('lets a clinic win over an attester for the same address', () => {
-    const index = nameIndex([clinic], [{ address: 'GCLINIC', name: 'Someone Else' }]);
+    const index = nameIndex(
+      [clinic],
+      [{ address: 'GCLINIC', name: 'Someone Else' }],
+    );
     expect(index.get('GCLINIC')).toBe('Ikeja General Clinic');
   });
 });

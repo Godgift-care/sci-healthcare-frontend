@@ -50,10 +50,30 @@ const SETTLED_VOUCHER = {
 };
 
 const SETTLED_EVENTS = [
-  { id: '0000001-000000-000001', name: 'voucher_created', txHash: 'TXCREATED', voucherId: VOUCHER_ID },
-  { id: '0000002-000000-000001', name: 'voucher_claimed', txHash: 'TXCLAIMED', voucherId: VOUCHER_ID },
-  { id: '0000003-000000-000001', name: 'voucher_attested', txHash: 'TXATTESTED', voucherId: VOUCHER_ID },
-  { id: '0000004-000000-000001', name: 'voucher_settled', txHash: 'TXSETTLED', voucherId: VOUCHER_ID },
+  {
+    id: '0000001-000000-000001',
+    name: 'voucher_created',
+    txHash: 'TXCREATED',
+    voucherId: VOUCHER_ID,
+  },
+  {
+    id: '0000002-000000-000001',
+    name: 'voucher_claimed',
+    txHash: 'TXCLAIMED',
+    voucherId: VOUCHER_ID,
+  },
+  {
+    id: '0000003-000000-000001',
+    name: 'voucher_attested',
+    txHash: 'TXATTESTED',
+    voucherId: VOUCHER_ID,
+  },
+  {
+    id: '0000004-000000-000001',
+    name: 'voucher_settled',
+    txHash: 'TXSETTLED',
+    voucherId: VOUCHER_ID,
+  },
 ];
 
 test.beforeEach(async ({ page }) => {
@@ -61,7 +81,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Voucher history links to its transactions (#18)', () => {
-  test('each completed step links to its transaction on Stellar Expert', async ({ page }) => {
+  test('each completed step links to its transaction on Stellar Expert', async ({
+    page,
+  }) => {
     await mockBackend(page, {
       provider: CLINIC,
       voucherById: { [VOUCHER_ID]: SETTLED_VOUCHER },
@@ -74,7 +96,9 @@ test.describe('Voucher history links to its transactions (#18)', () => {
     // One link per completed step, each pointing at its own transaction
     // on the network the app is built for.
     const txLink = (hash: string) =>
-      page.locator(`a[href="https://stellar.expert/explorer/testnet/tx/${hash}"]`);
+      page.locator(
+        `a[href="https://stellar.expert/explorer/testnet/tx/${hash}"]`,
+      );
     await expect(txLink('TXCREATED')).toHaveText('View transaction');
     await expect(txLink('TXCLAIMED')).toHaveText('View transaction');
     await expect(txLink('TXATTESTED')).toHaveText('View transaction');
@@ -100,7 +124,9 @@ test.describe('Voucher history links to its transactions (#18)', () => {
 
     // Dates and details still render...
     await expect(page.getByText('USDC moved into escrow')).toBeVisible();
-    await expect(page.getByText('Escrow released and a care receipt minted')).toBeVisible();
+    await expect(
+      page.getByText('Escrow released and a care receipt minted'),
+    ).toBeVisible();
     // ...but nothing offers an on-chain link.
     await expect(page.getByText('View transaction')).toHaveCount(0);
   });

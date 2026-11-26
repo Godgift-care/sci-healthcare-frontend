@@ -16,7 +16,10 @@ test.beforeEach(async ({ page }) => {
 test('is linked from the footer and shows a healthy API', async ({ page }) => {
   await mockBackend(page, {});
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Footer navigation' }).getByRole('link', { name: 'Status' }).click();
+  await page
+    .getByRole('navigation', { name: 'Footer navigation' })
+    .getByRole('link', { name: 'Status' })
+    .click();
 
   await expect(page).toHaveURL(/\/status$/);
   await expect(page.getByText('All systems operational')).toBeVisible();
@@ -29,13 +32,23 @@ test('shows a degraded indexer and says what is wrong', async ({ page }) => {
   await mockBackend(page, {
     ready: {
       status: 'degraded',
-      checks: { database: true, network: 'testnet', indexedLedger: 512000, lagLedgers: 340, gapDetected: true },
+      checks: {
+        database: true,
+        network: 'testnet',
+        indexedLedger: 512000,
+        lagLedgers: 340,
+        gapDetected: true,
+      },
     },
   });
   await page.goto('/status');
 
-  await expect(page.getByText('Degraded: the API is up but not fully healthy')).toBeVisible();
-  await expect(page.getByText('340 ledgers behind (about 28 min)').first()).toBeVisible();
+  await expect(
+    page.getByText('Degraded: the API is up but not fully healthy'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('340 ledgers behind (about 28 min)').first(),
+  ).toBeVisible();
   await expect(page.getByText('Gap detected')).toBeVisible();
   await expect(page.getByText(/some past events may be missing/)).toBeVisible();
 });
@@ -56,11 +69,21 @@ test('warns when the API indexes another network', async ({ page }) => {
       version: '0.2.0',
       commit: null,
       network: 'public',
-      contracts: { registry: '', voucher: '', receipt: '', usdc: null, faucet: null },
+      contracts: {
+        registry: '',
+        voucher: '',
+        receipt: '',
+        usdc: null,
+        faucet: null,
+      },
       startedAt: '2026-06-01T00:00:00.000Z',
     },
   });
   await page.goto('/status');
 
-  await expect(page.getByText('This app is built for testnet, but the API indexes public.')).toBeVisible();
+  await expect(
+    page.getByText(
+      'This app is built for testnet, but the API indexes public.',
+    ),
+  ).toBeVisible();
 });

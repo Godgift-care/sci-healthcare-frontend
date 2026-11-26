@@ -45,7 +45,11 @@ export type ClinicDailySummary = {
  * A `Funded` voucher is not pending payout: nobody has claimed it yet, and
  * it may still expire and refund. `Settled` has paid, `Refunded` never will.
  */
-export const PENDING_PAYOUT_STATUSES = ['Claimed', 'Attested', 'Disputed'] as const;
+export const PENDING_PAYOUT_STATUSES = [
+  'Claimed',
+  'Attested',
+  'Disputed',
+] as const;
 
 const PENDING = new Set<string>(PENDING_PAYOUT_STATUSES);
 
@@ -111,7 +115,12 @@ export function summariseDailyEarnings(
 ): ClinicDailySummary {
   const today = dayKey(date, timeZone);
   if (!today) {
-    return { claimedCount: 0, attestedCount: 0, settledCount: 0, netReceived: '0' };
+    return {
+      claimedCount: 0,
+      attestedCount: 0,
+      settledCount: 0,
+      netReceived: '0',
+    };
   }
 
   const byId = new Map(vouchers.map((voucher) => [voucher.id, voucher]));
@@ -134,7 +143,10 @@ export function summariseDailyEarnings(
   }
 
   for (const receipt of receipts) {
-    if (dayKey(receipt.settledAt, timeZone) !== today || settledIds.has(receipt.voucherId)) {
+    if (
+      dayKey(receipt.settledAt, timeZone) !== today ||
+      settledIds.has(receipt.voucherId)
+    ) {
       continue;
     }
     settledIds.add(receipt.voucherId);
@@ -231,19 +243,31 @@ export function summariseEarnings(vouchers: EarningsVoucher[]): ClinicEarnings {
  * and months with neither settled nor pending money are omitted — a row of
  * zeros adds nothing to a cash-flow table.
  */
-export function monthlyEarnings(vouchers: EarningsVoucher[]): ClinicEarningsMonth[] {
+export function monthlyEarnings(
+  vouchers: EarningsVoucher[],
+): ClinicEarningsMonth[] {
   const months = new Map<
     string,
-    { settled: bigint; pending: bigint; fees: bigint; settledCount: number; pendingCount: number }
+    {
+      settled: bigint;
+      pending: bigint;
+      fees: bigint;
+      settledCount: number;
+      pendingCount: number;
+    }
   >();
 
   for (const voucher of vouchers) {
     const key = monthKey(voucher.createdAt);
     if (!key) continue;
     const amount = units(voucher.amount);
-    const row =
-      months.get(key) ??
-      { settled: 0n, pending: 0n, fees: 0n, settledCount: 0, pendingCount: 0 };
+    const row = months.get(key) ?? {
+      settled: 0n,
+      pending: 0n,
+      fees: 0n,
+      settledCount: 0,
+      pendingCount: 0,
+    };
 
     if (voucher.status === 'Settled') {
       row.settled += amount;

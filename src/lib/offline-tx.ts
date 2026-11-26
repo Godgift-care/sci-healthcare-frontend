@@ -63,7 +63,10 @@ function write(transactions: QueuedTx[]): void {
 }
 
 function newId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -90,7 +93,8 @@ export function enqueueTx(
     error: null,
   };
   const next = read().filter(
-    (existing) => !(existing.kind === tx.kind && existing.voucherId === tx.voucherId),
+    (existing) =>
+      !(existing.kind === tx.kind && existing.voucherId === tx.voucherId),
   );
   next.push(entry);
   write(next);

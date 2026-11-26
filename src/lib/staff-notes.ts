@@ -25,7 +25,11 @@ function readNotes(): StaffNotes {
       return cachedNotes;
     }
     const parsed: unknown = JSON.parse(snapshot);
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
       cachedNotes = {};
       return cachedNotes;
     }
@@ -46,11 +50,12 @@ function writeNotes(notes: StaffNotes): boolean {
   if (typeof window === 'undefined') return false;
   try {
     cachedNotes = { ...notes };
-    const success = setStorageItem(STAFF_NOTES_STORAGE_KEY, JSON.stringify(cachedNotes));
-    if (success) {
-      window.dispatchEvent(new Event(STAFF_NOTES_CHANGE_EVENT));
-    }
-    return success;
+    window.localStorage.setItem(
+      STAFF_NOTES_STORAGE_KEY,
+      JSON.stringify(cachedNotes),
+    );
+    window.dispatchEvent(new Event(STAFF_NOTES_CHANGE_EVENT));
+    return true;
   } catch {
     // Storage may be unavailable in private browsing or by user policy.
     return false;
@@ -100,7 +105,11 @@ function subscribeStaffNotes(onChange: () => void): () => void {
  * and falls back to none while hydrating.
  */
 export function useStaffNote(voucherId: string): string {
-  const notes = useSyncExternalStore(subscribeStaffNotes, getStaffNotes, () => EMPTY_NOTES);
+  const notes = useSyncExternalStore(
+    subscribeStaffNotes,
+    getStaffNotes,
+    () => EMPTY_NOTES,
+  );
   const note = notes[voucherId];
   return typeof note === 'string' ? note.trim() : '';
 }

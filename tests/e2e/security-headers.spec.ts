@@ -52,7 +52,9 @@ test.beforeEach(async ({ page }) => {
   await recordViolations(page);
   await blockAnalytics(page);
   await page.route('**tile.openstreetmap.org/**', (route) => route.abort());
-  await page.route('**/soroban-testnet.stellar.org/**', (route) => route.abort());
+  await page.route('**/soroban-testnet.stellar.org/**', (route) =>
+    route.abort(),
+  );
   await page.route('https://evil.example/**', (route) => route.abort());
 });
 
@@ -103,7 +105,9 @@ test('the policy names only the origins the app needs', async ({ page }) => {
   expect(headers['x-frame-options']).toBe('DENY');
   expect(headers['x-content-type-options']).toBe('nosniff');
   expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
-  expect(headers['cross-origin-opener-policy']).toBe('same-origin-allow-popups');
+  expect(headers['cross-origin-opener-policy']).toBe(
+    'same-origin-allow-popups',
+  );
   expect(headers['permissions-policy']).toContain('geolocation=()');
 });
 

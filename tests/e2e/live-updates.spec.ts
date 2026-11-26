@@ -65,6 +65,8 @@ test.describe('Live updates and SWR cache invalidation (#63, #64)', () => {
     voucherStatus = 'Claimed';
 
     // Wait for the live updates polling fallback to revalidate SWR cache
-    await expect(page.getByText('Claimed', { exact: true })).toBeVisible({ timeout: 4000 });
+    await expect(page.getByText('Claimed', { exact: true })).toBeVisible({
+      timeout: 4000,
+    });
   });
 });

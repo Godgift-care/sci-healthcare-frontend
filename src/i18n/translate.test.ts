@@ -35,26 +35,40 @@ describe('selectPluralForm', () => {
   });
 
   it('falls back to other when a category is missing', () => {
-    expect(selectPluralForm('fr', { other: 'beaucoup' }, 1_000_000)).toBe('beaucoup');
+    expect(selectPluralForm('fr', { other: 'beaucoup' }, 1_000_000)).toBe(
+      'beaucoup',
+    );
   });
 });
 
 describe('translate', () => {
   it('renders one and two vouchers in English', () => {
     expect(
-      translate('en', 'clinic.earningsSettledDetail', { count: 1, net: '$5.00' }),
+      translate('en', 'clinic.earningsSettledDetail', {
+        count: 1,
+        net: '$5.00',
+      }),
     ).toBe('1 voucher · $5.00 net after fees');
     expect(
-      translate('en', 'clinic.earningsSettledDetail', { count: 2, net: '$5.00' }),
+      translate('en', 'clinic.earningsSettledDetail', {
+        count: 2,
+        net: '$5.00',
+      }),
     ).toBe('2 vouchers · $5.00 net after fees');
   });
 
   it('uses the locale plural rules in French', () => {
     expect(
-      translate('fr', 'clinic.earningsSettledDetail', { count: 1, net: '5,00 $' }),
+      translate('fr', 'clinic.earningsSettledDetail', {
+        count: 1,
+        net: '5,00 $',
+      }),
     ).toBe('1 bon · 5,00 $ net après frais');
     expect(
-      translate('fr', 'clinic.earningsSettledDetail', { count: 2, net: '5,00 $' }),
+      translate('fr', 'clinic.earningsSettledDetail', {
+        count: 2,
+        net: '5,00 $',
+      }),
     ).toBe('2 bons · 5,00 $ net après frais');
   });
 

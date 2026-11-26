@@ -74,7 +74,11 @@ export type BackendState = {
    */
   providerStats?: Record<string, unknown>;
   attesters?: Record<string, unknown>[];
-  receipts?: { total: number; totalSpendDisplay: string; receipts: Record<string, unknown>[] };
+  receipts?: {
+    total: number;
+    totalSpendDisplay: string;
+    receipts: Record<string, unknown>[];
+  };
   /**
    * `GET /ready` (#168). Defaults to a healthy, caught-up indexer; a
    * degraded body is served with 503, like a real readiness probe.
@@ -95,7 +99,10 @@ export type BackendState = {
   serviceByCode?: Record<string, Record<string, unknown>>;
 };
 
-export async function mockBackend(page: Page, state: BackendState): Promise<void> {
+export async function mockBackend(
+  page: Page,
+  state: BackendState,
+): Promise<void> {
   const providers = state.providers ?? (state.provider ? [state.provider] : []);
   const readsByVoucher = new Map<string, number>();
   await page.route('http://localhost:8080/**', (route) => {
@@ -111,7 +118,13 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
     if (parts[0] === 'ready') {
       const ready = state.ready ?? {
         status: 'ready',
-        checks: { database: true, network: 'testnet', indexedLedger: 512340, lagLedgers: 0, gapDetected: false },
+        checks: {
+          database: true,
+          network: 'testnet',
+          indexedLedger: 512340,
+          lagLedgers: 0,
+          gapDetected: false,
+        },
       };
       return json(ready, ready.status === 'ready' ? 200 : 503);
     }
@@ -124,7 +137,13 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
           network: 'testnet',
           rpcUrl: 'https://soroban-testnet.stellar.org',
           rpcUrls: ['https://soroban-testnet.stellar.org'],
-          contracts: { registry: '', voucher: '', receipt: '', usdc: null, faucet: null },
+          contracts: {
+            registry: '',
+            voucher: '',
+            receipt: '',
+            usdc: null,
+            faucet: null,
+          },
           indexerStartLedger: 500000,
           startedAt: '2026-06-01T00:00:00.000Z',
           uptimeSeconds: 3600,
@@ -207,7 +226,9 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
           const status = String((v as { status?: unknown }).status ?? '');
           byStatus[status] = (byStatus[status] ?? 0) + 1;
           if (status === 'Settled') {
-            settledValue += BigInt(String((v as { amount?: unknown }).amount ?? '0'));
+            settledValue += BigInt(
+              String((v as { amount?: unknown }).amount ?? '0'),
+            );
           }
         }
         return json({
@@ -265,7 +286,10 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
               state.voucherById?.[parts[1]] ??
               state.vouchers?.find((cand) => String(cand.id) === parts[1]);
             if (raw && typeof raw === 'object') {
-              return json({ ...(raw as Record<string, unknown>), status: converge.status });
+              return json({
+                ...(raw as Record<string, unknown>),
+                status: converge.status,
+              });
             }
           }
         }
@@ -276,9 +300,10 @@ export async function mockBackend(page: Page, state: BackendState): Promise<void
       const statusFilter = url.searchParams.get('status');
       const vouchers = statusFilter
         ? (state.vouchers ?? []).filter(
-            (v) => String((v as { status?: unknown }).status ?? '') === statusFilter,
+            (v) =>
+              String((v as { status?: unknown }).status ?? '') === statusFilter,
           )
-        : state.vouchers ?? [];
+        : (state.vouchers ?? []);
       return json({ total: vouchers.length, vouchers });
     }
 
@@ -308,7 +333,7 @@ export async function mockInvokeArgs(page: Page): Promise<string[][]> {
     const mock = window.__SCI_MOCK_RPC__;
     if (!mock) return [];
     return mock.calls
-      .map((call, i) => (call.kind === 'invoke' ? mock.args[i] ?? [] : null))
+      .map((call, i) => (call.kind === 'invoke' ? (mock.args[i] ?? []) : null))
       .filter((args): args is string[] => args !== null);
   });
 }

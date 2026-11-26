@@ -34,31 +34,18 @@ export function useVoucher(
   id: string | null | undefined,
   config?: SWRConfiguration<LoadedVoucher>,
 ) {
-  const { data, error, isLoading, isValidating, mutate } = useSWR<LoadedVoucher>(
-    id ? ['voucher', id] : null,
-    async () => {
-      try {
-        return await api.voucher(id!);
-      } catch (err) {
-        // Not-found is a 404 missing resource; rethrow rather than fallback
-        if (err instanceof ApiError && err.status === 404) {
-          throw err;
-        }
-        try {
-          return await fetchVoucherFromChain(id!);
-        } catch {
-          throw err;
-        }
-      }
-    },
-    config,
-  );
+  const { data, error, isLoading, isValidating, mutate } =
+    useSWR<LoadedVoucher>(
+      id ? ['voucher', id] : null,
+      () => api.voucher(id!),
+      config,
+    );
 
   return {
     voucher: data ?? null,
     receipt: data?.receipt ?? null,
-    isChainFallback: Boolean(data?.isChainFallback),
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -83,7 +70,8 @@ export function useVoucherEvents(id: string | null | undefined) {
 
   return {
     events: data ?? [],
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     isLoading,
     isValidating,
   };
@@ -113,7 +101,8 @@ export function useVouchers(
   return {
     vouchers: data?.vouchers ?? [],
     total: data?.total ?? 0,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -136,7 +125,8 @@ export function useProvider(
 
   return {
     provider: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -155,15 +145,17 @@ export function useProviderStats(
   address: string | null | undefined,
   config?: SWRConfiguration<ProviderStats>,
 ) {
-  const { data, error, isLoading, isValidating, mutate } = useSWR<ProviderStats>(
-    address ? ['provider-stats', address] : null,
-    () => api.providerStats(address!),
-    { shouldRetryOnError: false, ...config },
-  );
+  const { data, error, isLoading, isValidating, mutate } =
+    useSWR<ProviderStats>(
+      address ? ['provider-stats', address] : null,
+      () => api.providerStats(address!),
+      { shouldRetryOnError: false, ...config },
+    );
 
   return {
     stats: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -188,7 +180,8 @@ export function useEscrowSummary() {
 
   return {
     escrow: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     isLoading,
     mutate,
   };
@@ -206,7 +199,8 @@ export function useOpenEscrowTotal() {
 
   return {
     indexedOpen: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     isLoading,
     mutate,
   };
@@ -230,7 +224,8 @@ export function useProviderVouchers(
 
   return {
     vouchers: data ?? [],
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -251,7 +246,8 @@ export function useProviderReceipts(
 
   return {
     receipts: data ?? [],
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -267,7 +263,11 @@ export function useProviderReceipts(
  * page in the app fetch it.
  */
 export function useProviders(
-  params?: { status?: 'Pending' | 'Active' | 'Suspended'; country?: string; q?: string } | null,
+  params?: {
+    status?: 'Pending' | 'Active' | 'Suspended';
+    country?: string;
+    q?: string;
+  } | null,
   config?: SWRConfiguration<{ total: number; providers: Provider[] }>,
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
@@ -279,7 +279,8 @@ export function useProviders(
   return {
     providers: data?.providers ?? [],
     total: data?.total ?? 0,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -299,7 +300,8 @@ export function useStats(config?: SWRConfiguration<Stats>) {
 
   return {
     stats: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -320,7 +322,8 @@ export function useReady(config?: SWRConfiguration<ReadyStatus>) {
 
   return {
     ready: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -340,7 +343,8 @@ export function useVersion(config?: SWRConfiguration<VersionInfo>) {
 
   return {
     version: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -351,7 +355,10 @@ export function useVersion(config?: SWRConfiguration<VersionInfo>) {
 /**
  * Hook for fetching and caching daily time-series protocol statistics (#50).
  */
-export function useDailyStats(days = 30, config?: SWRConfiguration<DailyStats>) {
+export function useDailyStats(
+  days = 30,
+  config?: SWRConfiguration<DailyStats>,
+) {
   const { data, error, isLoading, isValidating, mutate } = useSWR<DailyStats>(
     ['dailyStats', days],
     () => api.dailyStats(days),
@@ -360,7 +367,8 @@ export function useDailyStats(days = 30, config?: SWRConfiguration<DailyStats>) 
 
   return {
     dailyStats: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -373,7 +381,12 @@ export function useDailyStats(days = 30, config?: SWRConfiguration<DailyStats>) 
  */
 export function useAttesters(
   params?: { all?: boolean; limit?: number; offset?: number },
-  config?: SWRConfiguration<{ total: number; limit: number; offset: number; attesters: Attester[] }>,
+  config?: SWRConfiguration<{
+    total: number;
+    limit: number;
+    offset: number;
+    attesters: Attester[];
+  }>,
 ) {
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     ['attesters', params ?? {}],
@@ -384,7 +397,8 @@ export function useAttesters(
   return {
     attesters: data?.attesters ?? [],
     total: data?.total ?? 0,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -396,16 +410,14 @@ export function useAttesters(
  * Hook for fetching and caching the service catalogue (GET /services).
  */
 export function useServices(config?: SWRConfiguration<ServicesResponse>) {
-  const { data, error, isLoading, isValidating, mutate } = useSWR<ServicesResponse>(
-    'services',
-    () => api.services(),
-    config,
-  );
+  const { data, error, isLoading, isValidating, mutate } =
+    useSWR<ServicesResponse>('services', () => api.services(), config);
 
   return {
     services: data?.services ?? [],
     total: data?.total ?? 0,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -420,22 +432,23 @@ export function useService(
   code: number | null | undefined,
   config?: SWRConfiguration<ServiceCatalogueItem>,
 ) {
-  const { data, error, isLoading, isValidating, mutate } = useSWR<ServiceCatalogueItem>(
-    code ? ['service', code] : null,
-    () => api.service(code!),
-    config,
-  );
+  const { data, error, isLoading, isValidating, mutate } =
+    useSWR<ServiceCatalogueItem>(
+      code ? ['service', code] : null,
+      () => api.service(code!),
+      config,
+    );
 
   return {
     service: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
     mutate,
   };
 }
-
 
 /**
  * Hook for fetching and caching receipts for a patient beneficiary ref (#63).
@@ -454,7 +467,8 @@ export function useReceipts(
     receipts: data?.receipts ?? [],
     total: data?.total ?? 0,
     totalSpendDisplay: data?.totalSpendDisplay ?? '0.00',
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     rawError: error,
     isLoading,
     isValidating,
@@ -477,7 +491,8 @@ export function useIsAttester(address: string | null | undefined) {
   return {
     isAttester: data ?? null,
     isLoading,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
   };
 }
 
@@ -500,7 +515,8 @@ export function useAttestationsLeft(attester: string | null | undefined) {
 
   return {
     left: data ?? null,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
     isLoading,
     mutate,
   };
@@ -526,7 +542,8 @@ export function useAdminAccess(address: string | null | undefined) {
       data?.registryAdmin === address &&
       data?.voucherAdmin === address,
     isLoading,
-    error: error instanceof Error ? error.message : error ? String(error) : null,
+    error:
+      error instanceof Error ? error.message : error ? String(error) : null,
   };
 }
 
@@ -548,7 +565,9 @@ export async function invalidateVouchers(voucherId?: string): Promise<void> {
 }
 
 /** Invalidate all provider-related cache entries */
-export async function invalidateProvider(providerAddress?: string): Promise<void> {
+export async function invalidateProvider(
+  providerAddress?: string,
+): Promise<void> {
   if (providerAddress) {
     await globalMutate(['provider', providerAddress]);
   }

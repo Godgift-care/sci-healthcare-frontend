@@ -1,4 +1,9 @@
-import { defaultLocale, localeNumberFormats, messages, type Locale } from './config';
+import {
+  defaultLocale,
+  localeNumberFormats,
+  messages,
+  type Locale,
+} from './config';
 
 /**
  * Translation core (#5, #278).

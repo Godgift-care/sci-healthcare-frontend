@@ -36,7 +36,9 @@ export type ProblemReport = {
  * The text that lands in the GitHub issue body. Kept as a pure function so
  * it is unit-tested and so no component can accidentally add a field.
  */
-export function buildProblemReport(voucher: ProblemReportVoucher): ProblemReport {
+export function buildProblemReport(
+  voucher: ProblemReportVoucher,
+): ProblemReport {
   const title = `Problem with voucher #${voucher.id}`;
   const publicDetails = [
     `- Voucher: #${voucher.id}`,

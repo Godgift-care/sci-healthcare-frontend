@@ -60,7 +60,8 @@ export function parseSplitAmount(input: string, escrow: bigint): bigint | null {
   if (!/^\d+(\.\d{1,7})?$/.test(trimmed)) return null;
   const [whole = '0', fraction = ''] = trimmed.split('.');
   const value =
-    BigInt(whole) * 10_000_000n + BigInt(fraction.padEnd(7, '0').slice(0, 7) || '0');
+    BigInt(whole) * 10_000_000n +
+    BigInt(fraction.padEnd(7, '0').slice(0, 7) || '0');
   return value <= escrow ? value : null;
 }
 

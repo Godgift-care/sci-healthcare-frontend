@@ -24,7 +24,11 @@ import {
   useProviderVouchers,
   useVouchers,
 } from '@/lib/hooks';
-import { registry, voucher as protocol, type ProviderStanding } from '@/lib/protocol';
+import {
+  registry,
+  voucher as protocol,
+  type ProviderStanding,
+} from '@/lib/protocol';
 import {
   VOUCHER_STATUSES,
   filterVouchers,
@@ -48,7 +52,8 @@ import { useNow } from '@/lib/hooks/useNow';
 type Standing = ProviderStanding | 'Unregistered' | null;
 
 const subscribeToTimeZone = () => () => {};
-const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const getBrowserTimeZone = () =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const getServerTimeZone = (): null => null;
 
 /**
@@ -71,7 +76,7 @@ function StatusTab({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`inline-flex max-sm:min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition max-sm:min-h-11 ${
         active
           ? 'border-transparent bg-[var(--color-brand)] text-[var(--color-brand-text)]'
           : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]'
@@ -90,7 +95,8 @@ function StatusTab({
 }
 
 const STANDING_TEXT: Record<Exclude<Standing, null>, string> = {
-  Unregistered: 'This wallet is not registered as a clinic yet. Register below.',
+  Unregistered:
+    'This wallet is not registered as a clinic yet. Register below.',
   Pending:
     'Registered and awaiting verification. An administrator must verify this clinic before it can list services or receive vouchers.',
   Active: 'This clinic is verified and can receive vouchers.',
@@ -169,7 +175,8 @@ export default function ClinicDeskPage() {
 
   // Only a registered clinic has statistics to read; an unregistered wallet
   // would get a 404 from the endpoint on every page load.
-  const earningsAddress = standing && standing !== 'Unregistered' ? address : null;
+  const earningsAddress =
+    standing && standing !== 'Unregistered' ? address : null;
   const {
     stats: clinicStats,
     error: statsError,
@@ -188,8 +195,14 @@ export default function ClinicDeskPage() {
     mutate: mutateEarningsReceipts,
   } = useProviderReceipts(earningsAddress);
 
-  const earnings = useMemo(() => summariseEarnings(earningsVouchers), [earningsVouchers]);
-  const months = useMemo(() => monthlyEarnings(earningsVouchers), [earningsVouchers]);
+  const earnings = useMemo(
+    () => summariseEarnings(earningsVouchers),
+    [earningsVouchers],
+  );
+  const months = useMemo(
+    () => monthlyEarnings(earningsVouchers),
+    [earningsVouchers],
+  );
   const now = useNow();
   const timeZone = useSyncExternalStore(
     subscribeToTimeZone,
@@ -199,7 +212,12 @@ export default function ClinicDeskPage() {
   const dailyEarnings = useMemo(
     () =>
       timeZone
-        ? summariseDailyEarnings(earningsVouchers, earningsReceipts, new Date(now), timeZone)
+        ? summariseDailyEarnings(
+            earningsVouchers,
+            earningsReceipts,
+            new Date(now),
+            timeZone,
+          )
         : null,
     [earningsVouchers, earningsReceipts, now, timeZone],
   );
@@ -239,7 +257,8 @@ export default function ClinicDeskPage() {
         address,
         due.map((v) => v.id),
         signTransaction,
-        (done, total, currentId) => setSettleProgress({ done, total, currentId }),
+        (done, total, currentId) =>
+          setSettleProgress({ done, total, currentId }),
       );
       // One funnel event per voucher actually released, names only.
       settled.forEach(() => trackEvent('voucher_settled'));
@@ -259,7 +278,10 @@ export default function ClinicDeskPage() {
     }
   }
 
-  async function submit(fn: () => Promise<{ hash: string }>, table = REGISTRY_ERRORS) {
+  async function submit(
+    fn: () => Promise<{ hash: string }>,
+    table = REGISTRY_ERRORS,
+  ) {
     if (!address) return void connect();
     setBusy(true);
     try {
@@ -269,7 +291,9 @@ export default function ClinicDeskPage() {
       toast.success(
         <>
           {t('common.submitted')}{' '}
-          <ExplorerLink href={explorerTx(res.hash)}>{t('common.viewTransaction')}</ExplorerLink>{' '}
+          <ExplorerLink href={explorerTx(res.hash)}>
+            {t('common.viewTransaction')}
+          </ExplorerLink>{' '}
           {t('common.indexerCatchUp')}
         </>,
       );
@@ -314,7 +338,9 @@ export default function ClinicDeskPage() {
     <div className="clinic-desk-page space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t('clinic.title')}</h1>
+          <h1 className="text-xl font-semibold tracking-tight">
+            {t('clinic.title')}
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
             {standing === null ? t('clinic.checking') : STANDING_TEXT[standing]}
           </p>
@@ -355,13 +381,14 @@ export default function ClinicDeskPage() {
         }}
       />
 
-      {standing !== null && (standing === 'Unregistered' || provider !== null) && (
-        <ClinicChecklist
-          status={standing}
-          services={provider?.services ?? []}
-          vouchers={earningsVouchers}
-        />
-      )}
+      {standing !== null &&
+        (standing === 'Unregistered' || provider !== null) && (
+          <ClinicChecklist
+            status={standing}
+            services={provider?.services ?? []}
+            vouchers={earningsVouchers}
+          />
+        )}
       <RecentVouchers />
       <OfflineClaimQueue />
 
@@ -399,24 +426,24 @@ export default function ClinicDeskPage() {
               ['dailySettled', dailyEarnings?.settledCount],
               [
                 'dailyReceived',
-                dailyEarnings ? `$${formatUsdc(dailyEarnings.netReceived, locale)}` : undefined,
+                dailyEarnings
+                  ? `$${formatUsdc(dailyEarnings.netReceived, locale)}`
+                  : undefined,
               ],
             ].map(([label, value]) => (
               <div
                 key={label}
                 className="rounded-xl border border-[var(--color-line)] p-4 print:break-inside-avoid"
               >
-                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t(`clinic.${label}`)}
                 </div>
                 <div className="mt-1 text-2xl font-bold tabular-nums">
-                  {earningsLoading || receiptsLoading || !timeZone ? (
-                    '—'
-                  ) : earningsError || receiptsError ? (
-                    '—'
-                  ) : (
-                    value
-                  )}
+                  {earningsLoading || receiptsLoading || !timeZone
+                    ? '—'
+                    : earningsError || receiptsError
+                      ? '—'
+                      : value}
                 </div>
               </div>
             ))}
@@ -457,7 +484,7 @@ export default function ClinicDeskPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div role="group" aria-label={t('clinic.earningsSettled')}>
               <Card className="h-full p-4">
-                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t('clinic.earningsSettled')}
                 </div>
                 <div className="mt-1 text-2xl font-bold">
@@ -472,7 +499,8 @@ export default function ClinicDeskPage() {
                     <Skeleton className="mt-1 h-3 w-28" />
                   ) : (
                     t('clinic.earningsSettledDetail', {
-                      count: clinicStats?.settledVouchers ?? earnings.settledCount,
+                      count:
+                        clinicStats?.settledVouchers ?? earnings.settledCount,
                       net: earningsReady
                         ? `$${formatUsdc(earnings.netReceived, locale)}`
                         : '—',
@@ -484,11 +512,13 @@ export default function ClinicDeskPage() {
 
             <div role="group" aria-label={t('clinic.earningsPending')}>
               <Card className="h-full p-4">
-                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t('clinic.earningsPending')}
                 </div>
                 <div className="mt-1 text-2xl font-bold">
-                  {earningsReady ? `$${formatUsdc(earnings.pending, locale)}` : '—'}
+                  {earningsReady
+                    ? `$${formatUsdc(earnings.pending, locale)}`
+                    : '—'}
                 </div>
                 <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
                   {earningsLoading ? (
@@ -506,11 +536,13 @@ export default function ClinicDeskPage() {
 
             <div role="group" aria-label={t('clinic.earningsFees')}>
               <Card className="h-full p-4">
-                <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t('clinic.earningsFees')}
                 </div>
                 <div className="mt-1 text-2xl font-bold">
-                  {earningsReady ? `$${formatUsdc(earnings.fees, locale)}` : '—'}
+                  {earningsReady
+                    ? `$${formatUsdc(earnings.fees, locale)}`
+                    : '—'}
                 </div>
                 <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
                   {t('clinic.earningsFeesDetail')}
@@ -521,7 +553,9 @@ export default function ClinicDeskPage() {
 
           <div className="space-y-3">
             <div>
-              <h3 className="text-base font-semibold">{t('clinic.earningsMonthly')}</h3>
+              <h3 className="text-base font-semibold">
+                {t('clinic.earningsMonthly')}
+              </h3>
               <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
                 {t('clinic.earningsMonthlyNote')}
               </p>
@@ -541,7 +575,9 @@ export default function ClinicDeskPage() {
                 <Empty>{t('clinic.earningsEmpty')}</Empty>
               ) : (
                 <table className="block w-full text-start text-sm sm:table">
-                  <caption className="sr-only">{t('clinic.earningsMonthly')}</caption>
+                  <caption className="sr-only">
+                    {t('clinic.earningsMonthly')}
+                  </caption>
                   <thead className="hidden sm:table-header-group">
                     <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
                       <th scope="col" className="pb-2 font-medium">
@@ -571,48 +607,63 @@ export default function ClinicDeskPage() {
                           {monthLabel(month.month, locale)}
                         </th>
                         <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                             {t('clinic.earningsSettled')}
                           </span>
-                          <span className="mono">${formatUsdc(month.settled, locale)}</span>
+                          <span className="mono">
+                            ${formatUsdc(month.settled, locale)}
+                          </span>
                         </td>
                         <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                             {t('clinic.earningsPending')}
                           </span>
-                          <span className="mono">${formatUsdc(month.pending, locale)}</span>
+                          <span className="mono">
+                            ${formatUsdc(month.pending, locale)}
+                          </span>
                         </td>
                         <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                          <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                          <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                             {t('clinic.earningsFees')}
                           </span>
-                          <span className="mono">${formatUsdc(month.fees, locale)}</span>
+                          <span className="mono">
+                            ${formatUsdc(month.fees, locale)}
+                          </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="block border-t border-[var(--color-line)] font-medium sm:table-footer-group">
                     <tr className="grid grid-cols-3 gap-x-3 gap-y-1 pt-3 sm:table-row sm:pt-0">
-                      <th scope="row" className="col-span-3 text-start sm:table-cell sm:py-2.5">
+                      <th
+                        scope="row"
+                        className="col-span-3 text-start sm:table-cell sm:py-2.5"
+                      >
                         {t('clinic.earningsTotal')}
                       </th>
                       <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                        <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                           {t('clinic.earningsSettled')}
                         </span>
-                        <span className="mono">${formatUsdc(earnings.settled, locale)}</span>
+                        <span className="mono">
+                          ${formatUsdc(earnings.settled, locale)}
+                        </span>
                       </td>
                       <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                        <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                           {t('clinic.earningsPending')}
                         </span>
-                        <span className="mono">${formatUsdc(earnings.pending, locale)}</span>
+                        <span className="mono">
+                          ${formatUsdc(earnings.pending, locale)}
+                        </span>
                       </td>
                       <td className="sm:table-cell sm:py-2.5 sm:text-end">
-                        <span className="block text-[10px] uppercase tracking-wide text-[var(--color-ink-soft)] sm:hidden">
+                        <span className="block text-[10px] tracking-wide text-[var(--color-ink-soft)] uppercase sm:hidden">
                           {t('clinic.earningsFees')}
                         </span>
-                        <span className="mono">${formatUsdc(earnings.fees, locale)}</span>
+                        <span className="mono">
+                          ${formatUsdc(earnings.fees, locale)}
+                        </span>
                       </td>
                     </tr>
                   </tfoot>
@@ -635,7 +686,9 @@ export default function ClinicDeskPage() {
             />
             <input
               value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase().slice(0, 2))}
+              onChange={(e) =>
+                setCountry(e.target.value.toUpperCase().slice(0, 2))
+              }
               placeholder={t('clinic.countryCode')}
               className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
             />
@@ -644,7 +697,12 @@ export default function ClinicDeskPage() {
             disabled={busy || !name || country.length !== 2}
             onClick={() =>
               void submit(() =>
-                registry.registerProvider(address, name, country, signTransaction),
+                registry.registerProvider(
+                  address,
+                  name,
+                  country,
+                  signTransaction,
+                ),
               )
             }
           >
@@ -670,12 +728,18 @@ export default function ClinicDeskPage() {
                   <div>
                     <div className="text-sm font-medium">{s.label}</div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
-                      {t('clinic.code', { code: s.code })} · <span className="mono">${formatUsdc(s.price, locale)}</span>{' '}
-                      <LocalEstimate amount={s.price} />
+                      {t('clinic.code', { code: s.code })} ·{' '}
+                      <span className="mono">
+                        ${formatUsdc(s.price, locale)}
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" disabled={busy} onClick={() => edit(s)}>
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => edit(s)}
+                    >
                       {t('clinic.edit')}
                     </Button>
                     {confirmRemove === s.code ? (
@@ -685,11 +749,17 @@ export default function ClinicDeskPage() {
                           disabled={busy}
                           onClick={() =>
                             void submit(() =>
-                              registry.removeService(address, s.code, signTransaction),
+                              registry.removeService(
+                                address,
+                                s.code,
+                                signTransaction,
+                              ),
                             )
                           }
                         >
-                          {busy ? t('common.confirming') : t('clinic.confirmDelist')}
+                          {busy
+                            ? t('common.confirming')
+                            : t('clinic.confirmDelist')}
                         </Button>
                         <Button
                           variant="ghost"
@@ -724,7 +794,9 @@ export default function ClinicDeskPage() {
       {standing === 'Active' && (
         <Card className="space-y-3 p-5">
           <h2 className="font-medium">
-            {editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
+            {editing
+              ? t('clinic.updateService', { code })
+              : t('clinic.listService')}
           </h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <input
@@ -763,7 +835,11 @@ export default function ClinicDeskPage() {
               )
             }
           >
-            {busy ? t('common.confirming') : editing ? t('clinic.updateService', { code }) : t('clinic.listService')}
+            {busy
+              ? t('common.confirming')
+              : editing
+                ? t('clinic.updateService', { code })
+                : t('clinic.listService')}
           </Button>
         </Card>
       )}
@@ -778,12 +854,11 @@ export default function ClinicDeskPage() {
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">{t('clinic.incomingVouchers')}</h2>
+          <h2 className="text-lg font-semibold">
+            {t('clinic.incomingVouchers')}
+          </h2>
           {settleable.length > 0 && (
-            <Button
-              disabled={settleAllBusy}
-              onClick={() => void settleAll()}
-            >
+            <Button disabled={settleAllBusy} onClick={() => void settleAll()}>
               {settleAllBusy
                 ? t('clinic.settlingCount', {
                     done: settleProgress?.done ?? 0,
@@ -799,7 +874,9 @@ export default function ClinicDeskPage() {
             className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-ink-soft)]">
-              <span>{t('clinic.settlingVoucher', { id: settleProgress.currentId })}</span>
+              <span>
+                {t('clinic.settlingVoucher', { id: settleProgress.currentId })}
+              </span>
               <span className="mono font-medium">
                 {t('clinic.settledOf', {
                   done: settleProgress.done,
@@ -870,7 +947,7 @@ export default function ClinicDeskPage() {
               ))}
             </div>
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <span className="block text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 {t('clinic.searchVoucherNumber')}
               </span>
               <input

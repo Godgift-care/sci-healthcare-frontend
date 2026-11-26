@@ -68,19 +68,26 @@ export default function AttestPage() {
       if (!a.refundableAt && !b.refundableAt) return 0;
       if (!a.refundableAt) return 1;
       if (!b.refundableAt) return -1;
-      return new Date(a.refundableAt).getTime() - new Date(b.refundableAt).getTime();
+      return (
+        new Date(a.refundableAt).getTime() - new Date(b.refundableAt).getTime()
+      );
     });
   }, [claimedRaw]);
 
   // Extract unique clinics from claimed vouchers for the filter
   const clinics = useMemo(() => {
-    const clinicMap = new Map<string, { address: string; name: string; country: string }>();
+    const clinicMap = new Map<
+      string,
+      { address: string; name: string; country: string }
+    >();
     for (const v of claimedSorted) {
       if (!clinicMap.has(v.provider.address)) {
         clinicMap.set(v.provider.address, v.provider);
       }
     }
-    return Array.from(clinicMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(clinicMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
   }, [claimedSorted]);
 
   const [clinicFilter, setClinicFilter] = useState<string>('');
@@ -125,27 +132,32 @@ export default function AttestPage() {
         return;
       } else if (e.key === 'Enter') {
         // Enter on a focused button or link is that control's own click.
-        if (e.target instanceof HTMLElement && e.target.closest('a, button')) return;
+        if (e.target instanceof HTMLElement && e.target.closest('a, button'))
+          return;
         e.preventDefault();
         router.push(`/vouchers/${claimed[index].id}`);
       } else if (e.key === 'a') {
         // Opens the confirmation modal; the attestation still needs Confirm.
-        if (rowRefs.current.get(claimed[index].id)?.startAttest()) e.preventDefault();
+        if (rowRefs.current.get(claimed[index].id)?.startAttest())
+          e.preventDefault();
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [claimed, selectedId, router]);
 
-  if (!address) return <Empty>Connect an attester wallet to review claims.</Empty>;
+  if (!address)
+    return <Empty>Connect an attester wallet to review claims.</Empty>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Awaiting confirmation</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          Awaiting confirmation
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          Confirm only care you have actually verified. Confirming opens a dispute
-          window, after which the clinic is paid.
+          Confirm only care you have actually verified. Confirming opens a
+          dispute window, after which the clinic is paid.
         </p>
       </div>
 
@@ -178,7 +190,10 @@ export default function AttestPage() {
 
       {clinics.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="clinic-filter" className="text-sm text-[var(--color-ink-soft)]">
+          <label
+            htmlFor="clinic-filter"
+            className="text-sm text-[var(--color-ink-soft)]"
+          >
             Filter by clinic:
           </label>
           <select
@@ -202,11 +217,13 @@ export default function AttestPage() {
         </div>
       )}
 
-      {claimed.length === 0 && <Empty>Nothing is waiting for confirmation.</Empty>}
+      {claimed.length === 0 && (
+        <Empty>Nothing is waiting for confirmation.</Empty>
+      )}
       {claimed.length > 0 && (
         <p className="hidden text-xs text-[var(--color-ink-soft)] sm:block">
-          Keyboard: <kbd className="mono">j</kbd>/<kbd className="mono">k</kbd> to
-          move between claims, <kbd className="mono">Enter</kbd> to open,{' '}
+          Keyboard: <kbd className="mono">j</kbd>/<kbd className="mono">k</kbd>{' '}
+          to move between claims, <kbd className="mono">Enter</kbd> to open,{' '}
           <kbd className="mono">a</kbd> to start confirming — you still confirm
           in the dialog.
         </p>

@@ -43,10 +43,9 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Every story file in this directory, so a new one is covered automatically.
-const storyModules = import.meta.glob('./*.stories.tsx', { eager: true }) as Record<
-  string,
-  Record<string, unknown>
->;
+const storyModules = import.meta.glob('./*.stories.tsx', {
+  eager: true,
+}) as Record<string, Record<string, unknown>>;
 
 /**
  * Stories render outside a Next app router, so `useRouter` and `usePathname`
@@ -71,8 +70,13 @@ vi.mock('next/navigation', () => ({
 type StoryComponent = React.ComponentType;
 
 /** Composed stories, typed as components so they can be rendered and named. */
-function storiesOf(module: Record<string, unknown>): Record<string, StoryComponent> {
-  return composeStories(module as never) as unknown as Record<string, StoryComponent>;
+function storiesOf(
+  module: Record<string, unknown>,
+): Record<string, StoryComponent> {
+  return composeStories(module as never) as unknown as Record<
+    string,
+    StoryComponent
+  >;
 }
 
 afterEach(cleanup);

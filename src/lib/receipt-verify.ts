@@ -11,11 +11,7 @@ import type { ChainReceipt } from './protocol';
  * on the ledger.
  */
 export type ReceiptField =
-  | 'voucher'
-  | 'provider'
-  | 'service'
-  | 'amount'
-  | 'settledAt';
+  'voucher' | 'provider' | 'service' | 'amount' | 'settledAt';
 
 export type ReceiptMismatch = {
   field: ReceiptField;
@@ -51,7 +47,8 @@ export function compareReceipt(
 ): ReceiptComparison {
   const mismatches: ReceiptMismatch[] = [];
   const check = (field: ReceiptField, shown: string, chain: string) => {
-    if (shown !== chain) mismatches.push({ field, displayed: shown, onChain: chain });
+    if (shown !== chain)
+      mismatches.push({ field, displayed: shown, onChain: chain });
   };
 
   check('voucher', String(displayed.voucherId), String(onChain.voucher_id));

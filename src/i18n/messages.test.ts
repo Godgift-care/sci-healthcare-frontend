@@ -25,7 +25,8 @@ function flatten(catalogue: Catalogue, prefix = ''): Map<string, string> {
     if (typeof value === 'string') {
       leaves.set(path, value);
     } else {
-      for (const [nested, text] of flatten(value, path)) leaves.set(nested, text);
+      for (const [nested, text] of flatten(value, path))
+        leaves.set(nested, text);
     }
   }
   return leaves;
@@ -50,7 +51,9 @@ describe('message catalogues', () => {
   it('has no empty translation', () => {
     for (const locale of locales) {
       const catalogue = flatten(messages[locale] as unknown as Catalogue);
-      const empty = [...catalogue].filter(([, text]) => text.trim() === '').map(([key]) => key);
+      const empty = [...catalogue]
+        .filter(([, text]) => text.trim() === '')
+        .map(([key]) => key);
       expect(empty, `${locale} has empty strings`).toEqual([]);
     }
   });
@@ -61,7 +64,9 @@ describe('message catalogues', () => {
       for (const [key, text] of english) {
         const translated = catalogue.get(key);
         if (translated === undefined) continue;
-        expect(placeholders(translated), `${locale}: ${key}`).toEqual(placeholders(text));
+        expect(placeholders(translated), `${locale}: ${key}`).toEqual(
+          placeholders(text),
+        );
       }
     }
   });

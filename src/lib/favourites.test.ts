@@ -26,13 +26,12 @@ function memoryStorage(initial?: Record<string, string>) {
   };
 }
 
-function stubBrowser(options: {
-  stored?: string;
-  storageThrows?: boolean;
-}) {
+function stubBrowser(options: { stored?: string; storageThrows?: boolean }) {
   _resetFavouritesCache();
   const storage = memoryStorage(
-    options.stored === undefined ? {} : { [FAVOURITES_STORAGE_KEY]: options.stored },
+    options.stored === undefined
+      ? {}
+      : { [FAVOURITES_STORAGE_KEY]: options.stored },
   );
   if (options.storageThrows) {
     storage.getItem = () => {
@@ -96,7 +95,9 @@ describe('favourites storage helper', () => {
     const added = toggleFavouriteClinic('GAAA111');
     expect(added).toBe(true);
     expect(isClinicFavourite('GAAA111')).toBe(true);
-    expect(storage.getItem(FAVOURITES_STORAGE_KEY)).toBe(JSON.stringify(['GAAA111']));
+    expect(storage.getItem(FAVOURITES_STORAGE_KEY)).toBe(
+      JSON.stringify(['GAAA111']),
+    );
     expect(dispatchEvent).toHaveBeenCalled();
 
     const removed = toggleFavouriteClinic('GAAA111');

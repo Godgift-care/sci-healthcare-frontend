@@ -62,7 +62,9 @@ export function isNetworkError(error: unknown): boolean {
 
 function isExpiredError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /tx too late|tx_too_late|txTooLate|timebound|time bounds|too late/i.test(message);
+  return /tx too late|tx_too_late|txTooLate|timebound|time bounds|too late/i.test(
+    message,
+  );
 }
 
 function queue(

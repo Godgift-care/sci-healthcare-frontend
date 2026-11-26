@@ -47,17 +47,10 @@ function ActivityChart({
   const paddingX = 40;
   const paddingY = 25;
 
-  const maxVal = Math.max(...data.map((d) => d.value), 1);
-  const plotHeight = chartHeight - paddingY * 2;
-  const bars = buildBarLayout({
-    values: data.map((d) => d.value),
-    chartWidth,
-    chartHeight,
-    paddingX,
-    paddingY,
-  });
-
-  const summary = summarizeActivitySeries(title, data, unit);
+  const barWidth = Math.max(
+    2,
+    Math.min(24, (plotWidth / (data.length || 1)) * 0.7),
+  );
 
   return (
     <div className="space-y-2">
@@ -173,7 +166,11 @@ export default function StatsPage() {
   const { vouchers } = useVouchers({});
   // The contract's own escrow accounting, read by simulation without a
   // wallet, beside the indexer's total for the same money (#295).
-  const { escrow, error: escrowError, isLoading: escrowLoading } = useEscrowSummary();
+  const {
+    escrow,
+    error: escrowError,
+    isLoading: escrowLoading,
+  } = useEscrowSummary();
   const { indexedOpen, error: indexedError } = useOpenEscrowTotal();
   const escrowComparison = escrow
     ? compareEscrow(escrow[0], escrow[1], indexedOpen)
@@ -195,12 +192,21 @@ export default function StatsPage() {
   const countryVouchers = useMemo(() => {
     const map = new Map<
       string,
-      { funded: number; fundedValue: bigint; settled: number; settledValue: bigint }
+      {
+        funded: number;
+        fundedValue: bigint;
+        settled: number;
+        settledValue: bigint;
+      }
     >();
     for (const v of vouchers) {
       const country = String(v.provider?.country ?? '');
-      const entry =
-        map.get(country) ?? { funded: 0, fundedValue: 0n, settled: 0, settledValue: 0n };
+      const entry = map.get(country) ?? {
+        funded: 0,
+        fundedValue: 0n,
+        settled: 0,
+        settledValue: 0n,
+      };
       if (v.status === 'Funded') {
         entry.funded += 1;
         entry.fundedValue += BigInt(v.amount || '0');
@@ -212,7 +218,9 @@ export default function StatsPage() {
       map.set(country, entry);
     }
     return Array.from(map.entries()).sort(
-      (a, b) => Number(b[1].settledValue - a[1].settledValue) || b[1].settled - a[1].settled,
+      (a, b) =>
+        Number(b[1].settledValue - a[1].settledValue) ||
+        b[1].settled - a[1].settled,
     );
   }, [vouchers]);
 
@@ -235,11 +243,15 @@ export default function StatsPage() {
   }, [series, locale]);
 
   const totalFundedVolume = useMemo(() => {
-    return series.reduce((acc, s) => acc + BigInt(s.funded.amount || '0'), 0n).toString();
+    return series
+      .reduce((acc, s) => acc + BigInt(s.funded.amount || '0'), 0n)
+      .toString();
   }, [series]);
 
   const totalSettledVolume = useMemo(() => {
-    return series.reduce((acc, s) => acc + BigInt(s.settled.amount || '0'), 0n).toString();
+    return series
+      .reduce((acc, s) => acc + BigInt(s.settled.amount || '0'), 0n)
+      .toString();
   }, [series]);
 
   function downloadDailyActivityCsv() {
@@ -278,9 +290,12 @@ export default function StatsPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Protocol statistics</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Protocol statistics
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-            Public ledger activity: vouchers funded, care settled, clinics, and geographic reach.
+            Public ledger activity: vouchers funded, care settled, clinics, and
+            geographic reach.
           </p>
         </div>
 
@@ -304,25 +319,32 @@ export default function StatsPage() {
       </div>
 
       {/* Totals Grid */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Protocol totals">
+      <section
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+        aria-label="Protocol totals"
+      >
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Active clinics
           </div>
           <div className="mt-1 text-2xl font-bold">
             {stats ? formatCount(stats.activeProviders, locale) : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats ? `${formatCount(stats.providers, locale)} registered total` : '…'}
+            {stats
+              ? `${formatCount(stats.providers, locale)} registered total`
+              : '…'}
           </div>
         </Card>
 
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Countries
           </div>
           <div className="mt-1 text-2xl font-bold">
-            {countryCounts.length ? formatCount(countryCounts.length, locale) : '—'}
+            {countryCounts.length
+              ? formatCount(countryCounts.length, locale)
+              : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
             operating across regions
@@ -330,7 +352,7 @@ export default function StatsPage() {
         </Card>
 
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Vouchers funded
           </div>
           <div className="mt-1 text-2xl font-bold">
@@ -342,14 +364,16 @@ export default function StatsPage() {
         </Card>
 
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
             Care settled
           </div>
           <div className="mt-1 text-2xl font-bold">
             {stats ? `$${formatUsdc(stats.settledValue, locale)}` : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats ? `${formatCount(stats.settledVouchers, locale)} vouchers paid` : '…'}
+            {stats
+              ? `${formatCount(stats.settledVouchers, locale)} vouchers paid`
+              : '…'}
           </div>
         </Card>
       </section>
@@ -359,13 +383,15 @@ export default function StatsPage() {
         <Card className="space-y-3 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold">{t('stats.escrowTitle')}</h2>
+              <h2 className="text-base font-semibold">
+                {t('stats.escrowTitle')}
+              </h2>
               <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
                 {t('stats.escrowNote')}
               </p>
             </div>
             <div className="text-end">
-              <div className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+              <div className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                 {t('stats.escrowOpen')}
               </div>
               <div className="mt-1 text-2xl font-bold">
@@ -425,7 +451,9 @@ export default function StatsPage() {
 
       {/* View Mode Toggle for Accessibility */}
       <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
-        <h2 className="text-base font-semibold">Daily activity ({days} days)</h2>
+        <h2 className="text-base font-semibold">
+          Daily activity ({days} days)
+        </h2>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -471,7 +499,7 @@ export default function StatsPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Funded Chart */}
           <Card className="p-5">
-            <h3 className="font-medium text-sm">Vouchers funded per day</h3>
+            <h3 className="text-sm font-medium">Vouchers funded per day</h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
               Total {days}d volume: ${formatUsdc(totalFundedVolume, locale)}
             </p>
@@ -512,7 +540,8 @@ export default function StatsPage() {
                         accessor: (row) => row.funded.amount,
                         align: 'right',
                         className: 'font-mono',
-                        render: (row) => `$${formatUsdc(row.funded.amount, locale)}`,
+                        render: (row) =>
+                          `$${formatUsdc(row.funded.amount, locale)}`,
                       },
                     ]}
                   />
@@ -523,7 +552,7 @@ export default function StatsPage() {
 
           {/* Settled Chart */}
           <Card className="p-5">
-            <h3 className="font-medium text-sm">Care settled per day</h3>
+            <h3 className="text-sm font-medium">Care settled per day</h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
               Total {days}d volume: ${formatUsdc(totalSettledVolume, locale)}
             </p>
@@ -563,7 +592,8 @@ export default function StatsPage() {
                         accessor: (row) => row.settled.amount,
                         align: 'right',
                         className: 'font-mono',
-                        render: (row) => `$${formatUsdc(row.settled.amount, locale)}`,
+                        render: (row) =>
+                          `$${formatUsdc(row.settled.amount, locale)}`,
                       },
                     ]}
                   />
@@ -588,12 +618,20 @@ export default function StatsPage() {
         </div>
         <Card className="overflow-x-auto p-4">
           <table className="block w-full text-start text-sm sm:table">
-            <caption className="sr-only">Registered clinics grouped by country</caption>
+            <caption className="sr-only">
+              Registered clinics grouped by country
+            </caption>
             <thead className="hidden sm:table-header-group">
               <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
-                <th scope="col" className="pb-2 font-medium">Country code</th>
-                <th scope="col" className="pb-2 font-medium">Total registered</th>
-                <th scope="col" className="pb-2 font-medium">Active status</th>
+                <th scope="col" className="pb-2 font-medium">
+                  Country code
+                </th>
+                <th scope="col" className="pb-2 font-medium">
+                  Total registered
+                </th>
+                <th scope="col" className="pb-2 font-medium">
+                  Active status
+                </th>
               </tr>
             </thead>
             <tbody className="block divide-y divide-[var(--color-line)] sm:table-row-group">
@@ -612,7 +650,9 @@ export default function StatsPage() {
                     key={country}
                     className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3 sm:table-row sm:py-0"
                   >
-                    <td className="block font-medium sm:table-cell sm:py-2.5">{country}</td>
+                    <td className="block font-medium sm:table-cell sm:py-2.5">
+                      {country}
+                    </td>
                     <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {formatCount(stats.count, locale)} registered
                     </td>
@@ -630,7 +670,9 @@ export default function StatsPage() {
       {/* Vouchers by country */}
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">Voucher activity by country</h2>
+          <h2 className="text-base font-semibold">
+            Voucher activity by country
+          </h2>
           <Button
             variant="ghost"
             onClick={downloadCountryVouchersCsv}
@@ -646,10 +688,18 @@ export default function StatsPage() {
             </caption>
             <thead className="hidden sm:table-header-group">
               <tr className="border-b border-[var(--color-line)] text-xs text-[var(--color-ink-soft)]">
-                <th scope="col" className="pb-2 font-medium">Country code</th>
-                <th scope="col" className="pb-2 font-medium text-right">Vouchers funded</th>
-                <th scope="col" className="pb-2 font-medium text-right">Care settled</th>
-                <th scope="col" className="pb-2 font-medium text-right">Value settled</th>
+                <th scope="col" className="pb-2 font-medium">
+                  Country code
+                </th>
+                <th scope="col" className="pb-2 text-right font-medium">
+                  Vouchers funded
+                </th>
+                <th scope="col" className="pb-2 text-right font-medium">
+                  Care settled
+                </th>
+                <th scope="col" className="pb-2 text-right font-medium">
+                  Value settled
+                </th>
               </tr>
             </thead>
             <tbody className="block divide-y divide-[var(--color-line)] sm:table-row-group">
@@ -671,13 +721,13 @@ export default function StatsPage() {
                     <td className="block font-medium sm:table-cell sm:py-2.5">
                       {country}
                     </td>
-                    <td className="block text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)] text-right">
+                    <td className="block text-right text-xs text-[var(--color-ink-soft)] sm:table-cell sm:py-2.5 sm:text-sm sm:text-[var(--color-ink)]">
                       {formatCount(activity.funded, locale)} funded
                     </td>
-                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right">
+                    <td className="block text-right text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       {formatCount(activity.settled, locale)} settled
                     </td>
-                    <td className="block text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm text-right font-mono">
+                    <td className="block text-right font-mono text-xs text-[var(--color-ink)] sm:table-cell sm:py-2.5 sm:text-sm">
                       ${formatUsdc(activity.settledValue.toString(), locale)}
                     </td>
                   </tr>

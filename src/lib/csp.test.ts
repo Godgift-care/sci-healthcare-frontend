@@ -114,9 +114,7 @@ describe('contentSecurityPolicy', () => {
     );
     expect(map.get('connect-src')).toContain('https://relay.walletconnect.com');
     expect(map.get('connect-src')).toContain('wss://relay.walletconnect.com');
-    expect(map.get('frame-src')).toContain(
-      'https://verify.walletconnect.com',
-    );
+    expect(map.get('frame-src')).toContain('https://verify.walletconnect.com');
   });
 
   it('allows the configured SEP-24 anchors and nothing else (#196)', () => {
@@ -147,10 +145,12 @@ describe('contentSecurityPolicy', () => {
   });
 
   it('adds the development-only allowances only in development', () => {
-    expect(directives(contentSecurityPolicy(BASE_ENV, true)).get('script-src'))
-      .toContain("'unsafe-eval'");
-    expect(directives(contentSecurityPolicy(BASE_ENV, false)).get('script-src'))
-      .not.toContain("'unsafe-eval'");
+    expect(
+      directives(contentSecurityPolicy(BASE_ENV, true)).get('script-src'),
+    ).toContain("'unsafe-eval'");
+    expect(
+      directives(contentSecurityPolicy(BASE_ENV, false)).get('script-src'),
+    ).not.toContain("'unsafe-eval'");
   });
 
   it('keeps the page unframeable and plugins off', () => {

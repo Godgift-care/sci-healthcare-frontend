@@ -54,7 +54,11 @@ export const viewport: Viewport = {
   themeColor: '#0f766e',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // The language is resolved before the first byte (#277): an explicit
   // choice from NEXT_LOCALE wins, otherwise the browser's Accept-Language.
   // Passing it to LocaleProvider keeps the server render and hydration in
@@ -87,7 +91,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script src="/theme-init.js" />
       </head>
       <body>
-        {config.flags.analytics ? <Analytics domain={config.plausibleDomain} /> : null}
+        {config.plausibleDomain ? (
+          <Analytics domain={config.plausibleDomain} />
+        ) : null}
         <ErrorReporter />
         <PendingTransactionGuard />
         <WalletProvider>
@@ -98,80 +104,90 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Language for translated text (#5); starts from the locale the
                 server resolved and remembers the visitor's choice. */}
             <LocaleProvider initialLocale={initialLocale}>
-            <SkipToContent />
-            <div className="print:hidden">
-              <TestnetNotice />
-              <MockModeNotice />
-            </div>
-            <SiteHeader />
-            <CommandPalette />
+              <SkipToContent />
+              <div className="print:hidden">
+                <TestnetNotice />
+              </div>
+              <SiteHeader />
+              <CommandPalette />
 
-            <main
-              id="main-content"
-              tabIndex={-1}
-              className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0"
-            >
-              {/* Toasts live here so transaction results from any page appear
+              <main
+                id="main-content"
+                tabIndex={-1}
+                className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:px-0 print:py-0"
+              >
+                {/* Toasts live here so transaction results from any page appear
                   wherever the user is looking (#80). */}
-              <ToastProvider>
-                <ServiceWorkerRegistration />
-                {children}
-              </ToastProvider>
-            </main>
+                <ToastProvider>
+                  <ServiceWorkerRegistration />
+                  {children}
+                </ToastProvider>
+              </main>
 
-            <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="max-w-xl">
-                  {isTestnet
-                    ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
-                    : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
-                  <BuildVersion />
-                </p>
-                {/* Per-browser preferences, kept together so they wrap as
-                    one group rather than squeezing the footer links. */}
-                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+              <footer className="mx-auto max-w-6xl border-t border-[var(--color-line)] px-4 py-8 text-xs text-[var(--color-ink-soft)] sm:px-6 print:hidden">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="max-w-xl">
+                    {isTestnet
+                      ? 'Testnet deployment. No real funds, and no patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'
+                      : 'No patient health information is stored on chain — vouchers reference a service category and an opaque beneficiary reference only.'}
+                    <BuildVersion />
+                  </p>
                   {/* Language choice for translated text (#5). */}
                   <LanguageSwitcher />
-                  {/* Optional local-currency estimate beside USDC amounts
-                      (#132); off by default. */}
-                  <LocalCurrencySelect />
                   {/* Explicit analytics opt-out (#143); hidden when analytics
-                      is not configured at build time. */}
+                    is not configured at build time. */}
                   <AnalyticsToggle />
-                </div>
-                <nav aria-label="Footer navigation" className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]">
-                  <Link href="/how-it-works" className="hover:text-[var(--color-brand)]">
-                    How it works
-                  </Link>
-                  <Link href="/stats" className="hover:text-[var(--color-brand)]">
-                    Stats
-                  </Link>
-                  <Link href="/services" className="hover:text-[var(--color-brand)]">
-                    Services
-                  </Link>
-                  <Link href="/attesters" className="hover:text-[var(--color-brand)]">
-                    Attesters
-                  </Link>
-                  <Link href="/privacy" className="hover:text-[var(--color-brand)]">
-                    Privacy
-                  </Link>
-                  <Link href="/faq" className="hover:text-[var(--color-brand)]">
-                    FAQ
-                  </Link>
-                  <Link href="/status" className="hover:text-[var(--color-brand)]">
-                    Status
-                  </Link>
-                  <a
-                    href="https://godgift-care.github.io/sci-healthcare-contracts/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-[var(--color-brand)]"
+                  <nav
+                    aria-label="Footer navigation"
+                    className="flex flex-wrap gap-4 font-medium text-[var(--color-ink)]"
                   >
-                    Docs
-                  </a>
-                </nav>
-              </div>
-            </footer>
+                    <Link
+                      href="/how-it-works"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      How it works
+                    </Link>
+                    <Link
+                      href="/stats"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      Stats
+                    </Link>
+                    <Link
+                      href="/attesters"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      Attesters
+                    </Link>
+                    <Link
+                      href="/privacy"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      Privacy
+                    </Link>
+                    <Link
+                      href="/faq"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      FAQ
+                    </Link>
+                    <Link
+                      href="/status"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      Status
+                    </Link>
+                    <a
+                      href="https://godgift-care.github.io/sci-healthcare-contracts/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-[var(--color-brand)]"
+                    >
+                      Docs
+                    </a>
+                  </nav>
+                </div>
+              </footer>
             </LocaleProvider>
           </SwrProvider>
         </WalletProvider>

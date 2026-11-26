@@ -76,7 +76,7 @@ page loads: `GET /providers` and `GET /vouchers` appear as the app renders.
 Docker is available in the dev container, so the backend runs there too, but
 the browser is on your machine and cannot reach the container's
 `localhost:8080`. Forward both ports publicly (**Ports** tab → 3000 and 8080 →
-*Public*) and set the API URL to the forwarded origin:
+_Public_) and set the API URL to the forwarded origin:
 
 ```bash
 SCI_BACKEND_CODESPACE="$CODESPACE_NAME" node scripts/codespace-env.mjs --force
@@ -96,13 +96,13 @@ CORS_ORIGIN="https://${CODESPACE_NAME}-3000.app.github.dev" docker compose up
 
 ## When it does not work
 
-| Symptom | Cause |
-| --- | --- |
-| Home page loads, no clinics | Indexer has not caught up: `curl http://localhost:8080/ready`. A stale database is the other cause — `docker compose down -v` recreates it. |
-| Console shows a CORS error | The app's origin is not in the backend's `CORS_ORIGIN`. |
-| Browser blocks the API request | `NEXT_PUBLIC_API_URL` is not the origin the browser is on, or it was changed without restarting `npm run dev`. |
-| `npm run build` stops naming variables | A production build requires the eight `NEXT_PUBLIC_*` values above (#76); `next dev` does not. |
-| Wrong contract ids | Reads succeed but return nothing: the backend indexes a different deployment than the app points at. Compare `/version` on the API with `.env.local`. |
+| Symptom                                | Cause                                                                                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home page loads, no clinics            | Indexer has not caught up: `curl http://localhost:8080/ready`. A stale database is the other cause — `docker compose down -v` recreates it.           |
+| Console shows a CORS error             | The app's origin is not in the backend's `CORS_ORIGIN`.                                                                                               |
+| Browser blocks the API request         | `NEXT_PUBLIC_API_URL` is not the origin the browser is on, or it was changed without restarting `npm run dev`.                                        |
+| `npm run build` stops naming variables | A production build requires the eight `NEXT_PUBLIC_*` values above (#76); `next dev` does not.                                                        |
+| Wrong contract ids                     | Reads succeed but return nothing: the backend indexes a different deployment than the app points at. Compare `/version` on the API with `.env.local`. |
 
 Nothing here holds a key: the app never asks for a seed phrase, and the
 backend never signs. See `CONTRIBUTING.md` for the non-negotiables.

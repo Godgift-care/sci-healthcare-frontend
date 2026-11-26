@@ -25,7 +25,9 @@ function Flaky() {
 function page() {
   // `children` arrives as createElement's third argument, which its typing
   // does not count towards the required prop.
-  const props = { label: 'This chart' } as ComponentProps<typeof WidgetBoundary>;
+  const props = { label: 'This chart' } as ComponentProps<
+    typeof WidgetBoundary
+  >;
   return createElement(
     'div',
     null,

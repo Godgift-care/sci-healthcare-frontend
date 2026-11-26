@@ -44,7 +44,9 @@ describe('disconnected', () => {
   it('cannot be pressed twice while connecting', () => {
     wallet.connecting = true;
     render(<ConnectButton />);
-    const button = screen.getByRole('button', { name: 'Connecting…' }) as HTMLButtonElement;
+    const button = screen.getByRole('button', {
+      name: 'Connecting…',
+    }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
 });

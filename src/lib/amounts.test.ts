@@ -65,7 +65,18 @@ describe('toBaseUnits', () => {
   });
 
   it('rejects anything that is not a plain decimal number', () => {
-    for (const bad of ['', ' ', 'abc', '1.2.3', '1.', '.5', '-1', '1,000', '1e7', '+1']) {
+    for (const bad of [
+      '',
+      ' ',
+      'abc',
+      '1.2.3',
+      '1.',
+      '.5',
+      '-1',
+      '1,000',
+      '1e7',
+      '+1',
+    ]) {
       expect(() => toBaseUnits(bad), bad).toThrow(/Not a valid amount/);
     }
   });
@@ -78,7 +89,9 @@ describe('validateAmountInput', () => {
   });
 
   it('rejects malformed values and precision beyond seven decimals', () => {
-    expect(validateAmountInput('not a number', 1n)).toBe('Enter a valid amount.');
+    expect(validateAmountInput('not a number', 1n)).toBe(
+      'Enter a valid amount.',
+    );
     expect(validateAmountInput('1.00000000', 1n)).toBe(
       'Use no more than 7 decimal places.',
     );
@@ -140,7 +153,9 @@ describe('formatUsdc', () => {
     });
 
     it('defaults to en', () => {
-      expect(formatUsdc(1_000_000_000_000n)).toBe(formatUsdc(1_000_000_000_000n, 'en'));
+      expect(formatUsdc(1_000_000_000_000n)).toBe(
+        formatUsdc(1_000_000_000_000n, 'en'),
+      );
     });
   });
 
@@ -152,11 +167,15 @@ describe('formatUsdc', () => {
       // The value does not survive a trip through Number, which is exactly
       // why the formatter never makes that trip.
       expect(BigInt(Number(ABOVE_SAFE))).not.toBe(ABOVE_SAFE);
-      expect(formatUsdc(ABOVE_SAFE, 'en')).toBe('9,007,199,254,740,993.1234567');
+      expect(formatUsdc(ABOVE_SAFE, 'en')).toBe(
+        '9,007,199,254,740,993.1234567',
+      );
       expect(formatUsdc(ABOVE_SAFE, 'fr')).toBe(
         `9${NBSP}007${NBSP}199${NBSP}254${NBSP}740${NBSP}993,1234567`,
       );
-      expect(formatUsdc(ABOVE_SAFE, 'sw')).toBe('9,007,199,254,740,993.1234567');
+      expect(formatUsdc(ABOVE_SAFE, 'sw')).toBe(
+        '9,007,199,254,740,993.1234567',
+      );
       // The string input takes the same path as the bigint one.
       expect(formatUsdc(ABOVE_SAFE.toString(), 'en')).toBe(
         '9,007,199,254,740,993.1234567',
@@ -219,9 +238,12 @@ describe('shortAddress', () => {
   });
 
   it('honours a custom character count', () => {
-    expect(shortAddress('GCATS5YOVB6ROX2WUNKGNQ2MP3GMXDMKSG2O4N5CLX3A6W4PZGZZI55U', 6)).toBe(
-      'GCATS5…ZZI55U',
-    );
+    expect(
+      shortAddress(
+        'GCATS5YOVB6ROX2WUNKGNQ2MP3GMXDMKSG2O4N5CLX3A6W4PZGZZI55U',
+        6,
+      ),
+    ).toBe('GCATS5…ZZI55U');
   });
 });
 
@@ -263,11 +285,15 @@ describe('timeUntil', () => {
   });
 
   it('follows the active locale (#278)', () => {
-    expect(timeUntil('2026-05-23T10:00:00.000Z', now, 'fr')).toBe('dans 3 jours');
+    expect(timeUntil('2026-05-23T10:00:00.000Z', now, 'fr')).toBe(
+      'dans 3 jours',
+    );
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('in 30 minutes');
+    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe(
+      'in 30 minutes',
+    );
   });
 
   afterEach(() => {
@@ -301,11 +327,15 @@ describe('timeSince', () => {
   });
 
   it('follows the active locale (#278)', () => {
-    expect(timeSince('2026-05-17T10:00:00.000Z', now, 'fr')).toBe('il y a 3 jours');
+    expect(timeSince('2026-05-17T10:00:00.000Z', now, 'fr')).toBe(
+      'il y a 3 jours',
+    );
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe('30 minutes ago');
+    expect(timeSince('2026-05-20T09:30:00.000Z', new Date(now))).toBe(
+      '30 minutes ago',
+    );
   });
 
   afterEach(() => {

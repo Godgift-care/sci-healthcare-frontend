@@ -51,21 +51,27 @@ async function stubShare(page: Page, mode: 'record' | 'absent' | 'dismiss') {
     const w = window as unknown as { __shared: unknown[] };
     w.__shared = [];
     if (m === 'absent') {
-      Object.defineProperty(Navigator.prototype, 'share', { value: undefined, configurable: true });
+      Object.defineProperty(Navigator.prototype, 'share', {
+        value: undefined,
+        configurable: true,
+      });
       return;
     }
     Object.defineProperty(Navigator.prototype, 'share', {
       configurable: true,
       value: async (data: unknown) => {
         w.__shared.push(data);
-        if (m === 'dismiss') throw new DOMException('Share canceled', 'AbortError');
+        if (m === 'dismiss')
+          throw new DOMException('Share canceled', 'AbortError');
       },
     });
   }, mode);
 }
 
 async function sharedPayloads(page: Page): Promise<SharePayload[]> {
-  return page.evaluate(() => (window as unknown as { __shared: SharePayload[] }).__shared);
+  return page.evaluate(
+    () => (window as unknown as { __shared: SharePayload[] }).__shared,
+  );
 }
 
 function expectNothingIdentifying(text: string) {
@@ -81,31 +87,48 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Share a receipt (#122)', () => {
-  test('voucher page shares a public summary through the share sheet', async ({ page }) => {
+  test('voucher page shares a public summary through the share sheet', async ({
+    page,
+  }) => {
     await stubShare(page, 'record');
     await useMockWallet(page, FUNDER);
-    await mockBackend(page, { provider: CLINIC, voucherById: { 7: SETTLED_VOUCHER } });
+    await mockBackend(page, {
+      provider: CLINIC,
+      voucherById: { 7: SETTLED_VOUCHER },
+    });
 
     await page.goto('/vouchers/7');
-    await page.getByRole('button', { name: 'Share the care receipt for voucher #7' }).click();
+    await page
+      .getByRole('button', { name: 'Share the care receipt for voucher #7' })
+      .click();
 
     await expect.poll(async () => (await sharedPayloads(page)).length).toBe(1);
     const [shared] = await sharedPayloads(page);
     const origin = new URL(page.url()).origin;
     expect(shared.title).toBe('Care receipt #7');
-    expect(shared.text).toContain('Care receipt for voucher #7: Outpatient consult at Ikeja General Clinic');
+    expect(shared.text).toContain(
+      'Care receipt for voucher #7: Outpatient consult at Ikeja General Clinic',
+    );
     expect(shared.text).toContain('$3.00 USDC');
     expect(shared.text).toMatch(new RegExp(`${origin}/vouchers/7$`));
     expectNothingIdentifying(JSON.stringify(shared));
   });
 
-  test('without a share sheet the receipt is copied instead', async ({ page, context }) => {
+  test('without a share sheet the receipt is copied instead', async ({
+    page,
+    context,
+  }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await stubShare(page, 'absent');
-    await mockBackend(page, { provider: CLINIC, voucherById: { 7: SETTLED_VOUCHER } });
+    await mockBackend(page, {
+      provider: CLINIC,
+      voucherById: { 7: SETTLED_VOUCHER },
+    });
 
     await page.goto('/vouchers/7');
-    await page.getByRole('button', { name: 'Share the care receipt for voucher #7' }).click();
+    await page
+      .getByRole('button', { name: 'Share the care receipt for voucher #7' })
+      .click();
 
     await expect(page.getByText('Receipt link copied')).toBeVisible();
     const copied = await page.evaluate(() => navigator.clipboard.readText());
@@ -114,30 +137,47 @@ test.describe('Share a receipt (#122)', () => {
     expectNothingIdentifying(copied);
   });
 
-  test('dismissing the share sheet neither copies nor reports an error', async ({ page, context }) => {
+  test('dismissing the share sheet neither copies nor reports an error', async ({
+    page,
+    context,
+  }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await stubShare(page, 'dismiss');
-    await mockBackend(page, { provider: CLINIC, voucherById: { 7: SETTLED_VOUCHER } });
+    await mockBackend(page, {
+      provider: CLINIC,
+      voucherById: { 7: SETTLED_VOUCHER },
+    });
 
     await page.goto('/vouchers/7');
     await page.evaluate(() => navigator.clipboard.writeText('untouched'));
-    await page.getByRole('button', { name: 'Share the care receipt for voucher #7' }).click();
+    await page
+      .getByRole('button', { name: 'Share the care receipt for voucher #7' })
+      .click();
 
     await expect.poll(async () => (await sharedPayloads(page)).length).toBe(1);
     await expect(page.getByText('Receipt link copied')).toHaveCount(0);
     await expect(page.getByText(/Could not share the receipt/)).toHaveCount(0);
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('untouched');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      'untouched',
+    );
   });
 
   test('an unsettled voucher offers no receipt to share', async ({ page }) => {
-    await mockBackend(page, { provider: CLINIC, voucherById: { 8: SETTLEABLE_VOUCHER('8') } });
+    await mockBackend(page, {
+      provider: CLINIC,
+      voucherById: { 8: SETTLEABLE_VOUCHER('8') },
+    });
 
     await page.goto('/vouchers/8');
-    await expect(page.getByRole('heading', { name: 'Outpatient consult' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Outpatient consult' }),
+    ).toBeVisible();
     await expect(page.getByTestId('share-receipt')).toHaveCount(0);
   });
 
-  test('care history shares each receipt by its voucher link only', async ({ page }) => {
+  test('care history shares each receipt by its voucher link only', async ({
+    page,
+  }) => {
     await stubShare(page, 'record');
     await mockBackend(page, {
       provider: CLINIC,
@@ -149,12 +189,16 @@ test.describe('Share a receipt (#122)', () => {
     await page.getByLabel('Secret key').fill(PATIENT_KEY);
     await page.getByRole('button', { name: 'Look up history' }).click();
 
-    await page.getByRole('button', { name: 'Share the care receipt for voucher #7' }).click();
+    await page
+      .getByRole('button', { name: 'Share the care receipt for voucher #7' })
+      .click();
 
     await expect.poll(async () => (await sharedPayloads(page)).length).toBe(1);
     const [shared] = await sharedPayloads(page);
     const origin = new URL(page.url()).origin;
-    expect(shared.text).toContain('Care receipt for voucher #7: Outpatient consult');
+    expect(shared.text).toContain(
+      'Care receipt for voucher #7: Outpatient consult',
+    );
     // The link is the bare voucher page, never the history page or its query.
     expect(shared.text).toMatch(new RegExp(`${origin}/vouchers/7$`));
     expect(shared.text).not.toContain('/my');

@@ -36,9 +36,22 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Check({ ok, okText, failText }: { ok: boolean | undefined; okText: string; failText: string }) {
+function Check({
+  ok,
+  okText,
+  failText,
+}: {
+  ok: boolean | undefined;
+  okText: string;
+  failText: string;
+}) {
   const { t } = useLocaleContext();
-  if (ok === undefined) return <span className="text-[var(--color-ink-soft)]">{t('status.notReported')}</span>;
+  if (ok === undefined)
+    return (
+      <span className="text-[var(--color-ink-soft)]">
+        {t('status.notReported')}
+      </span>
+    );
   return ok ? (
     <span className="text-[var(--color-ok)]">{okText}</span>
   ) : (
@@ -61,8 +74,13 @@ export default function StatusPage() {
     error: readyError,
     isValidating,
     mutate,
-  } = useReady({ refreshInterval: READY_REFRESH_MS, shouldRetryOnError: false });
-  const { version, error: versionError } = useVersion({ shouldRetryOnError: false });
+  } = useReady({
+    refreshInterval: READY_REFRESH_MS,
+    shouldRetryOnError: false,
+  });
+  const { version, error: versionError } = useVersion({
+    shouldRetryOnError: false,
+  });
 
   // A cached answer stays on screen while a refresh fails, so the page only
   // calls the API unreachable when there is no answer at all.
@@ -80,12 +98,18 @@ export default function StatusPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('status.title')}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {t('status.title')}
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
             {t('status.subtitle')}
           </p>
         </div>
-        <Button variant="ghost" disabled={isValidating} onClick={() => void mutate()}>
+        <Button
+          variant="ghost"
+          disabled={isValidating}
+          onClick={() => void mutate()}
+        >
           {isValidating ? t('status.checking') : t('status.checkAgain')}
         </Button>
       </div>
@@ -122,21 +146,33 @@ export default function StatusPage() {
       )}
 
       <section aria-labelledby="status-api" className="space-y-2">
-        <h2 id="status-api" className="text-base font-semibold">{t('status.apiReadiness')}</h2>
+        <h2 id="status-api" className="text-base font-semibold">
+          {t('status.apiReadiness')}
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label={t('status.readiness')}>
               {ready ? (
-                <Check ok={ready.status === 'ready'} okText={t('status.ready')} failText={t('status.degraded')} />
+                <Check
+                  ok={ready.status === 'ready'}
+                  okText={t('status.ready')}
+                  failText={t('status.degraded')}
+                />
               ) : overall === 'unreachable' ? (
-                <span className="text-[var(--color-danger)]">{t('status.unreachable')}</span>
+                <span className="text-[var(--color-danger)]">
+                  {t('status.unreachable')}
+                </span>
               ) : (
                 '…'
               )}
             </Row>
             <Row label={t('status.database')}>
               {ready ? (
-                <Check ok={ready.checks.database} okText={t('status.connected')} failText={t('status.unreachable')} />
+                <Check
+                  ok={ready.checks.database}
+                  okText={t('status.connected')}
+                  failText={t('status.unreachable')}
+                />
               ) : (
                 '—'
               )}
@@ -146,14 +182,20 @@ export default function StatusPage() {
             </Row>
             <Row label={t('status.latestIndexedLedger')}>
               {ready?.checks.indexedLedger !== undefined ? (
-                <span className="mono">{ready.checks.indexedLedger.toLocaleString(localeTag(locale))}</span>
+                <span className="mono">
+                  {ready.checks.indexedLedger.toLocaleString(localeTag(locale))}
+                </span>
               ) : (
                 '—'
               )}
             </Row>
             <Row label={t('status.ledgerHistory')}>
               {ready?.checks.gapDetected !== undefined ? (
-                <Check ok={!ready.checks.gapDetected} okText={t('status.complete')} failText={t('status.gapDetected')} />
+                <Check
+                  ok={!ready.checks.gapDetected}
+                  okText={t('status.complete')}
+                  failText={t('status.gapDetected')}
+                />
               ) : (
                 '—'
               )}
@@ -163,7 +205,9 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-network" className="space-y-2">
-        <h2 id="status-network" className="text-base font-semibold">{t('status.network')}</h2>
+        <h2 id="status-network" className="text-base font-semibold">
+          {t('status.network')}
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label={t('status.thisAppSignsFor')}>{config.network}</Row>
@@ -202,7 +246,9 @@ export default function StatusPage() {
       </section>
 
       <section aria-labelledby="status-versions" className="space-y-2">
-        <h2 id="status-versions" className="text-base font-semibold">{t('status.versions')}</h2>
+        <h2 id="status-versions" className="text-base font-semibold">
+          {t('status.versions')}
+        </h2>
         <Card className="px-5 py-2">
           <dl className="divide-y divide-[var(--color-line)]">
             <Row label={t('status.webApp')}>
@@ -218,13 +264,17 @@ export default function StatusPage() {
                   {apiCommit && ` (${apiCommit})`}
                 </span>
               ) : versionError ? (
-                <span className="text-[var(--color-ink-soft)]">{t('status.notAvailable')}</span>
+                <span className="text-[var(--color-ink-soft)]">
+                  {t('status.notAvailable')}
+                </span>
               ) : (
                 '…'
               )}
             </Row>
             {version?.startedAt && (
-              <Row label={t('status.apiRunningSince')}>{formatDate(version.startedAt, locale)}</Row>
+              <Row label={t('status.apiRunningSince')}>
+                {formatDate(version.startedAt, locale)}
+              </Row>
             )}
           </dl>
         </Card>

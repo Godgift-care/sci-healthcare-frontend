@@ -44,30 +44,48 @@ test.beforeEach(async ({ page }) => {
 
 test('renders voucher activity by country with data', async ({ page }) => {
   await page.goto('/stats');
-  await expect(page.getByRole('heading', { name: 'Protocol statistics' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Protocol statistics' }),
+  ).toBeVisible();
 
-  await expect(page.getByRole('heading', { name: 'Voucher activity by country' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Voucher activity by country' }),
+  ).toBeVisible();
 
   // NG: 1 funded (3.00) + 1 settled (3.00); KE: 1 settled (5.00).
   await expect(page.getByText('NG', { exact: true })).toBeVisible();
   await expect(page.getByText('KE', { exact: true })).toBeVisible();
 
   // NG row: 1 funded, 1 settled, $3.00
-  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('1 funded');
-  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('1 settled');
-  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText('$3.00');
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText(
+    '1 funded',
+  );
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText(
+    '1 settled',
+  );
+  await expect(page.locator('tr').filter({ hasText: 'NG' })).toContainText(
+    '$3.00',
+  );
 
   // KE row: 1 settled, $5.00
-  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText('1 settled');
-  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText('$5.00');
+  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText(
+    '1 settled',
+  );
+  await expect(page.locator('tr').filter({ hasText: 'KE' })).toContainText(
+    '$5.00',
+  );
 });
 
-test('renders empty state when there is no voucher activity', async ({ page }) => {
+test('renders empty state when there is no voucher activity', async ({
+  page,
+}) => {
   await useMockWallet(page, FUNDER);
   await mockBackend(page, { vouchers: [] });
   await page.goto('/stats');
 
-  await expect(page.getByRole('heading', { name: 'Voucher activity by country' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Voucher activity by country' }),
+  ).toBeVisible();
   await expect(
     page.getByText('No voucher activity recorded yet.'),
   ).toBeVisible();

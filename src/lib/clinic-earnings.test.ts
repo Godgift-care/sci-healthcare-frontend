@@ -9,7 +9,9 @@ import {
   type EarningsVoucher,
 } from './clinic-earnings';
 
-function voucher(overrides: Partial<EarningsVoucher> & { amount: string; status: string }): EarningsVoucher {
+function voucher(
+  overrides: Partial<EarningsVoucher> & { amount: string; status: string },
+): EarningsVoucher {
   return {
     createdAt: '2026-10-01T10:00:00.000Z',
     ...overrides,
@@ -67,7 +69,11 @@ describe('summariseEarnings', () => {
 
   it('derives a missing fee from the net, and a missing net from the fee', () => {
     const fromNet = summariseEarnings([
-      voucher({ amount: '30000000', status: 'Settled', settledNet: '29500000' }),
+      voucher({
+        amount: '30000000',
+        status: 'Settled',
+        settledNet: '29500000',
+      }),
     ]);
     expect(fromNet.fees).toBe('500000');
     expect(fromNet.netReceived).toBe('29500000');
@@ -237,8 +243,16 @@ describe('monthlyEarnings', () => {
   it('omits months with no settled or pending money', () => {
     expect(
       monthlyEarnings([
-        voucher({ amount: '10000000', status: 'Funded', createdAt: '2026-06-10T00:00:00.000Z' }),
-        voucher({ amount: '20000000', status: 'Refunded', createdAt: '2026-06-11T00:00:00.000Z' }),
+        voucher({
+          amount: '10000000',
+          status: 'Funded',
+          createdAt: '2026-06-10T00:00:00.000Z',
+        }),
+        voucher({
+          amount: '20000000',
+          status: 'Refunded',
+          createdAt: '2026-06-11T00:00:00.000Z',
+        }),
       ]),
     ).toEqual([]);
   });

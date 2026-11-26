@@ -20,7 +20,12 @@ function provider(
     status: 'Active',
     registeredAt: '2026-01-01T00:00:00.000Z',
     services: [
-      { code: 101, label: 'Outpatient consult', price: '30000000', priceDisplay: '3.00' },
+      {
+        code: 101,
+        label: 'Outpatient consult',
+        price: '30000000',
+        priceDisplay: '3.00',
+      },
     ],
     ...overrides,
   };
@@ -28,10 +33,10 @@ function provider(
 
 describe('eligibleRedirects', () => {
   it('lists an active clinic at exactly the escrow', () => {
-    const result = eligibleRedirects(
-      [provider('GA', 'At price')],
-      { serviceCode: 101, amount: 30_000_000n },
-    );
+    const result = eligibleRedirects([provider('GA', 'At price')], {
+      serviceCode: 101,
+      amount: 30_000_000n,
+    });
     expect(result).toEqual([
       {
         address: 'GA',
@@ -49,12 +54,22 @@ describe('eligibleRedirects', () => {
         provider('G2', 'Pending', { status: 'Pending' }),
         provider('G3', 'Wrong service', {
           services: [
-            { code: 202, label: 'Dental', price: '10000000', priceDisplay: '1.00' },
+            {
+              code: 202,
+              label: 'Dental',
+              price: '10000000',
+              priceDisplay: '1.00',
+            },
           ],
         }),
         provider('G4', 'Too expensive', {
           services: [
-            { code: 101, label: 'Outpatient consult', price: '40000000', priceDisplay: '4.00' },
+            {
+              code: 101,
+              label: 'Outpatient consult',
+              price: '40000000',
+              priceDisplay: '4.00',
+            },
           ],
         }),
         provider('G5', 'Unavailable service', {
@@ -69,7 +84,14 @@ describe('eligibleRedirects', () => {
           ],
         }),
         provider('G6', 'Zero price', {
-          services: [{ code: 101, label: 'Outpatient consult', price: '0', priceDisplay: '0.00' }],
+          services: [
+            {
+              code: 101,
+              label: 'Outpatient consult',
+              price: '0',
+              priceDisplay: '0.00',
+            },
+          ],
         }),
         provider('G7', 'Eligible'),
       ],
@@ -92,17 +114,32 @@ describe('eligibleRedirects', () => {
       [
         provider('G1', 'Zulu', {
           services: [
-            { code: 101, label: 'Outpatient consult', price: '20000000', priceDisplay: '2.00' },
+            {
+              code: 101,
+              label: 'Outpatient consult',
+              price: '20000000',
+              priceDisplay: '2.00',
+            },
           ],
         }),
         provider('G2', 'Alpha', {
           services: [
-            { code: 101, label: 'Outpatient consult', price: '10000000', priceDisplay: '1.00' },
+            {
+              code: 101,
+              label: 'Outpatient consult',
+              price: '10000000',
+              priceDisplay: '1.00',
+            },
           ],
         }),
         provider('G3', 'Beta', {
           services: [
-            { code: 101, label: 'Outpatient consult', price: '20000000', priceDisplay: '2.00' },
+            {
+              code: 101,
+              label: 'Outpatient consult',
+              price: '20000000',
+              priceDisplay: '2.00',
+            },
           ],
         }),
       ],

@@ -11,6 +11,10 @@ export const metadata: Metadata = {
  * must be exported from a server file in that segment — so it lives here,
  * passing straight through to the page.
  */
-export default function TransactionsLayout({ children }: { children: React.ReactNode }) {
+export default function TransactionsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }

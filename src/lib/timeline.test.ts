@@ -24,7 +24,11 @@ function voucher(overrides: Partial<Voucher> = {}): Voucher {
     id: '1',
     funder: 'GFUNDER',
     beneficiaryRef: 'ab'.repeat(32),
-    provider: { address: 'GPROVIDER', name: 'Ikeja General Clinic', country: 'NG' },
+    provider: {
+      address: 'GPROVIDER',
+      name: 'Ikeja General Clinic',
+      country: 'NG',
+    },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',
@@ -60,7 +64,8 @@ function receipt(overrides: Partial<Receipt> = {}): Receipt {
 
 type Step = ReturnType<typeof voucherTimeline>[number];
 const labels = (steps: Step[]) => steps.map((s) => s.label);
-const step = (steps: Step[], label: string) => steps.find((s) => s.label === label)!;
+const step = (steps: Step[], label: string) =>
+  steps.find((s) => s.label === label)!;
 
 /** A row of the indexer's event log (backend #13), as served to the page. */
 function event(name: string, txHash: string): VoucherEvent {
@@ -71,8 +76,16 @@ describe('voucherTimeline', () => {
   it('starts a freshly funded voucher at "Patient seen"', () => {
     const steps = voucherTimeline(voucher(), null, NOW);
 
-    expect(labels(steps)).toEqual(['Funded', 'Patient seen', 'Care confirmed', 'Clinic paid']);
-    expect(step(steps, 'Funded')).toMatchObject({ state: 'done', at: '2026-05-01T10:00:00.000Z' });
+    expect(labels(steps)).toEqual([
+      'Funded',
+      'Patient seen',
+      'Care confirmed',
+      'Clinic paid',
+    ]);
+    expect(step(steps, 'Funded')).toMatchObject({
+      state: 'done',
+      at: '2026-05-01T10:00:00.000Z',
+    });
     expect(step(steps, 'Patient seen')).toMatchObject({
       state: 'current',
       at: '2026-06-01T10:00:00.000Z',
@@ -159,13 +172,25 @@ describe('voucherTimeline', () => {
 
   it('marks a never-claimed refund as skipped, not failed', () => {
     const steps = voucherTimeline(
-      voucher({ status: 'Refunded', disputeResolvedAt: '2026-05-12T10:00:00.000Z' }),
+      voucher({
+        status: 'Refunded',
+        disputeResolvedAt: '2026-05-12T10:00:00.000Z',
+      }),
       null,
       NOW,
     );
 
-    expect(labels(steps)).toEqual(['Funded', 'Patient seen', 'Care confirmed', 'Refunded']);
-    expect(step(steps, 'Patient seen')).toMatchObject({ state: 'skipped', at: null, detail: 'Never claimed' });
+    expect(labels(steps)).toEqual([
+      'Funded',
+      'Patient seen',
+      'Care confirmed',
+      'Refunded',
+    ]);
+    expect(step(steps, 'Patient seen')).toMatchObject({
+      state: 'skipped',
+      at: null,
+      detail: 'Never claimed',
+    });
     expect(step(steps, 'Care confirmed').state).toBe('skipped');
     expect(step(steps, 'Refunded')).toMatchObject({
       state: 'done',
@@ -185,7 +210,10 @@ describe('voucherTimeline', () => {
       NOW,
     );
 
-    expect(step(steps, 'Care confirmed')).toMatchObject({ state: 'skipped', detail: 'Never attested' });
+    expect(step(steps, 'Care confirmed')).toMatchObject({
+      state: 'skipped',
+      detail: 'Never attested',
+    });
     expect(step(steps, 'In dispute')).toMatchObject({
       state: 'current',
       detail: 'Care was not delivered as described. Awaiting an administrator.',
@@ -246,7 +274,11 @@ describe('voucherTimeline', () => {
     const steps = voucherTimeline(voucher(), null, NOW, stepTxHashes([]));
     expect(steps.every((s) => s.txHash === undefined)).toBe(true);
     // Same when the argument is omitted entirely — old callers unchanged.
-    expect(voucherTimeline(voucher(), null, NOW).every((s) => s.txHash === undefined)).toBe(true);
+    expect(
+      voucherTimeline(voucher(), null, NOW).every(
+        (s) => s.txHash === undefined,
+      ),
+    ).toBe(true);
   });
 
   it('links a dispute to the transactions that opened and resolved it', () => {
@@ -268,7 +300,9 @@ describe('voucherTimeline', () => {
       hashes,
     );
 
-    expect(step(steps, 'Dispute resolved: Refunded').txHash).toBe('HASHRESOLVE');
+    expect(step(steps, 'Dispute resolved: Refunded').txHash).toBe(
+      'HASHRESOLVE',
+    );
     expect(step(steps, 'Refunded').txHash).toBe('HASHREFUND');
   });
 
@@ -345,7 +379,10 @@ describe('voucher status explanations (#323)', () => {
         for (const role of VOUCHER_ROLES) {
           const key = getStatusExplanationKey(status, role);
           const explanation = translate(locale, key);
-          expect(explanation, `Missing explanation for locale: ${locale}, key: ${key}`).toBeTruthy();
+          expect(
+            explanation,
+            `Missing explanation for locale: ${locale}, key: ${key}`,
+          ).toBeTruthy();
           expect(explanation).not.toEqual(key);
           expect(explanation.trim().length).toBeGreaterThan(10);
         }

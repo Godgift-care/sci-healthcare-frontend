@@ -4,9 +4,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ComponentProps } from 'react';
 
-import { detailHref, prefetchDetail, type DetailTarget } from '@/lib/detail-prefetch';
+import {
+  detailHref,
+  prefetchDetail,
+  type DetailTarget,
+} from '@/lib/detail-prefetch';
 
-type Props = Omit<ComponentProps<typeof Link>, 'href' | 'prefetch'> & { detail: DetailTarget };
+type Props = Omit<ComponentProps<typeof Link>, 'href' | 'prefetch'> & {
+  detail: DetailTarget;
+};
 
 /**
  * `useRouter` throws outside of the Next app router (e.g. when a story is
@@ -34,8 +40,14 @@ export function DetailLink({ detail, onMouseEnter, onFocus, ...props }: Props) {
       {...props}
       href={detailHref(detail)}
       prefetch={false}
-      onMouseEnter={(event) => { onMouseEnter?.(event); warm(); }}
-      onFocus={(event) => { onFocus?.(event); warm(); }}
+      onMouseEnter={(event) => {
+        onMouseEnter?.(event);
+        warm();
+      }}
+      onFocus={(event) => {
+        onFocus?.(event);
+        warm();
+      }}
     />
   );
 }

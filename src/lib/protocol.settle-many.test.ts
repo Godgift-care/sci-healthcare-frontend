@@ -40,7 +40,11 @@ vi.mock('./contracts', () => {
       },
     };
   }
-  return { VoucherClient: FakeClient, RegistryClient: FakeClient, FaucetClient: FakeClient };
+  return {
+    VoucherClient: FakeClient,
+    RegistryClient: FakeClient,
+    FaucetClient: FakeClient,
+  };
 });
 
 vi.mock('./stellar', () => ({
@@ -87,8 +91,11 @@ beforeEach(() => {
 describe('settleMany', () => {
   it('settles one voucher per write when the contract has no batch method', async () => {
     const progress: Array<[number, number, string]> = [];
-    const result = await voucher.settleMany(CALLER, ['11', '12'], sign, (done, total, id) =>
-      progress.push([done, total, id]),
+    const result = await voucher.settleMany(
+      CALLER,
+      ['11', '12'],
+      sign,
+      (done, total, id) => progress.push([done, total, id]),
     );
 
     expect(state.invokes).toEqual(['settle', 'settle']);
@@ -103,8 +110,11 @@ describe('settleMany', () => {
   describe('refundMany', () => {
     it('writes one voucher per transaction and reports progress', async () => {
       const progress: Array<[number, number, string]> = [];
-      const result = await voucher.refundMany(CALLER, ['71', '72', '73'], sign, (current, total, id) =>
-        progress.push([current, total, id]),
+      const result = await voucher.refundMany(
+        CALLER,
+        ['71', '72', '73'],
+        sign,
+        (current, total, id) => progress.push([current, total, id]),
       );
 
       expect(state.invokes).toEqual(['refund', 'refund', 'refund']);
@@ -128,7 +138,9 @@ describe('settleMany', () => {
 
       expect(state.invokes).toEqual(['refund', 'refund', 'refund']);
       expect(result.refunded).toEqual(['81', '83']);
-      expect(result.failed).toEqual([{ id: '82', error: new Error('refund failed') }]);
+      expect(result.failed).toEqual([
+        { id: '82', error: new Error('refund failed') },
+      ]);
       await expect(voucher.refundMany(CALLER, [], sign)).resolves.toEqual({
         refunded: [],
         failed: [],
@@ -183,8 +195,11 @@ describe('settleMany', () => {
     state.failNth = { method: 'settle', nth: 2 };
     const progress: string[] = [];
 
-    const result = await voucher.settleMany(CALLER, ['61', '62', '63'], sign, (_d, _t, id) =>
-      progress.push(id),
+    const result = await voucher.settleMany(
+      CALLER,
+      ['61', '62', '63'],
+      sign,
+      (_d, _t, id) => progress.push(id),
     );
 
     expect(state.invokes).toEqual(['settle', 'settle', 'settle']);

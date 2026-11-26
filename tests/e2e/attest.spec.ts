@@ -23,7 +23,10 @@ test('attester confirms care delivered', async ({ page }) => {
 
   // Attesting pays the clinic after the dispute window, so it confirms in a modal.
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Confirm' })
+    .click();
 
   await expect(page.getByText('Done.')).toBeVisible();
   expect(await mockInvokes(page)).toContainEqual({
@@ -42,7 +45,9 @@ test.describe('keyboard workflow', () => {
     });
   });
 
-  test('j/k move between claims and `a` opens the confirmation', async ({ page }) => {
+  test('j/k move between claims and `a` opens the confirmation', async ({
+    page,
+  }) => {
     await page.goto('/attest');
     await expect(page.getByText('#23')).toBeVisible();
     const selected = page.locator('[aria-current="true"]');
@@ -65,7 +70,10 @@ test.describe('keyboard workflow', () => {
     expect(await mockInvokes(page)).toEqual([]);
 
     await page.keyboard.press('a');
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Confirm' })
+      .click();
     await expect(page.getByText('Done.')).toBeVisible();
     expect(await mockInvokes(page)).toEqual([
       { kind: 'invoke', contractId: E2E_CONTRACTS.voucher, method: 'attest' },

@@ -32,7 +32,14 @@ declare global {
  * payload (see the LCP entry in the failing logs), so they are recognised by
  * name and excluded from the prop-less funnel checks.
  */
-const VITAL_NAMES = new Set(['core_web_vitals', 'LCP', 'CLS', 'INP', 'FCP', 'TTFB']);
+const VITAL_NAMES = new Set([
+  'core_web_vitals',
+  'LCP',
+  'CLS',
+  'INP',
+  'FCP',
+  'TTFB',
+]);
 
 /**
  * Analytics events that are not gated by the opt-out (Core Web Vitals reports
@@ -63,9 +70,7 @@ async function pageviewUrls(page: Page): Promise<string[]> {
 
 /** Polls until the current page has recorded exactly the expected pageviews. */
 async function expectPageviews(page: Page, urls: string[]): Promise<void> {
-  await expect
-    .poll(() => pageviewUrls(page), { timeout: 10000 })
-    .toEqual(urls);
+  await expect.poll(() => pageviewUrls(page), { timeout: 10000 }).toEqual(urls);
 }
 
 /** Nothing identifying may appear in any recorded payload. */
@@ -85,7 +90,9 @@ function coreVitalsEvents(events: unknown[][]): unknown[][] {
  * prop-less by contract: only the event name, nothing after it.
  */
 function funnelEvents(events: unknown[][]): unknown[][] {
-  return events.filter((e) => e[0] !== 'pageview' && !VITAL_NAMES.has(String(e[0])));
+  return events.filter(
+    (e) => e[0] !== 'pageview' && !VITAL_NAMES.has(String(e[0])),
+  );
 }
 
 /** Flattens recorded events to their names and string arguments only. */
@@ -135,7 +142,9 @@ test('funding records a prop-less event', async ({ page }) => {
   await expect(page.getByText('Voucher funded.')).toBeVisible();
 
   await expect
-    .poll(async () => eventNames(await analyticsEvents(page)), { timeout: 10000 })
+    .poll(async () => eventNames(await analyticsEvents(page)), {
+      timeout: 10000,
+    })
     .toContain('voucher_funded');
 
   const events = await analyticsEvents(page);
@@ -168,7 +177,9 @@ test('claiming records a prop-less event', async ({ page }) => {
   // Wait for the claim event to be recorded; the reporter can flush after
   // the UI settles, so a synchronous read is racy.
   await expect
-    .poll(async () => eventNames(await analyticsEvents(page)), { timeout: 10000 })
+    .poll(async () => eventNames(await analyticsEvents(page)), {
+      timeout: 10000,
+    })
     .toContain('voucher_claimed');
 
   const events = await analyticsEvents(page);
@@ -190,7 +201,9 @@ test('staff notes never leave the device', async ({ page }) => {
   await expect(page.getByText('This clinic is verified')).toBeVisible();
 
   await page.getByRole('button', { name: 'Add note' }).click();
-  await page.getByPlaceholder('Patient called, coming Tuesday').fill('Patient called, coming Tuesday');
+  await page
+    .getByPlaceholder('Patient called, coming Tuesday')
+    .fill('Patient called, coming Tuesday');
   await page.getByRole('button', { name: 'Save note' }).click();
   await expect(page.getByText('Patient called, coming Tuesday')).toBeVisible();
 

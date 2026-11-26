@@ -65,7 +65,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useLocaleContext();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [txAnnouncement, setTxAnnouncement] = useState<string>('');
-  const [customAssertiveAnnouncement, setCustomAssertiveAnnouncement] = useState<string>('');
+  const [customAssertiveAnnouncement, setCustomAssertiveAnnouncement] =
+    useState<string>('');
   const nextId = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const latestResultRef = useRef<HTMLDivElement | null>(null);
@@ -156,7 +157,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const notificationsLabel = t('components.toast.notifications') || 'Notifications';
+  const notificationsLabel =
+    t('components.toast.notifications') || 'Notifications';
   const dismissLabel = t('components.toast.dismiss') || 'Dismiss notification';
 
   return (
@@ -172,10 +174,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6"
       >
         {txAnnouncement && (
-          <div
-            className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 shadow-lg motion-reduce:transition-none"
-          >
-            <span className="inline-block h-2 w-2 rounded-full bg-blue-600 animate-pulse motion-reduce:animate-none" />
+          <div className="pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 shadow-lg motion-reduce:transition-none">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-600 motion-reduce:animate-none" />
             <span>{txAnnouncement}</span>
           </div>
         )}

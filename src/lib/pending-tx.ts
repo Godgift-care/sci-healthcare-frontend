@@ -18,7 +18,8 @@ import { useSyncExternalStore } from 'react';
  * announce each step once.
  */
 
-export type TransactionStatus = 'idle' | 'signing' | 'submitting' | 'confirming';
+export type TransactionStatus =
+  'idle' | 'signing' | 'submitting' | 'confirming';
 
 type PendingListener = (pending: boolean) => void;
 type StatusListener = (status: TransactionStatus) => void;
@@ -55,7 +56,9 @@ export function getTransactionStatus(): TransactionStatus {
  * Subscribes to transaction status transitions. Called immediately with
  * the current status, then on every change.
  */
-export function subscribeTransactionStatus(listener: StatusListener): () => void {
+export function subscribeTransactionStatus(
+  listener: StatusListener,
+): () => void {
   statusListeners.add(listener);
   listener(currentStatus);
   return () => {
@@ -107,7 +110,9 @@ export function isTransactionPending(): boolean {
  * Subscribes to pending changes. The listener is called immediately with the
  * current state, then on every change. Returns an unsubscribe function.
  */
-export function subscribePendingTransactions(listener: PendingListener): () => void {
+export function subscribePendingTransactions(
+  listener: PendingListener,
+): () => void {
   listeners.add(listener);
   listener(pendingCount > 0);
   return () => {

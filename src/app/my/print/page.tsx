@@ -34,7 +34,9 @@ export default function PrintableCareSummaryPage() {
   const saved = useSavedIdentity();
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [deriving, setDeriving] = useState(true);
-  const [verification, setVerification] = useState<Record<string, VerifyState>>({});
+  const [verification, setVerification] = useState<Record<string, VerifyState>>(
+    {},
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +67,11 @@ export default function PrintableCareSummaryPage() {
     };
   }, [saved.identifier, saved.key]);
 
-  const { receipts, totalSpendDisplay: spend, isLoading: receiptsLoading } = useReceipts(activeRef);
+  const {
+    receipts,
+    totalSpendDisplay: spend,
+    isLoading: receiptsLoading,
+  } = useReceipts(activeRef);
   const { providers } = useProviders();
 
   const providerMap = useMemo(() => {
@@ -128,7 +134,7 @@ export default function PrintableCareSummaryPage() {
         <div>
           <Link
             href="/my"
-            className="text-xs font-medium text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] transition"
+            className="text-xs font-medium text-[var(--color-ink-soft)] transition hover:text-[var(--color-ink)]"
           >
             &larr; Back to My vouchers
           </Link>
@@ -172,23 +178,23 @@ export default function PrintableCareSummaryPage() {
 
       {!loading && receipts.length === 0 && (
         <Card className="p-8 text-center print:hidden">
-          <Empty>
-            No settled care receipts found for this patient.
-          </Empty>
+          <Empty>No settled care receipts found for this patient.</Empty>
           <p className="mt-2 text-xs text-[var(--color-ink-soft)]">
-            Make sure you have looked up care history with the patient reference and secret key on{' '}
-            <Link href="/my" className="underline text-[var(--color-brand)]">
+            Make sure you have looked up care history with the patient reference
+            and secret key on{' '}
+            <Link href="/my" className="text-[var(--color-brand)] underline">
               My vouchers
-            </Link>.
+            </Link>
+            .
           </p>
         </Card>
       )}
 
       {/* Printable Document Container */}
       {receipts.length > 0 && (
-        <div className="rounded-2xl border border-[var(--color-line)] bg-white p-6 sm:p-10 shadow-xs print:border-none print:p-0 print:shadow-none space-y-8">
+        <div className="space-y-8 rounded-2xl border border-[var(--color-line)] bg-white p-6 shadow-xs sm:p-10 print:border-none print:p-0 print:shadow-none">
           {/* Document Header */}
-          <div className="border-b border-[var(--color-line)] pb-6 flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-line)] pb-6">
             <div>
               <div className="text-xs font-semibold tracking-wider text-[var(--color-brand)] uppercase">
                 SCI Healthcare Protocol
@@ -196,38 +202,56 @@ export default function PrintableCareSummaryPage() {
               <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                 Patient Care Summary
               </h2>
-              <p className="mt-1 text-xs text-slate-600 max-w-lg leading-relaxed">
-                Official portable record of clinical care vouchers funded, verified, and settled on the
-                Stellar blockchain ledger.
+              <p className="mt-1 max-w-lg text-xs leading-relaxed text-slate-600">
+                Official portable record of clinical care vouchers funded,
+                verified, and settled on the Stellar blockchain ledger.
               </p>
             </div>
-            <div className="text-start sm:text-end text-xs text-slate-500 space-y-1">
+            <div className="space-y-1 text-start text-xs text-slate-500 sm:text-end">
               <div>
                 <span className="font-medium text-slate-700">Issued:</span>{' '}
                 {formatDate(new Date())}
               </div>
               <div>
-                <span className="font-medium text-slate-700">Services delivered:</span>{' '}
+                <span className="font-medium text-slate-700">
+                  Services delivered:
+                </span>{' '}
                 {receipts.length}
               </div>
               <div>
-                <span className="font-medium text-slate-700">Total care funded:</span>{' '}
-                <span className="font-mono font-semibold text-slate-900">${spend} USDC</span>
+                <span className="font-medium text-slate-700">
+                  Total care funded:
+                </span>{' '}
+                <span className="font-mono font-semibold text-slate-900">
+                  ${spend} USDC
+                </span>
               </div>
             </div>
           </div>
 
           {/* Receipts Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-start text-sm border-collapse">
-              <caption className="sr-only">Delivered patient care receipts</caption>
+            <table className="w-full border-collapse text-start text-sm">
+              <caption className="sr-only">
+                Delivered patient care receipts
+              </caption>
               <thead>
-                <tr className="border-b-2 border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                  <th scope="col" className="py-3 pe-4">Date</th>
-                  <th scope="col" className="py-3 px-4">Clinic</th>
-                  <th scope="col" className="py-3 px-4">Service</th>
-                  <th scope="col" className="py-3 px-4 text-end">Amount</th>
-                  <th scope="col" className="py-3 ps-4 text-end">Receipt #</th>
+                <tr className="border-b-2 border-slate-200 text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                  <th scope="col" className="py-3 pe-4">
+                    Date
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Clinic
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Service
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-end">
+                    Amount
+                  </th>
+                  <th scope="col" className="py-3 ps-4 text-end">
+                    Receipt #
+                  </th>
                   <th scope="col" className="py-3 ps-4 text-end">
                     {t('print.verify')}
                   </th>
@@ -235,64 +259,76 @@ export default function PrintableCareSummaryPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {receipts.map((r) => {
-                  const clinicName = providerMap.get(r.providerAddress) ?? shortAddress(r.providerAddress);
-                  const state = verification[r.voucherId] ?? { status: 'idle' as const };
+                  const clinicName =
+                    providerMap.get(r.providerAddress) ??
+                    shortAddress(r.providerAddress);
+                  const state = verification[r.voucherId] ?? {
+                    status: 'idle' as const,
+                  };
                   return (
                     <Fragment key={r.voucherId}>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="py-3.5 pe-4 text-xs font-medium text-slate-700 whitespace-nowrap">
-                        {formatDate(r.settledAt)}
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-900">
-                        {clinicName}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-700">
-                        {r.serviceLabel ?? `Service ${r.serviceCode}`}
-                      </td>
-                      <td className="py-3.5 px-4 text-end font-mono font-medium text-slate-900 whitespace-nowrap">
-                        ${r.amountDisplay}
-                      </td>
-                      <td className="py-3.5 ps-4 text-end font-mono text-xs text-slate-500 whitespace-nowrap">
-                        #{r.voucherId}
-                      </td>
-                      <td className="py-3.5 ps-4 text-end align-top">
-                        <VerifyReceipt
-                          state={state}
-                          onVerify={() => void verify(r)}
-                          t={t}
-                        />
-                      </td>
-                    </tr>
-                    {state.status === 'mismatch' && (
-                      <tr>
-                        <td colSpan={6} className="pb-3">
-                          <Alert>
-                            <div className="font-semibold">{t('print.mismatch')}</div>
-                            <ul className="mt-1 space-y-0.5">
-                              {state.mismatches.map((m) => (
-                                <li key={m.field}>
-                                  {t('print.fieldMismatch', {
-                                    field: fieldLabel(m.field),
-                                    displayed: fieldValue(m.field, m.displayed),
-                                    onChain: fieldValue(m.field, m.onChain),
-                                  })}
-                                </li>
-                              ))}
-                            </ul>
-                          </Alert>
+                      <tr className="hover:bg-slate-50/50">
+                        <td className="py-3.5 pe-4 text-xs font-medium whitespace-nowrap text-slate-700">
+                          {formatDate(r.settledAt)}
+                        </td>
+                        <td className="px-4 py-3.5 font-medium text-slate-900">
+                          {clinicName}
+                        </td>
+                        <td className="px-4 py-3.5 text-slate-700">
+                          {r.serviceLabel ?? `Service ${r.serviceCode}`}
+                        </td>
+                        <td className="px-4 py-3.5 text-end font-mono font-medium whitespace-nowrap text-slate-900">
+                          ${r.amountDisplay}
+                        </td>
+                        <td className="py-3.5 ps-4 text-end font-mono text-xs whitespace-nowrap text-slate-500">
+                          #{r.voucherId}
+                        </td>
+                        <td className="py-3.5 ps-4 text-end align-top">
+                          <VerifyReceipt
+                            state={state}
+                            onVerify={() => void verify(r)}
+                            t={t}
+                          />
                         </td>
                       </tr>
-                    )}
+                      {state.status === 'mismatch' && (
+                        <tr>
+                          <td colSpan={6} className="pb-3">
+                            <Alert>
+                              <div className="font-semibold">
+                                {t('print.mismatch')}
+                              </div>
+                              <ul className="mt-1 space-y-0.5">
+                                {state.mismatches.map((m) => (
+                                  <li key={m.field}>
+                                    {t('print.fieldMismatch', {
+                                      field: fieldLabel(m.field),
+                                      displayed: fieldValue(
+                                        m.field,
+                                        m.displayed,
+                                      ),
+                                      onChain: fieldValue(m.field, m.onChain),
+                                    })}
+                                  </li>
+                                ))}
+                              </ul>
+                            </Alert>
+                          </td>
+                        </tr>
+                      )}
                     </Fragment>
                   );
                 })}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 font-semibold text-slate-900">
-                  <td colSpan={3} className="py-3.5 pe-4 text-xs uppercase tracking-wider">
+                  <td
+                    colSpan={3}
+                    className="py-3.5 pe-4 text-xs tracking-wider uppercase"
+                  >
                     Total
                   </td>
-                  <td className="py-3.5 px-4 text-end font-mono text-base">
+                  <td className="px-4 py-3.5 text-end font-mono text-base">
                     ${spend}
                   </td>
                   <td className="py-3.5 ps-4 text-end text-xs text-slate-500">
@@ -305,12 +341,16 @@ export default function PrintableCareSummaryPage() {
           </div>
 
           {/* Verification Notice */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-600 space-y-1">
-            <div className="font-semibold text-slate-800">Ledger verification</div>
+          <div className="space-y-1 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs text-slate-600">
+            <div className="font-semibold text-slate-800">
+              Ledger verification
+            </div>
             <p className="leading-relaxed">
-              Every service listed above represents an escrowed voucher claimed by the licensed clinic,
-              confirmed by an accredited independent medical attester, and finalized after the dispute window
-              elapsed. Patient privacy is preserved cryptographically without storing personal medical records on-chain.
+              Every service listed above represents an escrowed voucher claimed
+              by the licensed clinic, confirmed by an accredited independent
+              medical attester, and finalized after the dispute window elapsed.
+              Patient privacy is preserved cryptographically without storing
+              personal medical records on-chain.
             </p>
           </div>
         </div>
@@ -330,7 +370,9 @@ function VerifyReceipt({
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   if (state.status === 'loading') {
-    return <span className="text-xs text-slate-500">{t('print.verifying')}</span>;
+    return (
+      <span className="text-xs text-slate-500">{t('print.verifying')}</span>
+    );
   }
   if (state.status === 'ok') {
     return (
@@ -355,7 +397,11 @@ function VerifyReceipt({
   }
   return (
     <span className="print:hidden">
-      <Button variant="ghost" className="px-2.5 py-1 text-xs" onClick={onVerify}>
+      <Button
+        variant="ghost"
+        className="px-2.5 py-1 text-xs"
+        onClick={onVerify}
+      >
         {t('print.verify')}
       </Button>
     </span>

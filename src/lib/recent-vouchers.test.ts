@@ -8,9 +8,20 @@ describe('addRecentVoucherId', () => {
   });
 
   it('keeps only the ten most recent numeric ids', () => {
-    const ids = Array.from({ length: MAX_RECENT_VOUCHERS }, (_, index) => String(index + 1));
+    const ids = Array.from({ length: MAX_RECENT_VOUCHERS }, (_, index) =>
+      String(index + 1),
+    );
     expect(addRecentVoucherId(ids, '11')).toEqual([
-      '11', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      '11',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
     ]);
   });
 

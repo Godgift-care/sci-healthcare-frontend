@@ -43,7 +43,10 @@ const DRAFT_PREFIX = 'sci:checkout-draft:';
 const DRAFT_CHANGE_EVENT = 'sci:checkout-draft-changed';
 
 function announceDraftChanged(): void {
-  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.dispatchEvent === 'function'
+  ) {
     window.dispatchEvent(new Event(DRAFT_CHANGE_EVENT));
   }
 }
@@ -76,12 +79,17 @@ export function saveCheckoutDraft(
   try {
     const draft: CheckoutDraft = {
       clinicAddress: address,
-      selectedCodes: Array.isArray(input.selectedCodes) ? [...input.selectedCodes] : [],
-      amountOverride: typeof input.amountOverride === 'string' ? input.amountOverride : null,
+      selectedCodes: Array.isArray(input.selectedCodes)
+        ? [...input.selectedCodes]
+        : [],
+      amountOverride:
+        typeof input.amountOverride === 'string' ? input.amountOverride : null,
       expiryChoice: input.expiryChoice ?? 30,
-      customExpiry: typeof input.customExpiry === 'string' ? input.customExpiry : '',
+      customExpiry:
+        typeof input.customExpiry === 'string' ? input.customExpiry : '',
       patientNickname:
-        typeof input.patientNickname === 'string' && input.patientNickname.trim()
+        typeof input.patientNickname === 'string' &&
+        input.patientNickname.trim()
           ? input.patientNickname.trim()
           : null,
       savedAt: Date.now(),
@@ -95,7 +103,10 @@ export function saveCheckoutDraft(
   }
 }
 
-const cache = new Map<string, { raw: string | null; parsed: CheckoutDraft | null }>();
+const cache = new Map<
+  string,
+  { raw: string | null; parsed: CheckoutDraft | null }
+>();
 
 /**
  * Loads a saved checkout draft for a given clinic.
@@ -128,7 +139,12 @@ export function loadCheckoutDraft(clinicAddress: string): CheckoutDraft | null {
     const obj = parsed as Record<string, unknown>;
 
     // Sanity check: Ensure no sensitive keys were ever smuggled in
-    if ('identifier' in obj || 'key' in obj || 'secret' in obj || 'beneficiaryRef' in obj) {
+    if (
+      'identifier' in obj ||
+      'key' in obj ||
+      'secret' in obj ||
+      'beneficiaryRef' in obj
+    ) {
       storage.removeItem(key);
       cache.set(address, { raw: null, parsed: null });
       return null;
@@ -139,12 +155,16 @@ export function loadCheckoutDraft(clinicAddress: string): CheckoutDraft | null {
       selectedCodes: Array.isArray(obj.selectedCodes)
         ? (obj.selectedCodes.filter((c) => typeof c === 'number') as number[])
         : [],
-      amountOverride: typeof obj.amountOverride === 'string' ? obj.amountOverride : null,
-      expiryChoice: (typeof obj.expiryChoice === 'number' || obj.expiryChoice === 'custom'
+      amountOverride:
+        typeof obj.amountOverride === 'string' ? obj.amountOverride : null,
+      expiryChoice: (typeof obj.expiryChoice === 'number' ||
+      obj.expiryChoice === 'custom'
         ? obj.expiryChoice
         : 30) as ExpiryChoice,
-      customExpiry: typeof obj.customExpiry === 'string' ? obj.customExpiry : '',
-      patientNickname: typeof obj.patientNickname === 'string' ? obj.patientNickname : null,
+      customExpiry:
+        typeof obj.customExpiry === 'string' ? obj.customExpiry : '',
+      patientNickname:
+        typeof obj.patientNickname === 'string' ? obj.patientNickname : null,
       savedAt: typeof obj.savedAt === 'number' ? obj.savedAt : Date.now(),
     };
 

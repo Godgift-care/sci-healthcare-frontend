@@ -73,7 +73,9 @@ export type StepTxHashes = Partial<Record<StepEventKey, string>>;
  * endpoint yields an empty map — the timeline then shows dates only, which
  * is the intended fallback (#18).
  */
-export function stepTxHashes(events: VoucherEvent[] | null | undefined): StepTxHashes {
+export function stepTxHashes(
+  events: VoucherEvent[] | null | undefined,
+): StepTxHashes {
   const hashes: StepTxHashes = {};
   for (const event of events ?? []) {
     if (
@@ -138,7 +140,9 @@ export function voucherTimeline(
           label: 'Patient seen',
           state: refunded ? 'skipped' : 'current',
           at: refunded ? null : v.expiresAt,
-          detail: refunded ? 'Never claimed' : 'Clinic can claim until the voucher expires',
+          detail: refunded
+            ? 'Never claimed'
+            : 'Clinic can claim until the voucher expires',
         },
   );
 
@@ -155,10 +159,15 @@ export function voucherTimeline(
       label: 'Care confirmed',
       state: refunded || disputed ? 'skipped' : 'current',
       at: null,
-      detail: refunded || disputed ? 'Never attested' : 'Waiting for an attester',
+      detail:
+        refunded || disputed ? 'Never attested' : 'Waiting for an attester',
     });
   } else {
-    steps.push({ label: 'Care confirmed', state: refunded ? 'skipped' : 'upcoming', at: null });
+    steps.push({
+      label: 'Care confirmed',
+      state: refunded ? 'skipped' : 'upcoming',
+      at: null,
+    });
   }
 
   if (v.disputeDeadline) {
@@ -172,9 +181,11 @@ export function voucherTimeline(
   }
 
   if (v.disputeOutcome) {
-    const isRefundedOutcome = String(v.disputeOutcome).toLowerCase() === 'refunded';
+    const isRefundedOutcome =
+      String(v.disputeOutcome).toLowerCase() === 'refunded';
     const resolutionDate =
-      v.disputeResolvedAt ?? (isRefundedOutcome ? null : receipt?.settledAt ?? null);
+      v.disputeResolvedAt ??
+      (isRefundedOutcome ? null : (receipt?.settledAt ?? null));
     steps.push({
       label: `Dispute resolved: ${isRefundedOutcome ? 'Refunded' : 'Settled'}`,
       state: 'done',

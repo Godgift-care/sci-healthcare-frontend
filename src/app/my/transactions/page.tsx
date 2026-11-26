@@ -36,17 +36,21 @@ export default function TransactionsPage() {
   const [order, setOrder] = useState<HistoryOrder>('newest');
 
   const visible = useMemo(() => {
-    const scoped = scope === 'signed' ? rows.filter((row) => row.actor === 'wallet') : rows;
+    const scoped =
+      scope === 'signed' ? rows.filter((row) => row.actor === 'wallet') : rows;
     return sortHistoryRows(scoped, order);
   }, [rows, scope, order]);
 
   return (
     <div className="space-y-6">
       <section className="space-y-2">
-        <h1 className="text-xl font-semibold tracking-tight">Transaction history</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          Transaction history
+        </h1>
         <p className="text-sm text-[var(--color-ink-soft)]">
-          Every transaction this wallet took part in, newest first. Each line links to the
-          transaction on Stellar Explorer, so it can be checked on chain.
+          Every transaction this wallet took part in, newest first. Each line
+          links to the transaction on Stellar Explorer, so it can be checked on
+          chain.
         </p>
       </section>
 
@@ -58,8 +62,9 @@ export default function TransactionsPage() {
 
       {address && eventsUnavailable && (
         <Alert kind="info">
-          This indexer does not publish the on-chain event log yet, so the transactions cannot
-          be listed. The vouchers themselves are still shown on{' '}
+          This indexer does not publish the on-chain event log yet, so the
+          transactions cannot be listed. The vouchers themselves are still shown
+          on{' '}
           <Link href="/my" className="font-medium underline underline-offset-2">
             My vouchers
           </Link>
@@ -77,8 +82,8 @@ export default function TransactionsPage() {
 
       {address && !isLoading && !eventsUnavailable && rows.length === 0 && (
         <Empty>
-          No transactions yet. The history fills up as this wallet funds a voucher or takes
-          part in one.
+          No transactions yet. The history fills up as this wallet funds a
+          voucher or takes part in one.
         </Empty>
       )}
 
@@ -91,7 +96,7 @@ export default function TransactionsPage() {
           <Card className="space-y-3 p-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   Show
                 </span>
                 <select
@@ -104,7 +109,7 @@ export default function TransactionsPage() {
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   Order
                 </span>
                 <select
@@ -117,10 +122,14 @@ export default function TransactionsPage() {
                 </select>
               </label>
             </div>
-            <div className="text-xs text-[var(--color-ink-soft)]" aria-live="polite">
-              Showing {visible.length} transaction{visible.length === 1 ? '' : 's'}
-              {scope === 'signed' ? ' signed by this wallet' : ''} · {signedCount} signed by
-              this wallet in total
+            <div
+              className="text-xs text-[var(--color-ink-soft)]"
+              aria-live="polite"
+            >
+              Showing {visible.length} transaction
+              {visible.length === 1 ? '' : 's'}
+              {scope === 'signed' ? ' signed by this wallet' : ''} ·{' '}
+              {signedCount} signed by this wallet in total
               {truncated && ' · older vouchers are not listed here yet'}
             </div>
           </Card>
@@ -145,7 +154,9 @@ export default function TransactionsPage() {
                         {row.actorLabel}
                       </span>
                     </div>
-                    <div className="text-xs text-[var(--color-ink-soft)]">{row.detail}</div>
+                    <div className="text-xs text-[var(--color-ink-soft)]">
+                      {row.detail}
+                    </div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
                       {row.clinicName}
                       {row.clinicName && row.serviceLabel ? ' · ' : ''}
@@ -170,7 +181,9 @@ export default function TransactionsPage() {
                     </div>
                   </div>
                   <div className="shrink-0 text-start sm:text-end">
-                    <div className="mono text-sm font-semibold">${row.amountDisplay}</div>
+                    <div className="mono text-sm font-semibold">
+                      ${row.amountDisplay}
+                    </div>
                     <div className="text-xs text-[var(--color-ink-soft)]">
                       {row.at ? formatDate(row.at, locale) : 'Date unknown'}
                     </div>

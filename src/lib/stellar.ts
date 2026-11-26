@@ -129,7 +129,10 @@ export interface XlmSwapQuote {
 function toDecimalString(value: bigint, decimals = 7): string {
   const scale = 10n ** BigInt(decimals);
   const whole = value / scale;
-  const frac = (value % scale).toString().padStart(decimals, '0').replace(/0+$/, '');
+  const frac = (value % scale)
+    .toString()
+    .padStart(decimals, '0')
+    .replace(/0+$/, '');
   return frac ? `${whole}.${frac}` : `${whole.toString()}`;
 }
 
@@ -148,7 +151,7 @@ export async function quoteXlmForUsdc(
 
   if (isMockRpc()) {
     const cost = usdcAmount / 100n + 1n;
-    const max = cost + (cost * BigInt(slippageBps) / 10_000n);
+    const max = cost + (cost * BigInt(slippageBps)) / 10_000n;
     return {
       usdcAmount,
       xlmCost: cost,
@@ -170,13 +173,14 @@ export async function quoteXlmForUsdc(
     toDecimalString(usdcAmount),
   );
   const paths = await pathCall.call();
-  const best = (paths as { records?: Array<{ source_amount?: string }> }).records?.[0];
+  const best = (paths as { records?: Array<{ source_amount?: string }> })
+    .records?.[0];
   if (!best) {
     throw new Error('No XLM → USDC path is available for this voucher amount.');
   }
 
   const xlmCost = toBaseUnits(best.source_amount ?? '0');
-  const maxXlm = xlmCost + (xlmCost * BigInt(slippageBps) / 10_000n);
+  const maxXlm = xlmCost + (xlmCost * BigInt(slippageBps)) / 10_000n;
   return {
     usdcAmount,
     xlmCost,
@@ -191,7 +195,10 @@ export async function invokePathPaymentThenContract(
   args: xdr.ScVal[],
   walletAddress: string,
   sign: SignFn,
-  { usdcAmount, slippageBps = PATH_PAYMENT_SLIPPAGE_BPS }: { usdcAmount: bigint; slippageBps?: number },
+  {
+    usdcAmount,
+    slippageBps = PATH_PAYMENT_SLIPPAGE_BPS,
+  }: { usdcAmount: bigint; slippageBps?: number },
 ): Promise<{ hash: string; returnValue: unknown }> {
   if (usdcAmount <= 0n) {
     return invoke(contractId, method, args, walletAddress, sign);
@@ -203,8 +210,15 @@ export async function invokePathPaymentThenContract(
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
 
-  const { Asset, BASE_FEE, Contract, Operation, TransactionBuilder, rpc, scValToNative } =
-    await loadSdk();
+  const {
+    Asset,
+    BASE_FEE,
+    Contract,
+    Operation,
+    TransactionBuilder,
+    rpc,
+    scValToNative,
+  } = await loadSdk();
   const server = await getServer();
   const account = await server.getAccount(walletAddress);
   const usdcAsset = new Asset('USDC', config.usdcIssuer);
@@ -233,7 +247,10 @@ export async function invokePathPaymentThenContract(
 
   const prepared = rpc.assembleTransaction(built, sim).build();
   const signedXdr = await sign(prepared.toXDR());
-  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  const signed = TransactionBuilder.fromXDR(
+    signedXdr,
+    config.networkPassphrase,
+  );
 
   const sent = await server.sendTransaction(signed);
   if (sent.status === 'ERROR') {
@@ -271,7 +288,8 @@ interface HorizonSubmitResponse {
 
 function horizonBaseUrl(): string {
   if (config.network === 'public') return 'https://horizon.stellar.org';
-  if (config.network === 'futurenet') return 'https://horizon-futurenet.stellar.org';
+  if (config.network === 'futurenet')
+    return 'https://horizon-futurenet.stellar.org';
   return 'https://horizon-testnet.stellar.org';
 }
 
@@ -339,11 +357,14 @@ export async function getAccountSpendableBalance(
     const account = (await res.json()) as Partial<HorizonAccountRecord>;
     const balances = Array.isArray(account.balances) ? account.balances : [];
     const nativeEntry = balances.find((b) => b.asset_type === 'native');
-    const nativeBalance = nativeEntry && typeof nativeEntry.balance === 'string'
-      ? Number(nativeEntry.balance)
-      : 0;
+    const nativeBalance =
+      nativeEntry && typeof nativeEntry.balance === 'string'
+        ? Number(nativeEntry.balance)
+        : 0;
     const rawBalance = Number.isFinite(nativeBalance) ? nativeBalance : 0;
-    const subentries = Number.isFinite(account.subentry_count) ? Number(account.subentry_count) : 0;
+    const subentries = Number.isFinite(account.subentry_count)
+      ? Number(account.subentry_count)
+      : 0;
     const minBalance = (2 + subentries) * 0.5;
     const spendable = Math.max(0, rawBalance - minBalance);
     return {
@@ -464,7 +485,9 @@ export async function addUsdcTrustline(
   const { Account, Asset, BASE_FEE, Operation, StrKey, TransactionBuilder } =
     await loadSdk();
   if (!StrKey.isValidEd25519PublicKey(issuer)) {
-    throw new Error('This deployment’s USDC issuer is not a valid Stellar address.');
+    throw new Error(
+      'This deployment’s USDC issuer is not a valid Stellar address.',
+    );
   }
 
   const finish = beginPendingTransaction();
@@ -512,8 +535,9 @@ export async function addUsdcTrustline(
       if (delay > 0) await new Promise((r) => setTimeout(r, delay));
       // The mock ledger applies the change at once, so the re-read after
       // signing finds the line that was just added.
-      (window as unknown as { __SCI_NO_TRUSTLINE__?: boolean }).__SCI_NO_TRUSTLINE__ =
-        false;
+      (
+        window as unknown as { __SCI_NO_TRUSTLINE__?: boolean }
+      ).__SCI_NO_TRUSTLINE__ = false;
       return { hash: 'ab'.repeat(32) };
     }
 
@@ -542,11 +566,13 @@ async function submitSigned(
         'connection and try again.',
     );
   }
-  const body = (await res.json().catch(() => null)) as
-    | HorizonSubmitResponse
-    | null;
+  const body = (await res
+    .json()
+    .catch(() => null)) as HorizonSubmitResponse | null;
   if (res.ok && body?.hash) return { hash: body.hash };
-  throw new Error(humaniseHorizonResult(res.status, body?.extras?.result_codes));
+  throw new Error(
+    humaniseHorizonResult(res.status, body?.extras?.result_codes),
+  );
 }
 
 /** How long to wait for a submitted transaction to reach a final status. */
@@ -574,7 +600,15 @@ export async function invokeContract(
   // PendingTransactionGuard).
   const finish = beginPendingTransaction();
   try {
-    return await invoke(contractId, method, args, walletAddress, sign, sponsored, fee);
+    return await invoke(
+      contractId,
+      method,
+      args,
+      walletAddress,
+      sign,
+      sponsored,
+      fee,
+    );
   } finally {
     finish();
   }
@@ -605,7 +639,8 @@ export async function simulateContractFee(
 
   const sim = await server.simulateTransaction(built);
   if (rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
-  if (!sim.minResourceFee) throw new Error('Simulation did not return a resource fee.');
+  if (!sim.minResourceFee)
+    throw new Error('Simulation did not return a resource fee.');
   return BigInt(sim.minResourceFee);
 }
 
@@ -630,7 +665,15 @@ export async function invokeContractBatch(
 
   const results: Array<{ hash: string; returnValue: unknown }> = [];
   for (const call of calls) {
-    results.push(await invoke(call.contractId, call.method, call.args, call.walletAddress, sign));
+    results.push(
+      await invoke(
+        call.contractId,
+        call.method,
+        call.args,
+        call.walletAddress,
+        sign,
+      ),
+    );
   }
   return results;
 }
@@ -665,7 +708,9 @@ export async function resubmitWithHigherFee(
   if (original?.status === rpc.Api.GetTransactionStatus.SUCCESS) {
     return {
       hash,
-      returnValue: original.returnValue ? scValToNative(original.returnValue) : null,
+      returnValue: original.returnValue
+        ? scValToNative(original.returnValue)
+        : null,
     };
   }
   if (original?.status === rpc.Api.GetTransactionStatus.FAILED) {
@@ -688,7 +733,10 @@ export async function resubmitWithHigherFee(
   );
 
   const { TransactionBuilder } = await loadSdk();
-  const signed = TransactionBuilder.fromXDR(await sign(prepared.xdr), config.networkPassphrase);
+  const signed = TransactionBuilder.fromXDR(
+    await sign(prepared.xdr),
+    config.networkPassphrase,
+  );
 
   const sent = await server.sendTransaction(signed);
   if (sent.status === 'ERROR') {
@@ -717,11 +765,16 @@ async function invoke(
   if (sponsored) {
     // Keep fee-bump validation off the ordinary wallet/read-page bundle.
     sponsor = await import('./sponsorship');
-    if (contractId !== config.contracts.voucher || method !== 'create_voucher' || args.length !== 6) {
+    if (
+      contractId !== config.contracts.voucher ||
+      method !== 'create_voucher' ||
+      args.length !== 6
+    ) {
       throw new Error('Only voucher funding can use sponsored fees.');
     }
     const amount: unknown = scValToNative(args[4]);
-    if (typeof amount !== 'bigint') throw new Error('Invalid sponsored voucher amount.');
+    if (typeof amount !== 'bigint')
+      throw new Error('Invalid sponsored voucher amount.');
     sponsor.requireSponsorship(amount);
   }
 
@@ -746,11 +799,18 @@ async function invoke(
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(method) };
   }
 
-  const unsigned = TransactionBuilder.fromXDR(prepared.xdr, config.networkPassphrase);
-  if (!('sequence' in unsigned)) throw new Error('Expected an unsigned inner transaction.');
+  const unsigned = TransactionBuilder.fromXDR(
+    prepared.xdr,
+    config.networkPassphrase,
+  );
+  if (!('sequence' in unsigned))
+    throw new Error('Expected an unsigned inner transaction.');
   const signed = sponsor
     ? await sponsor.sponsorTransaction(unsigned, sign)
-    : TransactionBuilder.fromXDR(await sign(prepared.xdr), config.networkPassphrase);
+    : TransactionBuilder.fromXDR(
+        await sign(prepared.xdr),
+        config.networkPassphrase,
+      );
 
   const server = await getServer();
   const sent = await server.sendTransaction(signed);
@@ -802,7 +862,14 @@ export async function prepareContractInvocation(
   source: string,
   timeoutSeconds = 180,
 ): Promise<PreparedInvocation> {
-  return prepareInvocation(contractId, method, args, source, true, timeoutSeconds);
+  return prepareInvocation(
+    contractId,
+    method,
+    args,
+    source,
+    true,
+    timeoutSeconds,
+  );
 }
 
 /**
@@ -837,7 +904,8 @@ export async function prepareSignedContractInvocation(
   if (!isMockRpc()) {
     const { TransactionBuilder } = await loadSdk();
     const tx = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
-    const bounds = 'timeBounds' in tx ? tx.timeBounds : tx.innerTransaction.timeBounds;
+    const bounds =
+      'timeBounds' in tx ? tx.timeBounds : tx.innerTransaction.timeBounds;
     if (bounds?.maxTime) maxTime = Number(bounds.maxTime);
   }
   return { xdr: signedXdr, maxTime };
@@ -853,14 +921,21 @@ export async function submitSignedContractInvocation(
   meta: { contractId: string; method: string },
 ): Promise<{ hash: string; returnValue: unknown }> {
   if (isMockRpc()) {
-    recordMockCall({ kind: 'invoke', contractId: meta.contractId, method: meta.method });
+    recordMockCall({
+      kind: 'invoke',
+      contractId: meta.contractId,
+      method: meta.method,
+    });
     const delay = mockRpcDelayMs();
     if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     return { hash: 'ab'.repeat(32), returnValue: mockReturnValue(meta.method) };
   }
 
   const { TransactionBuilder } = await loadSdk();
-  const signed = TransactionBuilder.fromXDR(signedXdr, config.networkPassphrase);
+  const signed = TransactionBuilder.fromXDR(
+    signedXdr,
+    config.networkPassphrase,
+  );
   const server = await getServer();
   const sent = await server.sendTransaction(signed);
   if (sent.status === 'ERROR') {
@@ -901,7 +976,8 @@ async function prepareInvocation(
     };
   }
 
-  const { BASE_FEE, Contract, Operation, rpc, TransactionBuilder } = await loadSdk();
+  const { BASE_FEE, Contract, Operation, rpc, TransactionBuilder } =
+    await loadSdk();
   const server = await getServer();
 
   const account = await server.getAccount(source);
@@ -924,7 +1000,9 @@ async function prepareInvocation(
     if (!signForRestore) {
       throw new Error(
         restoreMessage(
-          restoreAttempted ? 'wallet.restoreStillRequired' : 'wallet.restoreRequired',
+          restoreAttempted
+            ? 'wallet.restoreStillRequired'
+            : 'wallet.restoreRequired',
         ),
       );
     }
@@ -938,7 +1016,10 @@ async function prepareInvocation(
       .setTimeout(timeoutSeconds)
       .build();
     const restoreSim = await server.simulateTransaction(restoreTx);
-    if (rpc.Api.isSimulationError(restoreSim) || rpc.Api.isSimulationRestore(restoreSim)) {
+    if (
+      rpc.Api.isSimulationError(restoreSim) ||
+      rpc.Api.isSimulationRestore(restoreSim)
+    ) {
       throw new Error(
         restoreMessage('wallet.restorePreparationError', {
           error: rpc.Api.isSimulationError(restoreSim)
@@ -948,7 +1029,9 @@ async function prepareInvocation(
       );
     }
 
-    const restorePrepared = rpc.assembleTransaction(restoreTx, restoreSim).build();
+    const restorePrepared = rpc
+      .assembleTransaction(restoreTx, restoreSim)
+      .build();
     const signedRestore = TransactionBuilder.fromXDR(
       await signForRestore(restorePrepared.toXDR(), {
         kind: 'restore-footprint',
@@ -1024,7 +1107,8 @@ export async function waitForPreparedInvocation(
   const expectedSequence = BigInt(prepared.sequence);
 
   while (Date.now() < deadline) {
-    if (options.signal?.aborted) throw new Error('Stopped waiting for the wallet.');
+    if (options.signal?.aborted)
+      throw new Error('Stopped waiting for the wallet.');
 
     if (isMockRpc()) {
       const submitted = mockSep7Submission();
@@ -1055,7 +1139,10 @@ async function findSubmittedTransaction(
   const { TransactionBuilder } = await loadSdk();
   const server = await getHorizonServer();
 
-  const account = (await server.accounts().accountId(prepared.source).call()) as {
+  const account = (await server
+    .accounts()
+    .accountId(prepared.source)
+    .call()) as {
     sequence?: string;
   };
   const currentSequence = account.sequence ? BigInt(account.sequence) : 0n;
@@ -1143,8 +1230,14 @@ export async function readContract<T>(
     return mockReadResult<T>(contractId, method, args);
   }
 
-  const { BASE_FEE, Account, Contract, rpc, TransactionBuilder, scValToNative } =
-    await loadSdk();
+  const {
+    BASE_FEE,
+    Account,
+    Contract,
+    rpc,
+    TransactionBuilder,
+    scValToNative,
+  } = await loadSdk();
   const server = await getServer();
 
   const contract = new Contract(contractId);

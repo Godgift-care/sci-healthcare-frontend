@@ -13,7 +13,10 @@ import { mockBackend } from './helpers';
  * press until the dialog appears keeps the test honest — it still fails if the
  * shortcut or the dialog is broken — without depending on hydration timing.
  */
-async function openPalette(page: Page, key: 'Control+k' | 'Meta+k' = 'Control+k') {
+async function openPalette(
+  page: Page,
+  key: 'Control+k' | 'Meta+k' = 'Control+k',
+) {
   const dialog = page.getByRole('dialog', { name: 'Go to' });
   await expect(async () => {
     await page.keyboard.press(key);
@@ -29,7 +32,9 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('opens with the keyboard and navigates to a matching clinic', async ({ page }) => {
+test('opens with the keyboard and navigates to a matching clinic', async ({
+  page,
+}) => {
   await page.goto('/');
 
   await openPalette(page);
@@ -38,7 +43,9 @@ test('opens with the keyboard and navigates to a matching clinic', async ({ page
   });
   await expect(search).toBeFocused();
   await search.fill('Ikeja');
-  await expect(page.getByRole('option', { name: /Ikeja General Clinic/ })).toBeVisible();
+  await expect(
+    page.getByRole('option', { name: /Ikeja General Clinic/ }),
+  ).toBeVisible();
   await search.press('ArrowDown');
   await search.press('Enter');
 
@@ -65,12 +72,16 @@ test('opens a voucher by number and closes on Escape', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Go to' })).not.toBeVisible();
 });
 
-test('does not show the admin destination without admin access', async ({ page }) => {
+test('does not show the admin destination without admin access', async ({
+  page,
+}) => {
   await page.goto('/');
   await openPalette(page);
-  await page.getByRole('combobox', {
-    name: 'Search clinics, pages, or voucher number',
-  }).fill('Admin');
+  await page
+    .getByRole('combobox', {
+      name: 'Search clinics, pages, or voucher number',
+    })
+    .fill('Admin');
 
   await expect(page.getByRole('option', { name: /^Admin/ })).toHaveCount(0);
 });

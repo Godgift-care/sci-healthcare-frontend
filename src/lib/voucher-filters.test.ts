@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Voucher } from './api';
-import { filterVouchers, matchesVoucherNumber, statusCounts } from './voucher-filters';
+import {
+  filterVouchers,
+  matchesVoucherNumber,
+  statusCounts,
+} from './voucher-filters';
 
 /**
  * Voucher list view state (#32). `/my` and the clinic desk both filter a
@@ -14,7 +18,11 @@ function voucher(id: string, overrides: Partial<Voucher> = {}): Voucher {
     id,
     funder: 'GFUNDER',
     beneficiaryRef: 'ab'.repeat(32),
-    provider: { address: 'GPROVIDER', name: 'Ikeja General Clinic', country: 'NG' },
+    provider: {
+      address: 'GPROVIDER',
+      name: 'Ikeja General Clinic',
+      country: 'NG',
+    },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',
@@ -99,17 +107,23 @@ describe('filterVouchers', () => {
   });
 
   it('combines status, clinic and voucher number', () => {
-    expect(ids(filterVouchers(LIST, { status: 'Claimed', clinic: null }))).toEqual([
-      '22',
-      '23',
-    ]);
     expect(
-      ids(filterVouchers(LIST, { status: null, clinic: 'GOTHER', search: '#204' })),
+      ids(filterVouchers(LIST, { status: 'Claimed', clinic: null })),
+    ).toEqual(['22', '23']);
+    expect(
+      ids(
+        filterVouchers(LIST, {
+          status: null,
+          clinic: 'GOTHER',
+          search: '#204',
+        }),
+      ),
     ).toEqual(['204']);
-    expect(ids(filterVouchers(LIST, { status: 'Claimed', clinic: null, search: '2' }))).toEqual([
-      '22',
-      '23',
-    ]);
+    expect(
+      ids(
+        filterVouchers(LIST, { status: 'Claimed', clinic: null, search: '2' }),
+      ),
+    ).toEqual(['22', '23']);
     // No voucher is both Claimed and a number starting with 1.
     expect(
       filterVouchers(LIST, { status: 'Claimed', clinic: null, search: '1' }),
@@ -117,6 +131,8 @@ describe('filterVouchers', () => {
   });
 
   it('ignores an unknown clinic rather than matching everything to it', () => {
-    expect(filterVouchers(LIST, { status: null, clinic: 'GNOWHERE' })).toEqual([]);
+    expect(filterVouchers(LIST, { status: null, clinic: 'GNOWHERE' })).toEqual(
+      [],
+    );
   });
 });

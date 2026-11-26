@@ -41,21 +41,33 @@ export async function discoverAnchor(
   const resolveToml = resolver ?? defaultTomlResolver;
   const toml = await resolveToml(config.domain);
   if (toml.NETWORK_PASSPHRASE !== networkPassphrase) {
-    throw new Error('The anchor is configured for a different Stellar network.');
+    throw new Error(
+      'The anchor is configured for a different Stellar network.',
+    );
   }
-  const currencies = toml.CURRENCIES?.filter(
-    (currency) => currency.code?.toUpperCase() === config.assetCode,
-  ) ?? [];
+  const currencies =
+    toml.CURRENCIES?.filter(
+      (currency) => currency.code?.toUpperCase() === config.assetCode,
+    ) ?? [];
   if (currencies.length !== 1 || currencies[0].issuer !== config.assetIssuer) {
     throw new Error(
       'The anchor does not publish one unambiguous currency matching the configured asset code and issuer.',
     );
   }
-  if (!toml.TRANSFER_SERVER_SEP0024 || !toml.WEB_AUTH_ENDPOINT || !toml.SIGNING_KEY) {
-    throw new Error('This anchor does not publish all required SEP-10/SEP-24 endpoints.');
+  if (
+    !toml.TRANSFER_SERVER_SEP0024 ||
+    !toml.WEB_AUTH_ENDPOINT ||
+    !toml.SIGNING_KEY
+  ) {
+    throw new Error(
+      'This anchor does not publish all required SEP-10/SEP-24 endpoints.',
+    );
   }
 
-  const transferServer = trustedUrl(toml.TRANSFER_SERVER_SEP0024, config.domain);
+  const transferServer = trustedUrl(
+    toml.TRANSFER_SERVER_SEP0024,
+    config.domain,
+  );
   const authEndpoint = trustedUrl(toml.WEB_AUTH_ENDPOINT, config.domain);
   return { config, transferServer, authEndpoint, signingKey: toml.SIGNING_KEY };
 }
@@ -76,16 +88,23 @@ export async function authenticateSep10(
   fetcher: Fetcher = fetch,
 ): Promise<string> {
   if (!account.startsWith('G')) {
-    throw new Error('SEP-10 requires a Stellar account address beginning with G.');
+    throw new Error(
+      'SEP-10 requires a Stellar account address beginning with G.',
+    );
   }
 
   const challengeUrl = new URL(anchor.authEndpoint);
   challengeUrl.searchParams.set('account', account);
   challengeUrl.searchParams.set('home_domain', anchor.config.domain);
   const challengeResponse = await fetcher(challengeUrl);
-  const challengeBody = await readJson<{ transaction?: string; error?: string }>(challengeResponse);
+  const challengeBody = await readJson<{
+    transaction?: string;
+    error?: string;
+  }>(challengeResponse);
   if (!challengeResponse.ok || !challengeBody.transaction) {
-    throw new Error(challengeBody.error || 'The anchor did not return a SEP-10 challenge.');
+    throw new Error(
+      challengeBody.error || 'The anchor did not return a SEP-10 challenge.',
+    );
   }
 
   const { WebAuth } = await import('@stellar/stellar-sdk');
@@ -115,26 +134,43 @@ export async function authenticateSep10(
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ transaction: signedChallenge }),
   });
-  const tokenBody = await readJson<{ token?: string; error?: string }>(tokenResponse);
+  const tokenBody = await readJson<{ token?: string; error?: string }>(
+    tokenResponse,
+  );
   if (!tokenResponse.ok || !tokenBody.token) {
-    throw new Error(tokenBody.error || 'The anchor did not issue an authentication token.');
+    throw new Error(
+      tokenBody.error || 'The anchor did not issue an authentication token.',
+    );
   }
   return tokenBody.token;
 }
 
 export type Sep24Info = {
-  withdraw?: Record<string, { enabled?: boolean; min_amount?: string | number; max_amount?: string | number }>;
+  withdraw?: Record<
+    string,
+    {
+      enabled?: boolean;
+      min_amount?: string | number;
+      max_amount?: string | number;
+    }
+  >;
 };
 
 export async function getWithdrawalInfo(
   anchor: DiscoveredAnchor,
   fetcher: Fetcher = fetch,
-): Promise<{ enabled: boolean; minAmount?: string | number; maxAmount?: string | number }> {
+): Promise<{
+  enabled: boolean;
+  minAmount?: string | number;
+  maxAmount?: string | number;
+}> {
   const response = await fetcher(endpoint(anchor.transferServer, 'info'));
   const body = await readJson<Sep24Info>(response);
-  if (!response.ok) throw new Error('Could not load withdrawal options from the anchor.');
+  if (!response.ok)
+    throw new Error('Could not load withdrawal options from the anchor.');
   const key = `${anchor.config.assetCode}:${anchor.config.assetIssuer}`;
-  const asset = body.withdraw?.[key] ?? body.withdraw?.[anchor.config.assetCode];
+  const asset =
+    body.withdraw?.[key] ?? body.withdraw?.[anchor.config.assetCode];
   return {
     enabled: asset?.enabled === true,
     minAmount: asset?.min_amount,
@@ -163,7 +199,9 @@ export async function startWithdrawal(
       }),
     },
   );
-  const body = await readJson<{ id?: string; url?: string; error?: string }>(response);
+  const body = await readJson<{ id?: string; url?: string; error?: string }>(
+    response,
+  );
   if (!response.ok || !body.id || !body.url) {
     throw new Error(body.error || 'The anchor could not start a withdrawal.');
   }
@@ -181,9 +219,14 @@ export async function getWithdrawalStatus(
   const response = await fetcher(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const body = await readJson<{ transaction?: Sep24Transaction; error?: string }>(response);
+  const body = await readJson<{
+    transaction?: Sep24Transaction;
+    error?: string;
+  }>(response);
   if (!response.ok || !body.transaction || body.transaction.id !== id) {
-    throw new Error(body.error || 'Could not read the withdrawal status from the anchor.');
+    throw new Error(
+      body.error || 'Could not read the withdrawal status from the anchor.',
+    );
   }
   return body.transaction;
 }
@@ -203,9 +246,14 @@ function trustedUrl(value: string, domain: string): URL {
     throw new Error('The anchor published an invalid service URL.');
   }
   if (!isAnchorUrl(url, domain)) {
-    throw new Error('The anchor published a service outside its configured HTTPS domain.');
+    throw new Error(
+      'The anchor published a service outside its configured HTTPS domain.',
+    );
   }
-  if (url.port) throw new Error('The anchor published a service on a non-standard HTTPS port.');
+  if (url.port)
+    throw new Error(
+      'The anchor published a service on a non-standard HTTPS port.',
+    );
   return url;
 }
 

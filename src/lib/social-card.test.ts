@@ -121,13 +121,18 @@ describe('voucher card', () => {
     // Structural typing means a whole voucher is accepted; it must not make
     // the card any wider than the narrowed shape does.
     expect(voucherCard(voucher)).toEqual(
-      voucherCard({ serviceCode: 101, serviceLabel: 'Outpatient consult', status: 'Attested' }),
+      voucherCard({
+        serviceCode: 101,
+        serviceLabel: 'Outpatient consult',
+        status: 'Attested',
+      }),
     );
   });
 
   it('falls back to the service code when the indexer has no label', () => {
     expect(
-      voucherCard({ serviceCode: 202, serviceLabel: null, status: 'Funded' }).title,
+      voucherCard({ serviceCode: 202, serviceLabel: null, status: 'Funded' })
+        .title,
     ).toBe('Service 202');
   });
 
@@ -174,12 +179,16 @@ describe('card sources', () => {
 
   it('builds the clinic card from the indexer', async () => {
     vi.mocked(api.provider).mockResolvedValue(clinic as never);
-    await expect(clinicCardFromApi(clinic.address)).resolves.toEqual(clinicCard(clinic));
+    await expect(clinicCardFromApi(clinic.address)).resolves.toEqual(
+      clinicCard(clinic),
+    );
   });
 
   it('builds the voucher card from the indexer', async () => {
     vi.mocked(api.voucher).mockResolvedValue(voucher as never);
-    await expect(voucherCardFromApi(voucher.id)).resolves.toEqual(voucherCard(voucher));
+    await expect(voucherCardFromApi(voucher.id)).resolves.toEqual(
+      voucherCard(voucher),
+    );
   });
 
   it('keeps an image when the indexer is asleep', async () => {

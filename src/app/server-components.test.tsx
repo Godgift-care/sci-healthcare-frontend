@@ -9,7 +9,9 @@ afterEach(() => {
 import FaqPage, { metadata as faqMetadata } from './faq/page';
 import ServicesPage, { metadata as servicesMetadata } from './services/page';
 import AttestersPage, { metadata as attestersMetadata } from './attesters/page';
-import HowItWorksPage, { metadata as howItWorksMetadata } from './how-it-works/page';
+import HowItWorksPage, {
+  metadata as howItWorksMetadata,
+} from './how-it-works/page';
 import PrivacyPage, { metadata as privacyMetadata } from './privacy/page';
 import { FaqAccordion } from '@/components/FaqAccordion';
 
@@ -24,10 +26,14 @@ describe('Server components', () => {
 
   it('renders FaqPage and HowItWorksPage without client wallet context', () => {
     render(<FaqPage />);
-    expect(screen.getByRole('heading', { name: 'Frequently Asked Questions' })).toBeDefined();
+    expect(
+      screen.getByRole('heading', { name: 'Frequently Asked Questions' }),
+    ).toBeDefined();
 
     render(<HowItWorksPage />);
-    expect(screen.getByRole('heading', { name: 'How SCI Healthcare Works' })).toBeDefined();
+    expect(
+      screen.getByRole('heading', { name: 'How SCI Healthcare Works' }),
+    ).toBeDefined();
   });
 
   it('FaqAccordion expands and collapses items', () => {

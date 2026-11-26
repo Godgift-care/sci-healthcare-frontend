@@ -11,7 +11,9 @@ import { mockBackend, useMockWallet } from './helpers';
  * carry public voucher facts and nothing identifying.
  */
 test.describe('Report a problem with a voucher', () => {
-  test('explains who can dispute and prefills only public details', async ({ page }) => {
+  test('explains who can dispute and prefills only public details', async ({
+    page,
+  }) => {
     const voucher = CLAIMED_VOUCHER('7');
     await useMockWallet(page, ATTESTER);
     await mockBackend(page, {

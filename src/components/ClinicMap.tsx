@@ -7,7 +7,11 @@ import type { Map as LeafletMap } from 'leaflet';
 import { useRouter } from 'next/navigation';
 import { prefetchDetail } from '@/lib/detail-prefetch';
 
-import { providerLocation, type Provider, type ProviderLocation } from '@/lib/api';
+import {
+  providerLocation,
+  type Provider,
+  type ProviderLocation,
+} from '@/lib/api';
 
 /**
  * Map of clinics that have published coordinates.
@@ -58,7 +62,9 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
 
       map = L.map(containerRef.current, { scrollWheelZoom: false });
       mapRef.current = map;
-      L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, maxZoom: 19 }).addTo(map);
+      L.tileLayer(TILE_URL, { attribution: ATTRIBUTION, maxZoom: 19 }).addTo(
+        map,
+      );
 
       const located: Located[] = providers
         .map((provider) => ({ provider, location: providerLocation(provider) }))
@@ -72,11 +78,21 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
         const link = document.createElement('a');
         link.href = `/clinics/${encodeURIComponent(provider.address)}`;
         link.textContent = 'View clinic';
-        const warm = () => prefetchDetail({ kind: 'clinic', id: provider.address }, (href) => router.prefetch(href));
+        const warm = () =>
+          prefetchDetail({ kind: 'clinic', id: provider.address }, (href) =>
+            router.prefetch(href),
+          );
         link.addEventListener('mouseenter', warm);
         link.addEventListener('focus', warm);
         link.addEventListener('click', (event) => {
-          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
           event.preventDefault();
           router.push(link.getAttribute('href')!);
         });

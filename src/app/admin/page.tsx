@@ -3,9 +3,30 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 
+import { useToast } from '@/components/Toast';
+import {
+  Alert,
+  Button,
+  Card,
+  Empty,
+  ExplorerLink,
+  Modal,
+} from '@/components/ui';
+import { api, type Attester, type Provider, type Voucher } from '@/lib/api';
+import { formatCurrency, toAmountInput } from '@/lib/amounts';
 import { explorerTx } from '@/lib/config';
 import { humaniseError, REGISTRY_ERRORS, VOUCHER_ERRORS } from '@/lib/errors';
-import { registry, voucher } from '@/lib/protocol';
+import {
+  invalidateProvider,
+  invalidateVouchers,
+  useAdminAccess,
+} from '@/lib/hooks';
+import {
+  registry,
+  voucher as voucherContract,
+  type ProviderStanding,
+} from '@/lib/protocol';
+import { parseSplitAmount, splitBreakdown } from '@/lib/split';
 import { useWallet } from '@/lib/wallet';
 import { useToast } from '@/components/Toast';
 import { Button, Card, Empty, ExplorerLink } from '@/components/ui';
@@ -55,7 +76,38 @@ async function acceptAdmin(
 
 export default function AdminPage() {
   const { address, signTransaction, connect } = useWallet();
+  const {
+    isAdmin,
+    isLoading: checkingAdmin,
+    error: accessError,
+  } = useAdminAccess(address);
+  const { t } = useLocaleContext();
   const toast = useToast();
+  const [offsets, setOffsets] = useState({
+    providers: 0,
+    vouchers: 0,
+    attesters: 0,
+  });
+  const [action, setAction] = useState<AdminAction | null>(null);
+  const [attesterAddress, setAttesterAddress] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [quote, setQuote] = useState<{
+    voucherId: string;
+    amounts: [bigint, bigint];
+  } | null>(null);
+  const [quoteError, setQuoteError] = useState<{
+    voucherId: string;
+    message: string;
+  } | null>(null);
+  const [quoteLoadingId, setQuoteLoadingId] = useState<string | null>(null);
+  const [splitInput, setSplitInput] = useState('');
+  const [splitQuote, setSplitQuote] = useState<{
+    voucherId: string;
+    gross: bigint;
+    fee: bigint;
+  } | null>(null);
+  const [splitQuoteError, setSplitQuoteError] = useState<string | null>(null);
+  const [splitQuoteLoading, setSplitQuoteLoading] = useState(false);
 
   const [busy, setBusy] = useState<ContractKind | null>(null);
   const [nomineeDraft, setNomineeDraft] = useState<Record<ContractKind, string>>({
@@ -63,80 +115,69 @@ export default function AdminPage() {
     voucher: '',
   });
 
-  const contracts: ContractKind[] = ['registry', 'voucher'];
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Admin console</h1>
-        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          Hand over the administrator role in two steps: propose a nominee, then
-          the nominee accepts. The change takes effect only after acceptance, so
-          a typo in the address cannot strand the contract.
-        </p>
-      </div>
-
-      {!address && (
-        <Empty>Connect the administrator wallet to propose or accept a handover.</Empty>
-      )}
-
-      {contracts.map((kind) => (
-        <AdminContractCard
-          key={kind}
-          kind={kind}
-          address={address}
-          busy={busy === kind}
-          setBusy={(v) => setBusy(v ? kind : null)}
-          nomineeDraft={nomineeDraft[kind]}
-          setNomineeDraft={(v) =>
-            setNomineeDraft((prev) => ({ ...prev, [kind]: v }))
-          }
-          signTransaction={signTransaction}
-          connect={connect}
-          toast={toast}
-        />
-      ))}
-    </div>
+  const providersKey = isAdmin
+    ? ['admin-pending-providers', offsets.providers]
+    : null;
+  const vouchersKey = isAdmin
+    ? ['admin-disputed-vouchers', offsets.vouchers]
+    : null;
+  const attestersKey = isAdmin ? ['admin-attesters', offsets.attesters] : null;
+  const {
+    data: providerPage,
+    error: providerError,
+    mutate: mutateProviders,
+  } = useSWR(providersKey, () =>
+    api.providers({
+      status: 'Pending',
+      limit: PAGE_SIZE,
+      offset: offsets.providers,
+    }),
   );
-}
-
-function AdminContractCard({
-  kind,
-  address,
-  busy,
-  setBusy,
-  nomineeDraft,
-  setNomineeDraft,
-  signTransaction,
-  connect,
-  toast,
-}: {
-  kind: ContractKind;
-  address: string | null;
-  busy: boolean;
-  setBusy: (v: boolean) => void;
-  nomineeDraft: string;
-  setNomineeDraft: (v: string) => void;
-  signTransaction: (xdr: string) => Promise<string>;
-  connect: () => void;
-  toast: ReturnType<typeof useToast>;
-}) {
-  const adminKey = ['admin', kind];
-  const pendingKey = ['pending-admin', kind];
-
-  const { data: admin, error: adminError, mutate: mutateAdmin } = useSWR(
-    adminKey,
-    () => getAdmin(kind),
+  const {
+    data: voucherPage,
+    error: voucherError,
+    mutate: mutateVouchers,
+  } = useSWR(vouchersKey, () =>
+    api.vouchers({
+      status: 'Disputed',
+      limit: PAGE_SIZE,
+      offset: offsets.vouchers,
+    }),
   );
-  const { data: pending, error: pendingError, mutate: mutatePending } = useSWR(
-    pendingKey,
-    () => getPendingAdmin(kind),
+  const {
+    data: attesterPage,
+    error: attesterError,
+    mutate: mutateAttesters,
+  } = useSWR(attestersKey, () =>
+    api.attesters({ all: true, limit: PAGE_SIZE, offset: offsets.attesters }),
   );
 
-  const isAdmin =
-    !!address && !!admin && address.toLowerCase() === admin.toLowerCase();
-  const isNominee =
-    !!address && !!pending && address.toLowerCase() === pending.toLowerCase();
+  function openResolution(voucher: Voucher, refundFunder: boolean) {
+    setAction({ kind: 'resolve', voucher, refundFunder });
+    setQuote(null);
+    setQuoteError(null);
+    if (refundFunder) {
+      setQuoteLoadingId(null);
+      return;
+    }
+    setQuoteLoadingId(voucher.id);
+    void voucherContract
+      .quote(BigInt(voucher.amount))
+      .then((result) => {
+        setQuote({ voucherId: voucher.id, amounts: result });
+      })
+      .catch((err: unknown) => {
+        setQuoteError({
+          voucherId: voucher.id,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      })
+      .finally(() => {
+        setQuoteLoadingId((current) =>
+          current === voucher.id ? null : current,
+        );
+      });
+  }
 
   async function handlePropose() {
     if (!address) return void connect();
@@ -144,13 +185,60 @@ function AdminContractCard({
     if (!target) return;
     setBusy(true);
     try {
-      const res = await proposeAdmin(kind, address, target, signTransaction);
-      await mutateAdmin();
-      await mutatePending();
+      let result: { hash: string };
+      if (action.kind === 'provider') {
+        result = await registry.setProviderStatus(
+          address,
+          action.provider.address,
+          action.status,
+          signTransaction,
+        );
+        await Promise.all([
+          mutateProviders(),
+          invalidateProvider(action.provider.address),
+        ]);
+      } else if (action.kind === 'resolve') {
+        result = await voucherContract.resolveDispute(
+          address,
+          action.voucher.id,
+          action.refundFunder,
+          signTransaction,
+        );
+        await Promise.all([
+          mutateVouchers(),
+          invalidateVouchers(action.voucher.id),
+        ]);
+      } else if (action.kind === 'split') {
+        const gross = parseSplitAmount(
+          splitInput,
+          BigInt(action.voucher.amount),
+        );
+        if (gross === null)
+          throw new Error('Enter an amount within the escrow.');
+        result = await voucherContract.resolveSplit(
+          address,
+          action.voucher.id,
+          gross,
+          signTransaction,
+        );
+        await Promise.all([
+          mutateVouchers(),
+          invalidateVouchers(action.voucher.id),
+        ]);
+      } else {
+        result = await registry.removeAttester(
+          address,
+          action.attester.address,
+          signTransaction,
+        );
+        await mutateAttesters();
+      }
       toast.success(
         <>
-          Handover proposed.{' '}
-          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+          Transaction submitted.{' '}
+          <ExplorerLink href={explorerTx(result.hash)}>
+            View transaction
+          </ExplorerLink>
         </>,
       );
       setNomineeDraft('');
@@ -165,13 +253,19 @@ function AdminContractCard({
     if (!address) return void connect();
     setBusy(true);
     try {
-      const res = await acceptAdmin(kind, address, signTransaction);
-      await mutateAdmin();
-      await mutatePending();
+      const result = await registry.addAttester(
+        address,
+        attesterAddress.trim(),
+        signTransaction,
+      );
+      setAttesterAddress('');
+      await mutateAttesters();
       toast.success(
         <>
-          Handover accepted.{' '}
-          <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+          Attester added.{' '}
+          <ExplorerLink href={explorerTx(result.hash)}>
+            View transaction
+          </ExplorerLink>
         </>,
       );
     } catch (err) {
@@ -196,7 +290,11 @@ function AdminContractCard({
   }
 
   if (checkingAdmin) {
-    return <p role="status" className="text-sm text-[var(--color-ink-soft)]">Checking contract administrator…</p>;
+    return (
+      <p role="status" className="text-sm text-[var(--color-ink-soft)]">
+        Checking contract administrator…
+      </p>
+    );
   }
 
   if (!isAdmin) return null;
@@ -206,9 +304,16 @@ function AdminContractCard({
   const isProviderAction = currentAction?.kind === 'provider';
   const isResolution = currentAction?.kind === 'resolve';
   const isSplit = currentAction?.kind === 'split';
-  const currentQuote = isResolution && quote?.voucherId === currentAction.voucher.id ? quote : null;
-  const currentQuoteError = isResolution && quoteError?.voucherId === currentAction.voucher.id ? quoteError.message : null;
-  const quoteLoading = isResolution && quoteLoadingId === currentAction.voucher.id;
+  const currentQuote =
+    isResolution && quote?.voucherId === currentAction.voucher.id
+      ? quote
+      : null;
+  const currentQuoteError =
+    isResolution && quoteError?.voucherId === currentAction.voucher.id
+      ? quoteError.message
+      : null;
+  const quoteLoading =
+    isResolution && quoteLoadingId === currentAction.voucher.id;
 
   // The split preview only counts when the quote belongs to the amount now
   // in the field, so a stale async answer cannot be confirmed.
@@ -220,7 +325,11 @@ function AdminContractCard({
     splitGross !== null &&
     splitQuote?.voucherId === currentAction.voucher.id &&
     splitQuote.gross === splitGross
-      ? splitBreakdown(BigInt(currentAction.voucher.amount), splitGross, splitQuote.fee)
+      ? splitBreakdown(
+          BigInt(currentAction.voucher.amount),
+          splitGross,
+          splitQuote.fee,
+        )
       : null;
 
   const confirmDisabled =
@@ -232,41 +341,415 @@ function AdminContractCard({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Admin console</h1>
-        <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
-          Hand over the administrator role in two steps: propose a nominee, then
-          the nominee accepts. The change takes effect only after acceptance, so
-          a typo in the address cannot strand the contract.
+      <header className="border-b border-[var(--color-line)] pb-5">
+        <p className="text-xs font-semibold text-[var(--color-brand)] uppercase">
+          Protocol operations
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold">Admin console</h1>
+        <p className="mt-2 text-sm break-all text-[var(--color-ink-soft)]">
+          Connected administrator: <code>{address}</code>
         </p>
       </div>
 
-      {!address && (
-        <Empty>Connect the administrator wallet to propose or accept a handover.</Empty>
+      {accessError && (
+        <Alert>{`Could not verify contract administrator: ${accessError}`}</Alert>
       )}
+      {errors.map((error) => (
+        <Alert key={String(error)}>{String(error)}</Alert>
+      ))}
 
-      {contracts.map((kind) => (
-        <AdminContractCard
-          key={kind}
-          kind={kind}
-          address={address}
-          busy={busy === kind}
-          setBusy={(v) => setBusy(v ? kind : null)}
-          nomineeDraft={nomineeDraft[kind]}
-          setNomineeDraft={(v) =>
-            setNomineeDraft((prev) => ({ ...prev, [kind]: v }))
+      <section aria-labelledby="providers-heading" className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="providers-heading" className="text-lg font-semibold">
+            Pending clinics
+          </h2>
+          <span className="text-sm text-[var(--color-ink-soft)]">
+            {providerPage?.total ?? 0} awaiting review
+          </span>
+        </div>
+        {!providerPage?.providers.length ? (
+          <Empty>
+            {providerError
+              ? 'Clinic applications could not be loaded.'
+              : 'No clinics are awaiting review.'}
+          </Empty>
+        ) : (
+          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
+            {providerPage.providers.map((provider) => (
+              <div
+                key={provider.address}
+                className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <h3 className="font-medium">{provider.name}</h3>
+                  <p className="text-sm text-[var(--color-ink-soft)]">
+                    {provider.country}
+                  </p>
+                  <code className="block text-xs break-all text-[var(--color-ink-soft)]">
+                    {provider.address}
+                  </code>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    disabled={busy}
+                    onClick={() =>
+                      setAction({
+                        kind: 'provider',
+                        provider,
+                        status: 'Active',
+                      })
+                    }
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="danger"
+                    disabled={busy}
+                    onClick={() =>
+                      setAction({
+                        kind: 'provider',
+                        provider,
+                        status: 'Suspended',
+                      })
+                    }
+                  >
+                    Suspend
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Pagination
+          offset={offsets.providers}
+          total={providerPage?.total ?? 0}
+          onChange={(offset) =>
+            setOffsets((value) => ({ ...value, providers: offset }))
           }
-          signTransaction={signTransaction}
-          connect={connect}
-          toast={toast}
         />
       ))}
 
-      <VoucherRiskLimits
-        address={address}
-        signTransaction={signTransaction}
-        toast={toast}
-      />
+      <section aria-labelledby="disputes-heading" className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="disputes-heading" className="text-lg font-semibold">
+            Disputed vouchers
+          </h2>
+          <span className="text-sm text-[var(--color-ink-soft)]">
+            {voucherPage?.total ?? 0} open disputes
+          </span>
+        </div>
+        {!voucherPage?.vouchers.length ? (
+          <Empty>
+            {voucherError
+              ? 'Disputed vouchers could not be loaded.'
+              : 'No vouchers are currently disputed.'}
+          </Empty>
+        ) : (
+          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
+            {voucherPage.vouchers.map((voucher) => (
+              <div key={voucher.id} className="space-y-3 py-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <p className="text-xs text-[var(--color-ink-soft)] uppercase">
+                      Voucher
+                    </p>
+                    <p className="font-medium">#{voucher.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--color-ink-soft)] uppercase">
+                      Escrow
+                    </p>
+                    <p>{formatCurrency(voucher.amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--color-ink-soft)] uppercase">
+                      Clinic
+                    </p>
+                    <p className="break-words">{voucher.provider.name}</p>
+                    <code className="text-xs break-all text-[var(--color-ink-soft)]">
+                      {shortAddress(voucher.provider.address)}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--color-ink-soft)] uppercase">
+                      Funder
+                    </p>
+                    <code className="text-xs break-all">
+                      {shortAddress(voucher.funder)}
+                    </code>
+                  </div>
+                </div>
+                <p className="text-sm">
+                  <span className="font-medium">Funder&apos;s reason: </span>
+                  {voucher.disputeReason == null
+                    ? 'No reason code supplied by the indexer.'
+                    : `#${voucher.disputeReason}: ${disputeReasonLabel(voucher.disputeReason)}`}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="danger"
+                    disabled={busy}
+                    onClick={() => openResolution(voucher, true)}
+                  >
+                    Refund funder
+                  </Button>
+                  <Button
+                    disabled={busy}
+                    onClick={() => openResolution(voucher, false)}
+                  >
+                    Pay clinic
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => openSplit(voucher)}
+                  >
+                    {t('admin.split.button')}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Pagination
+          offset={offsets.vouchers}
+          total={voucherPage?.total ?? 0}
+          onChange={(offset) =>
+            setOffsets((value) => ({ ...value, vouchers: offset }))
+          }
+        />
+      </section>
+
+      <section aria-labelledby="attesters-heading" className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="attesters-heading" className="text-lg font-semibold">
+            Attesters
+          </h2>
+          <span className="text-sm text-[var(--color-ink-soft)]">
+            {attesterPage?.total ?? 0} records
+          </span>
+        </div>
+        <Card className="p-4">
+          <form
+            onSubmit={(event) => void addAttester(event)}
+            className="flex flex-col gap-2 sm:flex-row"
+          >
+            <label className="sr-only" htmlFor="new-attester-address">
+              Stellar address
+            </label>
+            <input
+              id="new-attester-address"
+              value={attesterAddress}
+              onChange={(event) => setAttesterAddress(event.target.value)}
+              placeholder="G... Stellar address"
+              autoComplete="off"
+              className="min-w-0 flex-1 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+            />
+            <Button type="submit" disabled={busy || !attesterAddress.trim()}>
+              Add attester
+            </Button>
+          </form>
+        </Card>
+        {!attesterPage?.attesters.length ? (
+          <Empty>
+            {attesterError
+              ? 'Attesters could not be loaded.'
+              : 'No attesters are registered.'}
+          </Empty>
+        ) : (
+          <div className="divide-y divide-[var(--color-line)] border-y border-[var(--color-line)]">
+            {attesterPage.attesters.map((attester) => (
+              <div
+                key={attester.address}
+                className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium">
+                    {attester.name || attester.organisation || 'Attester'}
+                  </p>
+                  <code className="block text-xs break-all text-[var(--color-ink-soft)]">
+                    {attester.address}
+                  </code>
+                  <p className="text-xs text-[var(--color-ink-soft)]">
+                    {attester.active ? 'Active' : 'Inactive'} ·{' '}
+                    {attester.attestations} attestations
+                  </p>
+                </div>
+                {attester.active && (
+                  <Button
+                    variant="danger"
+                    disabled={busy}
+                    onClick={() =>
+                      setAction({ kind: 'remove-attester', attester })
+                    }
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <Pagination
+          offset={offsets.attesters}
+          total={attesterPage?.total ?? 0}
+          onChange={(offset) =>
+            setOffsets((value) => ({ ...value, attesters: offset }))
+          }
+        />
+      </section>
+
+      <Modal
+        open={!!action}
+        onClose={() => {
+          if (!busy) setAction(null);
+        }}
+        title={
+          isProviderAction
+            ? `${currentAction.status === 'Active' ? 'Approve' : 'Suspend'} clinic`
+            : isResolution || isSplit
+              ? `Resolve voucher #${currentAction.voucher.id}`
+              : 'Remove attester'
+        }
+        actions={
+          <>
+            <Button
+              variant={
+                (isProviderAction && currentAction.status === 'Suspended') ||
+                (isResolution && currentAction.refundFunder) ||
+                currentAction?.kind === 'remove-attester'
+                  ? 'danger'
+                  : 'primary'
+              }
+              disabled={confirmDisabled}
+              onClick={() => void submitAction()}
+            >
+              {busy ? 'Submitting…' : 'Confirm transaction'}
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setAction(null)}
+            >
+              Cancel
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {isProviderAction && (
+            <p>
+              Set <strong>{currentAction.provider.name}</strong> (
+              {shortAddress(currentAction.provider.address)}) to{' '}
+              <strong>{currentAction.status}</strong>.
+            </p>
+          )}
+          {isResolution && currentAction.refundFunder && (
+            <p>
+              The funder{' '}
+              <code className="break-all">{currentAction.voucher.funder}</code>{' '}
+              receives the full escrow of{' '}
+              <strong>{formatCurrency(currentAction.voucher.amount)}</strong>.
+              The clinic receives nothing.
+            </p>
+          )}
+          {isResolution && !currentAction.refundFunder && (
+            <div>
+              {quoteLoading && (
+                <p role="status">Calculating the clinic payout…</p>
+              )}
+              {currentQuoteError && (
+                <Alert>{`Could not calculate the contract payout: ${currentQuoteError}`}</Alert>
+              )}
+              {currentQuote && (
+                <p>
+                  <strong>{currentAction.voucher.provider.name}</strong> (
+                  <code className="break-all">
+                    {currentAction.voucher.provider.address}
+                  </code>
+                  ) receives{' '}
+                  <strong>{formatCurrency(currentQuote.amounts[1])}</strong>;
+                  the protocol fee is {formatCurrency(currentQuote.amounts[0])}.
+                  The funder receives nothing.
+                </p>
+              )}
+            </div>
+          )}
+          {isSplit && currentAction?.kind === 'split' && (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
+                  {t('admin.split.amountLabel')}
+                </span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={splitInput}
+                  onChange={(event) =>
+                    changeSplitAmount(event.target.value, currentAction.voucher)
+                  }
+                  aria-label={t('admin.split.amountLabel')}
+                  className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
+                />
+              </label>
+              <p className="text-xs text-[var(--color-ink-soft)]">
+                {t('admin.split.amountHint', {
+                  amount: formatCurrency(currentAction.voucher.amount),
+                })}
+              </p>
+              {splitInput.trim() !== '' && splitGross === null && (
+                <Alert>
+                  {t('admin.split.invalid', {
+                    amount: formatCurrency(currentAction.voucher.amount),
+                  })}
+                </Alert>
+              )}
+              {splitQuoteLoading && (
+                <p role="status">{t('admin.split.loading')}</p>
+              )}
+              {splitQuoteError && (
+                <Alert>
+                  {t('admin.split.error', { message: splitQuoteError })}
+                </Alert>
+              )}
+              {currentSplit && (
+                <div className="space-y-1 text-sm">
+                  <p>
+                    {t('admin.split.clinicReceives', {
+                      clinic: currentAction.voucher.provider.name,
+                      net: formatCurrency(currentSplit.providerNet),
+                      fee: formatCurrency(currentSplit.fee),
+                    })}
+                  </p>
+                  <p>
+                    {t('admin.split.funderReceives', {
+                      amount: formatCurrency(currentSplit.toFunder),
+                    })}
+                  </p>
+                  <p className="text-xs text-[var(--color-ink-soft)]">
+                    {t('admin.split.sum', {
+                      amount: formatCurrency(currentSplit.escrow),
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          {currentAction?.kind === 'remove-attester' && (
+            <p>
+              Revoke attester access for{' '}
+              <code className="break-all">
+                {currentAction.attester.address}
+              </code>
+              .
+            </p>
+          )}
+          <p className="text-xs text-[var(--color-ink-soft)]">
+            Review the recipient and outcome carefully. This transaction is
+            recorded on chain.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -292,11 +775,26 @@ function AdminContractCard({
   connect: () => void;
   toast: ReturnType<typeof useToast>;
 }) {
-  const adminKey = ['admin', kind];
-  const pendingKey = ['pending-admin', kind];
-
-  const { data: admin, error: adminError, mutate: mutateAdmin } = useSWR(
-    adminKey,
-    () => getAdmin(kind),
+  if (total <= PAGE_SIZE) return null;
+  return (
+    <div className="flex items-center justify-end gap-2 text-sm">
+      <Button
+        variant="ghost"
+        disabled={offset === 0}
+        onClick={() => onChange(Math.max(0, offset - PAGE_SIZE))}
+      >
+        Previous
+      </Button>
+      <span>
+        {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of {total}
+      </span>
+      <Button
+        variant="ghost"
+        disabled={offset + PAGE_SIZE >= total}
+        onClick={() => onChange(offset + PAGE_SIZE)}
+      >
+        Next
+      </Button>
+    </div>
   );
 }

@@ -34,9 +34,11 @@ export const config = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
   network: process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet',
   rpcUrl:
-    process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ?? 'https://soroban-testnet.stellar.org',
+    process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ??
+    'https://soroban-testnet.stellar.org',
   networkPassphrase:
-    process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015',
+    process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
+    'Test SDF Network ; September 2015',
   contracts: {
     registry: process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? '',
     voucher: process.env.NEXT_PUBLIC_VOUCHER_CONTRACT_ID ?? '',
@@ -86,11 +88,6 @@ export const flags = config.flags;
  * (`NEXT_PUBLIC_STELLAR_NETWORK=public`) therefore hides all of it.
  */
 export const isTestnet = config.flags.testnet;
-
-export function requireContracts(): void {
-  required('NEXT_PUBLIC_VOUCHER_CONTRACT_ID', config.contracts.voucher);
-  required('NEXT_PUBLIC_REGISTRY_CONTRACT_ID', config.contracts.registry);
-}
 
 export function explorerTx(hash: string): string {
   return `https://stellar.expert/explorer/${config.network}/tx/${hash}`;

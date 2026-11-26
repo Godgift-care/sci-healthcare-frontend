@@ -96,7 +96,8 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'no-float',
     category: 'Economics & Costs',
-    question: 'Why is there no general float or pool balance held in the protocol?',
+    question:
+      'Why is there no general float or pool balance held in the protocol?',
     answer:
       'SCI Healthcare operates strictly as purpose-bound, prepaid escrow rather than a pooled fund or banking deposit. Money enters the contract only as a voucher already earmarked for a specific clinic, service, and expiry date. This eliminates pooling risk, prevents insolvency, and conforms to non-custodial prepaid regulatory standards.',
     docTitle: 'Protocol Economics: Why There is No Float',
@@ -137,7 +138,12 @@ export const FAQ_ITEMS: FaqItem[] = [
 
 export function FaqAccordion() {
   const [openIds, setOpenIds] = useState<Set<string>>(
-    () => new Set(['patient-never-attends', 'claimed-never-attested', 'who-are-attesters']),
+    () =>
+      new Set([
+        'patient-never-attends',
+        'claimed-never-attested',
+        'who-are-attesters',
+      ]),
   );
 
   const toggleItem = (id: string) => {
@@ -160,7 +166,9 @@ export function FaqAccordion() {
     setOpenIds(new Set());
   };
 
-  const categories = Array.from(new Set(FAQ_ITEMS.map((item) => item.category)));
+  const categories = Array.from(
+    new Set(FAQ_ITEMS.map((item) => item.category)),
+  );
 
   return (
     <div className="space-y-8">
@@ -206,7 +214,9 @@ export function FaqAccordion() {
                         onClick={() => toggleItem(item.id)}
                         className="flex w-full items-start justify-between gap-4 text-start font-medium text-[var(--color-ink)] transition hover:text-[var(--color-brand)]"
                       >
-                        <span className="text-sm sm:text-base">{item.question}</span>
+                        <span className="text-sm sm:text-base">
+                          {item.question}
+                        </span>
                         <span
                           aria-hidden="true"
                           className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-[var(--color-line)] text-xs transition-transform duration-200 ${

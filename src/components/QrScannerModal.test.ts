@@ -9,8 +9,12 @@ describe('extractVoucherId', () => {
   });
 
   it('extracts voucher id from full URL', () => {
-    expect(extractVoucherId('https://sci-healthcare.org/vouchers/42')).toBe('42');
-    expect(extractVoucherId('http://localhost:3000/vouchers/105?contract=C123')).toBe('105');
+    expect(extractVoucherId('https://sci-healthcare.org/vouchers/42')).toBe(
+      '42',
+    );
+    expect(
+      extractVoucherId('http://localhost:3000/vouchers/105?contract=C123'),
+    ).toBe('105');
     expect(extractVoucherId('/vouchers/999')).toBe('999');
   });
 

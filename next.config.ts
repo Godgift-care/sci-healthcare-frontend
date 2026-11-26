@@ -7,7 +7,10 @@ import bundleAnalyzer from '@next/bundle-analyzer';
 import { parseSep24Anchors } from './src/lib/sep24-config';
 import { buildCommit } from './src/lib/build-info';
 
-import { contentSecurityPolicy, contentSecurityPolicyHeaderName } from './src/lib/csp';
+import {
+  contentSecurityPolicy,
+  contentSecurityPolicyHeaderName,
+} from './src/lib/csp';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -170,7 +173,7 @@ function assertBuildConfig(phase: string): void {
       "setting it only in the host's runtime environment changes nothing and",
       'the build would ship an app that fails on its first API or contract',
       'call. Set them in .env.local for a local build, and in the build',
-      "environment for a deployment (Vercel: Project → Settings →",
+      'environment for a deployment (Vercel: Project → Settings →',
       'Environment Variables, then redeploy). See .env.example, DEPLOY.md',
       'and the Environment section of README.md.',
       '',
@@ -235,7 +238,9 @@ if (process.env.NODE_ENV === 'production') {
 
 /** The web app's own version, read from package.json at build time. */
 const APP_VERSION = (
-  JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as { version: string }
+  JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as {
+    version: string;
+  }
 ).version;
 // A distinct worker URL makes each deployment discoverable to already-open tabs.
 const APP_BUILD_ID =
@@ -249,7 +254,8 @@ const config: NextConfig = {
   // runtime. A frontend still calling localhost in production is almost
   // always this variable missing from the build step.
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
     // Shown on /status (#168) so a support question can name the build.
     APP_VERSION: APP_VERSION,
     APP_COMMIT,

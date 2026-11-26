@@ -30,7 +30,9 @@ test('prompts for the trustline instead of showing the fund button', async ({
   await expect(
     page.getByText(/A trustline is your wallet agreeing to hold USDC/),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Fund voucher' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Fund voucher' })).toHaveCount(
+    0,
+  );
 
   // One click builds the changeTrust, which the wallet signs (echoed by the
   // mock) and the app submits (mocked).
@@ -38,8 +40,12 @@ test('prompts for the trustline instead of showing the fund button', async ({
 
   // The prompt disappears, the balance shows and funding is enabled.
   await expect(page.getByText(/A trustline is/)).toHaveCount(0);
-  await expect(page.getByText('USDC balance: $100.00', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Fund voucher' })).toBeVisible();
+  await expect(
+    page.getByText('USDC balance: $100.00', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Fund voucher' }),
+  ).toBeVisible();
   expect(await mockCalls(page)).toContainEqual({
     kind: 'change_trust',
     contractId: E2E_CONTRACTS.usdc,
@@ -56,7 +62,9 @@ test('prompts for the trustline instead of showing the fund button', async ({
   await expect(page.getByText('Voucher funded.')).toBeVisible();
 });
 
-test('a rejection in the wallet leaves everything as it was', async ({ page }) => {
+test('a rejection in the wallet leaves everything as it was', async ({
+  page,
+}) => {
   await page.addInitScript(
     `window.__SCI_NO_TRUSTLINE__ = true;
      window.__SCI_MOCK_SIGN_REJECT__ = true;`,
@@ -69,13 +77,12 @@ test('a rejection in the wallet leaves everything as it was', async ({ page }) =
     page.getByText('Nothing was sent. Press Add USDC whenever you are ready.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add USDC' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Fund voucher' })).toHaveCount(0);
-  // Reads and simulations (the faucet's balance poll, the fee preview) are
-  // fine; nothing was signed or submitted. `invoke` and `change_trust` are
-  // the kinds that reach the network, which is what this asserts.
-  const writes = (await mockCalls(page)).filter(
-    (c) => c.kind === 'invoke' || c.kind === 'change_trust',
+  await expect(page.getByRole('button', { name: 'Fund voucher' })).toHaveCount(
+    0,
   );
+  // Reads (the faucet's balance poll) are fine; nothing was built, signed
+  // or submitted.
+  const writes = (await mockCalls(page)).filter((c) => c.kind !== 'read');
   expect(writes).toEqual([]);
 });
 
@@ -83,8 +90,12 @@ test('warns when the USDC balance is below the voucher amount', async ({
   page,
 }) => {
   await page.goto(`/clinics/${CLINIC.address}`);
-  await expect(page.getByRole('button', { name: 'Fund voucher' })).toBeVisible();
-  await expect(page.getByText('USDC balance: $100.00', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Fund voucher' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('USDC balance: $100.00', { exact: true }),
+  ).toBeVisible();
 
   // The mock wallet holds $100.00; ask for more than that.
   await page.getByLabel('Amount (USDC)').fill('200');

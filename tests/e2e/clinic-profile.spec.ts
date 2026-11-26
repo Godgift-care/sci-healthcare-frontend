@@ -48,9 +48,9 @@ test('shows verified status, registration date and settled count', async ({
   await expect(page.getByText('1 Apr 2026')).toBeVisible();
 
   await expect(page.getByText('Vouchers settled')).toBeVisible();
-  await expect(
-    page.locator('dt:text-is("Vouchers settled") + dd'),
-  ).toHaveText('1');
+  await expect(page.locator('dt:text-is("Vouchers settled") + dd')).toHaveText(
+    '1',
+  );
 
   // The rest of the page is untouched: a funder can still pick a service.
   await expect(page.getByText('Fund care')).toBeVisible();

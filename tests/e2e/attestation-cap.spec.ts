@@ -22,7 +22,9 @@ test('shows how many attestations are left today', async ({ page }) => {
   ).toBeEnabled();
 });
 
-test('at zero the action is disabled and explains the reset time', async ({ page }) => {
+test('at zero the action is disabled and explains the reset time', async ({
+  page,
+}) => {
   await useMockWallet(page, ATTESTER, 0, {
     [`${E2E_CONTRACTS.voucher}:attestations_left`]: 0,
   });

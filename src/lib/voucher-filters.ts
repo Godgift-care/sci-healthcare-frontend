@@ -18,7 +18,8 @@ export const VOUCHER_STATUSES: readonly VoucherStatus[] = [
   'Refunded',
 ];
 
-export type VoucherSort = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
+export type VoucherSort =
+  'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
 
 export const DEFAULT_SORT: VoucherSort = 'date-desc';
 
@@ -54,7 +55,8 @@ export function clinicOptions(vouchers: Voucher[]): ClinicOption[] {
   return [...byAddress]
     .map(([address, name]) => ({ address, name }))
     .sort(
-      (a, b) => a.name.localeCompare(b.name) || a.address.localeCompare(b.address),
+      (a, b) =>
+        a.name.localeCompare(b.name) || a.address.localeCompare(b.address),
     );
 }
 
@@ -93,7 +95,9 @@ export function matchesVoucherNumber(v: Voucher, search: string): boolean {
 }
 
 /** How many vouchers sit in each status, for the clinic desk's tabs. */
-export function statusCounts(vouchers: Voucher[]): Record<VoucherStatus, number> {
+export function statusCounts(
+  vouchers: Voucher[],
+): Record<VoucherStatus, number> {
   const counts = Object.fromEntries(
     VOUCHER_STATUSES.map((s) => [s, 0]),
   ) as Record<VoucherStatus, number>;
@@ -101,7 +105,10 @@ export function statusCounts(vouchers: Voucher[]): Record<VoucherStatus, number>
   return counts;
 }
 
-export function sortVouchers(vouchers: Voucher[], sort: VoucherSort): Voucher[] {
+export function sortVouchers(
+  vouchers: Voucher[],
+  sort: VoucherSort,
+): Voucher[] {
   // A copy: callers pass the SWR-cached array and must not see it reordered.
   const sorted = [...vouchers];
   switch (sort) {
@@ -109,7 +116,9 @@ export function sortVouchers(vouchers: Voucher[], sort: VoucherSort): Voucher[] 
       sorted.sort((a, b) => compareNumbers(dateOf(a), dateOf(b)));
       break;
     case 'amount-desc':
-      sorted.sort((a, b) => -compareAmounts(BigInt(a.amount), BigInt(b.amount)));
+      sorted.sort(
+        (a, b) => -compareAmounts(BigInt(a.amount), BigInt(b.amount)),
+      );
       break;
     case 'amount-asc':
       sorted.sort((a, b) => compareAmounts(BigInt(a.amount), BigInt(b.amount)));

@@ -46,7 +46,9 @@ test('shows when the contract balance is short of its own accounting', async ({
   await page.goto('/stats');
   const section = page.locator('section[aria-label="Escrow held on chain"]');
   await expect(section.getByText(/do not match its balance/)).toBeVisible();
-  await expect(section.getByText('Contract holds $2.00', { exact: true })).toBeVisible();
+  await expect(
+    section.getByText('Contract holds $2.00', { exact: true }),
+  ).toBeVisible();
 });
 
 test('shows when the indexer and the chain disagree', async ({ page }) => {

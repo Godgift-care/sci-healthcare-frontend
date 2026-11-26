@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider, useToast } from './Toast';
@@ -17,7 +23,11 @@ import { setTransactionStatus } from '@/lib/pending-tx';
  * to the result when the flow ends.
  */
 
-function Trigger({ kind = 'success' }: { kind?: 'success' | 'error' | 'info' }) {
+function Trigger({
+  kind = 'success',
+}: {
+  kind?: 'success' | 'error' | 'info';
+}) {
   const toast = useToast();
   return (
     <button type="button" onClick={() => toast[kind]('Voucher funded.')}>
@@ -29,7 +39,10 @@ function Trigger({ kind = 'success' }: { kind?: 'success' | 'error' | 'info' }) 
 function ErrorTrigger() {
   const toast = useToast();
   return (
-    <button type="button" onClick={() => toast.error('Payment rejected by wallet.')}>
+    <button
+      type="button"
+      onClick={() => toast.error('Payment rejected by wallet.')}
+    >
       Fail
     </button>
   );
@@ -69,15 +82,17 @@ describe('ToastProvider', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Notify' }));
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toContain(
-      'Voucher funded.',
-    );
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toContain('Voucher funded.');
 
     act(() => {
       vi.runAllTimers();
     });
 
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toBe('');
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toBe('');
   });
 
   it('can be dismissed by hand before the timeout', () => {
@@ -91,7 +106,9 @@ describe('ToastProvider', () => {
     const dismiss = screen.getByRole('button', { name: /dismiss/i });
     fireEvent.click(dismiss);
 
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toBe('');
+    expect(
+      screen.getByRole('status', { name: 'Notifications' }).textContent,
+    ).toBe('');
   });
 
   it('announces transaction progress steps sequentially in the polite live region (#309)', () => {
@@ -144,11 +161,15 @@ describe('ToastProvider', () => {
 
     const assertiveRegion = screen.getByRole('alert');
     expect(assertiveRegion.getAttribute('aria-live')).toBe('assertive');
-    expect(assertiveRegion.textContent).toContain('Payment rejected by wallet.');
+    expect(assertiveRegion.textContent).toContain(
+      'Payment rejected by wallet.',
+    );
 
     // Focus moves to the result
     expect(document.activeElement).not.toBeNull();
-    expect(document.activeElement?.textContent).toContain('Payment rejected by wallet.');
+    expect(document.activeElement?.textContent).toContain(
+      'Payment rejected by wallet.',
+    );
   });
 
   it('moves focus to the result toast when a flow completes successfully (#309)', () => {

@@ -11,7 +11,10 @@ describe('scrubSentryEvent', () => {
   it('attaches the build commit without replacing existing tags', () => {
     vi.stubEnv('APP_COMMIT', 'abcdef1');
 
-    const event = { type: undefined, tags: { feature: 'checkout' } } as ErrorEvent;
+    const event = {
+      type: undefined,
+      tags: { feature: 'checkout' },
+    } as ErrorEvent;
 
     expect(scrubSentryEvent(event)?.tags).toEqual({
       feature: 'checkout',
@@ -22,7 +25,10 @@ describe('scrubSentryEvent', () => {
   it('leaves commit tags out when the build has no commit', () => {
     vi.stubEnv('APP_COMMIT', '');
 
-    const event = { type: undefined, tags: { feature: 'checkout' } } as ErrorEvent;
+    const event = {
+      type: undefined,
+      tags: { feature: 'checkout' },
+    } as ErrorEvent;
 
     expect(scrubSentryEvent(event)?.tags).toEqual({ feature: 'checkout' });
   });

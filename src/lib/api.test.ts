@@ -12,8 +12,18 @@ import { parseVoucherEvents } from './api';
 describe('parseVoucherEvents', () => {
   it('accepts a bare array of events', () => {
     const events = [
-      { id: '0-1', name: 'voucher_created', txHash: 'HASHCREATE', voucherId: '1' },
-      { id: '0-2', name: 'voucher_claimed', txHash: 'HASHCLAIM', voucherId: '1' },
+      {
+        id: '0-1',
+        name: 'voucher_created',
+        txHash: 'HASHCREATE',
+        voucherId: '1',
+      },
+      {
+        id: '0-2',
+        name: 'voucher_claimed',
+        txHash: 'HASHCLAIM',
+        voucherId: '1',
+      },
     ];
     expect(parseVoucherEvents(events)).toEqual(events);
   });

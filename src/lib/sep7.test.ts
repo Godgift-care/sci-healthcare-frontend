@@ -54,9 +54,9 @@ describe('buildSep7TxUri', () => {
     expect(
       parse(buildSep7TxUri({ xdr: XDR, message: '  Fund care  ' })).get('msg'),
     ).toBe('Fund care');
-    expect(
-      parse(buildSep7TxUri({ xdr: XDR, message: '   ' })).has('msg'),
-    ).toBe(false);
+    expect(parse(buildSep7TxUri({ xdr: XDR, message: '   ' })).has('msg')).toBe(
+      false,
+    );
   });
 
   it('accepts a message at the limit and rejects one over it', () => {

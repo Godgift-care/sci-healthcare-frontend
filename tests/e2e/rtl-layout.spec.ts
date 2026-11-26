@@ -30,7 +30,9 @@ async function forceRtl(page: Page): Promise<void> {
 /** Horizontal overflow of the document, in pixels. */
 async function overflow(page: Page): Promise<number> {
   return page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    () =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth,
   );
 }
 
@@ -82,7 +84,9 @@ test.describe('Right-to-left layout (#131)', () => {
     // The row has a 16px gutter (24px from `sm` up), so the edge test is
     // generous by design.
     expect(ltrBrand.x - box.x).toBeLessThan(40);
-    expect(box.x + box.width - (ltrCluster.x + ltrCluster.width)).toBeLessThan(40);
+    expect(box.x + box.width - (ltrCluster.x + ltrCluster.width)).toBeLessThan(
+      40,
+    );
 
     await forceRtl(page);
 
@@ -132,7 +136,9 @@ test.describe('Right-to-left layout (#131)', () => {
     expect(rtl.start).toBeLessThan(rtl.end);
   });
 
-  test('does not overflow the viewport in either direction', async ({ page }) => {
+  test('does not overflow the viewport in either direction', async ({
+    page,
+  }) => {
     for (const path of ['/', '/how-it-works', '/privacy', '/faq']) {
       await page.goto(path);
       const ltr = await overflow(page);
@@ -140,7 +146,9 @@ test.describe('Right-to-left layout (#131)', () => {
       const rtl = await overflow(page);
       // Flipping must not introduce a horizontal scrollbar that the
       // left-to-right page does not already have.
-      expect(rtl, `${path} overflows when flipped`).toBeLessThanOrEqual(ltr + 1);
+      expect(rtl, `${path} overflows when flipped`).toBeLessThanOrEqual(
+        ltr + 1,
+      );
     }
   });
 

@@ -8,7 +8,5 @@ export function BuildVersion() {
 
   if (!commit) return null;
 
-  return (
-    <span className="block">{t('footer.build', { commit })}</span>
-  );
+  return <span className="block">{t('footer.build', { commit })}</span>;
 }

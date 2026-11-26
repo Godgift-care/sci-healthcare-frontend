@@ -57,12 +57,17 @@ test('voucher print preview shows the QR, summary and history on one A4 page', a
 
   await page.goto(`/vouchers/${VOUCHER_ID}`);
   await expect(page.getByRole('heading', { name: 'History' })).toBeVisible();
-  await expect(page.locator(`img[alt="QR code for voucher #${VOUCHER_ID}"]`).first()).toBeVisible();
+  await expect(
+    page.locator(`img[alt="QR code for voucher #${VOUCHER_ID}"]`).first(),
+  ).toBeVisible();
 
   const screenshotDirectory = resolve(process.cwd(), 'docs', 'screenshots');
   await mkdir(screenshotDirectory, { recursive: true });
   await page.screenshot({
-    path: resolve(screenshotDirectory, `issue-139-voucher-${testInfo.project.name}.png`),
+    path: resolve(
+      screenshotDirectory,
+      `issue-139-voucher-${testInfo.project.name}.png`,
+    ),
     fullPage: true,
   });
 
@@ -76,16 +81,29 @@ test('voucher print preview shows the QR, summary and history on one A4 page', a
     printDocument.getByRole('heading', { name: 'Patient Clinic Voucher' }),
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'History' })).toBeVisible();
-  await expect(printDocument.getByText('Outpatient consult', { exact: true })).toBeVisible();
-  await expect(printDocument.getByText('Ikeja General Clinic', { exact: true })).toBeVisible();
-  await expect(page.getByText('Patient reference', { exact: true })).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Print voucher pass' })).toBeHidden();
+  await expect(
+    printDocument.getByText('Outpatient consult', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    printDocument.getByText('Ikeja General Clinic', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Patient reference', { exact: true }),
+  ).toBeHidden();
+  await expect(
+    page.getByRole('button', { name: 'Print voucher pass' }),
+  ).toBeHidden();
   await expect(
     page.locator(`img[alt="QR code for voucher #${VOUCHER_ID}"]:visible`),
   ).toHaveCount(1);
 
-  const pdf = await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
-  const pageCount = [...pdf.toString('latin1').matchAll(/\/Type\s*\/Page\b/g)].length;
+  const pdf = await page.pdf({
+    format: 'A4',
+    printBackground: true,
+    preferCSSPageSize: true,
+  });
+  const pageCount = [...pdf.toString('latin1').matchAll(/\/Type\s*\/Page\b/g)]
+    .length;
   expect(pageCount).toBe(1);
 
   if (testInfo.project.name === 'desktop') {

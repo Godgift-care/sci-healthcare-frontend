@@ -1,4 +1,9 @@
-import { Keypair, Networks, TransactionBuilder, WebAuth } from '@stellar/stellar-sdk';
+import {
+  Keypair,
+  Networks,
+  TransactionBuilder,
+  WebAuth,
+} from '@stellar/stellar-sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { parseSep24Anchors, supportsCountry } from './sep24-config';
@@ -16,15 +21,17 @@ const SERVER = Keypair.random();
 const ASSET_ISSUER = 'GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR';
 
 function configuredAnchor() {
-  return parseSep24Anchors(JSON.stringify([
-    {
-      name: 'Test anchor',
-      domain: 'anchor.example',
-      countries: ['ng'],
-      assetCode: 'USDC',
-      assetIssuer: ASSET_ISSUER,
-    },
-  ]))[0];
+  return parseSep24Anchors(
+    JSON.stringify([
+      {
+        name: 'Test anchor',
+        domain: 'anchor.example',
+        countries: ['ng'],
+        assetCode: 'USDC',
+        assetIssuer: ASSET_ISSUER,
+      },
+    ]),
+  )[0];
 }
 
 function toml(overrides: Record<string, unknown> = {}) {
@@ -39,7 +46,9 @@ function toml(overrides: Record<string, unknown> = {}) {
 }
 
 async function anchor(): Promise<DiscoveredAnchor> {
-  return discoverAnchor(configuredAnchor(), Networks.TESTNET, async () => toml());
+  return discoverAnchor(configuredAnchor(), Networks.TESTNET, async () =>
+    toml(),
+  );
 }
 
 function response(body: unknown, status = 200): Response {
@@ -51,24 +60,38 @@ function response(body: unknown, status = 200): Response {
 
 describe('SEP-24 anchor config and protocol', () => {
   it('validates JSON anchor config and normalizes countries and asset codes', () => {
-    const [config] = parseSep24Anchors(JSON.stringify([
-      {
-        name: 'Cash desk',
-        domain: 'ANCHOR.example',
-        countries: ['ng', 'NG'],
-        assetCode: 'usdc',
-        assetIssuer: ASSET_ISSUER,
-      },
-    ]));
+    const [config] = parseSep24Anchors(
+      JSON.stringify([
+        {
+          name: 'Cash desk',
+          domain: 'ANCHOR.example',
+          countries: ['ng', 'NG'],
+          assetCode: 'usdc',
+          assetIssuer: ASSET_ISSUER,
+        },
+      ]),
+    );
 
     expect(config.domain).toBe('anchor.example');
     expect(config.countries).toEqual(['NG']);
     expect(config.assetCode).toBe('USDC');
     expect(supportsCountry(config, 'ng')).toBe(true);
     expect(() => parseSep24Anchors('{')).toThrow(/valid JSON/);
-    expect(() => parseSep24Anchors(JSON.stringify([{ ...config, domain: 'http://anchor.example' }]))).toThrow(/bare HTTPS domain/);
-    expect(() => parseSep24Anchors(JSON.stringify([{ ...config, domain: 'anchor.example:443' }]))).toThrow(/bare HTTPS domain/);
-    expect(() => parseSep24Anchors(JSON.stringify([{ ...config, domain: 'anchor.example/path' }]))).toThrow(/bare HTTPS domain/);
+    expect(() =>
+      parseSep24Anchors(
+        JSON.stringify([{ ...config, domain: 'http://anchor.example' }]),
+      ),
+    ).toThrow(/bare HTTPS domain/);
+    expect(() =>
+      parseSep24Anchors(
+        JSON.stringify([{ ...config, domain: 'anchor.example:443' }]),
+      ),
+    ).toThrow(/bare HTTPS domain/);
+    expect(() =>
+      parseSep24Anchors(
+        JSON.stringify([{ ...config, domain: 'anchor.example/path' }]),
+      ),
+    ).toThrow(/bare HTTPS domain/);
   });
 
   it('requires the anchor network, asset issuer, and same-domain endpoints to match', async () => {
@@ -84,10 +107,12 @@ describe('SEP-24 anchor config and protocol', () => {
     ).rejects.toThrow(/configured asset code and issuer/);
     await expect(
       discoverAnchor(configuredAnchor(), Networks.TESTNET, async () =>
-        toml({ CURRENCIES: [
-          { code: 'USDC', issuer: ASSET_ISSUER },
-          { code: 'USDC', issuer: SERVER.publicKey() },
-        ] }),
+        toml({
+          CURRENCIES: [
+            { code: 'USDC', issuer: ASSET_ISSUER },
+            { code: 'USDC', issuer: SERVER.publicKey() },
+          ],
+        }),
       ),
     ).rejects.toThrow(/one unambiguous currency/);
     await expect(
@@ -110,7 +135,9 @@ describe('SEP-24 anchor config and protocol', () => {
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(input.toString());
       if (init?.method === 'POST') {
-        expect(new URLSearchParams(String(init.body)).get('transaction')).toBeTruthy();
+        expect(
+          new URLSearchParams(String(init.body)).get('transaction'),
+        ).toBeTruthy();
         return response({ token: 'anchor-jwt' });
       }
       expect(url.searchParams.get('account')).toBe(ACCOUNT.publicKey());
@@ -123,7 +150,13 @@ describe('SEP-24 anchor config and protocol', () => {
     };
 
     await expect(
-      authenticateSep10(service, ACCOUNT.publicKey(), Networks.TESTNET, signTransaction, fetcher),
+      authenticateSep10(
+        service,
+        ACCOUNT.publicKey(),
+        Networks.TESTNET,
+        signTransaction,
+        fetcher,
+      ),
     ).resolves.toBe('anchor-jwt');
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
@@ -140,10 +173,18 @@ describe('SEP-24 anchor config and protocol', () => {
       'anchor.example',
     );
     const signTransaction = vi.fn(async (xdr: string) => xdr);
-    const fetcher = vi.fn<typeof fetch>(async () => response({ transaction: challenge }));
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      response({ transaction: challenge }),
+    );
 
     await expect(
-      authenticateSep10(service, ACCOUNT.publicKey(), Networks.TESTNET, signTransaction, fetcher),
+      authenticateSep10(
+        service,
+        ACCOUNT.publicKey(),
+        Networks.TESTNET,
+        signTransaction,
+        fetcher,
+      ),
     ).rejects.toThrow(/different wallet/);
     expect(signTransaction).not.toHaveBeenCalled();
   });
@@ -153,16 +194,29 @@ describe('SEP-24 anchor config and protocol', () => {
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(input.toString());
       if (url.pathname.endsWith('/info')) {
-        return response({ withdraw: { [`USDC:${ASSET_ISSUER}`]: { enabled: true, min_amount: 1, max_amount: 100 } } });
+        return response({
+          withdraw: {
+            [`USDC:${ASSET_ISSUER}`]: {
+              enabled: true,
+              min_amount: 1,
+              max_amount: 100,
+            },
+          },
+        });
       }
       if (url.pathname.endsWith('/interactive')) {
         const body = new URLSearchParams(String(init?.body));
         expect(body.get('account')).toBe(ACCOUNT.publicKey());
         expect(body.get('country_code')).toBe('NG');
         expect(init?.headers).toMatchObject({ Authorization: 'Bearer jwt' });
-        return response({ id: 'withdrawal-1', url: 'https://kyc.partner.example/withdraw/1' });
+        return response({
+          id: 'withdrawal-1',
+          url: 'https://kyc.partner.example/withdraw/1',
+        });
       }
-      return response({ transaction: { id: 'withdrawal-1', status: 'pending_user' } });
+      return response({
+        transaction: { id: 'withdrawal-1', status: 'pending_user' },
+      });
     });
 
     await expect(getWithdrawalInfo(service, fetcher)).resolves.toEqual({
@@ -172,12 +226,19 @@ describe('SEP-24 anchor config and protocol', () => {
     });
     const started = await startWithdrawal(
       service,
-      { account: ACCOUNT.publicKey(), amount: '5.00', country: 'NG', token: 'jwt' },
+      {
+        account: ACCOUNT.publicKey(),
+        amount: '5.00',
+        country: 'NG',
+        token: 'jwt',
+      },
       fetcher,
     );
     expect(started.id).toBe('withdrawal-1');
     expect(started.url.href).toBe('https://kyc.partner.example/withdraw/1');
-    await expect(getWithdrawalStatus(service, started.id, 'jwt', fetcher)).resolves.toMatchObject({
+    await expect(
+      getWithdrawalStatus(service, started.id, 'jwt', fetcher),
+    ).resolves.toMatchObject({
       id: 'withdrawal-1',
       status: 'pending_user',
     });
@@ -189,8 +250,14 @@ describe('SEP-24 anchor config and protocol', () => {
     await expect(
       startWithdrawal(
         service,
-        { account: ACCOUNT.publicKey(), amount: '5.00', country: 'NG', token: 'jwt' },
-        async () => response({ id: 'withdrawal-2', url: 'javascript:alert(1)' }),
+        {
+          account: ACCOUNT.publicKey(),
+          amount: '5.00',
+          country: 'NG',
+          token: 'jwt',
+        },
+        async () =>
+          response({ id: 'withdrawal-2', url: 'javascript:alert(1)' }),
       ),
     ).rejects.toThrow(/unsafe interactive URL/);
   });

@@ -71,7 +71,10 @@ export function ServicesCatalogue() {
         <h2 className="text-lg font-semibold">Service catalogue</h2>
       </div>
 
-      <div role="search" className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
+      <div
+        role="search"
+        className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]"
+      >
         <label className="block">
           <span className="sr-only">Search service name</span>
           <input
@@ -106,7 +109,7 @@ export function ServicesCatalogue() {
           action={
             <Link
               href="/clinic"
-              className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90 max-sm:min-h-11"
             >
               List a service
             </Link>
@@ -162,11 +165,8 @@ function ServiceCard({
               {s.clinicCount} clinic{s.clinicCount === 1 ? '' : 's'}
             </p>
           </div>
-          <span className="flex shrink-0 flex-col items-end">
-            <span className="mono text-sm font-medium">
-              ${formatUsdc(s.minPrice)}
-            </span>
-            <LocalEstimate amount={s.minPrice} />
+          <span className="mono shrink-0 text-sm font-medium">
+            ${formatUsdc(s.minPrice)}
           </span>
         </div>
 
@@ -180,7 +180,7 @@ function ServiceCard({
           </p>
         </div>
 
-        <p className="mt-3 text-xs text-[var(--color-brand)] font-medium underline underline-offset-2 hover:opacity-80">
+        <p className="mt-3 text-xs font-medium text-[var(--color-brand)] underline underline-offset-2 hover:opacity-80">
           Compare clinics →
         </p>
       </Card>

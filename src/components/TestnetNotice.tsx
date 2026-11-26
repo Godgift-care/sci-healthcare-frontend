@@ -34,7 +34,11 @@ function getServerSnapshot(): boolean {
 }
 
 export function TestnetNotice() {
-  const isDismissed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isDismissed = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   if (config.network !== 'testnet' || isDismissed) {
     return null;
@@ -52,7 +56,7 @@ export function TestnetNotice() {
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <span className="inline-block rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-900">
+          <span className="inline-block rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-amber-900 uppercase">
             Testnet
           </span>
           <p>

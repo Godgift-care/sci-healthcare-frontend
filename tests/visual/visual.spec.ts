@@ -116,40 +116,48 @@ test('clinic desk — daily summary', async ({ page }) => {
       attestedAt: null,
     },
   ];
-  await page.route(/^http:\/\/localhost:8080\/vouchers(?:\?.*)?$/, async (route) => {
-    if (!new URL(route.request().url()).searchParams.has('provider')) {
-      return route.fallback();
-    }
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ total: vouchers.length, vouchers }),
-    });
-  });
-  await page.route(/^http:\/\/localhost:8080\/receipts(?:\?.*)?$/, async (route) => {
-    if (!new URL(route.request().url()).searchParams.has('provider')) {
-      return route.fallback();
-    }
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        total: 1,
-        receipts: [
-          {
-            voucherId: '1',
-            providerAddress: CLINIC_ADDRESS,
-            amount: '30000000',
-            amountDisplay: '3.00',
-            settledAt: '2026-06-15T11:30:00.000Z',
-          },
-        ],
-      }),
-    });
-  });
+  await page.route(
+    /^http:\/\/localhost:8080\/vouchers(?:\?.*)?$/,
+    async (route) => {
+      if (!new URL(route.request().url()).searchParams.has('provider')) {
+        return route.fallback();
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ total: vouchers.length, vouchers }),
+      });
+    },
+  );
+  await page.route(
+    /^http:\/\/localhost:8080\/receipts(?:\?.*)?$/,
+    async (route) => {
+      if (!new URL(route.request().url()).searchParams.has('provider')) {
+        return route.fallback();
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          total: 1,
+          receipts: [
+            {
+              voucherId: '1',
+              providerAddress: CLINIC_ADDRESS,
+              amount: '30000000',
+              amountDisplay: '3.00',
+              settledAt: '2026-06-15T11:30:00.000Z',
+            },
+          ],
+        }),
+      });
+    },
+  );
 
   await page.goto('/clinic');
-  const summary = page.getByRole('region', { name: "Today's front-desk summary" });
+  const summary = page.getByRole('region', {
+    name: "Today's front-desk summary",
+  });
   await expect(summary).toContainText('$2.94');
   await expect(summary).toContainText('UTC');
   await settle(page);
@@ -174,19 +182,27 @@ test('clinic desk — SEP-24 cash-out handoff', async ({ page }) => {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ withdraw: { USDC: { enabled: true, min_amount: 1, max_amount: 100 } } }),
+        body: JSON.stringify({
+          withdraw: { USDC: { enabled: true, min_amount: 1, max_amount: 100 } },
+        }),
       });
     }
     return route.fulfill({ status: 404, body: '{}' });
   });
 
   await page.goto('/clinic');
-  await expect(page.getByRole('heading', { name: 'Local cash-out' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Local cash-out' }),
+  ).toBeVisible();
   await page.getByLabel('Anchor').selectOption('anchor.example');
   await expect(page.getByText('Anchor limits: 1–100 USDC.')).toBeVisible();
-  await expect(page.getByText(/may require identity verification \(KYC\)/)).toBeVisible();
+  await expect(
+    page.getByText(/may require identity verification \(KYC\)/),
+  ).toBeVisible();
   await settle(page);
-  await expect(page.getByRole('region', { name: 'Local cash-out' })).toHaveScreenshot('clinic-cashout.png');
+  await expect(
+    page.getByRole('region', { name: 'Local cash-out' }),
+  ).toHaveScreenshot('clinic-cashout.png');
 });
 
 test('attest — disconnected', async ({ page }) => {
@@ -207,10 +223,14 @@ test('admin — verified operator console', async ({ page }) => {
      };`,
   );
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Admin console' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Admin console' }),
+  ).toBeVisible();
   await expect(page.getByText('Pending clinics')).toBeVisible();
   await expect(page.getByText('Disputed vouchers')).toBeVisible();
-  await expect(page.getByText('Attesters', { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText('Attesters', { exact: true }).first(),
+  ).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('admin.png');
 });
@@ -240,5 +260,7 @@ test('reduced motion disables long animations (#306)', async ({ page }) => {
     document.body.removeChild(el);
     return { animDuration, animName };
   });
-  expect(duration.animDuration <= 0.01 || duration.animName === 'none').toBe(true);
+  expect(duration.animDuration <= 0.01 || duration.animName === 'none').toBe(
+    true,
+  );
 });

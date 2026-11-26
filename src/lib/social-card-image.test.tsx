@@ -96,7 +96,9 @@ describe('social preview images', () => {
   it('renders a PNG under the size budget for a voucher', async () => {
     vi.mocked(api.voucher).mockResolvedValue(voucher as never);
 
-    const image = await VoucherImage({ params: Promise.resolve({ id: voucher.id }) });
+    const image = await VoucherImage({
+      params: Promise.resolve({ id: voucher.id }),
+    });
     const bytes = await render(image);
 
     expect(image.headers.get('content-type')).toBe('image/png');
@@ -109,7 +111,9 @@ describe('social preview images', () => {
     vi.mocked(api.voucher).mockRejectedValue(new Error('timeout'));
 
     const clinicBytes = await render(
-      await ClinicImage({ params: Promise.resolve({ address: clinic.address }) }),
+      await ClinicImage({
+        params: Promise.resolve({ address: clinic.address }),
+      }),
     );
     const voucherBytes = await render(
       await VoucherImage({ params: Promise.resolve({ id: voucher.id }) }),

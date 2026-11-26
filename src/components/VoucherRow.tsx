@@ -2,19 +2,39 @@
 
 import Link from 'next/link';
 import { DetailLink } from '@/components/DetailLink';
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
 
 import { api, type Voucher } from '@/lib/api';
-import { formatDate, formatUsdc, timeUntil, timeSince, toAmountInput } from '@/lib/amounts';
-import { LocalEstimate } from '@/components/LocalEstimate';
+import {
+  formatDate,
+  formatUsdc,
+  timeUntil,
+  timeSince,
+  toAmountInput,
+} from '@/lib/amounts';
 import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
-import { DISPUTE_REASONS, disputeReasonLabel, type DisputeReasonCode } from '@/lib/disputes';
+import {
+  DISPUTE_REASONS,
+  disputeReasonLabel,
+  type DisputeReasonCode,
+} from '@/lib/disputes';
 import { humaniseError } from '@/lib/errors';
 import { invalidateVouchers, useNow } from '@/lib/hooks';
 import { voucher as protocol } from '@/lib/protocol';
 import { EXPECTED_STATUS, pollVoucherStatus } from '@/lib/reconcile';
-import { clearStaffNote, saveStaffNote, STAFF_NOTE_MAX_LENGTH, useStaffNote } from '@/lib/staff-notes';
+import {
+  clearStaffNote,
+  saveStaffNote,
+  STAFF_NOTE_MAX_LENGTH,
+  useStaffNote,
+} from '@/lib/staff-notes';
 import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 
@@ -23,7 +43,10 @@ import { AddressName } from './AddressName';
 import { useToast } from './Toast';
 import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { VerifyPatient } from './VerifyPatient';
-import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
+import {
+  availableActions,
+  type VoucherAction as Action,
+} from '@/lib/voucher-actions';
 import type { RestoreFootprintSignContext } from '@/lib/stellar';
 
 /** Funnel step per contract write. Names only — never any properties. */
@@ -100,14 +123,19 @@ export function VoucherRow({
   // Transaction hash when the indexer never caught up in time.
   const [staleTx, setStaleTx] = useState<string | null>(null);
   const mounted = useRef(true);
-  useEffect(() => () => {
-    mounted.current = false;
-  }, []);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
   // Disputing freezes funds, so it takes a reason and a confirmation modal.
   // Attesting pays the clinic after the dispute window, so it confirms too.
   const [disputing, setDisputing] = useState(false);
   const [attesting, setAttesting] = useState(false);
-  const [reason, setReason] = useState<DisputeReasonCode>(DISPUTE_REASONS[0].code);
+  const [reason, setReason] = useState<DisputeReasonCode>(
+    DISPUTE_REASONS[0].code,
+  );
   // Patient check (#33): keep which voucher matched, never the typed values.
   // Keying the match by voucher means a changed row cannot inherit a match.
   const [verifying, setVerifying] = useState(false);
@@ -133,7 +161,10 @@ export function VoucherRow({
         setTransactionStatus('submitting');
         return signed;
       };
-      const fns: Record<Action, () => Promise<{ hash: string; queued?: boolean }>> = {
+      const fns: Record<
+        Action,
+        () => Promise<{ hash: string; queued?: boolean }>
+      > = {
         claim: () => protocol.claim(address, v.id, wrappedSign),
         attest: () => protocol.attest(address, v.id, wrappedSign),
         settle: () => protocol.settle(address, v.id, wrappedSign),
@@ -172,7 +203,9 @@ export function VoucherRow({
         toast.success(
           <>
             Done.{' '}
-            <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+            <ExplorerLink href={explorerTx(res.hash)}>
+              View transaction
+            </ExplorerLink>
           </>,
         );
       } else {
@@ -180,7 +213,9 @@ export function VoucherRow({
         toast.success(
           <>
             Confirmed on chain — the indexer is still catching up.{' '}
-            <ExplorerLink href={explorerTx(res.hash)}>View transaction</ExplorerLink>
+            <ExplorerLink href={explorerTx(res.hash)}>
+              View transaction
+            </ExplorerLink>
           </>,
         );
       }
@@ -257,15 +292,20 @@ export function VoucherRow({
               <StatusBadge status={v.status} />
             </div>
             <h3 className="mt-1 font-medium">
-              <AddressName address={v.provider.address} name={v.provider.name} />
+              <AddressName
+                address={v.provider.address}
+                name={v.provider.name}
+              />
             </h3>
             <p className="text-xs text-[var(--color-ink-soft)]">
-              {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded {formatDate(v.createdAt)}
+              {v.serviceLabel ?? `Service ${v.serviceCode}`} · funded{' '}
+              {formatDate(v.createdAt)}
             </p>
           </div>
           <div className="text-end">
-            <div className="mono text-lg font-semibold">${formatUsdc(v.amount)}</div>
-            <LocalEstimate amount={v.amount} className="block" />
+            <div className="mono text-lg font-semibold">
+              ${formatUsdc(v.amount)}
+            </div>
             {v.status === 'Settled' && v.settledNet && (
               <div className="text-xs text-[var(--color-ink-soft)]">
                 clinic received ${formatUsdc(v.settledNet)}
@@ -284,8 +324,8 @@ export function VoucherRow({
 
       {v.status === 'Attested' && v.disputeDeadline && !v.isSettleable && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Dispute window closes {timeUntil(v.disputeDeadline, now, locale)} — settles
-          after that.
+          Dispute window closes {timeUntil(v.disputeDeadline, now, locale)} —
+          settles after that.
           <InfoTip content="The funder can dispute before the window closes. After it closes, anyone can release the payment to the clinic." />
         </p>
       )}
@@ -303,7 +343,14 @@ export function VoucherRow({
             </p>
           )}
           <p className="mt-1 text-xs">
-            Refundable <span className={isUrgent(v.refundableAt, now) ? 'font-semibold text-[var(--color-danger)]' : ''}>
+            Refundable{' '}
+            <span
+              className={
+                isUrgent(v.refundableAt, now)
+                  ? 'font-semibold text-[var(--color-danger)]'
+                  : ''
+              }
+            >
               {timeUntil(v.refundableAt, now, locale)}
             </span>
             ({formatDate(v.refundableAt)}).
@@ -313,8 +360,8 @@ export function VoucherRow({
       )}
       {v.status === 'Disputed' && v.disputeReason != null && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
-          Disputed: {disputeReasonLabel(v.disputeReason)}. Funds are frozen until
-          an administrator resolves it.
+          Disputed: {disputeReasonLabel(v.disputeReason)}. Funds are frozen
+          until an administrator resolves it.
         </p>
       )}
       {v.disputeOutcome && (
@@ -338,7 +385,7 @@ export function VoucherRow({
           {editingNote ? (
             <div className="mt-3 space-y-2">
               <label className="block">
-                <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+                <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
                   {t('voucher.staffNote')}
                 </span>
                 <textarea
@@ -388,7 +435,13 @@ export function VoucherRow({
           {available.map((a) => (
             <Button
               key={a}
-              variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
+              variant={
+                a === 'dispute'
+                  ? 'danger'
+                  : a === 'settle'
+                    ? 'primary'
+                    : 'ghost'
+              }
               disabled={
                 disabled ||
                 busy !== null ||
@@ -422,7 +475,7 @@ export function VoucherRow({
               <h4 className="flex items-center gap-2 text-sm font-medium">
                 Verify patient
                 {patientVerified && (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">
                     Match
                   </span>
                 )}
@@ -433,15 +486,25 @@ export function VoucherRow({
                   : 'Optional: have the patient, or whoever holds their key, confirm this voucher on this device.'}
               </p>
             </div>
-            <Button variant="ghost" onClick={() => setVerifying((open) => !open)}>
-              {verifying ? 'Hide check' : patientVerified ? 'Verify again' : 'Verify patient'}
+            <Button
+              variant="ghost"
+              onClick={() => setVerifying((open) => !open)}
+            >
+              {verifying
+                ? 'Hide check'
+                : patientVerified
+                  ? 'Verify again'
+                  : 'Verify patient'}
             </Button>
           </div>
 
           {!verifying && requirePatientMatch && !patientVerified && (
-            <p role="status" className="mt-3 text-xs text-[var(--color-ink-soft)]">
-              This desk requires a patient check before claiming. The reference and key
-              enable “Mark patient seen”.
+            <p
+              role="status"
+              className="mt-3 text-xs text-[var(--color-ink-soft)]"
+            >
+              This desk requires a patient check before claiming. The reference
+              and key enable “Mark patient seen”.
             </p>
           )}
 
@@ -466,7 +529,9 @@ export function VoucherRow({
       {staleTx && !reconciling && (
         <p className="mt-3 text-xs text-[var(--color-ink-soft)]">
           The transaction succeeded on chain but the list has not caught up yet.{' '}
-          <ExplorerLink href={explorerTx(staleTx)}>View transaction</ExplorerLink>
+          <ExplorerLink href={explorerTx(staleTx)}>
+            View transaction
+          </ExplorerLink>
         </p>
       )}
 
@@ -503,12 +568,14 @@ export function VoucherRow({
       >
         <div className="space-y-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
+            <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
               What went wrong?
             </span>
             <select
               value={reason}
-              onChange={(e) => setReason(Number(e.target.value) as DisputeReasonCode)}
+              onChange={(e) =>
+                setReason(Number(e.target.value) as DisputeReasonCode)
+              }
               className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm"
             >
               {DISPUTE_REASONS.map((r) => (
@@ -520,7 +587,8 @@ export function VoucherRow({
           </label>
           <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
             The clinic will not be paid while this is open. An administrator
-            reviews it and returns the money to you or releases it to the clinic.
+            reviews it and returns the money to you or releases it to the
+            clinic.
             <InfoTip content="Disputing freezes the escrow. Only open one for care you funded and believe was not delivered." />
           </p>
         </div>
