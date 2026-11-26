@@ -289,21 +289,14 @@ export function humaniseError(
   // something else entirely), so recognise them by text before looking the
   // number up.
   if (/trustline/i.test(message)) {
-    if (locale === 'fr')
-      return 'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.';
-    if (locale === 'sw')
-      return 'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.';
-    if (locale === 'yo')
-      return 'Àpò rẹ nílò trustline USDC kí ó tó lè gba tàbí fi USDC ránṣẹ́.';
+    if (locale === 'fr') return 'Votre portefeuille nécessite une trustline USDC pour détenir ou envoyer des USDC.';
+    if (locale === 'sw') return 'Pochi yako inahitaji trustline ya USDC kabla ya kupokea au kutuma USDC.';
+    if (locale === 'yo') return 'Àpò rẹ nílò trustline USDC kí ó tó lè gba tàbí fi USDC ránṣẹ́.';
     return 'Your wallet needs a USDC trustline before it can hold or send USDC.';
   }
-  if (
-    /insufficient balance|balance is not sufficient|underflow/i.test(message)
-  ) {
-    if (locale === 'fr')
-      return 'Solde USDC insuffisant dans votre portefeuille.';
-    if (locale === 'sw')
-      return 'Huna USDC ya kutosha kwenye pochi yako kwa hili.';
+  if (/insufficient balance|balance is not sufficient|underflow/i.test(message)) {
+    if (locale === 'fr') return 'Solde USDC insuffisant dans votre portefeuille.';
+    if (locale === 'sw') return 'Huna USDC ya kutosha kwenye pochi yako kwa hili.';
     if (locale === 'yo') return 'Kò sí USDC tó tó nínú àpò rẹ fún èyí.';
     return 'Not enough USDC in your wallet for this.';
   }

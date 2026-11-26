@@ -44,8 +44,7 @@ export function Button({
       'bg-[var(--color-brand)] text-[var(--color-brand-text)] hover:opacity-90 disabled:opacity-40',
     ghost:
       'border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] disabled:opacity-40',
-    danger:
-      'bg-[var(--color-danger)] text-white hover:opacity-90 disabled:opacity-40',
+    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 disabled:opacity-40',
   }[variant];
 
   return (
@@ -53,7 +52,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed motion-reduce:transition-none max-sm:min-h-11 ${styles} ${className}`}
+      className={` inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition motion-reduce:transition-none disabled:cursor-not-allowed ${styles} ${className}`}
     >
       {children}
     </button>
@@ -164,13 +163,7 @@ export function Empty({
   );
 }
 
-export function ExplorerLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
+export function ExplorerLink( { href, children }: { href: string; children: ReactNode }) {
   return (
     <a
       href={href}
@@ -183,16 +176,7 @@ export function ExplorerLink({
   );
 }
 
-export function NavLink({
-  href,
-  children,
-  compact = false,
-}: {
-  href: string;
-  children: ReactNode;
-  /** Tighter horizontal padding for headers that carry an extra link. */
-  compact?: boolean;
-}) {
+export function NavLink( { href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}

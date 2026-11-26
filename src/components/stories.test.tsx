@@ -5,11 +5,15 @@ import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type React from 'react';
 
-// `VoucherRow` links through `DetailLink`, which asks Next for a router to
-// prefetch its page on intent. Stories render outside the app router, so
-// supply the two methods it calls instead of failing on the invariant.
+// Stories render components that reach for the Next router (DetailLink,
+// SiteHeader); jsdom has none mounted, so provide the hooks they call.
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ prefetch: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));

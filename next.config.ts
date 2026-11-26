@@ -7,10 +7,7 @@ import bundleAnalyzer from '@next/bundle-analyzer';
 import { parseSep24Anchors } from './src/lib/sep24-config';
 import { buildCommit } from './src/lib/build-info';
 
-import {
-  contentSecurityPolicy,
-  contentSecurityPolicyHeaderName,
-} from './src/lib/csp';
+import { contentSecurityPolicy, contentSecurityPolicyHeaderName } from './src/lib/csp';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -254,8 +251,7 @@ const config: NextConfig = {
   // runtime. A frontend still calling localhost in production is almost
   // always this variable missing from the build step.
   env: {
-    NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080',
     // Shown on /status (#168) so a support question can name the build.
     APP_VERSION: APP_VERSION,
     APP_COMMIT,

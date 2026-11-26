@@ -29,7 +29,9 @@ const ClinicMap = dynamic(
   () => import('@/components/ClinicMap').then((m) => m.ClinicMap),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
+    loading: () => (
+      <Skeleton className="h-96 w-full rounded-xl" />
+    ),
   },
 );
 
@@ -210,19 +212,19 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <a
             href="#directory"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90 max-sm:min-h-11"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-brand-text)] transition hover:opacity-90"
           >
             Browse clinics &darr;
           </a>
           <Link
             href="/how-it-works"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             How it works &rarr;
           </Link>
           <Link
             href="/clinic"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] max-sm:min-h-11"
+            className="inline-flex max-sm:min-h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
           >
             Clinic desk
           </Link>
@@ -311,10 +313,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div
-          role="search"
-          className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]"
-        >
+        <div role="search" className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
           <label className="block">
             <span className="sr-only">Search clinics by name or service</span>
             <input
@@ -466,12 +465,12 @@ function ClinicCard({ provider: p }: { provider: Provider }) {
       <Card className="h-full p-4 transition hover:border-[var(--color-brand)] sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="font-medium break-words">{p.name}</h3>
+            <h3 className="break-words font-medium">{p.name}</h3>
             <p className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
               {p.country}
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
             Verified
           </span>
         </div>

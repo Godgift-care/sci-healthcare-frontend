@@ -105,10 +105,7 @@ export function statusCounts(
   return counts;
 }
 
-export function sortVouchers(
-  vouchers: Voucher[],
-  sort: VoucherSort,
-): Voucher[] {
+export function sortVouchers(vouchers: Voucher[], sort: VoucherSort): Voucher[] {
   // A copy: callers pass the SWR-cached array and must not see it reordered.
   const sorted = [...vouchers];
   switch (sort) {

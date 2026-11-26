@@ -72,15 +72,6 @@ export const config = {
    */
   walletConnectProjectId:
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
-  flags: {
-    sponsoredFees: process.env.NEXT_PUBLIC_SPONSORED_FEES === 'true',
-    walletConnect: Boolean(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim()),
-    analytics: Boolean(process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN?.trim()),
-    errorReporting: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN?.trim()),
-    faucet: Boolean(process.env.NEXT_PUBLIC_FAUCET_CONTRACT_ID?.trim()),
-    sep24: parseSep24Anchors(process.env.NEXT_PUBLIC_SEP24_ANCHORS).length > 0,
-    testnet: (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet') !== 'public',
-  } satisfies FeatureFlags,
 } as const;
 
 export const flags = config.flags;

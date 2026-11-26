@@ -23,9 +23,27 @@ export type MockRpcCall = {
 declare global {
   interface Window {
     __SCI_MOCK_WALLET__?: { address: string };
-    __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
-    __SCI_MOCK_ADMIN__?: string;
-    __SCI_MOCK_PENDING_ADMIN__?: string | null;
+    /**
+     * Simulates the wallet submitting a SEP-7 transaction (#162). Until it is
+     * set the poller keeps waiting; once present the funding panel reports
+     * the hash and moves to its success state.
+     */
+    __SCI_MOCK_SEP7__?: { hash: string };
+    __SCI_MOCK_RPC__?: {
+      calls: MockRpcCall[];
+      /**
+       * Arguments of each recorded call, as base64 XDR, index-aligned with
+       * `calls`. Kept beside them rather than on them so a test asserting the
+       * calls it expects does not have to know their arguments.
+       */
+      args: string[][];
+      delayMs?: number;
+      reads?: Record<string, unknown>;
+    };
+    /** Playwright: the mock wallet has no USDC trustline yet (#1). */
+    __SCI_NO_TRUSTLINE__?: boolean;
+    /** Playwright: the mock wallet refuses to sign, as a real one can (#1). */
+    __SCI_MOCK_SIGN_REJECT__?: boolean;
   }
 }
 
@@ -59,9 +77,7 @@ export function recordMockCall(call: MockRpcCall, args: string[] = []): void {
 
 /** True once Playwright has made the mock wallet refuse to sign (#1). */
 export function mockSignRejects(): boolean {
-  return (
-    typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_SIGN_REJECT__)
-  );
+  return typeof window !== 'undefined' && Boolean(window.__SCI_MOCK_SIGN_REJECT__);
 }
 
 /**

@@ -42,7 +42,7 @@ function escapeHtml(value: string): string {
 type Located = { provider: Provider; location: ProviderLocation };
 
 export function ClinicMap({ providers }: { providers: Provider[] }) {
-  const { t } = useLocaleContext();
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   // Leaflet loads and draws inside an async effect, where a throw would be
@@ -71,7 +71,20 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
       const bounds = L.latLngBounds([]);
       for (const { provider, location } of located) {
         bounds.extend([location.lat, location.lng]);
-        const directions = directionsLinks(location);
+        const popup = document.createElement('div');
+        popup.innerHTML = `<strong>${escapeHtml(provider.name)}</strong><br>${escapeHtml(provider.country)}<br>`;
+        const link = document.createElement('a');
+        link.href = `/clinics/${encodeURIComponent(provider.address)}`;
+        link.textContent = 'View clinic';
+        const warm = () => prefetchDetail({ kind: 'clinic', id: provider.address }, (href) => router.prefetch(href));
+        link.addEventListener('mouseenter', warm);
+        link.addEventListener('focus', warm);
+        link.addEventListener('click', (event) => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          router.push(link.getAttribute('href')!);
+        });
+        popup.append(link);
         L.circleMarker([location.lat, location.lng], {
           radius: 8,
           color: '#0f766e',
@@ -80,19 +93,7 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
           fillOpacity: 0.85,
         })
           .addTo(map)
-          .bindPopup(
-            `<strong>${escapeHtml(provider.name)}</strong><br>` +
-              `${escapeHtml(provider.country)}<br>` +
-              `<a href="/clinics/${encodeURIComponent(provider.address)}">View clinic</a>` +
-              // Tapping the pin should offer the route (#303). The web
-              // fallback is used here because a Leaflet popup cannot pick a
-              // maps handler; the clinic page carries the geo: link.
-              (directions
-                ? `<br><a href="${escapeHtml(directions.web)}" target="_blank" rel="noreferrer">${escapeHtml(
-                    t('clinic.openInOpenStreetMap'),
-                  )}</a>`
-                : ''),
-          );
+          .bindPopup(popup);
       }
 
       if (located.length > 0) {
@@ -107,7 +108,7 @@ export function ClinicMap({ providers }: { providers: Provider[] }) {
       map?.remove();
       mapRef.current = null;
     };
-  }, [providers, t]);
+  }, [providers, router]);
 
   if (failure) throw failure;
 

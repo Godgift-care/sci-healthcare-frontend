@@ -292,9 +292,7 @@ export default function VoucherPage({
               aria-label="Copy link"
             >
               {copied ? (
-                <span className="font-medium text-emerald-700">
-                  {t('voucher.linkCopied')}
-                </span>
+                <span className="font-medium text-emerald-700">{t('voucher.linkCopied')}</span>
               ) : (
                 <>
                   <svg
@@ -461,34 +459,12 @@ export default function VoucherPage({
             <Field label={t('voucher.disputeOutcome')}>
               <span className="font-medium">
                 {v.disputeOutcome}
-                {v.disputeResolvedAt &&
-                  ` · ${formatDate(v.disputeResolvedAt, locale)}`}
+                {v.disputeResolvedAt && ` · ${formatDate(v.disputeResolvedAt, locale)}`}
               </span>
             </Field>
           )}
           {v.receipt && (
-            <Field label={t('voucher.careReceipt')}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span>
-                  {t('voucher.minted')}{' '}
-                  {formatDate(v.receipt.settledAt, locale)}
-                </span>
-                {/* Public receipt facts only; never the patient reference (#122). */}
-                <ShareReceiptButton
-                  className="print:hidden"
-                  receipt={{
-                    voucherId: v.id,
-                    service:
-                      v.receipt.serviceLabel ??
-                      v.serviceLabel ??
-                      `Service ${v.serviceCode}`,
-                    clinic: v.receipt.providerName ?? v.provider.name,
-                    amount: formatUsdc(v.receipt.amount, locale),
-                    settledOn: formatDate(v.receipt.settledAt, locale),
-                  }}
-                />
-              </div>
-            </Field>
+            <Field label={t('voucher.careReceipt')}>{t('voucher.minted')} {formatDate(v.receipt.settledAt, locale)}</Field>
           )}
           <div className="space-y-4 print:hidden">
             <Field label={t('voucher.patientReference')}>

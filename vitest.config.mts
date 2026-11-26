@@ -20,7 +20,24 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    // Component tests opt into jsdom with `// @vitest-environment jsdom`.
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      // `src/lib` holds the money, privacy and protocol logic (#351). Generated
+      // bindings are produced from the contracts, so covering them would only
+      // measure the generator.
+      include: ['src/lib/**/*.ts'],
+      exclude: ['src/lib/contracts/generated/**', '**/*.test.*'],
+      reporter: ['text', 'text-summary'],
+      // Five points below the figures at the time of writing, so an ordinary
+      // change does not trip it but a new untested module does. Raise these as
+      // coverage improves; never lower one to land a change.
+      thresholds: {
+        statements: 53,
+        branches: 55,
+        functions: 51,
+        lines: 55,
+      },
+    },
   },
 });

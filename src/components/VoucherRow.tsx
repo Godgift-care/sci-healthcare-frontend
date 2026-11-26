@@ -1,17 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { DetailLink } from '@/components/DetailLink';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import useSWR from 'swr';
 
 import { api, type Voucher } from '@/lib/api';
-import {
-  formatDate,
-  formatUsdc,
-  timeUntil,
-  timeSince,
-  toAmountInput,
-} from '@/lib/amounts';
+import { formatDate, formatUsdc, timeUntil, timeSince, toAmountInput } from '@/lib/amounts';
 import { trackEvent, type AnalyticsEvent } from '@/lib/analytics';
 import { explorerTx } from '@/lib/config';
 import {
@@ -39,7 +34,7 @@ import { useToast } from './Toast';
 import { setTransactionStatus, useTransactionStatus } from '@/lib/pending-tx';
 import { VerifyPatient } from './VerifyPatient';
 import { availableActions, type VoucherAction as Action } from '@/lib/voucher-actions';
-import { useLocaleContext } from '@/i18n/LocaleContext';
+import type { RestoreFootprintSignContext } from '@/lib/stellar';
 
 /** Funnel step per contract write. Names only — never any properties. */
 const ACTION_EVENTS = {
@@ -116,19 +111,14 @@ export function VoucherRow({
   // Transaction hash when the indexer never caught up in time.
   const [staleTx, setStaleTx] = useState<string | null>(null);
   const mounted = useRef(true);
-  useEffect(
-    () => () => {
-      mounted.current = false;
-    },
-    [],
-  );
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
   // Disputing freezes funds, so it takes a reason and a confirmation modal.
   // Attesting pays the clinic after the dispute window, so it confirms too.
   const [disputing, setDisputing] = useState(false);
   const [attesting, setAttesting] = useState(false);
   const [reason, setReason] = useState<DisputeReasonCode>(DISPUTE_REASONS[0].code);
-  const [reducing, setReducing] = useState(false);
-  const [reduceNewAmount, setReduceNewAmount] = useState<string>('');
   // Patient check (#33): keep which voucher matched, never the typed values.
   // Keying the match by voucher means a changed row cannot inherit a match.
   const [verifying, setVerifying] = useState(false);
@@ -139,23 +129,6 @@ export function VoucherRow({
   const note = useStaffNote(v.id);
   const [draft, setDraft] = useState('');
   const [editingNote, setEditingNote] = useState(false);
-
-  // #285: a voucher funded with a presence commitment can only be claimed
-  // with the code the patient brings. Read the commitment from the contract
-  // so the desk asks before the wallet is prompted.
-  const { data: voucherOptions } = useSWR(
-    actions.includes('claim') ? ['voucher-options', v.id] : null,
-    () => protocol.options(v.id),
-  );
-  const presenceRequired = Boolean(voucherOptions?.presenceCommitment);
-  // A code scanned from the patient's pass arrives through session storage;
-  // typing replaces it. The fallback avoids a setState-in-effect.
-  const { data: scannedPresenceCode } = useSWR(
-    actions.includes('claim') ? ['presence-code', v.id] : null,
-    () => getScannedPresenceCode(v.id),
-  );
-  const [typedPresenceCode, setTypedPresenceCode] = useState<string | null>(null);
-  const presenceCode = typedPresenceCode ?? scannedPresenceCode ?? '';
 
   async function run(action: Action) {
     if (!address) return void connect();
@@ -315,9 +288,7 @@ export function VoucherRow({
             </p>
           </div>
           <div className="text-end">
-            <div className="mono text-lg font-semibold">
-              ${formatUsdc(v.amount)}
-            </div>
+            <div className="mono text-lg font-semibold">${formatUsdc(v.amount)}</div>
             {v.status === 'Settled' && v.settledNet && (
               <div className="text-xs text-[var(--color-ink-soft)]">
                 clinic received ${formatUsdc(v.settledNet)}
@@ -444,130 +415,33 @@ export function VoucherRow({
 
       {available.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {available.map((a) => {
-            const isReduce = a === 'reduce';
-            return (
-              <Button
-                key={a}
-                variant={isReduce ? 'ghost' : a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
-                disabled={
-                  disabled ||
-                  busy !== null ||
-                  reconciling !== null ||
-                  (a === 'claim' && requirePatientMatch && !patientVerified) ||
-                  (isReduce && reducing)
-                }
-                onClick={() => {
-                  if (a === 'dispute') setDisputing(true);
-                  else if (a === 'attest') setAttesting(true);
-                  else if (isReduce) {
-                    setReduceNewAmount('');
-                    setReducing(true);
-                  } else {
-                    void run(a);
-                  }
-                }}
-              >
-                {busy === a
-                  ? txStatus === 'signing'
-                    ? t('common.signing')
-                    : txStatus === 'submitting'
-                      ? t('common.submitting')
-                      : t('common.confirming')
-                  : reconciling === a
-                    ? 'Updating…'
-                  : isReduce
-                    ? reducing
-                      ? 'Reducing…'
-                      : LABELS[a]
-                    : LABELS[a]}
-              </Button>
-            );
-          })}
-        </div>
-      )}
-      {reducing && (
-        <Modal
-          open={true}
-          onClose={() => setReducing(false)}
-          title={t('reduceTitle', { id: v.id })}
-          actions={
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => setReducing(false)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  const newAmount = BigInt(reduceNewAmount?.replace(/[^0-9]/g, '') || '0');
-                  const currentAmount = BigInt(v.amount);
-                  if (newAmount >= 0n && newAmount <= currentAmount) {
-                    const refundAmount = currentAmount - newAmount;
-                    // TODO: call protocol.reduce with newAmount
-                    setReducing(false);
-                    setReduceNewAmount('');
-                    toast.success(
-                      t('reduceSuccess', {
-                        from: formatUsdc(currentAmount),
-                        to: formatUsdc(newAmount),
-                        refund: formatUsdc(refundAmount),
-                      })
-                    );
-                  } else {
-                    toast.error(t('reduceErrorBelowPrice'));
-                    setReduceNewAmount('');
-                  }
-                }}
-              >
-                {t('reduce')}
-              </Button>
-            </>
-          }
-        >
-          <div className="space-y-3">
-            <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[var(--color-ink-soft)]">
-                {t('reduceNewAmount')}
-              </span>
-              <input
-                type="number"
-                value={reduceNewAmount}
-                onChange={(e) => setReduceNewAmount(e.target.value)}
-                inputMode="decimal"
-                min={0}
-                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
-                placeholder="e.g. 1.50"
-              />
-              <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
-                {t('reduceMinAmount')}
-              </span>
-            </label>
-          </div>
-        </Modal>
-      )}
-
-      {available.includes('claim') && presenceRequired && (
-        <div className="mt-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
-          <label className="block">
-            <span className="text-sm font-medium">{t('voucher.presenceCode')}</span>
-            <input
-              value={presenceCode}
-              onChange={(e) => setTypedPresenceCode(e.target.value.trim())}
-              placeholder={t('voucher.presenceCodePlaceholder')}
-              className="mono mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-xs"
-            />
-          </label>
-          <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
-            {t('voucher.presenceCodeNote')}
-          </p>
-          {!presenceCode.trim() && (
-            <p role="status" className="mt-2 text-xs text-[var(--color-danger)]">
-              {t('voucher.presenceRequired')}
-            </p>
-          )}
+          {available.map((a) => (
+            <Button
+              key={a}
+              variant={a === 'dispute' ? 'danger' : a === 'settle' ? 'primary' : 'ghost'}
+              disabled={
+                disabled ||
+                busy !== null ||
+                reconciling !== null ||
+                (a === 'claim' && requirePatientMatch && !patientVerified)
+              }
+              onClick={() => {
+                if (a === 'dispute') setDisputing(true);
+                else if (a === 'attest') setAttesting(true);
+                else void run(a);
+              }}
+            >
+              {busy === a
+                ? txStatus === 'signing'
+                  ? t('common.signing')
+                  : txStatus === 'submitting'
+                    ? t('common.submitting')
+                    : t('common.confirming')
+                : reconciling === a
+                  ? 'Updating…'
+                  : LABELS[a]}
+            </Button>
+          ))}
         </div>
       )}
 

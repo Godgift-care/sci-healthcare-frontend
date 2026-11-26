@@ -291,9 +291,7 @@ describe('timeUntil', () => {
   });
 
   it('accepts a Date as the reference point', () => {
-    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe(
-      'in 30 minutes',
-    );
+    expect(timeUntil('2026-05-20T10:30:00.000Z', new Date(now))).toBe('in 30 minutes');
   });
 
   afterEach(() => {

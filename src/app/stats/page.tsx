@@ -331,9 +331,7 @@ export default function StatsPage() {
             {stats ? formatCount(stats.activeProviders, locale) : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats
-              ? `${formatCount(stats.providers, locale)} registered total`
-              : '…'}
+            {stats ? `${formatCount(stats.providers, locale)} registered total` : '…'}
           </div>
         </Card>
 
@@ -371,9 +369,7 @@ export default function StatsPage() {
             {stats ? `$${formatUsdc(stats.settledValue, locale)}` : '—'}
           </div>
           <div className="mt-0.5 text-xs text-[var(--color-ink-soft)]">
-            {stats
-              ? `${formatCount(stats.settledVouchers, locale)} vouchers paid`
-              : '…'}
+            {stats ? `${formatCount(stats.settledVouchers, locale)} vouchers paid` : '…'}
           </div>
         </Card>
       </section>

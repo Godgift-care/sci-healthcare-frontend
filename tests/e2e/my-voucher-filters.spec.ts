@@ -3,12 +3,7 @@ import { scValToNative, xdr } from '@stellar/stellar-sdk';
 
 import { blockAnalytics } from '../analytics-guard';
 import { CLINIC, FUNDER, UNLOCATED_CLINIC } from './fixtures';
-import {
-  mockBackend,
-  mockInvokeArgs,
-  mockInvokes,
-  useMockWallet,
-} from './helpers';
+import { mockBackend, mockInvokeArgs, mockInvokes, useMockWallet } from './helpers';
 
 /**
  * Funders with many vouchers need to find the ones that need action (#97).

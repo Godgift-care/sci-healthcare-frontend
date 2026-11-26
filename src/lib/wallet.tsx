@@ -13,7 +13,18 @@ import {
 import { config } from './config';
 import { formatXlm } from './amounts';
 import { mockSignRejects, mockWalletAddress } from './e2e-seam';
-import type { RestoreFootprintSignContext } from './stellar';
+import {
+  PASSKEY_WALLET_ID,
+  PasskeyModule,
+  connectPasskeyWallet,
+  getStoredPasskeyAddress,
+  signWithPasskey,
+} from './passkey';
+import {
+  checkAccountFunded,
+  getAccountSpendableBalance,
+  type RestoreFootprintSignContext,
+} from './stellar';
 import { defaultLocale, isLocale } from '@/i18n/config';
 import { translate } from '@/i18n/translate';
 import {
@@ -22,18 +33,6 @@ import {
   walletConnectChainId,
   walletConnectMetadata,
 } from './wallet-connect';
-
-export const PASSKEY_WALLET_ID = 'passkey-smart-wallet';
-const PASSKEY_STORAGE_ADDR = 'sci:passkey:address';
-
-function getStoredPasskeyAddress(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(PASSKEY_STORAGE_ADDR);
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Wallet connection.
@@ -195,9 +194,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isLowXlm, setIsLowXlm] = useState(false);
   const [spendableXlm, setSpendableXlm] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [walletNetworkName, setWalletNetworkName] = useState<string | null>(
-    null,
-  );
+  const [walletNetworkName, setWalletNetworkName] = useState<string | null>(null);
   const [networkMismatch, setNetworkMismatch] = useState(false);
 
   // Restore a previous session silently (#59, #342: scheduled after idle).
@@ -467,7 +464,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const savedWalletId = getStorageItem(SELECTED_WALLET_ID_KEY);
+      const savedWalletId = (() => {
+        try {
+          return window.localStorage.getItem(SELECTED_WALLET_ID_KEY);
+        } catch {
+          return null;
+        }
+      })();
 
       if (savedWalletId === PASSKEY_WALLET_ID || address.startsWith('C')) {
         const { signWithPasskey } = await import('./passkey');

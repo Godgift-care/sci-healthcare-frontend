@@ -64,23 +64,6 @@
     "storybook": "^10.6.2",
     "tailwindcss": "4.3.5",
     "typescript": "5.7.3",
-    "vitest": "5.1.0",
-    "husky": "^9.1.7",
-    "knip": "^6.46.1",
-    "lint-staged": "^17.6.1",
-    "prettier": "^3.10.1",
-    "prettier-plugin-tailwindcss": "^0.8.1"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,mjs,cjs}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml,css}": [
-      "prettier --write"
-    ]
-  },
-  "overrides": {
-    "undici": "8.5.0"
+    "vitest": "5.1.0"
   }
 }

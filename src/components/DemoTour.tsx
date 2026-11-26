@@ -77,9 +77,7 @@ export function DemoTour() {
       <Card className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-xl">
-            <h2 className="text-sm font-semibold">
-              {t('components.demoTour.title')}
-            </h2>
+            <h2 className="text-sm font-semibold">{t('components.demoTour.title')}</h2>
             <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
               {isTestnet
                 ? t('components.demoTour.introTestnet')
@@ -94,7 +92,7 @@ export function DemoTour() {
               type="button"
               onClick={finish}
               aria-label={t('components.demoTour.dismiss')}
-              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] transition hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] motion-reduce:transition-none"
+              className="rounded-md px-2 py-1 text-lg leading-none text-[var(--color-ink-soft)] transition motion-reduce:transition-none hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)]"
             >
               ×
             </button>

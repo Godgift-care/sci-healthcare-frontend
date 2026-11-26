@@ -32,7 +32,7 @@ export type TimelineStep = {
   state: StepState;
   /** When it happened, or when it is due for upcoming steps. */
   at: string | Date | null;
-  detail?: string | undefined;
+  detail?: string;
   /**
    * Hash of the transaction behind this step, when the indexer has one
    * (#18). Rendered as a "view transaction" link to Stellar Expert, so a

@@ -9,17 +9,7 @@ const config = [
     files: ['**/*.{js,jsx,mjs,ts,tsx,mts,cts}'],
     rules: jsxA11y.flatConfigs.recommended.rules,
   },
-  {
-    ignores: [
-      '.next/',
-      'out/',
-      'node_modules/',
-      'next-env.d.ts',
-      'storybook-static/',
-      '.lighthouseci/',
-      'src/lib/contracts/generated/**',
-    ],
-  },
+  { ignores: ['.next/', 'out/', 'node_modules/', 'next-env.d.ts', 'storybook-static/', '.lighthouseci/', 'src/lib/contracts/generated/**'] },
   {
     // GitHub Actions scripts (actions/github-script loads CommonJS).
     files: ['.github/scripts/**/*.cjs'],

@@ -24,7 +24,7 @@ import {
 } from '../api';
 import { fetchVoucherFromChain } from '../voucher-chain';
 
-export type LoadedVoucher = VoucherDetail & { isChainFallback?: boolean };
+export type LoadedVoucher = VoucherDetail;
 
 /**
  * Hook for fetching and caching a single voucher with its receipt (#63).
@@ -450,6 +450,7 @@ export function useService(
     mutate,
   };
 }
+
 
 /**
  * Hook for fetching and caching receipts for a patient beneficiary ref (#63).

@@ -200,9 +200,7 @@ test('a waiting second worker prompts the user to reload', async ({ page }) => {
   await waitForController(page);
 });
 
-test('indexer data is never cached, however patient-shaped it is', async ({
-  page,
-}) => {
+test('indexer data is never cached, however patient-shaped it is', async ({ page }) => {
   await useMockWallet(page, FUNDER);
   await mockBackend(page, {
     providers: [CLINIC],

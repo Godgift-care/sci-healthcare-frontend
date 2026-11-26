@@ -107,7 +107,6 @@ Every one of these is inlined into the client bundle at **build** time.
 | `NEXT_PUBLIC_USDC_CONTRACT_ID` | `CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M` |
 | `NEXT_PUBLIC_FAUCET_CONTRACT_ID` | `CCB25WG7DQ2CSNXPTOHZO2PDZ324FQPZLH3LSNCCLWYM3FEH52GEXC47` (testnet only; leave unset in production) |
 | `NEXT_PUBLIC_USDC_ISSUER` | `GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR` |
-| `NEXT_PUBLIC_SPONSOR_CONTRACT_ID` | `(optional) matching-sponsor contract; unset hides the sponsor page, its nav link and voucher match lookups` |
 | `NEXT_PUBLIC_SEP24_ANCHORS` | Optional JSON allowlist of anchor names, domains, supported ISO country codes, asset codes and exact asset issuers; see [SEP-24 cash-out](docs/sep24.md) |
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | `(optional) analytics domain, e.g. `app.example.com`; unset disables analytics entirely` |
 | `NEXT_PUBLIC_SENTRY_DSN` | `(optional) Sentry DSN for error reporting; unset disables it entirely` |

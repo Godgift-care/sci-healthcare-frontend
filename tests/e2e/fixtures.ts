@@ -132,11 +132,7 @@ function baseVoucher(id: string, overrides: Record<string, unknown>) {
     id,
     funder: FUNDER,
     beneficiaryRef: PATIENT_REF,
-    provider: {
-      address: PROVIDER,
-      name: 'Ikeja General Clinic',
-      country: 'NG',
-    },
+    provider: { address: PROVIDER, name: 'Ikeja General Clinic', country: 'NG' },
     serviceCode: 101,
     serviceLabel: 'Outpatient consult',
     amount: '30000000',

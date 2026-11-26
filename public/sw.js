@@ -16,11 +16,14 @@
  *
  * What it NEVER caches:
  *
- * - Any route or request carrying patient references, beneficiary references/hashes,
- *   keys, or secrets.
- * - Receipts (`/receipts`) and vouchers (`/vouchers`), whose state is on-chain.
- * - Readiness checks (`/ready`), which must accurately reflect real-time network health.
- * - Same-origin RSC payloads (`?_rsc=`), which carry client-side page state.
+ * A cached copy of an API answer would also be *wrong*, not just leaky: a
+ * voucher's state comes from the chain, and showing yesterday's answer
+ * while offline invites a funder to act on it.
+ *
+ * A newly installed worker waits until a user chooses to reload, so a deploy
+ * cannot replace a page in the middle of a contract write. Writes are
+ * untouched — they were never cacheable — and no request is ever served from
+ * cache while the network answers.
  */
 
 const CACHE = 'sci-healthcare-shell-v1';

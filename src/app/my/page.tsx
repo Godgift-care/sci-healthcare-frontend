@@ -1,9 +1,25 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Voucher } from '@sci-healthcare/client';
 
-import { useLocaleContext } from '@/i18n/LocaleContext';
+import { formatDate, shortAddress } from '@/lib/amounts';
+import { api } from '@/lib/api';
+import { trackEvent } from '@/lib/analytics';
+import {
+  beneficiaryRef,
+  localIdentity,
+  parsePatientBackup,
+  serialisePatientBackup,
+} from '@/lib/beneficiary';
+import { humaniseError } from '@/lib/errors';
+import { buildReceiptCsvRows, buildVoucherCsvRows, downloadCsv } from '@/lib/csv';
+import { getStaffNotes } from '@/lib/staff-notes';
+import { invalidateVouchers, useLiveUpdates, useProviders, useReceipts, useVouchers } from '@/lib/hooks';
+import { voucher as protocol } from '@/lib/protocol';
+import { useSavedIdentity } from '@/lib/useSavedIdentity';
 import {
   DEFAULT_SORT,
   SORT_LABELS,
@@ -14,10 +30,8 @@ import {
   sortVouchers,
   type VoucherSort,
 } from '@/lib/voucher-filters';
-import { shortAddress } from '@/lib/amounts';
-import { useProviders, useVouchers } from '@/lib/hooks';
+import { groupVouchersByPatient } from '@/lib/voucher-groups';
 import { useWallet } from '@/lib/wallet';
-import { useVirtualList } from '@/lib/useVirtualList';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
 import { RecentVouchers } from '@/components/RecentVouchers';
@@ -31,14 +45,9 @@ import {
 } from '@/components/my-vouchers';
 
 export default function MyPage() {
-  const { address, signTransaction } = useWallet();
+  const { address, signTransaction, connect } = useWallet();
   const { t } = useLocaleContext();
-  const { providers } = useProviders();
-  const {
-    vouchers: funded,
-    error: fundedError,
-    mutate: mutateFunded,
-  } = useVouchers(address ? { funder: address } : null);
+  useLiveUpdates();
 
   const [query, setQuery] = useState('');
   const queryRef = useRef('');
@@ -61,6 +70,94 @@ export default function MyPage() {
   const clinicFilter = searchParams.get('clinic');
   const sort = parseSort(searchParams.get('sort'));
 
+  const saved = useSavedIdentity();
+  // null until the user types, so the saved values show through.
+  const [identifierDraft, setIdentifier] = useState<string | null>(null);
+  const [secretDraft, setSecret] = useState<string | null>(null);
+  const identifier = identifierDraft ?? saved.identifier;
+  const secret = secretDraft ?? saved.key;
+
+  // The saved identity is HMAC'd locally so a voucher's beneficiaryRef can be
+  // matched to it without asking the API who the patient is. Null means there
+  // is nothing usable saved, and the list stays flat.
+  const [savedMatch, setSavedMatch] = useState<{
+    identifier: string;
+    key: string;
+    ref: string;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const identifier = saved.identifier.trim();
+    const key = saved.key;
+    if (!identifier || key.length < 32) return;
+    beneficiaryRef(identifier, key)
+      .then((ref) => {
+        if (!cancelled) setSavedMatch({ identifier, key, ref });
+      })
+      .catch(() => {
+        // Malformed saved values: the flat list is a fine fallback, and the
+        // history form reports the problem when the user asks for it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [saved.identifier, saved.key]);
+  // A result from a previous identity is ignored rather than cleared in the
+  // effect, which would be a synchronous setState during render.
+  const savedRef =
+    savedMatch &&
+    savedMatch.identifier === saved.identifier.trim() &&
+    savedMatch.key === saved.key
+      ? savedMatch.ref
+      : null;
+
+  const [activeRef, setActiveRef] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [backupAccepted, setBackupAccepted] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
+  const [backupQr, setBackupQr] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrBusy, setQrBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Batch refunding state (#45)
+  const [batchRefunding, setBatchRefunding] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+    currentId: string;
+  } | null>(null);
+  const [batchSummary, setBatchSummary] = useState<{
+    succeeded: string[];
+    failed: { id: string; error: string }[];
+  } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectVisibleRef = useRef<HTMLInputElement>(null);
+
+  // SWR cached reads (#63)
+  const {
+    vouchers: walletFunded,
+    error: fundedError,
+    mutate: mutateFunded,
+  } = useVouchers(address ? { funder: address } : null);
+
+  const { providers } = useProviders();
+
+  const {
+    receipts,
+    totalSpendDisplay: spend,
+    error: receiptsError,
+  } = useReceipts(activeRef);
+
+  const {
+    vouchers: refVouchers,
+    error: refVouchersError,
+  } = useVouchers(activeRef ? { beneficiaryRef: activeRef } : null);
+
   const providerMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of providers) {
@@ -69,17 +166,9 @@ export default function MyPage() {
     return map;
   }, [providers]);
 
-  const visible = useMemo(
-    () =>
-      sortVouchers(
-        filterVouchers(funded, {
-          status: statusFilter,
-          clinic: clinicFilter,
-        }),
-        sort,
-      ),
-    [funded, statusFilter, clinicFilter, sort],
-  );
+  // Combine wallet vouchers with any looked-up beneficiary history vouchers
+  const seenIds = new Set(walletFunded.map((v) => v.id));
+  const funded = [...walletFunded, ...refVouchers.filter((v) => !seenIds.has(v.id))];
 
   const statusChoices = useMemo(
     () => Array.from(new Set(funded.map((v) => v.status))).sort(),
@@ -98,14 +187,11 @@ export default function MyPage() {
     filterVouchers(funded, { status: statusFilter, clinic: clinicFilter }),
     sort,
   );
-  const {
-    containerRef: myVouchersRef,
-    virtualItems: myVirtualItems,
-    totalCount: myTotalCount,
-    paddingTop: myPaddingTop,
-    paddingBottom: myPaddingBottom,
-    isVirtual: myIsVirtual,
-  } = useVirtualList(visible);
+  // Group by the patient saved on this device. Without one, every row would
+  // sit under "Unknown patients", so the flat list is clearer.
+  const groups = savedRef
+    ? groupVouchersByPatient(visible, [{ name: saved.identifier, ref: savedRef }])
+    : null;
   const filtered = statusFilter !== null || Boolean(clinicFilter);
   const isDefaultView = !filtered && sort === DEFAULT_SORT;
 
@@ -137,11 +223,9 @@ export default function MyPage() {
     });
   }
 
-  const selectedVouchers = useMemo(
-    () => funded.filter((v) => selectedIds.has(v.id)),
-    [funded, selectedIds],
-  );
-
+  const refundable = funded.filter((v) => v.isRefundable);
+  const selectedVouchers = funded.filter((v) => selectedIds.has(v.id));
+  const selectedRefundable = selectedVouchers.filter((v) => v.isRefundable);
   const allVisibleSelected =
     visible.length > 0 && visible.every((v) => selectedIds.has(v.id));
 
@@ -173,6 +257,300 @@ export default function MyPage() {
     });
   }
 
+  async function handleRefund(vouchersToRefund: typeof funded) {
+    if (!address) return void connect();
+    const toRefund = vouchersToRefund.filter((v) => v.isRefundable);
+    if (toRefund.length === 0) return;
+
+    setBatchRefunding(true);
+    setBatchSummary(null);
+    try {
+      const result = await protocol.refundMany(
+        address,
+        toRefund.map((v) => v.id),
+        signTransaction,
+        (current, total, currentId) => {
+          setBatchProgress({ current, total, currentId });
+        },
+      );
+      for (const id of result.refunded) {
+        trackEvent('voucher_refunded');
+        void invalidateVouchers(id);
+      }
+      const succeeded = result.refunded;
+      const failed = result.failed.map(({ id, error }) => ({
+        id,
+        error: humaniseError(error),
+      }));
+      setBatchSummary({ succeeded, failed });
+      setSelectedIds((previous) => {
+        const next = new Set(previous);
+        for (const id of succeeded) next.delete(id);
+        return next;
+      });
+    } finally {
+      setBatchProgress(null);
+      setBatchRefunding(false);
+      void mutateFunded();
+    }
+  }
+
+  function downloadSelectedVouchersCsv() {
+    if (selectedVouchers.length === 0) return;
+    downloadCsv(
+      'selected-vouchers.csv',
+      buildVoucherCsvRows(selectedVouchers, providerMap, window.location.origin, getStaffNotes()),
+    );
+  }
+
+  async function loadHistory() {
+    setError(null);
+    try {
+      const ref = await beneficiaryRef(identifier, secret);
+      await localIdentity.save(saved.selectedNickname || 'Saved patient', identifier, secret);
+      setActiveRef(ref);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load history');
+    }
+  }
+
+  async function downloadFundedVouchersCsv() {
+    if (!address) return;
+
+    const all: typeof walletFunded = [];
+    const seen = new Set<string>();
+    let offset = 0;
+    let total = 0;
+
+    while (true) {
+      const page = await api.vouchers({ funder: address, limit: 100, offset });
+      const unique = page.vouchers.filter((voucher) => {
+        if (seen.has(voucher.id)) return false;
+        seen.add(voucher.id);
+        return true;
+      });
+      if (unique.length === 0) break;
+      all.push(...unique);
+      offset += page.vouchers.length;
+      // Cursor-paged responses omit the total; a short page is the end.
+      if (page.total === undefined) {
+        if (page.vouchers.length < 100) break;
+      } else {
+        total = page.total;
+        if (offset >= total) break;
+      }
+    }
+
+    downloadCsv('funded-vouchers.csv', buildVoucherCsvRows(all, providerMap, window.location.origin, getStaffNotes()));
+  }
+
+  async function downloadCareHistoryCsv() {
+    if (!activeRef) return;
+
+    const all: typeof receipts = [];
+    const seen = new Set<string>();
+    let offset = 0;
+    let total = 0;
+
+    while (true) {
+      const page = await api.receipts(activeRef, { limit: 100, offset });
+      const unique = page.receipts.filter((receipt) => {
+        if (seen.has(receipt.voucherId)) return false;
+        seen.add(receipt.voucherId);
+        return true;
+      });
+      if (unique.length === 0) break;
+      all.push(...unique);
+      total = page.total;
+      offset += page.receipts.length;
+      if (offset >= total) break;
+    }
+
+    downloadCsv('care-history.csv', buildReceiptCsvRows(all, providerMap));
+  }
+
+  async function applyImportedPatient(input: string | File | unknown) {
+    setImportError(null);
+    try {
+      const patient = await parsePatientBackup(input);
+      // Saved into the same store as every other saved patient, and
+      // selected, so it appears in the patient picker straight away.
+      if (!(await localIdentity.save(patient.nickname, patient.identifier, patient.key))) {
+        throw new Error('This device could not save the patient. Is storage blocked?');
+      }
+      await localIdentity.select(patient.nickname);
+      setIdentifier(patient.identifier);
+      setSecret(patient.key);
+      setError(null);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'That patient backup is invalid.');
+    }
+  }
+
+  const patientBackup = useMemo(() => {
+    if (!identifier || !secret) return '';
+    try {
+      return serialisePatientBackup({
+        nickname: saved.selectedNickname || undefined,
+        identifier,
+        key: secret,
+        createdAt: new Date().toISOString(),
+      });
+    } catch {
+      return '';
+    }
+  }, [identifier, secret, saved.selectedNickname]);
+
+  function downloadPatientBackup() {
+    if (!identifier || !secret) return;
+
+    const fileName = `${(identifier || 'patient').trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9._-]/g, '') || 'patient'}-backup.json`;
+    const payload = serialisePatientBackup({
+        nickname: saved.selectedNickname || undefined,
+        identifier,
+        key: secret,
+        createdAt: new Date().toISOString(),
+      });
+    const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function renderPatientQr() {
+    if (!identifier || !secret) return;
+
+    setBackupBusy(true);
+    setBackupError(null);
+    try {
+      const payload = serialisePatientBackup({
+        nickname: saved.selectedNickname || undefined,
+        identifier,
+        key: secret,
+        createdAt: new Date().toISOString(),
+      });
+      // QR generation is optional; keep it out of the initial dashboard bundle.
+      const { default: QRCode } = await import('qrcode');
+      const value = await QRCode.toDataURL(payload, {
+        width: 300,
+        margin: 1,
+        color: { dark: '#111827', light: '#ffffff' },
+        errorCorrectionLevel: 'M',
+      });
+      setBackupQr(value);
+    } catch {
+      setBackupError('Unable to render the QR code for this backup.');
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!qrOpen) return;
+
+    let cancelled = false;
+    let controls: { stop: () => void | Promise<void> } | undefined;
+    let cameraElement: HTMLVideoElement | null = null;
+
+    const start = async () => {
+      setQrBusy(true);
+      try {
+        // Load the camera decoder only after the user opens the scanner.
+        const { BrowserQRCodeReader } = await import('@zxing/browser');
+        if (cancelled) return;
+        const devices = await BrowserQRCodeReader.listVideoInputDevices();
+        if (cancelled) return;
+        if (devices.length === 0) {
+          throw new Error('No camera is available on this device.');
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false,
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        const reader = new BrowserQRCodeReader();
+        cameraElement = videoRef.current;
+        if (!cameraElement) {
+          throw new Error('Unable to open the QR scanner.');
+        }
+        cameraElement.srcObject = stream;
+        await cameraElement.play();
+
+        controls = await reader.decodeFromVideoDevice(
+          devices[0].deviceId,
+          cameraElement,
+          async (result, error) => {
+            if (cancelled) return;
+            if (result) {
+              const text = result.getText();
+              setQrBusy(false);
+              setQrOpen(false);
+              await applyImportedPatient(text);
+            } else if (error && !/NotFoundException|NoCodeFound/.test(String(error))) {
+              setQrBusy(false);
+              setQrOpen(false);
+              setImportError(
+                'Could not read that QR code. Try another angle or import the JSON backup file instead.',
+              );
+            }
+          },
+        );
+        if (cancelled) void controls.stop();
+      } catch (err) {
+        if (!cancelled) {
+          setQrBusy(false);
+          setQrOpen(false);
+          setImportError(
+            err instanceof Error ? err.message : 'Unable to open the QR scanner.',
+          );
+        }
+      }
+    };
+
+    void start();
+    return () => {
+      cancelled = true;
+      void controls?.stop();
+      const stream = cameraElement?.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((track) => track.stop());
+      if (cameraElement) cameraElement.srcObject = null;
+    };
+  }, [qrOpen]);
+
+  const historyError = error || receiptsError || refVouchersError;
+
+  // Batch selection wraps every row, whether the list is grouped by patient or
+  // flat, so the two renderings cannot drift apart.
+  const renderVoucherRow = (v: (typeof visible)[number]) => (
+    <div key={v.id} className="flex items-start gap-3">
+      <label className="inline-flex min-h-11 shrink-0 items-center">
+        <input
+          type="checkbox"
+          checked={selectedIds.has(v.id)}
+          disabled={batchRefunding}
+          onChange={(event) => toggleVoucherSelection(v.id, event.target.checked)}
+          aria-label={t('my.selectVoucher', { id: v.id })}
+          className="h-4 w-4 rounded border-[var(--color-line)]"
+        />
+      </label>
+      <div className="min-w-0 flex-1">
+        <VoucherRow
+          v={v}
+          actions={['dispute', 'refund', 'settle']}
+          onDone={() => void mutateFunded()}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       <TestUsdc />
@@ -181,18 +559,99 @@ export default function MyPage() {
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">Vouchers I funded</h1>
-          <VoucherBulkActions
-            funded={funded}
-            selectedVouchers={selectedVouchers}
-            providerMap={providerMap}
-            address={address}
-            signTransaction={signTransaction}
-            onMutate={() => void mutateFunded()}
-            onClearSelected={clearSelected}
-            t={t}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/my/transactions"
+              className="inline-flex items-center rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)]"
+            >
+              Transaction history
+            </Link>
+            {walletFunded.length > 0 && (
+              <Button variant="ghost" onClick={() => void downloadFundedVouchersCsv()}>
+                Download CSV
+              </Button>
+            )}
+            {selectedVouchers.length > 0 && (
+              <>
+                <Button
+                  variant="ghost"
+                  disabled={batchRefunding}
+                  onClick={downloadSelectedVouchersCsv}
+                >
+                  {t('my.exportSelected')}
+                </Button>
+                {selectedRefundable.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    disabled={batchRefunding}
+                    onClick={() => void handleRefund(selectedRefundable)}
+                  >
+                    {batchRefunding
+                      ? t('my.refundingCount', {
+                          current: batchProgress?.current ?? 0,
+                          total: batchProgress?.total ?? selectedRefundable.length,
+                        })
+                      : t('my.refundSelected', { count: selectedRefundable.length })}
+                  </Button>
+                )}
+              </>
+            )}
+            {refundable.length > 0 && (
+              <Button
+                variant="ghost"
+                disabled={batchRefunding}
+                onClick={() => void handleRefund(refundable)}
+              >
+                {batchRefunding
+                  ? t('my.refundingCount', {
+                      current: batchProgress?.current ?? 0,
+                      total: batchProgress?.total ?? refundable.length,
+                    })
+                  : t('my.refundAll', { count: refundable.length })}
+              </Button>
+            )}
+          </div>
         </div>
-
+        {selectedVouchers.length > 0 && (
+          <p aria-live="polite" className="text-xs text-[var(--color-ink-soft)]">
+            {t('my.selectedCount', { count: selectedVouchers.length })}
+          </p>
+        )}
+        {batchProgress && (
+          <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm">
+            <div className="flex items-center justify-between text-xs text-[var(--color-ink-soft)]">
+              <span>{t('my.refundingVoucher', { id: batchProgress.currentId })}</span>
+              <span className="mono font-medium">
+                {t('my.refundProgress', {
+                  current: batchProgress.current,
+                  total: batchProgress.total,
+                })}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line)]">
+              <div
+                className="h-full bg-[var(--color-brand)] transition-all duration-300"
+                style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {batchSummary && (
+          <div className="space-y-2">
+            {batchSummary.succeeded.length > 0 && (
+              <Alert kind="success">
+                {t('my.refundedSummary', { count: batchSummary.succeeded.length })}{' '}
+                {batchSummary.succeeded.map((id) => `#${id}`).join(', ')}.
+              </Alert>
+            )}
+            {batchSummary.failed.length > 0 && (
+              <Alert>
+                {t('my.refundFailedSummary', { count: batchSummary.failed.length })}{' '}
+                {batchSummary.failed.map((f) => `#${f.id} (${f.error})`).join(', ')}.
+              </Alert>
+            )}
+          </div>
+        )}
         {fundedError && <Alert>{fundedError}</Alert>}
         {!address && (
           <Empty>Connect a wallet to see vouchers you have funded.</Empty>
@@ -298,47 +757,24 @@ export default function MyPage() {
               <span>{t('my.selectAllVisible', { count: visible.length })}</span>
             </label>
           )}
-          <div
-            ref={myVouchersRef}
-            role="table"
-            aria-rowcount={myTotalCount}
-            aria-label={t('my.title')}
-            className="space-y-3"
-            style={
-              myIsVirtual
-                ? { paddingTop: `${myPaddingTop}px`, paddingBottom: `${myPaddingBottom}px` }
-                : undefined
-            }
-          >
-            {myVirtualItems.map(({ item: v, index }) => (
-              <div
-                key={v.id}
-                role="row"
-                aria-rowindex={index + 1}
-                className="flex items-start gap-3"
-              >
-                <label className="inline-flex min-h-11 shrink-0 items-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(v.id)}
-                    disabled={batchRefunding}
-                    onChange={(event) =>
-                      toggleVoucherSelection(v.id, event.target.checked)
-                    }
-                    aria-label={t('my.selectVoucher', { id: v.id })}
-                    className="h-4 w-4 rounded border-[var(--color-line)]"
-                  />
-                </label>
-                <div className="min-w-0 flex-1">
-                  <VoucherRow
-                    v={v}
-                    actions={['dispute', 'refund', 'settle']}
-                    onDone={() => void mutateFunded()}
-                  />
+          {groups ? (
+            groups.map((group) => (
+              <section key={group.ref ?? 'unknown'} className="space-y-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-medium">
+                    {group.name ?? 'Unknown patients'}
+                  </h3>
+                  <span className="text-xs text-[var(--color-ink-soft)]">
+                    {group.vouchers.length} voucher
+                    {group.vouchers.length === 1 ? '' : 's'}
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
+                {group.vouchers.map(renderVoucherRow)}
+              </section>
+            ))
+          ) : (
+            <div className="space-y-3">{visible.map(renderVoucherRow)}</div>
+          )}
         </div>
       </section>
 

@@ -157,8 +157,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const notificationsLabel =
-    t('components.toast.notifications') || 'Notifications';
+  const notificationsLabel = t('components.toast.notifications') || 'Notifications';
   const dismissLabel = t('components.toast.dismiss') || 'Dismiss notification';
 
   return (

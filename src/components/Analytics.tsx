@@ -4,15 +4,8 @@ import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { useEffect, useRef } from 'react';
 
-import {
-  flushAnalyticsQueue,
-  trackMetric,
-  trackPageview,
-} from '@/lib/analytics';
-import {
-  reportCoreWebVitals,
-  useAnalyticsOptOut,
-} from '@/lib/analytics-preference';
+import { flushAnalyticsQueue, trackMetric, trackPageview } from '@/lib/analytics';
+import { reportCoreWebVitals, useAnalyticsOptOut } from '@/lib/analytics-preference';
 import { useLowBandwidth } from '@/lib/low-bandwidth';
 
 /**

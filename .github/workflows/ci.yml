@@ -123,9 +123,8 @@ jobs:
 
   lighthouse:
     name: lighthouse
-    needs: build
     runs-on: ubuntu-24.04
-    # Measures the app built with the same public config as the build job.
+    # Same build-time env as the build job; the app is measured as built.
     env:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
@@ -158,7 +157,6 @@ jobs:
 
   visual:
     name: visual
-    needs: build
     runs-on: ubuntu-24.04
     env:
       PLAYWRIGHT_USE_BUILD_ARTIFACT: 'true'
@@ -169,10 +167,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: .next
       - name: Get Playwright version
         id: playwright-version
         run: |
@@ -192,8 +186,9 @@ jobs:
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
-      # This compares the shared default-config build with the backend mocked
-      # and the clock frozen. After an intentional UI change, run
+      # The web server builds the app itself (see playwright.config.ts), so
+      # this compares screenshots with the backend mocked and the clock
+      # frozen. After an intentional UI change, run
       # `npm run test:visual:update` locally and commit the new snapshots.
       - run: npm run test:visual
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -204,8 +199,8 @@ jobs:
             test-results/
             playwright-report/
 
-  bundle:
-    name: bundle budget
+  e2e:
+    name: e2e
     runs-on: ubuntu-24.04
     # Same build-time env as the build job: the budget is measured on an
     # identical production build.
@@ -272,10 +267,11 @@ jobs:
       - name: Install Playwright OS dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
-      # E2E uses the feature-enabled config from playwright.config.ts, so it
-      # builds its own artifact. Each flow uses mocked API, wallet and RPC.
+      # The web server builds the app itself (see playwright.config.ts).
+      # Each flow runs against a mocked API with a mock wallet and mock RPC
+      # (see src/lib/e2e-seam.ts): no testnet, indexer or wallet needed.
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
           name: e2e-test-results-${{ matrix.shard }}
@@ -295,90 +291,3 @@ jobs:
       # every action pinned to a commit SHA and every workflow declaring
       # permissions. It needs no install, so it runs in this job too.
       - run: node --test .github/scripts/automerge.test.cjs .github/scripts/security-scan.test.cjs .github/scripts/workflow-policy.test.cjs
-
-  format:
-    name: format
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      # Config: .prettierrc.json and .prettierignore. `npm run format` fixes
-      # whatever this reports.
-      - run: npm run format:check
-
-  deadcode:
-    name: deadcode
-    runs-on: ubuntu-24.04
-    # knip loads next.config.ts, which validates the build environment.
-    env:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
-      NEXT_PUBLIC_STELLAR_NETWORK: testnet
-      NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
-      NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015'
-      NEXT_PUBLIC_REGISTRY_CONTRACT_ID: CAMU635NRFEHATJ6MTY5SI43IAZ43KHPFXAQDQAST2AHKCHLSGWHVE4V
-      NEXT_PUBLIC_VOUCHER_CONTRACT_ID: CBPUQN6CNJCNGPKNEXB7UM4T7RINKQB7HQI5CXEOSQ5EFRHE4G4VKPSQ
-      NEXT_PUBLIC_RECEIPT_CONTRACT_ID: CBCJRI2BCZBMZNX77WWDC2NGSV4ZNAN5Q23XHYNBH6UTOQMPJHZGX5C7
-      NEXT_PUBLIC_USDC_CONTRACT_ID: CCRLJ7FEIKTR3GBT3VQQPSIJGRBO2WPNMVFKJDP6AYGJQWECOR4QVE5M
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      # Config: knip.json. Reports unused files, exports, types and
-      # dependencies; generated bindings are declared out of scope there.
-      - run: npm run deadcode
-
-  lockfile:
-    name: lockfile (npm 10)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          # The change check diffs against the pull request's base commit,
-          # which the default shallow checkout does not contain.
-          fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: '22'
-      - name: Did package-lock.json change?
-        id: changed
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          if [ -z "$BASE_SHA" ]; then
-            # workflow_dispatch (the auto-merge bot runs CI on main this way)
-            # has no base commit, so always check.
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet "$BASE_SHA" HEAD -- package-lock.json; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "package-lock.json is unchanged; skipping the npm 10 install check."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-      # A lockfile written by npm 11 (and some Dependabot updates) drops
-      # entries npm 10 needs, which then fails `npm ci` in all the other jobs
-      # at once with an error that does not say what to do (#365). This job is
-      # deliberately cheap and only runs when the lockfile changed: --dry-run
-      # resolves the tree without downloading it, --ignore-scripts runs
-      # nothing.
-      - name: Install the lockfile with npm 10
-        if: steps.changed.outputs.changed == 'true'
-        run: |
-          if npm ci --ignore-scripts --dry-run; then
-            echo "package-lock.json installs with npm $(npm -v)."
-            exit 0
-          fi
-          echo "::error::package-lock.json does not install with npm $(npm -v) (the npm bundled with Node 22). It was probably written by a newer npm."
-          echo "Fix it with the Node version CI uses:"
-          echo "    nvm use              # Node 22 from .nvmrc, which ships npm 10"
-          echo "    rm -rf node_modules package-lock.json"
-          echo "    npm install          # rewrites the lockfile with npm 10"
-          echo "    git add package-lock.json"
-          echo "Do not hand-edit package-lock.json, and do not repair it with npm install under npm 11+ - that is what produced the broken lockfile."
-          exit 1

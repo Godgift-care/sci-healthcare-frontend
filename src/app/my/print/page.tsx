@@ -34,9 +34,7 @@ export default function PrintableCareSummaryPage() {
   const saved = useSavedIdentity();
   const [activeRef, setActiveRef] = useState<string | null>(null);
   const [deriving, setDeriving] = useState(true);
-  const [verification, setVerification] = useState<Record<string, VerifyState>>(
-    {},
-  );
+  const [verification, setVerification] = useState<Record<string, VerifyState>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -207,7 +205,7 @@ export default function PrintableCareSummaryPage() {
                 verified, and settled on the Stellar blockchain ledger.
               </p>
             </div>
-            <div className="space-y-1 text-start text-xs text-slate-500 sm:text-end">
+            <div className="text-start sm:text-end text-xs text-slate-500 space-y-1">
               <div>
                 <span className="font-medium text-slate-700">Issued:</span>{' '}
                 {formatDate(new Date())}
@@ -231,27 +229,15 @@ export default function PrintableCareSummaryPage() {
 
           {/* Receipts Table */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-start text-sm">
-              <caption className="sr-only">
-                Delivered patient care receipts
-              </caption>
+            <table className="w-full text-start text-sm border-collapse">
+              <caption className="sr-only">Delivered patient care receipts</caption>
               <thead>
-                <tr className="border-b-2 border-slate-200 text-xs font-semibold tracking-wider text-slate-600 uppercase">
-                  <th scope="col" className="py-3 pe-4">
-                    Date
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Clinic
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Service
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-end">
-                    Amount
-                  </th>
-                  <th scope="col" className="py-3 ps-4 text-end">
-                    Receipt #
-                  </th>
+                <tr className="border-b-2 border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                  <th scope="col" className="py-3 pe-4">Date</th>
+                  <th scope="col" className="py-3 px-4">Clinic</th>
+                  <th scope="col" className="py-3 px-4">Service</th>
+                  <th scope="col" className="py-3 px-4 text-end">Amount</th>
+                  <th scope="col" className="py-3 ps-4 text-end">Receipt #</th>
                   <th scope="col" className="py-3 ps-4 text-end">
                     {t('print.verify')}
                   </th>
@@ -259,36 +245,51 @@ export default function PrintableCareSummaryPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {receipts.map((r) => {
-                  const clinicName =
-                    providerMap.get(r.providerAddress) ??
-                    shortAddress(r.providerAddress);
-                  const state = verification[r.voucherId] ?? {
-                    status: 'idle' as const,
-                  };
+                  const clinicName = providerMap.get(r.providerAddress) ?? shortAddress(r.providerAddress);
+                  const state = verification[r.voucherId] ?? { status: 'idle' as const };
                   return (
                     <Fragment key={r.voucherId}>
-                      <tr className="hover:bg-slate-50/50">
-                        <td className="py-3.5 pe-4 text-xs font-medium whitespace-nowrap text-slate-700">
-                          {formatDate(r.settledAt)}
-                        </td>
-                        <td className="px-4 py-3.5 font-medium text-slate-900">
-                          {clinicName}
-                        </td>
-                        <td className="px-4 py-3.5 text-slate-700">
-                          {r.serviceLabel ?? `Service ${r.serviceCode}`}
-                        </td>
-                        <td className="px-4 py-3.5 text-end font-mono font-medium whitespace-nowrap text-slate-900">
-                          ${r.amountDisplay}
-                        </td>
-                        <td className="py-3.5 ps-4 text-end font-mono text-xs whitespace-nowrap text-slate-500">
-                          #{r.voucherId}
-                        </td>
-                        <td className="py-3.5 ps-4 text-end align-top">
-                          <VerifyReceipt
-                            state={state}
-                            onVerify={() => void verify(r)}
-                            t={t}
-                          />
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="py-3.5 pe-4 text-xs font-medium text-slate-700 whitespace-nowrap">
+                        {formatDate(r.settledAt)}
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-slate-900">
+                        {clinicName}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-700">
+                        {r.serviceLabel ?? `Service ${r.serviceCode}`}
+                      </td>
+                      <td className="py-3.5 px-4 text-end font-mono font-medium text-slate-900 whitespace-nowrap">
+                        ${r.amountDisplay}
+                      </td>
+                      <td className="py-3.5 ps-4 text-end font-mono text-xs text-slate-500 whitespace-nowrap">
+                        #{r.voucherId}
+                      </td>
+                      <td className="py-3.5 ps-4 text-end align-top">
+                        <VerifyReceipt
+                          state={state}
+                          onVerify={() => void verify(r)}
+                          t={t}
+                        />
+                      </td>
+                    </tr>
+                    {state.status === 'mismatch' && (
+                      <tr>
+                        <td colSpan={6} className="pb-3">
+                          <Alert>
+                            <div className="font-semibold">{t('print.mismatch')}</div>
+                            <ul className="mt-1 space-y-0.5">
+                              {state.mismatches.map((m) => (
+                                <li key={m.field}>
+                                  {t('print.fieldMismatch', {
+                                    field: fieldLabel(m.field),
+                                    displayed: fieldValue(m.field, m.displayed),
+                                    onChain: fieldValue(m.field, m.onChain),
+                                  })}
+                                </li>
+                              ))}
+                            </ul>
+                          </Alert>
                         </td>
                       </tr>
                       {state.status === 'mismatch' && (
@@ -322,13 +323,10 @@ export default function PrintableCareSummaryPage() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 font-semibold text-slate-900">
-                  <td
-                    colSpan={3}
-                    className="py-3.5 pe-4 text-xs tracking-wider uppercase"
-                  >
+                  <td colSpan={3} className="py-3.5 pe-4 text-xs uppercase tracking-wider">
                     Total
                   </td>
-                  <td className="px-4 py-3.5 text-end font-mono text-base">
+                  <td className="py-3.5 px-4 text-end font-mono text-base">
                     ${spend}
                   </td>
                   <td className="py-3.5 ps-4 text-end text-xs text-slate-500">

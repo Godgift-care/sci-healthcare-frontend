@@ -1,14 +1,14 @@
 import { batchSettleMethod } from './batch-settle';
 import type { xdr } from '@stellar/stellar-sdk';
 
-import { config, isTestnet, sponsorEnabled } from './config';
+import { claimOrQueue } from './claim-queue';
+import { config, isTestnet } from './config';
 import {
   FaucetClient,
   RegistryClient,
   SponsorClient,
   VoucherClient,
 } from './contracts';
-import type { SponsorRules } from './sponsor-rules';
 import { ProviderStatus } from './contracts/generated/registry';
 import {
   arg,
@@ -22,6 +22,8 @@ import {
   type PreparedInvocation,
   type SignFn,
 } from './stellar';
+
+export { RegistryClient, VoucherClient, FaucetClient } from './contracts';
 
 /**
  * Typed wrappers for every contract call the app makes.
@@ -55,10 +57,6 @@ function getFaucetClient() {
     networkPassphrase: config.networkPassphrase,
     rpcUrl: config.rpcUrl,
   });
-}
-
-function getSponsorClient() {
-  return new SponsorClient(config.contracts.sponsor);
 }
 
 export type CreateVoucherParams = {
@@ -332,60 +330,6 @@ export const voucher = {
     return [BigInt(openEscrow), BigInt(tokenBalance)];
   },
 
-  /**
-   * claim_with_proof(provider, voucher_id, secret): claims a voucher funded
-   * with a presence commitment by revealing the patient's code (#285).
-   */
-  async claimWithProof(
-    provider: string,
-    voucherId: string,
-    secret: string,
-    sign: SignFn,
-  ) {
-    return invokeContract(
-      config.contracts.voucher,
-      'claim_with_proof',
-      [
-        await arg.address(provider),
-        await arg.u64(BigInt(voucherId)),
-        await arg.bytes(secret),
-      ],
-      provider,
-      sign,
-    );
-  },
-
-  /** The voucher's optional terms (#285); absent fields read as null. */
-  async options(voucherId: string): Promise<{
-    presenceCommitment: string | null;
-    disputeWindow: number | null;
-  }> {
-    const raw = await readContract<{
-      presence_commitment: Uint8Array | Buffer | null;
-      dispute_window: bigint | null;
-    }>(config.contracts.voucher, 'get_voucher_options', [
-      await arg.u64(BigInt(voucherId)),
-    ]);
-    const commitment = raw.presence_commitment;
-    return {
-      presenceCommitment: commitment
-        ? Buffer.from(commitment).toString('hex')
-        : null,
-      disputeWindow:
-        raw.dispute_window === null ? null : Number(raw.dispute_window),
-    };
-  },
-
-  /** A clinic's open vouchers and value, straight from the voucher contract. */
-  async exposure(provider: string): Promise<{ vouchers: number; value: bigint }> {
-    const raw = await readContract<{ vouchers: number; value: bigint }>(
-      config.contracts.voucher,
-      'get_exposure',
-      [await arg.address(provider)],
-    );
-    return { vouchers: Number(raw.vouchers), value: BigInt(raw.value) };
-  },
-
   /** attest(attester, voucher_id) */
   async attest(attester: string, voucherId: string, sign: SignFn) {
     const client = getVoucherClient();
@@ -576,8 +520,13 @@ export const voucher = {
     );
   },
 
-  /** Current administrator of the voucher contract. */
-  async getAdmin(): Promise<string> {
+  /** resolve_dispute(admin, voucher_id, refund_funder) */
+  async resolveDispute(
+    admin: string,
+    voucherId: string,
+    refundFunder: boolean,
+    sign: SignFn,
+  ) {
     const client = getVoucherClient();
     const args = client.spec.funcArgsToScVals('get_admin', {});
     return readContract<string>(config.contracts.voucher, 'get_admin', args);
@@ -727,7 +676,7 @@ export const registry = {
     );
   },
 
-  /** register_provider(owner, name, country, category?) */
+  /** register_provider(owner, name, country) */
   async registerProvider(
     owner: string,
     name: string,

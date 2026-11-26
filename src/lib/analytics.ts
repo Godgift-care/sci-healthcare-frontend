@@ -126,7 +126,65 @@ export function trackMetric(name: string, value: number): void {
 
 /** A route change. Sends origin + normalized path, never the real URL. */
 export function trackPageview(pathname: string): void {
-  send('pageview', {
-    u: `${window.location.origin}${normalizePath(pathname)}`,
+  send('pageview', { u: `${window.location.origin}${normalizePath(pathname)}` });
+}
+
+/**
+ * Reports Core Web Vitals (LCP, INP, CLS) once per page view.
+ *
+ * Each metric is sent at most once per page view: the first value observed
+ * for a given metric wins, and later reports (e.g. LCP updates on scroll)
+ * are ignored. Values are rounded so no high-entropy fingerprint leaks.
+ * Respects the same opt-out as every other event.
+ */
+export function reportWebVitals(): void {
+  if (typeof window === 'undefined') return;
+  if (!isAnalyticsEnabled()) return;
+
+  const reported = new Set<string>();
+
+  const report = (name: string, value: number): void => {
+    if (reported.has(name)) return;
+    if (!Number.isFinite(value) || value < 0) return;
+    reported.add(name);
+    trackMetric(name, Math.round(value));
+  };
+
+  type LayoutShiftEntry = PerformanceEntry & { value?: number; hadRecentInput?: boolean };
+  type EventTimingEntry = PerformanceEntry & { interactionId?: number };
+
+  const observe = (type: string, cb: (entry: PerformanceEntry) => void): void => {
+    try {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) cb(entry);
+      });
+      observer.observe({ type, buffered: true } as PerformanceObserverInit);
+    } catch {
+      // Unsupported entry type in this browser; skip silently.
+    }
+  };
+
+  // Largest Contentful Paint: keep the largest value seen before the first
+  // report, then lock it in.
+  let lcp = 0;
+  observe('largest-contentful-paint', (entry) => {
+    lcp = entry.startTime;
+    report('LCP', lcp);
+  });
+
+  // Interaction to Next Paint: the worst interaction duration observed.
+  observe('event', (entry) => {
+    const e = entry as EventTimingEntry;
+    if (e.interactionId === undefined) return;
+    report('INP', e.duration);
+  });
+
+  // Cumulative Layout Shift: sum of unexpected shifts, reported once.
+  let cls = 0;
+  observe('layout-shift', (entry) => {
+    const e = entry as LayoutShiftEntry;
+    if (e.hadRecentInput) return;
+    cls += e.value ?? 0;
+    report('CLS', cls);
   });
 }

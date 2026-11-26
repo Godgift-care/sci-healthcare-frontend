@@ -60,14 +60,9 @@ export default function PrivacyPage() {
           parameters required for financial escrow and delivery confirmation:
         </p>
 
-        <div
-          tabIndex={0}
-          role="region"
-          aria-label="On-chain voucher fields"
-          className="overflow-x-auto rounded-xl border border-[var(--color-line)] focus:outline-none"
-        >
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
           <table className="w-full text-start text-sm">
-            <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium tracking-wider text-[var(--color-ink-soft)] uppercase">
+            <thead className="border-b border-[var(--color-line)] bg-[var(--color-canvas)] text-xs font-medium uppercase tracking-wider text-[var(--color-ink-soft)]">
               <tr>
                 <th className="px-4 py-3">Field</th>
                 <th className="px-4 py-3">Example</th>

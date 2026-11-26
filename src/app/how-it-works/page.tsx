@@ -12,7 +12,7 @@ export default function HowItWorksPage() {
     <div className="space-y-12">
       {/* Header */}
       <div className="max-w-2xl space-y-2.5">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] ring-1 ring-[var(--color-line)] ring-inset">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-ink-soft)] ring-1 ring-inset ring-[var(--color-line)]">
           Care-voucher protocol on Stellar
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-[var(--color-ink)] sm:text-3xl">
@@ -31,66 +31,56 @@ export default function HowItWorksPage() {
         <Card className="bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-canvas)] p-4 sm:p-6">
           <div className="grid gap-3 text-center sm:grid-cols-5">
             {/* Step 1 */}
-            <div className="space-y-1.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 space-y-1.5">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 1
               </span>
-              <div className="text-sm font-semibold text-[var(--color-ink)]">
-                Fund
-              </div>
-              <p className="text-xs leading-normal text-[var(--color-ink-soft)]">
+              <div className="font-semibold text-sm text-[var(--color-ink)]">Fund</div>
+              <p className="text-xs text-[var(--color-ink-soft)] leading-normal">
                 Funder commits USDC into smart contract escrow.
               </p>
             </div>
 
             {/* Step 2 */}
-            <div className="space-y-1.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 space-y-1.5">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 2
               </span>
-              <div className="text-sm font-semibold text-[var(--color-ink)]">
-                Claim
-              </div>
-              <p className="text-xs leading-normal text-[var(--color-ink-soft)]">
+              <div className="font-semibold text-sm text-[var(--color-ink)]">Claim</div>
+              <p className="text-xs text-[var(--color-ink-soft)] leading-normal">
                 Clinic sees patient and logs medical care.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="space-y-1.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 space-y-1.5">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 3
               </span>
-              <div className="text-sm font-semibold text-[var(--color-ink)]">
-                Attest
-              </div>
-              <p className="text-xs leading-normal text-[var(--color-ink-soft)]">
+              <div className="font-semibold text-sm text-[var(--color-ink)]">Attest</div>
+              <p className="text-xs text-[var(--color-ink-soft)] leading-normal">
                 Third-party attester audits clinical proof.
               </p>
             </div>
 
             {/* Step 4 */}
-            <div className="space-y-1.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 space-y-1.5">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 4
               </span>
-              <div className="text-sm font-semibold text-[var(--color-ink)]">
-                Dispute window
-              </div>
-              <p className="text-xs leading-normal text-[var(--color-ink-soft)]">
+              <div className="font-semibold text-sm text-[var(--color-ink)]">Dispute window</div>
+              <p className="text-xs text-[var(--color-ink-soft)] leading-normal">
                 Time window for funder to raise any dispute.
               </p>
             </div>
 
             {/* Step 5 */}
-            <div className="space-y-1.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+            <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 space-y-1.5">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 5
               </span>
-              <div className="text-sm font-semibold text-[var(--color-ink)]">
-                Pay or Refund
-              </div>
-              <p className="text-xs leading-normal text-[var(--color-ink-soft)]">
+              <div className="font-semibold text-sm text-[var(--color-ink)]">Pay or Refund</div>
+              <p className="text-xs text-[var(--color-ink-soft)] leading-normal">
                 Clinic receives funds or 100% refunded to funder.
               </p>
             </div>
@@ -104,14 +94,12 @@ export default function HowItWorksPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Step 1 detail */}
-          <Card className="space-y-3 border-s-4 border-s-blue-500 p-5">
+          <Card className="p-5 space-y-3 border-s-4 border-s-blue-500">
             <div className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 1
               </span>
-              <h3 className="text-base font-semibold text-[var(--color-ink)]">
-                Fund into Escrow
-              </h3>
+              <h3 className="font-semibold text-base text-[var(--color-ink)]">Fund into Escrow</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
               A funder (grantmaker, donor, or patient sponsor) selects a
@@ -129,14 +117,12 @@ export default function HowItWorksPage() {
           </Card>
 
           {/* Step 2 detail */}
-          <Card className="space-y-3 border-s-4 border-s-amber-500 p-5">
+          <Card className="p-5 space-y-3 border-s-4 border-s-amber-500">
             <div className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 2
               </span>
-              <h3 className="text-base font-semibold text-[var(--color-ink)]">
-                Clinic Claims Attendance
-              </h3>
+              <h3 className="font-semibold text-base text-[var(--color-ink)]">Clinic Claims Attendance</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
               When the patient arrives and care is delivered, the licensed
@@ -155,14 +141,12 @@ export default function HowItWorksPage() {
           </Card>
 
           {/* Step 3 detail */}
-          <Card className="space-y-3 border-s-4 border-s-violet-500 p-5">
+          <Card className="p-5 space-y-3 border-s-4 border-s-violet-500">
             <div className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 3
               </span>
-              <h3 className="text-base font-semibold text-[var(--color-ink)]">
-                Independent Attestation
-              </h3>
+              <h3 className="font-semibold text-base text-[var(--color-ink)]">Independent Attestation</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
               An independent, accredited third-party attester audits clinical
@@ -183,14 +167,12 @@ export default function HowItWorksPage() {
           </Card>
 
           {/* Step 4 detail */}
-          <Card className="space-y-3 border-s-4 border-s-indigo-500 p-5">
+          <Card className="p-5 space-y-3 border-s-4 border-s-indigo-500">
             <div className="flex items-center gap-2">
-              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-xs font-bold text-[var(--color-brand)]">
+              <span className="grid h-6 w-6 place-items-center rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-xs font-bold">
                 4
               </span>
-              <h3 className="text-base font-semibold text-[var(--color-ink)]">
-                Time-Locked Dispute Window
-              </h3>
+              <h3 className="font-semibold text-base text-[var(--color-ink)]">Time-Locked Dispute Window</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
               Before payment can settle, a transparent dispute window opens.
@@ -212,27 +194,19 @@ export default function HowItWorksPage() {
             5. Settlement: Pay or Refund
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Card className="border-s-4 border-s-emerald-500 bg-[var(--color-surface)] p-5">
-              <div className="text-sm font-semibold text-[var(--color-brand)]">
-                Outcome A: Care Paid
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">
-                When the dispute window expires with care confirmed, settlement
-                can be triggered permissionlessly by anyone. USDC releases
-                straight to the clinic&apos;s Stellar address, and an immutable
-                care receipt is minted on chain.
+            <Card className="p-5 border-s-4 border-s-emerald-500 bg-[var(--color-surface)]">
+              <div className="font-semibold text-sm text-[var(--color-brand)]">Outcome A: Care Paid</div>
+              <p className="mt-2 text-xs text-[var(--color-ink-soft)] leading-relaxed">
+                When the dispute window expires with care confirmed, settlement can be triggered permissionlessly by anyone.
+                USDC releases straight to the clinic&apos;s Stellar address, and an immutable care receipt is minted on chain.
               </p>
             </Card>
 
-            <Card className="border-s-4 border-s-blue-500 bg-[var(--color-surface)] p-5">
-              <div className="text-sm font-semibold text-[var(--color-brand)]">
-                Outcome B: 100% Refunded
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-soft)]">
-                If the patient never attends, or if care is not attested before
-                the expiry deadline, the funder can trigger a complete refund.
-                Every single cent committed in USDC returns to the funder with
-                zero fees deducted.
+            <Card className="p-5 border-s-4 border-s-blue-500 bg-[var(--color-surface)]">
+              <div className="font-semibold text-sm text-[var(--color-brand)]">Outcome B: 100% Refunded</div>
+              <p className="mt-2 text-xs text-[var(--color-ink-soft)] leading-relaxed">
+                If the patient never attends, or if care is not attested before the expiry deadline, the funder can trigger a complete refund.
+                Every single cent committed in USDC returns to the funder with zero fees deducted.
               </p>
             </Card>
           </div>

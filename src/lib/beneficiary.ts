@@ -11,15 +11,9 @@
  * data cannot enumerate patients, because HMAC without the key is not
  * searchable.
  */
-import {
-  isTransactionPending,
-  subscribePendingTransactions,
-} from './pending-tx';
+import { isTransactionPending, subscribePendingTransactions } from './pending-tx';
 
-export async function beneficiaryRef(
-  identifier: string,
-  key: string,
-): Promise<string> {
+export async function beneficiaryRef(identifier: string, key: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
   if (!id) throw new Error('Enter a patient reference');
   if (key.length < 32)

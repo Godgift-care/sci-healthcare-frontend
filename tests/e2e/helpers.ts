@@ -97,8 +97,6 @@ export type BackendState = {
    * comparison page. An omitted code answers 404.
    */
   serviceByCode?: Record<string, Record<string, unknown>>;
-
-  governance?: Record<string, unknown>;
 };
 
 export async function mockBackend(
@@ -311,8 +309,7 @@ export async function mockBackend(
         if (events) return json({ total: events.length, events });
         return json({ message: 'Not found' }, 404);
       }
-      if (parts.length === 2 && parts[1] !== undefined) {
-        const voucherId = parts[1];
+      if (parts.length === 2) {
         const converge = state.voucherConverges;
         if (converge) {
           const seen = (readsByVoucher.get(voucherId) ?? 0) + 1;
@@ -329,7 +326,7 @@ export async function mockBackend(
             }
           }
         }
-        const v = state.voucherById?.[voucherId];
+        const v = state.voucherById?.[parts[1]];
         if (v) return json(v);
         return json({ message: 'Not found' }, 404);
       }

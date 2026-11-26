@@ -94,9 +94,7 @@ export default defineConfig({
       VERCEL_GIT_COMMIT_SHA: '0123456789abcdef0123456789abcdef01234567',
       // The visual-only command captures the default (flag-off) deployment.
       // E2E builds enable sponsorship to exercise the opt-in flow as well.
-      NEXT_PUBLIC_SPONSORED_FEES: process.argv.includes('tests/visual')
-        ? 'false'
-        : 'true',
+      NEXT_PUBLIC_SPONSORED_FEES: process.argv.includes('tests/visual') ? 'false' : 'true',
       NEXT_PUBLIC_STELLAR_NETWORK: 'testnet',
       NEXT_PUBLIC_SOROBAN_RPC_URL: 'https://soroban-testnet.stellar.org',
       NEXT_PUBLIC_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015',

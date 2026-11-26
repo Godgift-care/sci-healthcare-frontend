@@ -107,31 +107,11 @@ export function ConnectButton() {
     // The guidance dialog portals to <body>, so the trigger keeps the exact
     // DOM it had before: adding a wrapper here would shift the header.
     return (
-      <>
-        <Button
-          onClick={() => void handleConnect()}
-          disabled={connecting || checkingWallets}
-        >
-          {connecting
-            ? 'Connecting…'
-            : checkingWallets
-              ? t('wallet.checking')
-              : t('wallet.connect')}
-        </Button>
-        <WalletGuidance
-          open={guidancePlatform !== null}
-          platform={guidancePlatform ?? 'desktop'}
-          onClose={() => setGuidancePlatform(null)}
-          onUsePasskey={() => {
-            setGuidancePlatform(null);
-            void connect(PASSKEY_WALLET_ID);
-          }}
-          onShowAllWallets={() => {
-            setGuidancePlatform(null);
-            void connect();
-          }}
-        />
-      </>
+      <Button onClick={() => void connect()} disabled={connecting}>
+        {connecting
+          ? t('components.connectButton.connecting')
+          : t('components.connectButton.connect')}
+      </Button>
     );
   }
 
@@ -144,7 +124,7 @@ export function ConnectButton() {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] focus:ring-2 focus:ring-[var(--color-brand)] focus:outline-none max-sm:min-h-11"
+        className="inline-flex max-sm:min-h-11 items-center gap-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-canvas)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
       >
         <span
           aria-hidden="true"
@@ -172,7 +152,7 @@ export function ConnectButton() {
           {/* Wallet Name & Status */}
           <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
             <div>
-              <div className="text-[10px] font-semibold tracking-wider text-[var(--color-ink-soft)] uppercase">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-soft)]">
                 {t('components.connectButton.wallet')}
               </div>
               <div className="mt-0.5 text-sm font-semibold text-[var(--color-ink)]">
@@ -198,7 +178,7 @@ export function ConnectButton() {
 
           {/* Full Address Copy */}
           <div className="border-b border-[var(--color-line)] py-3">
-            <div className="text-[10px] font-semibold tracking-wider text-[var(--color-ink-soft)] uppercase">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-soft)]">
               {t('components.connectButton.accountAddress')}
             </div>
             <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-[var(--color-canvas)] p-2">
@@ -222,9 +202,7 @@ export function ConnectButton() {
           {/* Unfunded Account Alert (#60) */}
           {isUnfunded && (
             <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">
-                {t('components.connectButton.unfundedTitle')}
-              </p>
+              <p className="font-semibold">{t('components.connectButton.unfundedTitle')}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
                 {t('components.connectButton.unfundedBody')}
               </p>
@@ -237,9 +215,7 @@ export function ConnectButton() {
                     role="menuitem"
                     className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
                   >
-                    <span>
-                      {t('components.connectButton.fundWithFriendbot')}
-                    </span>
+                    <span>{t('components.connectButton.fundWithFriendbot')}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
@@ -250,9 +226,7 @@ export function ConnectButton() {
           {/* Low XLM for Network Fees Alert (#61) */}
           {!isUnfunded && isLowXlm && (
             <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">
-                {t('components.connectButton.lowXlmTitle')}
-              </p>
+              <p className="font-semibold">{t('components.connectButton.lowXlmTitle')}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
                 {t('components.connectButton.lowXlmBodyBeforeAmount')}{' '}
                 <span className="font-semibold">
@@ -271,9 +245,7 @@ export function ConnectButton() {
                     role="menuitem"
                     className="inline-flex items-center gap-1 font-semibold text-[var(--color-brand)] hover:underline"
                   >
-                    <span>
-                      {t('components.connectButton.topUpWithFriendbot')}
-                    </span>
+                    <span>{t('components.connectButton.topUpWithFriendbot')}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>

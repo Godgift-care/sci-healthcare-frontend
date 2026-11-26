@@ -60,10 +60,7 @@ export function toBaseUnits(display: string): bigint {
   return BigInt(whole) * SCALE + BigInt(padded || '0');
 }
 
-export function validateAmountInput(
-  display: string,
-  minimum: bigint,
-): string | null {
+export function validateAmountInput(display: string, minimum: bigint): string | null {
   const trimmed = display.trim();
   if (!/^\d+(\.\d+)?$/.test(trimmed)) return 'Enter a valid amount.';
 

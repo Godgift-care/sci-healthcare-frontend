@@ -59,7 +59,6 @@
 - Passkey smart wallet support using WebAuthn / secp256r1 biometrics on Soroban testnet, enabling passwordless, non-custodial signing without browser extensions alongside existing extension wallets (#58).
 - Silent wallet reconnection on mount persisting the selected wallet id in `localStorage` under `sci-wallet-id`, with complete cleanup on disconnect (#59).
 - Unfunded account detection via Soroban RPC on wallet connect; warns users when their account has no XLM balance and provides a prefilled link to Friendbot on testnet (#60).
-
 ### Added
 
 - Root `error.tsx` with a retry button and a shared `not-found.tsx` in the app's style, plus a light loading skeleton for route transitions.
@@ -98,7 +97,6 @@
 - Claimed vouchers say when they become refundable if no attester confirms.
 
 ### Fixed
-
 - An unknown voucher or clinic (for example `/vouchers/99999`) showed the raw API error string; the voucher and clinic pages now call `notFound()` on a 404 and show a friendly page with a way back.
 - A missing USDC trustline was reported as "The dispute window is still open", and an insufficient balance as "not in the right state": token errors come through with the token's own error numbers, which were looked up in the voucher table. Token messages are now recognised first.
 - Clinic desk treated pending, suspended and unregistered clinics alike, so a clinic awaiting verification was offered the Register form again, which then failed. Status is now read from the registry and each state gets its own message.
