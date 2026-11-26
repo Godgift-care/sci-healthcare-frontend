@@ -447,44 +447,6 @@ export const voucher = {
       sign,
     );
   },
-
-  /** Current daily attestation cap for the voucher contract. */
-  async getAttestationCap(): Promise<number> {
-    return readContract<number>(config.contracts.voucher, 'get_attestation_cap', []);
-  },
-
-  /** Set the daily attestation cap. Only the admin may call. */
-  async setAttestationCap(admin: string, cap: number, sign: SignFn) {
-    const args = [await arg.address(admin), await arg.u32(cap)];
-    return invokeContract(
-      config.contracts.voucher,
-      'set_attestation_cap',
-      args,
-      admin,
-      sign,
-    );
-  },
-
-  /** Current per-clinic (per-provider) escrow cap for the voucher contract. */
-  async getMaxEscrowPerProvider(): Promise<bigint> {
-    return readContract<bigint>(
-      config.contracts.voucher,
-      'get_max_escrow_per_provider',
-      [],
-    );
-  },
-
-  /** Set the per-clinic escrow cap. Only the admin may call. */
-  async setMaxEscrowPerProvider(admin: string, cap: bigint, sign: SignFn) {
-    const args = [await arg.address(admin), await arg.i128(cap)];
-    return invokeContract(
-      config.contracts.voucher,
-      'set_max_escrow_per_provider',
-      args,
-      admin,
-      sign,
-    );
-  },
 };
 
 /**

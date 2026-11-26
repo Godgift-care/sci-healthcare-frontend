@@ -26,8 +26,6 @@ declare global {
     __SCI_MOCK_RPC__?: { calls: MockRpcCall[]; delayMs?: number };
     __SCI_MOCK_ADMIN__?: string;
     __SCI_MOCK_PENDING_ADMIN__?: string | null;
-    __SCI_MOCK_ATTESTATION_CAP__?: number;
-    __SCI_MOCK_MAX_ESCROW_PER_PROVIDER__?: bigint | number;
   }
 }
 
