@@ -64,10 +64,11 @@ test('a custom expiry date becomes the voucher expiry', async ({ page }) => {
   );
   expect(created).toBeGreaterThanOrEqual(0);
   // create_voucher(funder, beneficiary_ref, provider, service_code, amount, expires_at)
-  const encodedExpiry = args[created][5];
-  const expiresAt = Number(
-    scValToNative(xdr.ScVal.fromXDR(encodedExpiry, 'base64')),
-  );
+  const createArgs = args[created];
+  if (!createArgs) throw new Error('Expected invoke args');
+  const encodedExpiry = createArgs[5];
+  if (typeof encodedExpiry !== 'string') throw new Error('Expected encoded expiry string');
+  const expiresAt = Number(scValToNative(xdr.ScVal.fromXDR(encodedExpiry, 'base64')));
   // End of the chosen day, UTC: the voucher is valid through that date.
   expect(expiresAt).toBe(Math.floor(Date.parse(`${chosen}T23:59:59Z`) / 1000));
 });

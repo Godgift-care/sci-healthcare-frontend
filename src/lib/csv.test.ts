@@ -79,9 +79,11 @@ describe('buildVoucherCsvRows', () => {
       'transaction link',
       'staff note',
     ]);
-    expect(rows[1][3]).toBe('1.50');
-    expect(rows[1][7]).toBe('https://example.com/vouchers/42');
-    expect(rows[1][8]).toBe('');
+    const row1 = rows[1];
+    if (!row1) throw new Error('Expected row 1');
+    expect(row1[3]).toBe('1.50');
+    expect(row1[7]).toBe('https://example.com/vouchers/42');
+    expect(row1[8]).toBe('');
   });
 
   it('includes the staff note kept on the device, when there is one', () => {
@@ -115,7 +117,9 @@ describe('buildVoucherCsvRows', () => {
       },
     );
 
-    expect(rows[1][8]).toBe('Patient called, coming Tuesday');
+    const staffRow = rows[1];
+    if (!staffRow) throw new Error('Expected row 1');
+    expect(staffRow[8]).toBe('Patient called, coming Tuesday');
   });
 });
 
@@ -171,7 +175,9 @@ describe('buildCountryVoucherCsvRows', () => {
       'value settled (USDC)',
     ]);
     expect(toCsvString(rows)).toContain("'=NG");
-    expect(rows[1].slice(1)).toEqual([3, 2, '3.00']);
+    const summaryRow1 = rows[1];
+    if (!summaryRow1) throw new Error('Expected summary row 1');
+    expect(summaryRow1.slice(1)).toEqual([3, 2, '3.00']);
   });
 });
 

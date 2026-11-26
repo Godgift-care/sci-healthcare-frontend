@@ -336,7 +336,9 @@ export async function mapWithConcurrency<T, R>(
     for (;;) {
       const index = cursor++;
       if (index >= items.length) return;
-      results[index] = await task(items[index], index);
+      const item = items[index];
+      if (item === undefined) return;
+      results[index] = await task(item, index);
     }
   });
 

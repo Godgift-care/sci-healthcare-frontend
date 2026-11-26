@@ -19,12 +19,12 @@ export function AddressName({
 }: {
   address: string;
   /** Known name for this address, from a loaded directory. */
-  name?: string | null;
+  name?: string | null | undefined;
   /** Text to show, overriding both the name and the shortened address. */
-  display?: string;
+  display?: string | undefined;
   /** Characters kept at each end when shortening. */
-  chars?: number;
-  className?: string;
+  chars?: number | undefined;
+  className?: string | undefined;
 }) {
   return (
     <span className={className} title={address}>

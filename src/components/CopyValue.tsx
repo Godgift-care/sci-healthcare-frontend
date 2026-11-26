@@ -25,16 +25,16 @@ export function CopyValue({
 }: {
   value: string;
   /** What the value is, for the accessible name: "Copy clinic address". */
-  label?: string;
+  label?: string | undefined;
   /** Text to show instead of a shortened value. */
-  display?: string;
+  display?: string | undefined;
   /** Known name for the value, when it is an address. */
-  name?: string | null;
+  name?: string | null | undefined;
   /** Characters kept at each end when shortening. */
-  chars?: number;
+  chars?: number | undefined;
   /** Render only the button, when the value is already shown next to it. */
-  buttonOnly?: boolean;
-  className?: string;
+  buttonOnly?: boolean | undefined;
+  className?: string | undefined;
 }) {
   const { t } = useLocaleContext();
   const label = labelProp ?? t('components.copyValue.defaultLabel');

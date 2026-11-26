@@ -29,6 +29,11 @@ call. The values in `vercel.json` satisfy the rest.
 > `localhost`, this variable was missing when the build ran — set it and
 > **Redeploy**, do not just restart.
 
+## Pull request previews & fork deployments
+
+- **Branches in this repository:** Every pull request opened from a branch within this repository automatically triggers a Vercel preview deployment. The build uses the committed public configuration in `vercel.json` (including `NEXT_PUBLIC_API_URL` pointing to the public testnet API), yielding a working live preview without manual environment variable setup.
+- **Pull requests from forks:** Vercel security settings require maintainer authorization before deploying previews from forked repositories. Fork contributors should expect the Vercel check to show `Authorization required to deploy` until a repository maintainer approves the deployment. This is expected behavior and does not block review or CI checks.
+
 ## After both are up
 
 Set `CORS_ORIGIN` on the Render service to the Vercel URL, then redeploy the

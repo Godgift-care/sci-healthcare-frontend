@@ -28,19 +28,19 @@ export type Sep7TxRequest = {
   /** Base64 transaction envelope XDR to sign, as `Transaction.toXDR()`. */
   xdr: string;
   /** Optional message shown to the user in the wallet. */
-  message?: string;
+  message?: string | undefined;
   /**
    * Only needed when the transaction is not for the public network; wallets
    * default to `Public Global Stellar Network ; September 2015`.
    */
-  networkPassphrase?: string;
+  networkPassphrase?: string | undefined;
   /** The app's domain, so the wallet can show where the request came from. */
-  originDomain?: string;
+  originDomain?: string | undefined;
   /**
    * Optional SEP-7 callback. The app cannot receive one (it has no server),
    * so it polls the ledger instead and leaves this unset.
    */
-  callback?: string;
+  callback?: string | undefined;
 };
 
 /**

@@ -115,19 +115,15 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 it('simulates before signing, submits the fee bump and polls its hash for the voucher ID', async () => {
-  await expect(invoke()).resolves.toEqual({
-    hash: 'ab'.repeat(32),
-    returnValue: 7n,
-  });
-  expect(rpcMock.simulateTransaction.mock.invocationCallOrder[0]).toBeLessThan(
-    sign.mock.invocationCallOrder[0],
-  );
-  expect(rpcMock.sendTransaction.mock.calls[0][0].feeSource).toBe(
-    sponsor.publicKey(),
-  );
-  expect(rpcMock.sendTransaction.mock.calls[0][0].innerTransaction.fee).toBe(
-    '600',
-  );
+  await expect(invoke()).resolves.toEqual({ hash: 'ab'.repeat(32), returnValue: 7n });
+  const simOrder = rpcMock.simulateTransaction.mock.invocationCallOrder[0];
+  const signOrder = sign.mock.invocationCallOrder[0];
+  if (simOrder === undefined || signOrder === undefined) throw new Error('Expected invocation call order');
+  expect(simOrder).toBeLessThan(signOrder);
+  const call0 = rpcMock.sendTransaction.mock.calls[0];
+  if (!call0 || !call0[0]) throw new Error('Expected sendTransaction call');
+  expect(call0[0].feeSource).toBe(sponsor.publicKey());
+  expect(call0[0].innerTransaction.fee).toBe('600');
   expect(rpcMock.getTransaction).toHaveBeenCalledWith('ab'.repeat(32));
 });
 it('includes simulated Soroban resource fees in the cap before signing', async () => {
@@ -145,7 +141,9 @@ it('includes simulated Soroban resource fees in the cap before signing', async (
 it('keeps ordinary funding on the direct path', async () => {
   await invoke(false);
   expect(fetch).not.toHaveBeenCalled();
-  expect(rpcMock.sendTransaction.mock.calls[0][0]).toBeInstanceOf(Transaction);
+  const directCall = rpcMock.sendTransaction.mock.calls[0];
+  if (!directCall || !directCall[0]) throw new Error('Expected sendTransaction call');
+  expect(directCall[0]).toBeInstanceOf(Transaction);
 });
 it('restores archived footprint data before signing and submitting the invocation', async () => {
   rpcMock.getAccount.mockImplementation(
@@ -197,21 +195,18 @@ it('restores archived footprint data before signing and submitting the invocatio
   });
 
   expect(sign).toHaveBeenCalledTimes(2);
-  expect(sign.mock.calls[0][1]).toEqual({
+  const call0 = sign.mock.calls[0];
+  const call1 = sign.mock.calls[1];
+  if (!call0 || !call1) throw new Error('Expected 2 sign calls');
+  expect(call0[1]).toEqual({
     kind: 'restore-footprint',
     restoreFee: 600n,
     transactionFee: 600n,
   });
   expect(rpcMock.simulateTransaction).toHaveBeenCalledTimes(3);
   expect(rpcMock.sendTransaction).toHaveBeenCalledTimes(2);
-  const restore = TransactionBuilder.fromXDR(
-    sign.mock.calls[0][0],
-    Networks.TESTNET,
-  ) as Transaction;
-  const invocation = TransactionBuilder.fromXDR(
-    sign.mock.calls[1][0],
-    Networks.TESTNET,
-  ) as Transaction;
+  const restore = TransactionBuilder.fromXDR(call0[0], Networks.TESTNET) as Transaction;
+  const invocation = TransactionBuilder.fromXDR(call1[0], Networks.TESTNET) as Transaction;
   expect(restore.operations[0]?.type).toBe('restoreFootprint');
   expect(invocation.operations[0]?.type).toBe('invokeHostFunction');
 });

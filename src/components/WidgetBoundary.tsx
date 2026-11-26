@@ -23,20 +23,20 @@ export class WidgetBoundary extends Component<
   },
   { failed: boolean }
 > {
-  state = { failed: false };
+  override state = { failed: false };
 
   static getDerivedStateFromError(): { failed: boolean } {
     return { failed: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: Error, info: ErrorInfo): void {
     Sentry.captureException(error, {
       tags: { widget: this.props.label },
       extra: { componentStack: info.componentStack },
     });
   }
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (!this.state.failed) return this.props.children;
     return (
       <div

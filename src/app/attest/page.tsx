@@ -115,7 +115,9 @@ export default function AttestPage() {
 
       const index = claimed.findIndex((v) => v.id === selectedId);
       const select = (i: number) => {
-        const id = claimed[i].id;
+        const item = claimed[i];
+        if (!item) return;
+        const id = item.id;
         setSelectedId(id);
         const card = cardRefs.current.get(id);
         card?.focus();
@@ -130,16 +132,18 @@ export default function AttestPage() {
         select(Math.max(index - 1, 0));
       } else if (index === -1) {
         return;
-      } else if (e.key === 'Enter') {
-        // Enter on a focused button or link is that control's own click.
-        if (e.target instanceof HTMLElement && e.target.closest('a, button'))
-          return;
-        e.preventDefault();
-        router.push(`/vouchers/${claimed[index].id}`);
-      } else if (e.key === 'a') {
-        // Opens the confirmation modal; the attestation still needs Confirm.
-        if (rowRefs.current.get(claimed[index].id)?.startAttest())
+      } else {
+        const currentItem = claimed[index];
+        if (!currentItem) return;
+        if (e.key === 'Enter') {
+          // Enter on a focused button or link is that control's own click.
+          if (e.target instanceof HTMLElement && e.target.closest('a, button')) return;
           e.preventDefault();
+          router.push(`/vouchers/${currentItem.id}`);
+        } else if (e.key === 'a') {
+          // Opens the confirmation modal; the attestation still needs Confirm.
+          if (rowRefs.current.get(currentItem.id)?.startAttest()) e.preventDefault();
+        }
       }
     };
     document.addEventListener('keydown', onKeyDown);

@@ -10,11 +10,11 @@ import {
 } from '../low-bandwidth';
 
 export interface LiveUpdateOptions {
-  voucherId?: string;
-  providerAddress?: string;
-  enabled?: boolean;
-  pollIntervalMs?: number;
-  onUpdate?: (eventData?: unknown) => void;
+  voucherId?: string | undefined;
+  providerAddress?: string | undefined;
+  enabled?: boolean | undefined;
+  pollIntervalMs?: number | undefined;
+  onUpdate?: ((eventData?: unknown) => void) | undefined;
 }
 
 export interface LiveUpdateState {

@@ -153,8 +153,9 @@ export function QrScannerModal({ open, onClose, onScan }: QrScannerModalProps) {
         if (detector) {
           try {
             const barcodes = await detector.detect(video);
-            if (barcodes.length > 0 && barcodes[0].rawValue) {
-              handleDetected(barcodes[0].rawValue);
+            const firstBarcode = barcodes[0];
+            if (firstBarcode?.rawValue) {
+              handleDetected(firstBarcode.rawValue);
               return;
             }
           } catch {

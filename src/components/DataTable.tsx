@@ -39,8 +39,9 @@ export function DataTable<T>({
   getRowKey: (row: T, index: number) => string | number;
   emptyMessage?: string;
 }) {
+  const firstCol = columns[0];
   const [sort, setSort] = useState<SortState | null>(
-    columns.length > 0 ? { key: columns[0].key, direction: 'ascending' } : null,
+    columns.length > 0 && firstCol ? { key: firstCol.key, direction: 'ascending' } : null,
   );
 
   const activeColumn = sort

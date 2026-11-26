@@ -39,6 +39,7 @@ const rows: Row[] = [
 
 function bodyNames(): string[] {
   const [, body] = screen.getAllByRole('rowgroup');
+  if (!body) throw new Error('Expected body rowgroup');
   return within(body)
     .getAllByRole('row')
     .map((row) => row.querySelector('td, th')?.textContent ?? '');

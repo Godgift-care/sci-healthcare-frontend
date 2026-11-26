@@ -21,17 +21,18 @@ const SERVER = Keypair.random();
 const ASSET_ISSUER = 'GCKX5KAFVF7GLFZ3JWQGJ4F62RYYZU67PI3TACBGKVPJ73JELMI3L4KR';
 
 function configuredAnchor() {
-  return parseSep24Anchors(
-    JSON.stringify([
-      {
-        name: 'Test anchor',
-        domain: 'anchor.example',
-        countries: ['ng'],
-        assetCode: 'USDC',
-        assetIssuer: ASSET_ISSUER,
-      },
-    ]),
-  )[0];
+  const anchors = parseSep24Anchors(JSON.stringify([
+    {
+      name: 'Test anchor',
+      domain: 'anchor.example',
+      countries: ['ng'],
+      assetCode: 'USDC',
+      assetIssuer: ASSET_ISSUER,
+    },
+  ]));
+  const first = anchors[0];
+  if (!first) throw new Error('Expected anchor');
+  return first;
 }
 
 function toml(overrides: Record<string, unknown> = {}) {
@@ -60,17 +61,16 @@ function response(body: unknown, status = 200): Response {
 
 describe('SEP-24 anchor config and protocol', () => {
   it('validates JSON anchor config and normalizes countries and asset codes', () => {
-    const [config] = parseSep24Anchors(
-      JSON.stringify([
-        {
-          name: 'Cash desk',
-          domain: 'ANCHOR.example',
-          countries: ['ng', 'NG'],
-          assetCode: 'usdc',
-          assetIssuer: ASSET_ISSUER,
-        },
-      ]),
-    );
+    const [config] = parseSep24Anchors(JSON.stringify([
+      {
+        name: 'Cash desk',
+        domain: 'ANCHOR.example',
+        countries: ['ng', 'NG'],
+        assetCode: 'usdc',
+        assetIssuer: ASSET_ISSUER,
+      },
+    ]));
+    if (!config) throw new Error('Expected config');
 
     expect(config.domain).toBe('anchor.example');
     expect(config.countries).toEqual(['NG']);

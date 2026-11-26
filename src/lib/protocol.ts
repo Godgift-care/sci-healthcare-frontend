@@ -277,7 +277,10 @@ export const voucher = {
       if (requests.length > 1) {
         const batch = await invokeContractBatch(batchCalls, sign);
         for (let i = 0; i < batch.length; i++) {
-          onProgress?.(i + 1, callArgs[i].params, requests.length);
+          const arg = callArgs[i];
+          if (arg) {
+            onProgress?.(i + 1, arg.params, requests.length);
+          }
         }
         return batch;
       }
@@ -288,8 +291,10 @@ export const voucher = {
 
     const results: Array<{ hash: string; returnValue: unknown }> = [];
     for (let i = 0; i < requests.length; i++) {
-      onProgress?.(i + 1, requests[i], requests.length);
-      results.push(await this.create(requests[i], sign));
+      const req = requests[i];
+      if (!req) continue;
+      onProgress?.(i + 1, req, requests.length);
+      results.push(await this.create(req, sign));
     }
     return results;
   },
@@ -537,6 +542,7 @@ export const voucher = {
 
     for (let i = 0; i < total; i++) {
       const id = voucherIds[i];
+      if (!id) continue;
       onProgress?.(i + 1, total, id);
       try {
         await this.refund(caller, id, sign);

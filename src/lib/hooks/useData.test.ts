@@ -196,7 +196,7 @@ describe('useVoucher', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/vouchers/7');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/vouchers/7');
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -253,7 +253,7 @@ describe('useVoucherEvents', () => {
     const { result } = renderHook(() => useVoucherEvents('ev-success'));
 
     await waitFor(() => expect(result.current.events).toHaveLength(1));
-    expect(result.current.events[0].txHash).toBe('HASHCLAIM');
+    expect(result.current.events[0]?.txHash).toBe('HASHCLAIM');
     expect(result.current.error).toBeNull();
   });
 
@@ -284,15 +284,11 @@ describe('useVoucherEvents', () => {
     });
     const { result } = renderHook(() => useVoucherEvents('ev-refetch'));
 
-    await waitFor(() =>
-      expect(result.current.events[0].name).toBe('voucher_created'),
-    );
+    await waitFor(() => expect(result.current.events[0]?.name).toBe('voucher_created'));
     await act(async () => {
       await invalidateVouchers();
     });
-    await waitFor(() =>
-      expect(result.current.events[0].name).toBe('voucher_claimed'),
-    );
+    await waitFor(() => expect(result.current.events[0]?.name).toBe('voucher_claimed'));
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
@@ -307,7 +303,7 @@ describe('useVouchers', () => {
     await waitFor(() => expect(result.current.vouchers).toHaveLength(1));
     expect(result.current.total).toBe(1);
     expect(result.current.error).toBeNull();
-    expect(String(fetchMock.mock.calls[0][0])).toContain(`funder=${FUNDER}`);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(`funder=${FUNDER}`);
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -358,9 +354,7 @@ describe('useProvider', () => {
       expect(result.current.provider?.name).toBe('Ikeja General Clinic'),
     );
     expect(result.current.error).toBeNull();
-    expect(String(fetchMock.mock.calls[0][0])).toContain(
-      `/providers/${PROVIDER}`,
-    );
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(`/providers/${PROVIDER}`);
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -404,7 +398,7 @@ describe('useProviders', () => {
 
     await waitFor(() => expect(result.current.providers).toHaveLength(1));
     expect(result.current.total).toBe(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('status=Active');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('status=Active');
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -452,7 +446,7 @@ describe('useStats', () => {
 
     await waitFor(() => expect(result.current.stats?.vouchers).toBe(2));
     expect(result.current.error).toBeNull();
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/stats');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/stats');
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -490,7 +484,7 @@ describe('useDailyStats', () => {
 
     await waitFor(() => expect(result.current.dailyStats?.days).toBe(7));
     expect(result.current.dailyStats?.series).toHaveLength(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/stats/daily?days=7');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/stats/daily?days=7');
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -529,7 +523,7 @@ describe('useAttesters', () => {
 
     await waitFor(() => expect(result.current.attesters).toHaveLength(1));
     expect(result.current.total).toBe(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('all=true');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('all=true');
   });
 
   it('surfaces an HTTP error with its status', async () => {
@@ -569,7 +563,7 @@ describe('useReceipts', () => {
     await waitFor(() => expect(result.current.receipts).toHaveLength(1));
     expect(result.current.total).toBe(1);
     expect(result.current.totalSpendDisplay).toBe('3.00');
-    expect(String(fetchMock.mock.calls[0][0])).toContain(
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
       `beneficiaryRef=${PATIENT_REF}`,
     );
   });

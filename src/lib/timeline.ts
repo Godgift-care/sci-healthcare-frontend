@@ -32,13 +32,13 @@ export type TimelineStep = {
   state: StepState;
   /** When it happened, or when it is due for upcoming steps. */
   at: string | Date | null;
-  detail?: string;
+  detail?: string | undefined;
   /**
    * Hash of the transaction behind this step, when the indexer has one
    * (#18). Rendered as a "view transaction" link to Stellar Expert, so a
    * reader can verify the step on chain instead of taking the page's word.
    */
-  txHash?: string;
+  txHash?: string | undefined;
 };
 
 /**
