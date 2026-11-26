@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 
 import { NavLink } from '@/components/ui';
-import { sponsorEnabled } from '@/lib/config';
+import { KeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import { useAdminAccess } from '@/lib/hooks';
 import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
@@ -104,6 +104,7 @@ export function SiteHeader() {
           <NetworkBadge />
           <MockModeBadge />
           <ConnectButton />
+          <KeyboardShortcuts />
           <button
             type="button"
             aria-expanded={open}
