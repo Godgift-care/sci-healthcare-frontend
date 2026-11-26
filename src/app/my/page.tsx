@@ -44,8 +44,7 @@ import { useWallet } from '@/lib/wallet';
 import { useLocaleContext } from '@/i18n/LocaleContext';
 import { ShareReceiptButton } from '@/components/ShareReceiptButton';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
-import { ExpiryReminders } from '@/components/ExpiryReminders';
-import { RecentVouchers } from '@/components/RecentVouchers';
+import { SecretKeyInput } from '@/components/SecretKeyInput';
 import { TestUsdc } from '@/components/TestUsdc';
 import { VoucherRow } from '@/components/VoucherRow';
 import { Alert, Button, Card, Empty, Field } from '@/components/ui';
@@ -971,17 +970,11 @@ export default function MyPage() {
                 className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
               />
             </label>
-            <label className="block">
-              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
-                Secret key
-              </span>
-              <input
-                type="password"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm"
-              />
-            </label>
+            <SecretKeyInput
+              label="Secret key"
+              value={secret}
+              onChange={setSecret}
+            />
           </div>
           {historyError && <Alert>{historyError}</Alert>}
           <Button onClick={() => void loadHistory()}>Look up history</Button>

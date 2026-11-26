@@ -53,7 +53,7 @@ import { useLocaleContext } from '@/i18n/LocaleContext';
 import { clinicDirectionsLinks } from '@/lib/maps';
 import { useWallet } from '@/lib/wallet';
 import { SavedPatientControls } from '@/components/SavedPatientControls';
-import { useLocaleContext } from '@/i18n/LocaleContext';
+import { SecretKeyInput } from '@/components/SecretKeyInput';
 import { Sep7FundPanel } from '@/components/Sep7FundPanel';
 import { TestUsdc } from '@/components/TestUsdc';
 import { CopyValue } from '@/components/CopyValue';
@@ -1052,6 +1052,7 @@ export default function ClinicPage({
               onSelect={(patient) => {
                 setIdentifier(patient?.identifier ?? '');
                 setSecret(patient?.key ?? '');
+                setGeneratedKey(false);
               }}
             />
 
@@ -1084,21 +1085,15 @@ export default function ClinicPage({
               />
             </label>
 
-            <label className="block">
-              <span className="text-xs tracking-wide text-[var(--color-ink-soft)] uppercase">
-                Secret key (32+ characters)
-              </span>
-              <div className="mt-1 flex gap-2">
-                <input
-                  type={generatedKey ? 'text' : 'password'}
-                  value={secret}
-                  onChange={(e) => {
-                    setSecret(e.target.value);
-                    setGeneratedKey(false);
-                  }}
-                  placeholder="stays on this device"
-                  className="mono min-w-0 flex-1 rounded-lg border border-[var(--color-line)] px-3 py-2 text-xs"
-                />
+            <SecretKeyInput
+              label="Secret key (32+ characters)"
+              value={secret}
+              onChange={(value) => {
+                setSecret(value);
+                setGeneratedKey(false);
+              }}
+              placeholder="stays on this device"
+              action={
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1108,12 +1103,14 @@ export default function ClinicPage({
                 >
                   Generate
                 </Button>
-              </div>
+              }
+            />
+            <div>
               <span className="mt-1 block text-xs text-[var(--color-ink-soft)]">
                 Used to derive an opaque reference. Never sent anywhere, and
                 never written to the ledger.
               </span>
-            </label>
+            </div>
 
             {generatedKey && (
               <Alert kind="info">
